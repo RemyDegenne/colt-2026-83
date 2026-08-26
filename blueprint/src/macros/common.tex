@@ -1,0 +1,58 @@
+% In this file you should put all LaTeX macros and settings to be used both by
+% the pdf version and the web version.
+% This should be most of your macros.
+
+% The theorem-like environments defined below are those that appear by default
+% in the dependency graph. See the README of leanblueprint if you need help to
+% customize this.
+% The configuration below use the theorem counter for all those environments
+% (this is what the [theorem] arguments mean) and never resets it.
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------------------------------------------------------------------------
+% Notation macros for the COLT83 blueprint (epsilon-best arm identification in
+% linear bandits: the power of adaptivity).
+% ---------------------------------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\indic}{\mathbf{1}}
+\newcommand{\ip}[2]{\langle #1, #2 \rangle}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\Xs}{\mathcal{X}}            % the action set
+\newcommand{\ball}{\mathbb{B}}           % unit euclidean ball \ball_d
+\newcommand{\sphere}{\mathbb{S}}         % unit sphere \sphere^{d-1}
+\newcommand{\simplex}{\triangle}         % design distributions \simplex_{\Xs}
+\newcommand{\designset}{\mathcal{M}}     % set of design matrices \designset(\Xs)
+\newcommand{\gw}{w}                      % Gaussian width term
+\newcommand{\gwidth}[2]{\gw(#1;#2)}      % w(X; A)
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\Span}{\operatorname{span}}
+\newcommand{\conv}{\operatorname{conv}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\hist}{H}                    % history
+\newcommand{\rec}{\hat{x}}               % recommended arm
+\newcommand{\cG}{c_{\mathrm{G}}}         % Gaussian concentration constant (pi^2/4)
+\newcommand{\PD}{\mathcal{S}_{++}^{d}}   % positive definite matrices
+\newcommand{\PSD}{\mathcal{S}_{+}^{d}}   % positive semidefinite matrices
+\newcommand{\Sym}{\mathcal{S}^{d}}       % symmetric matrices
+\newcommand{\eqd}{\overset{d}{=}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}

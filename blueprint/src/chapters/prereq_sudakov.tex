@@ -1,0 +1,371 @@
+\chapter{The Sudakov--Fernique inequality}
+\label{chap:pre_sudakov}
+
+This chapter proves the Sudakov--Fernique comparison inequality for finite families of
+centered Gaussian random variables, by the Gaussian interpolation method
+(\cite[Theorem~7.2.11]{vershynin2018high}), and a lower bound on the expected maximum of
+independent standard Gaussians. Both are only used for the secondary lower bound
+$\gw(\Xs) \ge c\sqrt{d\log d}$ (Proposition~\ref{prop:width_lower_sqrt_dlogd}); the
+covariance-domination special case needed everywhere else has a direct proof
+(Lemma~\ref{lem:gauss_comparison}). The chapter is written so that each step is a small
+declaration: Gaussian integration by parts (Stein's identity), the derivative of an
+interpolated expectation, the Hessian of the soft-max, and elementary tail estimates.
+
+\textbf{What Mathlib/LML provides.} Gaussian vectors: \texttt{ProbabilityTheory.stdGaussian},
+\texttt{multivariateGaussian}, \texttt{IsGaussian}, and their linear images (see
+Chapter~\ref{chap:pre_gaussian}). Differentiation under the integral sign:
+\texttt{hasDerivAt\_integral\_of\_dominated\_loc\_of\_deriv\_le}
+(\texttt{Mathlib/Analysis/Calculus/ParametricIntegral.lean}). Integration by parts on $\R$ with
+limits at $\pm\infty$: \texttt{MeasureTheory.integral\_mul\_deriv\_eq\_deriv\_mul} and
+\texttt{integral\_deriv\_mul\_eq\_sub} in \texttt{MeasureTheory/Integral/IntegralEqImproper.lean}.
+Monotonicity from the sign of the derivative: \texttt{antitoneOn\_of\_deriv\_nonpos}. The
+Gaussian density \texttt{gaussianPDFReal} and \texttt{gaussianReal\_apply\_eq\_integral}.
+Numerical bounds on $\pi$, $e$ and $\log 2$: \texttt{Real.pi\_lt\_d2}, \texttt{Real.pi\_gt\_d2},
+\texttt{Real.exp\_one\_lt\_d9}, \texttt{Real.log\_two\_lt\_d9}, \texttt{Real.log\_two\_gt\_d9}.
+
+\textbf{What is missing.} Stein's identity for Gaussian vectors, the interpolation formula, the
+Sudakov--Fernique inequality itself, the lower Mills-ratio bound and the lower bound on the
+expected maximum are all absent.
+
+\section{Gaussian integration by parts}
+\label{sec:pre_sudakov_stein}
+
+Throughout, ``$F : \R^m\to\R$ is $C^1$ with $\norm{\nabla F}\le L$'' means that $F$ is
+continuously differentiable and $\norm{\nabla F(x)}\le L$ for every $x$; such an $F$ is
+$L$-Lipschitz with $\abs{F(x)}\le\abs{F(0)}+L\norm x$ (Lemma~\ref{lem:pc_lipschitz_of_grad}),
+so that for a Gaussian vector $X$ the variables $F(X)$, $X_iF(X)$ and $\partial_jF(X)$ are
+integrable (Lemma~\ref{lem:pc_exp_norm_integrable}, or Lemma~\ref{lem:gauss_norm_moments}
+for the second moments needed for $X_iF(X)$). Similarly, ``$F$ is $C^2$ with
+$\norm{\mathrm{Hess}\,F}_{\mathrm{op}}\le L$'' means that the Hessian matrix of $F$ has
+operator norm at most $L$ at every point; for a $C^2$ function this is equivalent to $\nabla F$
+being $L$-Lipschitz (mean value inequality, Mathlib
+\texttt{lipschitzWith\_of\_nnnorm\_fderiv\_le}).
+
+\begin{lemma}[One-dimensional Stein identity]\label{lem:psf_ibp_1d}
+\uses{def:pg_gaussian_vector}
+Let $\xi\sim\Normal(0,1)$, $L\ge0$, and $f : \R\to\R$ be $C^1$ with $\abs{f'(x)}\le L$ for
+every $x$. Then $\xi f(\xi)$ and $f'(\xi)$ are integrable and $\E[\xi f(\xi)] = \E[f'(\xi)]$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_1d_moments, lem:pc_lipschitz_of_grad}
+Let $\varphi(x) := (2\pi)^{-1/2}e^{-x^2/2}$, so that $\varphi'(x) = -x\varphi(x)$ and
+$\E[\xi f(\xi)] = \int x f(x)\varphi(x)\,dx = -\int f(x)\varphi'(x)\,dx$. By
+Lemma~\ref{lem:pc_lipschitz_of_grad} (in dimension one), $\abs{f(x)}\le\abs{f(0)}+L\abs x$.
+Integration by parts on $\R$ (Mathlib \texttt{integral\_mul\_deriv\_eq\_deriv\_mul}) requires:
+$f\varphi'$ and $f'\varphi$ integrable, which holds since
+$\abs{f(x)\varphi'(x)}\le(\abs{f(0)}+L\abs x)\abs x\varphi(x)$ and $\abs{f'\varphi}\le L\varphi$,
+and $\xi$ has a second moment (Lemma~\ref{lem:gauss_1d_moments}); and
+$f(x)\varphi(x)\to 0$ as $x\to\pm\infty$, which holds since
+$\abs{f(x)\varphi(x)}\le(\abs{f(0)}+L\abs x)\varphi(x)\to0$. It gives
+$-\int f\varphi' = \int f'\varphi = \E[f'(\xi)]$.
+\end{proof}
+
+\begin{lemma}[Multivariate Stein identity]\label{lem:gauss_ibp}
+\uses{def:pg_gaussian_vector}
+Let $S \in \PSD$ (of size $m$), $X \sim \Normal(0,S)$ on $\R^m$, $L\ge0$, and
+$F : \R^m\to\R$ be $C^1$ with $\norm{\nabla F(x)}\le L$ for every $x$. Then $X_iF(X)$ and
+$\partial_jF(X)$ are integrable and, for every $i \le m$,
+\[
+  \E\big[X_i F(X)\big] = \sum_{j=1}^m S_{ij}\,\E\big[\partial_j F(X)\big].
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:psf_ibp_1d, lem:pc_lipschitz_of_grad, lem:pc_exp_norm_integrable, lem:gauss_norm_moments}
+\emph{Integrability.} By Lemma~\ref{lem:pc_lipschitz_of_grad}, $\abs{F(x)}\le\abs{F(0)}+L\norm x$,
+so $\abs{X_iF(X)}\le\norm X(\abs{F(0)}+L\norm X)$ is integrable by
+Lemma~\ref{lem:gauss_norm_moments} (first and second moments; or
+Lemma~\ref{lem:pc_exp_norm_integrable}), and $\abs{\partial_jF(X)}\le L$ is bounded.
+
+\emph{Standard case $S = I_m$.} By Lemma~\ref{lem:gauss_pi} the coordinates of $X = g$ are
+i.i.d.\ standard Gaussians, so the law of $g$ is the product measure. Fix $i$ and write
+$g = (g_i, g_{-i})$. By Fubini (justified by the integrability just shown),
+$\E[g_iF(g)] = \E_{g_{-i}}\big[\E_{g_i}[g_i F(g_i,g_{-i})]\big]$, and for fixed $g_{-i}$ the
+function $x\mapsto F(x,g_{-i})$ is $C^1$ with derivative $\partial_iF(x,g_{-i})$ bounded by
+$L$ in absolute value (as $\abs{\partial_iF}\le\norm{\nabla F}\le L$). Lemma~\ref{lem:psf_ibp_1d}
+gives $\E_{g_i}[g_iF(g_i,g_{-i})] = \E_{g_i}[\partial_iF(g_i,g_{-i})]$; integrate in $g_{-i}$.
+
+\emph{General case.} Let $M := S^{1/2}$, so that $MM^\top = S$ and $Mg\sim\Normal(0,S)$ has the
+law of $X$ (Lemmas~\ref{lem:gauss_linear_image} and~\ref{lem:gauss_law_of_cov}); expectations
+of measurable functions only depend on the law, so we may take $X = Mg$. Then
+$X_i = \sum_k M_{ik}g_k$ and $G := F\circ M$ is $C^1$ with
+$\nabla G(g) = M^\top\nabla F(Mg)$, i.e.\ $\partial_kG(g) = \sum_j M_{jk}(\partial_jF)(Mg)$
+(chain rule), and $\norm{\nabla G}\le\norm{M}_{\mathrm{op}}L$: $G$ has a bounded gradient. By
+the standard case,
+\[
+  \E[X_iF(X)] = \sum_k M_{ik}\E[g_kG(g)] = \sum_k M_{ik}\E[\partial_kG(g)]
+  = \sum_k\sum_j M_{ik}M_{jk}\E[\partial_jF(Mg)] = \sum_j S_{ij}\E[\partial_jF(X)].
+\]
+\end{proof}
+
+\section{Gaussian interpolation}
+\label{sec:pre_sudakov_interp}
+
+\begin{lemma}[Derivative of an interpolated expectation]\label{lem:interpolation_derivative}
+\uses{def:pg_gaussian_vector}
+Let $S_X, S_Y \in \PSD$ (size $m$), $X\sim\Normal(0,S_X)$ and $Y\sim\Normal(0,S_Y)$ be
+independent, $L\ge0$, and $F : \R^m\to\R$ be $C^2$ with
+$\norm{\mathrm{Hess}\,F(z)}_{\mathrm{op}}\le L$ for every $z$ (so that $\nabla F$ is
+$L$-Lipschitz). For $t\in[0,1]$ set
+$Z_t := \sqrt t\,X + \sqrt{1-t}\,Y$ and $\psi(t) := \E[F(Z_t)]$. Then $\psi$ is continuous on
+$[0,1]$, differentiable on $(0,1)$, and for $t\in(0,1)$,
+\[
+  \psi'(t) = \frac12\sum_{i,j=1}^m (S_X - S_Y)_{ij}\,\E\big[\partial_{ij}F(Z_t)\big].
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:gauss_ibp, lem:gauss_norm_moments}
+Since $\norm{\mathrm{Hess}\,F}_{\mathrm{op}}\le L$ everywhere, $\nabla F$ is $L$-Lipschitz
+(mean value inequality applied to the $C^1$ map $\nabla F$, whose derivative is the Hessian;
+Mathlib \texttt{lipschitzWith\_of\_nnnorm\_fderiv\_le}), so
+$\norm{\nabla F(z)} \le \norm{\nabla F(0)} + L\norm{z}$ and $\abs{F(z)} \le \abs{F(0)} + \norm{\nabla F(0)}\norm{z} + L\norm{z}^2/2$.
+Hence $F(Z_t)$, $\partial_iF(Z_t)$ and $X_i\partial_iF(Z_t)$ are integrable for every $t$
+(Lemma~\ref{lem:gauss_norm_moments}: $X$ and $Y$ have second moments), and each
+$\partial_iF$ is $C^1$ with $\norm{\nabla\partial_iF(z)} = \norm{\mathrm{Hess}\,F(z)\,e_i}\le L$.
+
+\emph{Continuity.} $\abs{F(Z_t) - F(Z_s)} \le (\norm{\nabla F(0)} + L(\norm{X}+\norm{Y}))\,(\abs{\sqrt t-\sqrt s}\norm{X} + \abs{\sqrt{1-t}-\sqrt{1-s}}\norm{Y})$,
+whose expectation tends to $0$ as $s\to t$ (second moments, Lemma~\ref{lem:gauss_norm_moments}).
+
+\emph{Differentiability.} For $t \in (0,1)$, $\frac{d}{dt}F(Z_t) = \big\langle\nabla F(Z_t),\ \tfrac{X}{2\sqrt t} - \tfrac{Y}{2\sqrt{1-t}}\big\rangle$,
+which on any interval $[a,b]\subset(0,1)$ is dominated by
+$(\norm{\nabla F(0)} + L(\norm{X}+\norm{Y}))(\norm{X}+\norm{Y})/(2\min(\sqrt a,\sqrt{1-b}))$, an
+integrable function. Differentiation under the integral sign (Mathlib
+\texttt{hasDerivAt\_integral\_of\_dominated\_loc\_of\_deriv\_le}) gives
+\[
+  \psi'(t) = \frac{1}{2\sqrt t}\sum_i\E\big[X_i\,\partial_iF(Z_t)\big]
+  - \frac{1}{2\sqrt{1-t}}\sum_i\E\big[Y_i\,\partial_iF(Z_t)\big].
+\]
+
+\emph{Stein's identity.} Write $X = S_X^{1/2}g$, $Y = S_Y^{1/2}g'$ with $(g,g')$ a standard
+Gaussian vector of $\R^{2m}$ (Lemmas~\ref{lem:gauss_pi}, \ref{lem:gauss_law_of_cov}; independence
+of $X$ and $Y$ is the product structure of the law of $(g,g')$). Then $W := (X,Y)$ is the linear
+image of $(g,g')$ by the block-diagonal matrix $\mathrm{diag}(S_X^{1/2},S_Y^{1/2})$, hence
+$W\sim\Normal(0,\mathrm{diag}(S_X,S_Y))$ (Lemma~\ref{lem:gauss_linear_image}). Fix $i$ and apply
+Lemma~\ref{lem:gauss_ibp} to $W$ and the $C^1$ function
+$G(x,y) := \partial_iF(\sqrt t\,x + \sqrt{1-t}\,y)$, whose gradient is
+$\nabla G(x,y) = (\sqrt t\,\nabla\partial_iF(Z), \sqrt{1-t}\,\nabla\partial_iF(Z))$ with
+$Z = \sqrt t x+\sqrt{1-t}y$, so that
+$\norm{\nabla G(x,y)}^2 = (t + (1-t))\norm{\mathrm{Hess}\,F(Z)\,e_i}^2\le L^2$: $G$ has a
+gradient bounded by $L$, as Lemma~\ref{lem:gauss_ibp} requires.
+The covariance of $W$ is block-diagonal, so
+\[
+  \E[X_iG(W)] = \sum_j (S_X)_{ij}\E[\partial_{x_j}G(W)] = \sqrt t\sum_j(S_X)_{ij}\E[\partial_{ij}F(Z_t)],
+  \qquad
+  \E[Y_iG(W)] = \sqrt{1-t}\sum_j(S_Y)_{ij}\E[\partial_{ij}F(Z_t)].
+\]
+Substituting in the formula for $\psi'(t)$, the factors $\sqrt t$ and $\sqrt{1-t}$ cancel and
+we obtain $\psi'(t) = \frac12\sum_{ij}(S_X)_{ij}\E[\partial_{ij}F(Z_t)] - \frac12\sum_{ij}(S_Y)_{ij}\E[\partial_{ij}F(Z_t)]$.
+\end{proof}
+
+\begin{lemma}[The soft-max and its Hessian]\label{lem:logsumexp_hessian}
+For $\beta > 0$ and $z\in\R^m$ let $F_\beta(z) := \beta^{-1}\log\sum_{i=1}^m e^{\beta z_i}$ and
+$p_i(z) := e^{\beta z_i}/\sum_k e^{\beta z_k}$, so that $p(z)$ is a probability vector. Then:
+\begin{enumerate}
+  \item[(i)] $\max_i z_i \le F_\beta(z) \le \max_i z_i + (\log m)/\beta$;
+  \item[(ii)] $F_\beta$ is $C^\infty$, $\partial_iF_\beta = p_i$, hence $\norm{\nabla F_\beta(z)}\le 1$
+        and $\abs{F_\beta(z) - F_\beta(z')} \le \norm{z-z'}$;
+  \item[(iii)] $\partial_{ij}F_\beta = \beta(\delta_{ij}p_i - p_ip_j)$, i.e.\
+        $\mathrm{Hess}\,F_\beta(z) = \beta(\operatorname{diag}(p) - pp^\top)$, a positive
+        semidefinite matrix with $\norm{\mathrm{Hess}\,F_\beta(z)}_{\mathrm{op}}\le\beta$ (and
+        all entries bounded by $\beta$ in absolute value);
+  \item[(iv)] for every symmetric matrix $\Gamma\in\R^{m\times m}$ and every $z$,
+        \[
+          \sum_{i,j}\Gamma_{ij}\,\partial_{ij}F_\beta(z)
+          = \frac{\beta}{2}\sum_{i,j}p_i(z)p_j(z)\,\big(\Gamma_{ii} + \Gamma_{jj} - 2\Gamma_{ij}\big).
+        \]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i): $e^{\beta\max_i z_i} \le \sum_i e^{\beta z_i} \le m\,e^{\beta\max_i z_i}$; take logarithms
+and divide by $\beta$. (ii): $\partial_i\log\sum_ke^{\beta z_k} = \beta e^{\beta z_i}/\sum_ke^{\beta z_k}$;
+$\norm{p}_2 \le \norm{p}_1 = 1$; the Lipschitz bound is the mean value inequality
+(Mathlib \texttt{Convex.norm\_image\_sub\_le\_of\_norm\_fderiv\_le}). (iii): differentiate
+$p_i = e^{\beta z_i}/\sum_k e^{\beta z_k}$: $\partial_jp_i = \beta\delta_{ij}p_i - \beta p_ip_j$,
+and $\abs{\delta_{ij}p_i - p_ip_j}\le 1$. For the operator norm, for every $v\in\R^m$, with
+$\bar v := \sum_ip_iv_i$,
+$v^\top(\operatorname{diag}(p) - pp^\top)v = \sum_ip_iv_i^2 - \bar v^2 = \sum_ip_i(v_i-\bar v)^2$,
+the variance of $v$ under the probability vector $p$, which lies in
+$[0, \sum_ip_iv_i^2]\subseteq[0,\norm v^2]$; so the symmetric matrix
+$\mathrm{Hess}\,F_\beta(z)$ has its eigenvalues in $[0,\beta]$. (iv): by (iii),
+$\sum_{ij}\Gamma_{ij}\partial_{ij}F_\beta = \beta\big(\sum_i\Gamma_{ii}p_i - \sum_{ij}\Gamma_{ij}p_ip_j\big)$.
+On the other hand, using $\sum_jp_j = 1$,
+\[
+  \sum_{i,j}p_ip_j(\Gamma_{ii}+\Gamma_{jj}-2\Gamma_{ij})
+  = \sum_ip_i\Gamma_{ii} + \sum_jp_j\Gamma_{jj} - 2\sum_{ij}p_ip_j\Gamma_{ij}
+  = 2\Big(\sum_i\Gamma_{ii}p_i - \sum_{ij}\Gamma_{ij}p_ip_j\Big),
+\]
+and multiplying by $\beta/2$ gives the claim.
+\end{proof}
+
+\begin{theorem}[Sudakov--Fernique inequality]\label{thm:sudakov_fernique}
+\uses{def:pg_gaussian_vector}
+Let $X$ and $Y$ be centered Gaussian vectors in $\R^m$, with laws $\Normal(0,S_X)$ and
+$\Normal(0,S_Y)$, such that
+\[
+  \E\big[(X_i - X_j)^2\big] \le \E\big[(Y_i - Y_j)^2\big] \qquad\text{for all } i,j\le m .
+\]
+Then $\E\big[\max_{i\le m}X_i\big] \le \E\big[\max_{i\le m}Y_i\big]$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:gauss_law_of_cov, lem:interpolation_derivative, lem:logsumexp_hessian}
+Both sides only depend on the laws of $X$ and $Y$, so we may assume that $X$ and $Y$ are
+independent (realize them on a product space; Lemma~\ref{lem:gauss_law_of_cov}). Fix
+$\beta > 0$, let $F_\beta$ be the soft-max of Lemma~\ref{lem:logsumexp_hessian}, and
+$Z_t := \sqrt t\,X + \sqrt{1-t}\,Y$, $\psi(t) := \E[F_\beta(Z_t)]$, so that $Z_0 = Y$ and
+$Z_1 = X$. By Lemma~\ref{lem:logsumexp_hessian}(iii) $F_\beta$ is $C^2$ with
+$\norm{\mathrm{Hess}\,F_\beta}_{\mathrm{op}}\le\beta$, so Lemma~\ref{lem:interpolation_derivative}
+applies with $L = \beta$: $\psi$ is continuous on
+$[0,1]$, differentiable on $(0,1)$, and with $\Gamma := S_X - S_Y$ (symmetric) and
+Lemma~\ref{lem:logsumexp_hessian}(iv),
+\[
+  \psi'(t) = \frac12\,\E\Big[\sum_{i,j}\Gamma_{ij}\partial_{ij}F_\beta(Z_t)\Big]
+  = \frac{\beta}{4}\,\E\Big[\sum_{i,j}p_i(Z_t)p_j(Z_t)\big(\Gamma_{ii}+\Gamma_{jj}-2\Gamma_{ij}\big)\Big].
+\]
+Now $\Gamma_{ii}+\Gamma_{jj}-2\Gamma_{ij} = \big((S_X)_{ii}+(S_X)_{jj}-2(S_X)_{ij}\big) - \big((S_Y)_{ii}+(S_Y)_{jj}-2(S_Y)_{ij}\big)
+= \E[(X_i-X_j)^2] - \E[(Y_i-Y_j)^2] \le 0$ by hypothesis, and $p_ip_j \ge 0$, so $\psi'(t)\le 0$
+on $(0,1)$. Hence $\psi$ is nonincreasing on $[0,1]$ (Mathlib
+\texttt{antitoneOn\_of\_deriv\_nonpos} with continuity on the closed interval), and
+$\E[F_\beta(X)] = \psi(1) \le \psi(0) = \E[F_\beta(Y)]$. Finally, by
+Lemma~\ref{lem:logsumexp_hessian}(i),
+\[
+  \E\big[\max_iX_i\big] \le \E[F_\beta(X)] \le \E[F_\beta(Y)] \le \E\big[\max_iY_i\big] + \frac{\log m}{\beta},
+\]
+and letting $\beta\to\infty$ concludes (all expectations are finite since $\abs{\max_iX_i}\le\norm{X}$).
+\end{proof}
+
+\begin{remark}[On the sign of the interpolation derivative]\label{rem:psf_sign}
+The outline of this chapter hesitated about the sign of $\psi'$. The computation above is the
+correct one: with $Z_t = \sqrt t X + \sqrt{1-t}Y$ the derivative is
+$\frac12\sum_{ij}(S_X-S_Y)_{ij}\E[\partial_{ij}F_\beta(Z_t)]$ (no minus sign), and the Hessian
+identity of Lemma~\ref{lem:logsumexp_hessian}(iv) carries the factor $+\beta/2$ (the sign error in
+the outline came from writing $-\beta/2$ there). Smaller increments for $X$ therefore make
+$\psi$ \emph{nonincreasing} from $\psi(0) = \E F_\beta(Y)$ to $\psi(1) = \E F_\beta(X)$, which is
+exactly $\E\max X\le\E\max Y$, the standard statement (\cite[Theorem~7.2.11]{vershynin2018high}).
+The compact-index-set version (suprema over $\Xs$) follows by density,
+Lemma~\ref{lem:sup_countable_dense}, but is not needed.
+\end{remark}
+
+\section{Expected maximum of independent Gaussians}
+\label{sec:pre_sudakov_max}
+
+\begin{lemma}[Lower Mills-ratio bound]\label{lem:gauss_tail_lower}
+Let $\xi\sim\Normal(0,1)$ and $\varphi(t) := (2\pi)^{-1/2}e^{-t^2/2}$. For every $t \ge 0$,
+\[
+  \Prob(\xi\ge t) \ge \frac{t}{1+t^2}\,\varphi(t) = \frac{t}{1+t^2}\cdot\frac{e^{-t^2/2}}{\sqrt{2\pi}} .
+\]
+\end{lemma}
+
+\begin{proof}
+Let $h(t) := \Prob(\xi\ge t) - \frac{t}{1+t^2}\varphi(t)$ for $t\in\R$. The tail
+$t\mapsto\Prob(\xi\ge t) = \int_t^\infty\varphi$ is differentiable with derivative $-\varphi(t)$
+(fundamental theorem of calculus, Mathlib \texttt{intervalIntegral.integral\_hasDerivAt\_right}
+after writing the tail as $1 - \int_{-\infty}^t\varphi$; the tail is
+\texttt{gaussianReal\_apply\_eq\_integral}). Using $\varphi'(t) = -t\varphi(t)$,
+\[
+  \frac{d}{dt}\Big[\frac{t}{1+t^2}\varphi(t)\Big]
+  = \varphi(t)\Big[\frac{1-t^2}{(1+t^2)^2} - \frac{t^2}{1+t^2}\Big],
+  \qquad
+  h'(t) = -\varphi(t)\Big[1 + \frac{1-t^2}{(1+t^2)^2} - \frac{t^2}{1+t^2}\Big]
+  = -\frac{2\,\varphi(t)}{(1+t^2)^2} < 0,
+\]
+since $1 - \frac{t^2}{1+t^2} = \frac{1}{1+t^2}$ and $\frac{1+t^2}{(1+t^2)^2} + \frac{1-t^2}{(1+t^2)^2} = \frac{2}{(1+t^2)^2}$.
+Thus $h$ is decreasing (Mathlib \texttt{antitone\_of\_deriv\_nonpos}) and
+$h(t)\to 0$ as $t\to\infty$ (both terms tend to $0$: the tail by dominated convergence, the
+second term since $\varphi(t)\to 0$). Hence $h(t) \ge \lim_{s\to\infty}h(s) = 0$ for every $t$.
+\end{proof}
+
+\begin{lemma}[Expected maximum of two standard Gaussians]\label{lem:psf_max_two}
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_1d_moments}
+If $\xi_1,\xi_2$ are i.i.d.\ $\Normal(0,1)$ then $\E[\max(\xi_1,\xi_2)] = 1/\sqrt\pi \ge 0.56$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_1d_moments}
+$\max(a,b) = \frac{a+b}{2} + \frac{\abs{a-b}}{2}$. The first term has expectation $0$. By
+Lemmas~\ref{lem:gauss_pi} and~\ref{lem:gauss_linear_image}, $\xi_1-\xi_2\sim\Normal(0,2)$, so
+$\E\abs{\xi_1-\xi_2} = \sqrt2\cdot\sqrt{2/\pi} = 2/\sqrt\pi$ (Lemma~\ref{lem:gauss_1d_moments}),
+and $\E\max(\xi_1,\xi_2) = 1/\sqrt\pi$; finally $\pi < 3.15$ gives $1/\sqrt\pi > 0.563$.
+\end{proof}
+
+\begin{lemma}[Monotonicity in the number of variables]\label{lem:psf_max_mono}
+Let $(\xi_i)_{i\ge1}$ be real random variables with $\E\abs{\xi_i}<\infty$. For $1\le m\le m'$,
+$\E[\max_{i\le m}\xi_i] \le \E[\max_{i\le m'}\xi_i]$.
+\end{lemma}
+
+\begin{proof}
+Pointwise, $\max_{i\le m}\xi_i\le\max_{i\le m'}\xi_i$; both are integrable since
+$\abs{\max_{i\le m}\xi_i}\le\sum_{i\le m}\abs{\xi_i}$.
+\end{proof}
+
+\begin{lemma}[Lower bound on the expected maximum, large $m$]\label{lem:psf_max_lower_large}
+\uses{lem:gauss_tail_lower, lem:gauss_1d_moments}
+Let $\xi_1,\dots,\xi_m$ be i.i.d.\ $\Normal(0,1)$ with $m \ge 128$. Then
+$\E[\max_{i\le m}\xi_i] \ge \frac14\sqrt{\log m}$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_tail_lower, lem:gauss_1d_moments}
+Let $t := \sqrt{\log m}$ and $p_t := \Prob(\xi_1\ge t)$. We proceed in steps.
+\begin{enumerate}
+  \item[(i)] Since $m\ge128 = 2^7$, $t^2 = \log m \ge 7\log 2 > 4.85$ (Mathlib
+        \texttt{Real.log\_two\_gt\_d9}), so $t > 2.2 > 1$.
+  \item[(ii)] By Lemma~\ref{lem:gauss_tail_lower} and $e^{-t^2/2} = m^{-1/2}$,
+        $p_t \ge \frac{t}{1+t^2}\cdot\frac{m^{-1/2}}{\sqrt{2\pi}} \ge \frac{m^{-1/2}}{2t\sqrt{2\pi}}$,
+        using $\frac{t}{1+t^2}\ge\frac{1}{2t}$ for $t\ge1$ (equivalent to $t^2\ge1$).
+  \item[(iii)] Hence $mp_t \ge \frac{\sqrt m}{2\sqrt{2\pi}\sqrt{\log m}} \ge 1$: the inequality
+        $\sqrt m \ge 2\sqrt{2\pi}\sqrt{\log m}$ is equivalent to $m \ge 8\pi\log m$; at
+        $m = 128$ it reads $128\ge 8\pi\cdot7\log2$, true since $8\pi\cdot7\log 2 < 8\cdot3.15\cdot7\cdot0.6932 < 122.3$;
+        and $m\mapsto m/\log m$ is nondecreasing on $[e,\infty)$ (its derivative is
+        $(\log m - 1)/(\log m)^2\ge0$), so $m\ge 8\pi\log m$ for all $m\ge128$.
+  \item[(iv)] By independence, $\Prob(\max_i\xi_i < t) = (1-p_t)^m \le e^{-mp_t} \le e^{-1}$,
+        so $\Prob(\max_i\xi_i\ge t) \ge 1 - e^{-1} \ge \frac12$ (Mathlib
+        \texttt{Real.add\_one\_le\_exp}, \texttt{Real.exp\_one\_gt\_d9}).
+  \item[(v)] Write $M := \max_i\xi_i = M^+ - M^-$. Since $t > 0$, $M^+ \ge t\,\indic\{M\ge t\}$, so
+        $\E[M^+] \ge t\,\Prob(M\ge t) \ge t/2$. Since $M\ge\xi_1$, $M^- \le \xi_1^-$ and
+        $\E[M^-]\le\E[\xi_1^-] = \frac12\E\abs{\xi_1} = \frac{1}{\sqrt{2\pi}} < 0.4$
+        (Lemma~\ref{lem:gauss_1d_moments} and symmetry of $\xi_1$).
+  \item[(vi)] Therefore $\E[M] \ge \frac t2 - 0.4 \ge \frac t4$, because $\frac t4 \ge 0.4$ is
+        implied by $t > 2.2$. That is, $\E[\max_i\xi_i]\ge\frac14\sqrt{\log m}$.
+\end{enumerate}
+\end{proof}
+
+\begin{lemma}[Lower bound on the expected maximum of i.i.d.\ Gaussians]\label{lem:gauss_max_lower}
+\uses{lem:psf_max_two, lem:psf_max_mono, lem:psf_max_lower_large}
+Let $\xi_1,\dots,\xi_m$ be i.i.d.\ $\Normal(0,1)$ with $m\ge2$. Then
+\[
+  \E\Big[\max_{i\le m}\xi_i\Big] \ge c_{\max}\sqrt{\log m},\qquad c_{\max} := \frac14 .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:psf_max_two, lem:psf_max_mono, lem:psf_max_lower_large}
+If $m\ge128$ this is Lemma~\ref{lem:psf_max_lower_large}. If $2\le m<128$, then by
+Lemmas~\ref{lem:psf_max_mono} and~\ref{lem:psf_max_two},
+$\E[\max_{i\le m}\xi_i]\ge\E[\max(\xi_1,\xi_2)] = 1/\sqrt\pi$, and
+$\frac14\sqrt{\log m} \le \frac14\sqrt{\log 128} = \frac14\sqrt{7\log2}$. It remains to check
+$1/\sqrt\pi\ge\frac14\sqrt{7\log2}$, i.e.\ $16/\pi\ge7\log2$: indeed $16/\pi > 16/3.15 > 5.07$
+and $7\log 2 < 7\cdot0.6932 < 4.86$ (Mathlib \texttt{Real.pi\_lt\_d2},
+\texttt{Real.log\_two\_lt\_d9}).
+\end{proof}
+
+\begin{remark}[Constants]\label{rem:psf_constants}
+The constant $c_{\max} = 1/4$ holds for every $m\ge2$; the argument is not sharp
+($\E\max_i\xi_i\sim\sqrt{2\log m}$), but only an absolute constant is needed for
+Proposition~\ref{prop:width_lower_sqrt_dlogd}. The splitting at $m = 128$ is chosen so that
+both branches only require the crude numerical bounds $\pi<3.15$, $0.693<\log2<0.6932$ and
+$e^{-1}<1/2$, which are available in Mathlib. The outline suggested the threshold
+$t = \sqrt{\log m}$ and a Paley--Zygmund argument on the number of exceedances; the direct
+bound $\Prob(\max\ge t)\ge1-e^{-mp_t}$ used above is simpler and gives the same order.
+\end{remark}
+
+\textbf{Lean remark.} The i.i.d.\ family is \texttt{Fin m → ℝ} with law
+\texttt{Measure.pi (fun \_ ↦ gaussianReal 0 1)}; the maximum is \texttt{Finset.sup'} or
+\texttt{⨆ i, ξ i}. In Theorem~\ref{thm:sudakov_fernique} the vectors are
+\texttt{EuclideanSpace ℝ (Fin m)}-valued with laws \texttt{multivariateGaussian 0 S}, and the
+soft-max $F_\beta$ is \texttt{fun z ↦ β⁻¹ * Real.log (∑ i, Real.exp (β * z i))}, whose
+derivatives are best handled through \texttt{ContDiff} and \texttt{fderiv} of the composition
+$\log\circ\sum\circ\exp$.

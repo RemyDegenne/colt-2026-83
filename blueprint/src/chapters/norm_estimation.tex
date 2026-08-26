@@ -1,0 +1,760 @@
+\chapter{Estimation of the \texorpdfstring{$\ell_2$}{l2}-norm of the reward vector}
+\label{chap:norm}
+
+This chapter formalizes Section~3 and Appendix~D of the paper (the four subsections on
+$\ell_2$-norm estimation): on the action set $\Xs = \ball_d$ one wants to estimate
+$r := \norm{\theta}$ up to an additive error $\eps$ with probability at least $1-\delta$,
+using $O(d\log(1/\delta)/\eps^2)$ observations. The target is Theorem~8 of the paper
+(Theorem~\ref{thm:norm_estimation}). The procedure has three ingredients: a statistic
+built from random Rademacher directions, each sampled repeatedly, which estimates $r^2$ with
+an additive error proportional to $r\eps$ once a constant-factor estimate $r_0$ of $r$ is
+available (Section~\ref{sec:norm_additive}); an adaptive multi-scale test which produces
+such an $r_0$, or detects that $r$ is either at most $\eps$ or at least $\sqrt d$
+(Section~\ref{sec:norm_test}); and a direct estimator for the large-norm regime
+$r \ge \sqrt d$ (Section~\ref{sec:norm_large}). The three are composed into a
+meta-algorithm in Section~\ref{sec:norm_meta}.
+
+From Chapter~\ref{chap:pre_subexp} we use the sub-exponential calculus: the definition
+\ref{def:subexp}, the tail bound for averages (Corollary~\ref{cor:subexp_average_tail}), the
+sub-exponential parameters of squared Gaussians (Lemma~\ref{lem:gaussian_square_subexp}), of
+chi-square variables (Lemma~\ref{lem:chi_square_subexp}) and of squared Rademacher linear
+forms (Lemma~\ref{lem:rademacher_square_subexp}). From the model chapter we use the noise
+representation (Lemma~\ref{lem:noise_representation}) and the sequential composition of
+algorithms (Lemma~\ref{lem:composition}). Compared with the paper, the constants are all
+explicit (no attempt was made to optimize them), the Hanson--Wright inequality is replaced by
+Lemma~\ref{lem:rademacher_square_subexp}, the conditional argument for the noise term is a
+Fubini argument over the directions, and the large-norm regime uses a deterministic basis
+design instead of random Rademacher rows, which removes the random-matrix concentration
+step of the paper. Throughout the chapter $\eps \in (0,1]$, $\delta \in (0,1)$, $d \ge 1$,
+$\Xs = \ball_d$ and $r := \norm{\theta}$.
+
+\section{Estimation algorithms and the Rademacher statistic}
+\label{sec:norm_setup}
+
+\begin{definition}[Norm estimation algorithm]\label{def:norm_estimator}
+\uses{def:env, def:bai_alg}
+An \emph{estimation algorithm with budget $T$} on $\ball_d$ is a pair $(\mathrm{alg}, \rho)$
+of an LML algorithm with actions in $\ball_d$ and observations in $\R$, and a Markov kernel
+$\rho$ from histories of length $T$ to $[0,\infty)$. Run against $\nu_\theta$
+(Definition~\ref{def:env}) it produces $\hist_T$ and the estimate $\hat r \sim \rho(\hist_T)$;
+we write $\Prob_\theta$ for the law of $(\hist_T, \hat r)$. It is
+\emph{$(\eps,\delta)$-accurate} if for every $\theta \in \R^d$,
+\[
+  \Prob_\theta\big( \abs{\hat r - \norm{\theta}} \le \eps \big) \ge 1 - \delta .
+\]
+\end{definition}
+
+\textbf{Lean remark.} This is Definition~\ref{def:bai_alg} with the recommendation type
+$\Xs$ replaced by $[0,\infty)$ (or simply $\R$): the LML notion of an algorithm with a
+recommendation is polymorphic in the recommendation type, so no new framework is needed.
+All the estimators below are deterministic functions of the history, so $\rho$ is
+\texttt{Kernel.deterministic}.
+
+\begin{definition}[Rademacher direction]\label{def:rademacher_direction}
+\uses{def:arm_set}
+A \emph{Rademacher direction} is the random vector $x := \sigma/\sqrt d \in \R^d$ where
+$\sigma = (\sigma_1, \dots, \sigma_d)$ has i.i.d.\ coordinates uniform on $\{-1, +1\}$. We
+write $\mathrm{Rad}_d$ for its law (the image of the uniform measure on $\{-1,+1\}^d$ by
+$\sigma \mapsto \sigma/\sqrt d$). Since $\norm{x} = 1$, $x \in \sphere^{d-1} \subset \ball_d$.
+\end{definition}
+
+\begin{lemma}[Second moments of a Rademacher direction]\label{lem:direction_second_moment}
+\uses{def:rademacher_direction}
+Let $x = \sigma/\sqrt d$ be a Rademacher direction and $\theta \in \R^d$. Then
+$\E[xx^\top] = I_d/d$ and $\E\big[\ip{x}{\theta}^2\big] = \norm{\theta}^2/d$. Moreover
+$d\,\ip{x}{\theta}^2 = \ip{\sigma}{\theta}^2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:rademacher_fourth_moment}
+$\E[\sigma_i\sigma_j] = \indic\{i = j\}$ by independence and $\E\sigma_i = 0$,
+$\sigma_i^2 = 1$, so $\E[\sigma\sigma^\top] = I_d$ and $\E[xx^\top] = I_d/d$. Then
+$\E\ip{x}{\theta}^2 = \theta^\top\E[xx^\top]\theta = \norm{\theta}^2/d$ (this is also the
+second-moment identity of Lemma~\ref{lem:rademacher_fourth_moment} divided by $d$). The last
+identity is $\ip{x}{\theta} = \ip{\sigma}{\theta}/\sqrt d$.
+\end{proof}
+
+\begin{definition}[Rademacher block sampling and the squared statistic]\label{def:squared_statistic}
+\uses{def:rademacher_direction, def:env, def:regret}
+Let $s \ge 1$ and $K \ge 1$ be integers. The \emph{Rademacher block sampling rule}
+$\mathrm{RB}(s, K)$ is the algorithm with actions in $\ball_d$ and budget $sK$ which, for
+each $k < K$, draws at round $ks$ a fresh Rademacher direction $x^{(k)} = \sigma^{(k)}/\sqrt d$
+(its policy kernel at round $ks$ is the constant kernel $\mathrm{Rad}_d$) and plays the same
+action $x^{(k)}$ at rounds $ks + \ell$, $0 \le \ell < s$ (its policy at round $ks + \ell$,
+$\ell \ge 1$, is the Dirac mass at the previous action). Given the history, define for
+$k < K$
+\[
+  \bar y_k := \frac1s \sum_{\ell < s} y_{ks+\ell}, \qquad
+  Z_k := d\Big( \bar y_k^2 - \frac1s \Big), \qquad
+  \bar Z := \frac1K \sum_{k<K} Z_k ,
+\]
+and, for a reward vector $\theta$ with $r = \norm{\theta}$,
+\[
+  \mu_k := \ip{x^{(k)}}{\theta}, \qquad
+  X_k := d\mu_k^2 - r^2, \qquad
+  W_k := Z_k - d\mu_k^2 .
+\]
+Then, as an algebraic identity,
+\[
+  \bar Z - r^2 = \frac1K \sum_{k<K} X_k + \frac1K \sum_{k<K} W_k .
+\]
+\end{definition}
+
+\textbf{Lean remark.} The directions are the algorithm's internal randomness: in LML the
+policy of $\mathrm{RB}(s,K)$ is the kernel which, at rounds $t$ with $s \mid t$, ignores the
+history and returns the measure $\mathrm{Rad}_d$ (a finitely supported measure on the
+subtype $\ball_d$), and at the other rounds returns the Dirac mass at $x_{t-1}$. The
+quantities $\bar y_k$, $Z_k$, $\bar Z$ are measurable functions of the history of length
+$sK$. The identity $\bar Z - r^2 = \frac1K\sum X_k + \frac1K\sum W_k$ is a rearrangement of
+$Z_k = X_k + W_k + r^2$.
+
+\begin{lemma}[Structure of the statistic]\label{lem:statistic_structure}
+\uses{def:squared_statistic, lem:noise_representation}
+Run $\mathrm{RB}(s,K)$ against $\nu_\theta$. Then the directions $x^{(0)}, \dots, x^{(K-1)}$
+are i.i.d.\ with law $\mathrm{Rad}_d$ and, with
+$\zeta_k := \frac1s\sum_{\ell<s}\eta_{ks+\ell}$ (where $\eta_t := y_t - \ip{x_t}{\theta}$),
+\[
+  \bar y_k = \mu_k + \zeta_k, \qquad k < K,
+\]
+where $\zeta_0, \dots, \zeta_{K-1}$ are i.i.d.\ $\Normal(0, 1/s)$ and the vector
+$(\zeta_k)_{k<K}$ is independent of the vector $(x^{(k)})_{k<K}$. Consequently, the joint law
+of $\big((x^{(k)}, \zeta_k)\big)_{k<K}$ is $\big(\mathrm{Rad}_d \otimes \Normal(0,1/s)\big)^{\otimes K}$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:noise_representation, lem:gauss_pi, lem:gauss_linear_image}
+By Lemma~\ref{lem:noise_representation} the $\eta_t$, $t < sK$, are i.i.d.\ $\Normal(0,1)$
+and $\eta_t$ is independent of $(\hist_t, x_t)$. Since $x_{ks+\ell} = x^{(k)}$ for
+$\ell < s$, averaging the observations of block $k$ gives $\bar y_k = \mu_k + \zeta_k$.
+The direction $x^{(k)}$ is drawn at round $ks$ from the constant kernel $\mathrm{Rad}_d$, so
+it is independent of $\hist_{ks}$, hence of $(x^{(j)}, \zeta_j)_{j<k}$; and
+$(\eta_{ks+\ell})_{\ell<s}$ is independent of $(\hist_{ks}, x^{(k)})$. An induction on $k$
+shows that the law of $\big((x^{(j)},\zeta_j)\big)_{j \le k}$ is the product law: at each
+step the conditional law of $(x^{(k)}, (\eta_{ks+\ell})_{\ell<s})$ given the past is the
+constant kernel $\mathrm{Rad}_d \otimes \Normal(0,1)^{\otimes s}$ (Lemma~\ref{lem:gauss_pi}).
+Finally $\zeta_k = \frac1s\mathbf 1^\top(\eta_{ks+\ell})_{\ell<s} \sim \Normal(0, 1/s)$ by
+Lemma~\ref{lem:gauss_linear_image}.
+\end{proof}
+
+\textbf{Lean remark.} The proof is an induction on the blocks using the step decomposition
+of the trajectory measure (LML \texttt{IsAlgEnvSeq.hasCondDistrib\_step}): since the policy
+kernel at round $ks$ does not depend on the history, the conditional law of the block
+$k$ given $\hist_{ks}$ is a constant kernel, which is exactly independence from the past.
+Alternatively one can view $\mathrm{RB}(s,K)$ as the $K$-fold sequential composition
+(Lemma~\ref{lem:composition}) of the one-block rule $\mathrm{RB}(s,1)$.
+
+\section{Additive estimation given a constant-factor estimate}
+\label{sec:norm_additive}
+
+Throughout this section $\mathrm{RB}(s,K)$ is run against $\nu_\theta$ and the notation of
+Definition~\ref{def:squared_statistic} is in force. The decomposition
+$\bar Z - r^2 = \frac1K\sum_k X_k + \frac1K\sum_k W_k$ separates the fluctuations of the
+directions (Term~1, the $X_k$) from the fluctuations of the noise (Term~2, the $W_k$).
+
+\begin{lemma}[Term 1 is sub-exponential]\label{lem:term1_subexp}
+\uses{def:squared_statistic, lem:statistic_structure, def:subexp}
+Assume $r = \norm{\theta} > 0$. The variables $X_k = d\mu_k^2 - r^2$, $k < K$, are i.i.d.\ and
+each has $\mathrm{HasSubexponentialMGF}\ X_k\ (16 r^4)\ (4r^2)$. If $r = 0$ then $X_k = 0$
+for all $k$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:rademacher_square_subexp, lem:direction_second_moment, lem:statistic_structure}
+By Lemma~\ref{lem:direction_second_moment}, $d\mu_k^2 = \ip{\sigma^{(k)}}{\theta}^2$ where
+$\sigma^{(k)}$ is a uniform sign vector, so $X_k = \ip{\sigma^{(k)}}{\theta}^2 - \norm{\theta}^2$,
+which has the sub-exponential parameters $(16r^4, 4r^2)$ by
+Lemma~\ref{lem:rademacher_square_subexp}. The $\sigma^{(k)}$ are i.i.d.\ by
+Lemma~\ref{lem:statistic_structure}, hence so are the $X_k$. When $\theta = 0$,
+$\mu_k = 0 = r$.
+\end{proof}
+
+\begin{lemma}[Tail bound for Term 1]\label{lem:term1_bound}
+\uses{lem:term1_subexp}
+Assume $r > 0$. For every $t > 0$,
+\[
+  \Prob_\theta\Big( \Big| \frac1K\sum_{k<K} X_k \Big| > t \Big)
+  \le 2\exp\Big( -K \min\Big( \frac{t^2}{32 r^4}, \frac{t}{8 r^2} \Big) \Big).
+\]
+If $r = 0$ the left-hand side is $0$.
+\end{lemma}
+
+\begin{proof}
+\uses{cor:subexp_average_tail, lem:term1_subexp}
+Corollary~\ref{cor:subexp_average_tail} applied to the independent variables $X_k$ with the
+common parameters $(V, b) = (16r^4, 4r^2)$ (Lemma~\ref{lem:term1_subexp}) gives the bound
+$2\exp(-K\min(t^2/(2V), t/(2b)))$, and $2V = 32r^4$, $2b = 8r^2$. The case $r = 0$ is
+$X_k = 0$.
+\end{proof}
+
+\begin{lemma}[Term 2 is conditionally sub-exponential]\label{lem:term2_conditional}
+\uses{def:squared_statistic, lem:statistic_structure, def:subexp}
+Fix deterministic directions $x^{(0)}, \dots, x^{(K-1)} \in \sphere^{d-1}$, let
+$\mu_k := \ip{x^{(k)}}{\theta}$, and let $\zeta_0, \dots, \zeta_{K-1}$ be i.i.d.\
+$\Normal(0,1/s)$. Define $\bar y_k := \mu_k + \zeta_k$, $Z_k := d(\bar y_k^2 - 1/s)$ and
+$W_k := Z_k - d\mu_k^2$. Then the $W_k$ are independent and
+$\mathrm{HasSubexponentialMGF}\ W_k\ V_k\ b$ with
+\[
+  V_k := 8\Big( \frac{d^2}{s^2} + \mu_k^2\,\frac{d^2}{s} \Big), \qquad b := \frac{4d}{s} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gaussian_square_subexp, lem:gauss_linear_image}
+$\sqrt d\,\bar y_k \sim \Normal(\sqrt d\,\mu_k, d/s)$ (Lemma~\ref{lem:gauss_linear_image}),
+and
+\[
+  W_k = d\bar y_k^2 - \frac ds - d\mu_k^2
+      = \big(\sqrt d\,\bar y_k\big)^2 - \Big( (\sqrt d\,\mu_k)^2 + \frac ds \Big),
+\]
+which is $X^2 - (\mu^2 + \sigma^2)$ for $X \sim \Normal(\mu,\sigma^2)$ with
+$\mu = \sqrt d\,\mu_k$, $\sigma^2 = d/s$. Lemma~\ref{lem:gaussian_square_subexp} gives the
+parameters $(8(\sigma^4 + \mu^2\sigma^2), 4\sigma^2) = (8(d^2/s^2 + \mu_k^2 d^2/s), 4d/s)$.
+Independence of the $W_k$ follows from that of the $\zeta_k$, each $W_k$ being a function
+of $\zeta_k$ alone.
+\end{proof}
+
+\begin{lemma}[Tail bound for Term 2]\label{lem:term2_bound}
+\uses{lem:term2_conditional, lem:statistic_structure}
+Run $\mathrm{RB}(s,K)$ against $\nu_\theta$ and let
+\[
+  \bar V := \frac1K\sum_{k<K} V_k
+  = 8\Big( \frac{d^2}{s^2} + \frac{d^2}{s}\cdot\frac1K\sum_{k<K}\mu_k^2 \Big),
+  \qquad b := \frac{4d}{s} ,
+\]
+a function of the directions. Then for every $\tau > 0$ and $t > 0$,
+\[
+  \Prob_\theta\Big( \Big| \frac1K\sum_{k<K} W_k \Big| > t \Big)
+  \le \Prob_\theta(\bar V > \tau)
+    + 2\exp\Big( -K\min\Big( \frac{t^2}{2\tau}, \frac{t}{2b} \Big) \Big).
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:term2_conditional, lem:statistic_structure, cor:subexp_average_tail}
+By Lemma~\ref{lem:statistic_structure} the joint law of the directions and the noise
+averages is the product $\mathrm{Rad}_d^{\otimes K} \otimes \Normal(0,1/s)^{\otimes K}$, and
+$\frac1K\sum_k W_k$ is a measurable function $F(x^{(0:K)}, \zeta_{0:K})$. Split the event on
+$\{\bar V \le \tau\}$, which depends on the directions only, and apply Fubini:
+\[
+  \Prob_\theta\Big(\Big|\frac1K\sum_k W_k\Big| > t,\ \bar V \le \tau\Big)
+  = \int \indic\{\bar V(x) \le \tau\}\,
+    \Prob_\zeta\Big( \Big| \frac1K\sum_k W_k(x, \zeta) \Big| > t \Big)\,
+    \mathrm{Rad}_d^{\otimes K}(dx) .
+\]
+For fixed directions $x$, Lemma~\ref{lem:term2_conditional} and
+Corollary~\ref{cor:subexp_average_tail} bound the inner probability by
+$2\exp(-K\min(t^2/(2\bar V(x)), t/(2b)))$, which is at most
+$2\exp(-K\min(t^2/(2\tau), t/(2b)))$ when $\bar V(x) \le \tau$. Adding
+$\Prob_\theta(\bar V > \tau)$ for the complementary event gives the claim.
+\end{proof}
+
+\textbf{Lean remark.} The statement is about a product measure: the natural formalization
+is to prove the bound for the product measure
+$\mathrm{Rad}_d^{\otimes K} \otimes \Normal(0,1/s)^{\otimes K}$ on
+$(\R^d)^K \times \R^K$ (Fubini, \texttt{MeasureTheory.Measure.prod}), and to transport it
+to $\Prob_\theta$ through the law identity of Lemma~\ref{lem:statistic_structure}. No
+conditional expectation is needed.
+
+\begin{lemma}[Bound on the conditional variance proxy]\label{lem:vbar_bound}
+\uses{lem:term2_bound, lem:term1_bound}
+With $\bar V$ as in Lemma~\ref{lem:term2_bound} and
+\[
+  \tau := 8\Big( \frac{d^2}{s^2} + \frac{3 d r^2}{2 s} \Big),
+  \qquad\text{one has}\qquad
+  \Prob_\theta(\bar V > \tau) \le 2\exp(-K/128) .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:term1_bound, def:squared_statistic}
+Since $\frac1K\sum_k d\mu_k^2 = r^2 + \frac1K\sum_k X_k$, on the event
+$\{|\frac1K\sum_k X_k| \le r^2/2\}$ we have $\frac1K\sum_k\mu_k^2 \le 3r^2/(2d)$ and hence
+$\bar V \le 8(d^2/s^2 + (d^2/s)\cdot 3r^2/(2d)) = \tau$. If $r = 0$ this event is sure and
+$\bar V = 8d^2/s^2 \le \tau$. If $r > 0$, Lemma~\ref{lem:term1_bound} with $t = r^2/2$ gives
+$\min(t^2/(32r^4), t/(8r^2)) = \min(1/128, 1/16) = 1/128$, so the complementary event has
+probability at most $2\exp(-K/128)$.
+\end{proof}
+
+\begin{definition}[Additive estimation algorithm; Algorithm~1]\label{def:additive_algorithm}
+\uses{def:squared_statistic, def:norm_estimator}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $r_0 > 0$ (a scale parameter), and set
+\[
+  c_0 := 4, \qquad c_1 := 4096, \qquad
+  s(r_0) := \Big\lceil \frac{c_0 d}{r_0^2} \Big\rceil, \qquad
+  K(r_0) := \Big\lceil \frac{c_1 r_0^2 \log(4/\delta)}{\eps^2} \Big\rceil .
+\]
+\emph{Algorithm~1} with parameters $(\eps,\delta,r_0)$, written
+$\mathrm{AddEst}(\eps,\delta,r_0)$, is the estimation algorithm
+(Definition~\ref{def:norm_estimator}) with budget $s(r_0)K(r_0)$ whose sampling rule is the
+Rademacher block sampling rule $\mathrm{RB}(s(r_0),K(r_0))$ of
+Definition~\ref{def:squared_statistic} and whose estimate is the deterministic function of
+the history
+\[
+  \hat r := \sqrt{\max(\bar Z, 0)} ,
+\]
+where $\bar Z$ is the squared statistic of Definition~\ref{def:squared_statistic}. When
+$\eps$ and $\delta$ are fixed we write $s := s(r_0)$ and $K := K(r_0)$.
+\end{definition}
+
+\textbf{Lean remark.} The algorithm is a pair (LML algorithm, deterministic recommendation
+kernel); its parameters $s, K$ are natural numbers computed from $(\eps,\delta,r_0)$ by
+\texttt{Nat.ceil}. The meta-algorithm of Definition~\ref{def:meta_algorithm} instantiates it
+with a data-dependent $r_0$ taking finitely many values.
+
+\begin{theorem}[Additive estimation with a constant-factor estimate; Algorithm~1]\label{thm:additive_estimation}
+\uses{def:additive_algorithm, def:norm_estimator}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$, $r_0 \ge \eps$, and let $s = s(r_0)$, $K = K(r_0)$
+be the parameters of Algorithm~1 (Definition~\ref{def:additive_algorithm}, with
+$c_0 = 4$, $c_1 = 4096$). Then for every
+$\theta$ with $r/2 < r_0 \le 2r$, the estimate $\hat r$ of $\mathrm{AddEst}(\eps,\delta,r_0)$
+satisfies
+\[
+  \Prob_\theta\Big( \abs{\bar Z - r^2} \le \frac{r\eps}{2} \Big) \ge 1 - \frac{3\delta}{8},
+  \qquad\text{hence}\qquad
+  \Prob_\theta\Big( \abs{\hat r - r} \le \frac{\eps}{2} \Big) \ge 1 - \frac{\delta}{2} .
+\]
+Moreover, if $r_0 \le 2\sqrt d$ then the budget satisfies
+\[
+  sK \le C\,\frac{d\log(4/\delta)}{\eps^2}, \qquad C := 32776 .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic, def:additive_algorithm}
+Write $L := \log(4/\delta) \ge \log 4 > 1$ and note $\log(16/\delta) = \log 4 + L \le 2L$.
+Since $\eps \le r_0 \le 2r$ we have $r > 0$; the hypotheses also give $r_0/2 < r < 2r_0$. By
+Definition~\ref{def:squared_statistic}, $\{|\bar Z - r^2| > r\eps/2\}$ is contained in the
+union of $E_1 := \{|\frac1K\sum X_k| > r\eps/4\}$ and $E_2 := \{|\frac1K\sum W_k| > r\eps/4\}$.
+
+\emph{Term 1.} Lemma~\ref{lem:term1_bound} with $t = r\eps/4$: $t^2/(32r^4) = \eps^2/(512r^2)$
+and $t/(8r^2) = \eps/(32r)$. Since $\eps \le 2r \le 16r$, the minimum is $\eps^2/(512r^2)$,
+so $\Prob(E_1) \le 2\exp(-K\eps^2/(512r^2))$. This is at most $\delta/8$ as soon as
+$K \ge 512r^2\log(16/\delta)/\eps^2$, which holds because $r^2 < 4r_0^2$ and
+$\log(16/\delta) \le 2L$ give $512r^2\log(16/\delta)/\eps^2 \le 4096\,r_0^2L/\eps^2 \le K$.
+
+\emph{Variance proxy.} Lemma~\ref{lem:vbar_bound}: $\Prob(\bar V > \tau) \le 2e^{-K/128} \le \delta/8$
+because $K \ge 4096 r_0^2L/\eps^2 \ge 4096 L \ge 128\log(16/\delta)$ (using $r_0 \ge \eps$).
+
+\emph{Term 2.} Since $s \ge 4d/r_0^2$ we have $d/s \le r_0^2/4$, hence $b = 4d/s \le r_0^2$ and,
+with $r^2 < 4r_0^2$,
+\[
+  \tau = 8\Big( \frac{d^2}{s^2} + \frac{3dr^2}{2s} \Big)
+  \le 8\Big( \frac{r_0^4}{16} + \frac{3 r^2 r_0^2}{8} \Big)
+  \le 8\Big( \frac{r_0^4}{16} + \frac{3 r_0^4}{2} \Big) = \frac{25}{2}\,r_0^4 .
+\]
+With $t = r\eps/4$ and $r > r_0/2$:
+$t^2/(2\tau) \ge (r^2\eps^2/16)/(25r_0^4) = r^2\eps^2/(400r_0^4) > \eps^2/(1600 r_0^2)$ and
+$t/(2b) \ge r\eps/(8r_0^2) > \eps/(16r_0)$; since $\eps \le r_0$,
+$\eps^2/(1600r_0^2) \le \eps/(16r_0)$, so the minimum in Lemma~\ref{lem:term2_bound} is at
+least $\eps^2/(1600r_0^2)$ and
+$\Prob(E_2) \le \Prob(\bar V > \tau) + 2\exp(-K\eps^2/(1600r_0^2))$. The last term is at
+most $\delta/8$ as soon as $K \ge 1600r_0^2\log(16/\delta)/\eps^2$, which holds since
+$1600r_0^2\log(16/\delta)/\eps^2 \le 3200\,r_0^2L/\eps^2 \le K$.
+
+\emph{Union bound.} $\Prob(|\bar Z - r^2| > r\eps/2) \le \delta/8 + \delta/8 + \delta/8 = 3\delta/8$.
+
+\emph{From $r^2$ to $r$.} On the event $|\bar Z - r^2| \le r\eps/2$, since $r > r_0/2 \ge \eps/2$,
+$\bar Z \ge r(r - \eps/2) > 0$, so $\hat r = \sqrt{\bar Z}$ and
+\[
+  \abs{\hat r - r} = \frac{\abs{\bar Z - r^2}}{\sqrt{\bar Z} + r} \le \frac{r\eps/2}{r} = \frac{\eps}{2}.
+\]
+
+\emph{Budget.} If $r_0 \le 2\sqrt d$ then $4d/r_0^2 \ge 1$, so $s \le 4d/r_0^2 + 1 \le 8d/r_0^2$;
+and $K \le 4096\,r_0^2L/\eps^2 + 1 \le 4097\,r_0^2L/\eps^2$ because $r_0^2L/\eps^2 \ge 1$.
+Hence $sK \le 8\cdot 4097\, dL/\eps^2 = 32776\, dL/\eps^2$.
+\end{proof}
+
+\begin{remark}[On the constants of Algorithm 1]\label{rem:norm_additive_constants}
+The paper takes $c_0, c_1$ ``large enough''; the values $c_0 = 4$, $c_1 = 4096$ are what the
+computation above produces with the sub-exponential parameters $(16r^4, 4r^2)$ of
+Lemma~\ref{lem:rademacher_square_subexp} and the threshold $t = r\eps/4$ of the paper. The
+proof shows that $|\hat r - r| \le \eps/2$, twice as much as needed; using the threshold
+$t = r\eps/2$ instead would divide $c_1$ (and $C$) by four. The three failure events are
+bounded by $\delta/8$ each, so the total failure probability is $3\delta/8$ rather than the
+$\delta/2$ claimed by the paper; the extra room is not used.
+\end{remark}
+
+\section{A constant-factor estimate by a multi-scale test}
+\label{sec:norm_test}
+
+\begin{definition}[Scale test]\label{def:scale_test}
+\uses{def:squared_statistic}
+For a scale $t > 0$ and a confidence level $\delta' \in (0,1)$, the test
+$\mathrm{Test}(t,\delta')$ is the algorithm $\mathrm{RB}(s,K)$ with
+\[
+  s := \Big\lceil \frac{c_0 d}{t^2} \Big\rceil, \qquad
+  K := \big\lceil c_1' \log(1/\delta') \big\rceil, \qquad
+  c_0 := 4, \quad c_1' := 5120 ,
+\]
+followed by the binary output $\hat H := H_1$ if $U \ge \tfrac32 t^2$ and $\hat H := H_0$
+otherwise, where $U := \bar Z$ is the statistic of Definition~\ref{def:squared_statistic}.
+The hypothesis $H_0$ is ``$r \le t$'' and $H_1$ is ``$r \ge 2t$''; when $t < r < 2t$ neither
+output counts as an error. Its budget is $sK$.
+\end{definition}
+
+\begin{lemma}[Error of the test under $H_0$]\label{lem:test_error_h0}
+\uses{def:scale_test}
+Let $\delta' \in (0,1/4]$ and $\theta$ with $r \le t$. Then
+$\Prob_\theta(\mathrm{Test}(t,\delta') \text{ returns } H_1) \le 3\delta'/4$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic}
+Write $T_1 := \frac1K\sum_k X_k$, $T_2 := \frac1K\sum_k W_k$, so $U = r^2 + T_1 + T_2$. If
+$|T_1| \le t^2/8$ and $|T_2| \le t^2/8$ then $U \le r^2 + t^2/4 \le 5t^2/4 < 3t^2/2$ and the
+output is $H_0$. Hence the error event is contained in
+$\{|T_1| > t^2/8\} \cup \{|T_2| > t^2/8\}$.
+
+\emph{Term 1.} If $r = 0$ then $T_1 = 0$. Otherwise Lemma~\ref{lem:term1_bound} with
+$a_0 = t^2/8$ gives $a_0^2/(32r^4) = t^4/(2048 r^4) \ge 1/2048$ and
+$a_0/(8r^2) = t^2/(64r^2) \ge 1/64$ since $r \le t$; so
+$\Prob(|T_1| > t^2/8) \le 2e^{-K/2048}$.
+
+\emph{Term 2.} Since $s \ge 4d/t^2$: $d/s \le t^2/4$, $b = 4d/s \le t^2$ and
+$\tau = 8(d^2/s^2 + 3dr^2/(2s)) \le 8(t^4/16 + 3t^4/8) = 7t^4/2$ (using $r \le t$). With
+$\nu_0 = t^2/8$: $\nu_0^2/(2\tau) \ge (t^4/64)/(7t^4) = 1/448$ and
+$\nu_0/(2b) \ge (t^2/8)/(2t^2) = 1/16$. Lemmas~\ref{lem:term2_bound} and~\ref{lem:vbar_bound}
+give $\Prob(|T_2| > t^2/8) \le 2e^{-K/128} + 2e^{-K/448}$.
+
+\emph{Total.} The error probability is at most
+$2e^{-K/2048} + 2e^{-K/128} + 2e^{-K/448} \le 6e^{-K/2048}$. Since $\delta' \le 1/4$,
+$\log 8 = \tfrac32\log 4 \le \tfrac32\log(1/\delta')$, hence
+$2048\log(8/\delta') \le 2048\cdot\tfrac52\log(1/\delta') = 5120\log(1/\delta') \le K$, and
+$6e^{-K/2048} \le 6\delta'/8 = 3\delta'/4$.
+\end{proof}
+
+\begin{lemma}[Error of the test under $H_1$]\label{lem:test_error_h1}
+\uses{def:scale_test}
+Let $\delta' \in (0,1/4]$ and $\theta$ with $r \ge 2t$. Then
+$\Prob_\theta(\mathrm{Test}(t,\delta') \text{ returns } H_0) \le 3\delta'/4$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic}
+With $T_1, T_2$ as above, if $|T_1| \le r^2/8$ and $|T_2| \le r^2/8$ then
+$U \ge r^2 - r^2/4 = 3r^2/4 \ge 3t^2$ (as $r^2 \ge 4t^2$) and the output is $H_1$. Hence the
+error event is contained in $\{|T_1| > r^2/8\} \cup \{|T_2| > r^2/8\}$; here $r > 0$.
+
+\emph{Term 1.} Lemma~\ref{lem:term1_bound} with $a_1 = r^2/8$:
+$\min(a_1^2/(32r^4), a_1/(8r^2)) = \min(1/2048, 1/64) = 1/2048$, so
+$\Prob(|T_1| > r^2/8) \le 2e^{-K/2048}$.
+
+\emph{Term 2.} As before $d/s \le t^2/4 \le r^2/16$ and $b \le t^2 \le r^2/4$, and
+$\tau \le 8(t^4/16 + 3t^2r^2/8) \le 8(r^4/256 + 3r^4/32) = 25r^4/32$. With $\nu_1 = r^2/8$:
+$\nu_1^2/(2\tau) \ge (r^4/64)/(25r^4/16) = 1/100$ and $\nu_1/(2b) \ge (r^2/8)/(r^2/2) = 1/4$.
+Lemmas~\ref{lem:term2_bound} and~\ref{lem:vbar_bound} give
+$\Prob(|T_2| > r^2/8) \le 2e^{-K/128} + 2e^{-K/100}$.
+
+\emph{Total.} At most $6e^{-K/2048} \le 3\delta'/4$ exactly as in
+Lemma~\ref{lem:test_error_h0}.
+\end{proof}
+
+\begin{definition}[Multi-scale algorithm; Algorithm~2]\label{def:multiscale_algorithm}
+\uses{def:scale_test, lem:composition}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$ and set, for $j \in \N$,
+\[
+  t_j := 2^j\eps, \qquad \delta_j := \frac{\delta}{2^{j+2}}, \qquad
+  s_j := \Big\lceil \frac{4d}{t_j^2} \Big\rceil, \qquad
+  K_j := \big\lceil 5120\log(1/\delta_j) \big\rceil, \qquad
+  J := \min\{ j \in \N : t_j \ge 2\sqrt d \} .
+\]
+Since $\eps \le 1 < 2\sqrt d$, $J \ge 1$; and $t_J < 4\sqrt d$ by minimality. The
+\emph{multi-scale algorithm} runs, for $j = 0, 1, \dots$ in this order and as long as
+$j < J$, the test $\mathrm{Test}(t_j, \delta_j)$ (using $s_jK_j$ fresh rounds), and stops at
+the first $j$ whose test returns $H_0$, with output $r_0 := t_j$; if all $J$ tests return
+$H_1$ the output is $r_0 := t_J$. Its budget is the deterministic number
+$N_{\mathrm{ms}} := \sum_{j<J} s_jK_j$: after stopping, the remaining rounds are filled with the
+action $0 \in \ball_d$ (the observations of these rounds are ignored). The output satisfies
+$\eps \le r_0 \le t_J < 4\sqrt d$ and $r_0 \in \{t_0, \dots, t_J\}$.
+\end{definition}
+
+\textbf{Lean remark.} The loop is a sequential composition of $J$ fixed-length phases
+(Lemma~\ref{lem:composition}) whose parameters depend on the past: phase $j$ is
+$\mathrm{Test}(t_j,\delta_j)$ if no earlier test returned $H_0$ (a measurable function of the
+history, computed from the statistics of the earlier blocks) and the constant algorithm
+playing $0$ otherwise. The data-dependent output $r_0$ is a measurable function of the full
+history of length $N_{\mathrm{ms}}$ with finitely many values. The algorithm is adaptive, but
+in a very restricted sense: only the choice between ``continue'' and ``idle'' depends on the
+data.
+
+\begin{lemma}[Good event of the multi-scale algorithm]\label{lem:norm_multiscale_good_event}
+\uses{def:multiscale_algorithm, lem:test_error_h0, lem:test_error_h1}
+For $j < J$ let $E_j$ be the event that the test $j$ is run (no earlier test returned $H_0$)
+and its outcome is wrong: it returns $H_1$ while $r \le t_j$, or $H_0$ while $r \ge 2t_j$.
+Then $\Prob_\theta(E_j) \le 3\delta_j/4$ and
+$\Prob_\theta\big( \bigcup_{j<J} E_j \big) \le 3\delta/8$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:composition, lem:test_error_h0, lem:test_error_h1, def:multiscale_algorithm}
+Whether test $j$ is run is determined by the history $h$ before phase $j$. By
+Lemma~\ref{lem:composition}, conditionally on this history the phase $j$ is an
+algorithm-environment sequence for $\mathrm{Test}(t_j,\delta_j)$ against $\nu_\theta$, so on
+the set of histories for which the test is run, the conditional probability of a wrong
+outcome is at most $3\delta_j/4$ by Lemma~\ref{lem:test_error_h0} (if $r \le t_j$) or
+Lemma~\ref{lem:test_error_h1} (if $r \ge 2t_j$); when $t_j < r < 2t_j$ no outcome is wrong.
+Here $\delta_j \le \delta/4 < 1/4$. Integrating over the history gives
+$\Prob_\theta(E_j) \le 3\delta_j/4$, and the union bound gives
+$\sum_{j\ge0} 3\delta_j/4 = \frac{3\delta}{4}\sum_{j\ge0}2^{-j-2} = \frac{3\delta}{8}$.
+\end{proof}
+
+\begin{theorem}[Guarantee of the multi-scale algorithm]\label{thm:multiscale_guarantee}
+\uses{def:multiscale_algorithm, lem:norm_multiscale_good_event}
+Let $E_j$, $j < J$, be the events of Lemma~\ref{lem:norm_multiscale_good_event} and let $G$
+be the complement of $\bigcup_{j<J}E_j$, so $\Prob_\theta(G) \ge 1 - 3\delta/8$ for
+every $\theta$. On $G$ the output $r_0$ satisfies:
+\begin{enumerate}
+  \item[(i)] if $r \le \eps$, then $r_0 = \eps$;
+  \item[(ii)] if $\eps < r < \sqrt d$, then $r/2 < r_0 \le 2r$ and $r_0 < 2\sqrt d$;
+  \item[(iii)] if $\sqrt d \le r < 4\sqrt d$, then $r/2 < r_0 \le 2r$ or $r_0 \ge 2\sqrt d$;
+  \item[(iv)] if $r \ge 4\sqrt d$, then $r_0 \ge 2\sqrt d$.
+\end{enumerate}
+In particular, on $G$, for every $\theta$ one of the following holds: $r_0 = \eps$ and
+$r < 2\eps$; or $\eps < r_0 < 2\sqrt d$ and $r/2 < r_0 \le 2r$; or $r_0 \ge 2\sqrt d$ and
+$r \ge \sqrt d$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:norm_multiscale_good_event, def:multiscale_algorithm}
+The probability bound is Lemma~\ref{lem:norm_multiscale_good_event}. Fix an outcome in $G$;
+then every test $j < J$ that is run returns $H_1$ if $r \ge 2t_j$ and $H_0$ if $r \le t_j$.
+Recall $t_{j+1} = 2t_j$.
+
+(i) $r \le \eps = t_0$: test $0$ is run ($J \ge 1$) and returns $H_0$, so $r_0 = t_0 = \eps$.
+
+(ii) and (iii), $\eps < r < 4\sqrt d$: let $j_* := \max\{j : t_j \le r\} \ge 0$, so
+$t_{j_*} \le r < 2t_{j_*}$. For $j < \min(j_*, J)$, $2t_j \le t_{j_*} \le r$, so test $j$
+returns $H_1$ and the algorithm continues. If $j_* \ge J$ then all $J$ tests return $H_1$ and
+$r_0 = t_J \ge 2\sqrt d$; this is impossible in case (ii) since then
+$t_{j_*+1} = 2t_{j_*} \le 2r < 2\sqrt d$ forces $j_* + 1 < J$. If $j_* < J$, test $j_*$ is
+run; if it returns $H_0$ then $r_0 = t_{j_*} \in (r/2, r]$; if it returns $H_1$ then either
+$j_* + 1 < J$ and test $j_*+1$ returns $H_0$ because $r < t_{j_*+1}$, giving
+$r_0 = t_{j_*+1} = 2t_{j_*} \in (r, 2r]$, or $j_* + 1 = J$ and $r_0 = t_J = 2t_{j_*} \in (r,2r]$.
+In all cases $r/2 < r_0 \le 2r$ or $r_0 \ge 2\sqrt d$, which is (iii); in case (ii) the second
+alternative was excluded and $r_0 \le 2r < 2\sqrt d$.
+
+(iv) $r \ge 4\sqrt d$: for all $j < J$, $2t_j \le t_J < 4\sqrt d \le r$, so all tests return
+$H_1$ and $r_0 = t_J \ge 2\sqrt d$.
+
+The final trichotomy: if $r_0 = \eps$ then, in case (i), $r \le \eps < 2\eps$, and in the
+other cases $r_0 = \eps < 2\sqrt d$ forces $r/2 < r_0 = \eps$; if $\eps < r_0 < 2\sqrt d$ then
+we are in case (ii) or (iii) with $r/2 < r_0 \le 2r$; if $r_0 \ge 2\sqrt d$ then
+$r_0 \ne \eps$ and we are in cases (iii) or (iv), so $r \ge \sqrt d$ (in case (ii),
+$r_0 < 2\sqrt d$).
+\end{proof}
+
+\begin{lemma}[Budget of the multi-scale algorithm]\label{lem:multiscale_samples}
+\uses{def:multiscale_algorithm}
+With $L := \log(4/\delta)$, the budget of the multi-scale algorithm satisfies
+\[
+  N_{\mathrm{ms}} = \sum_{j<J} s_jK_j
+  \le \frac{8d}{\eps^2}\Big( 6828\,L + 1578 \Big)
+  \le C'\,\frac{d\log(4/\delta)}{\eps^2}, \qquad C' := 64000 .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:multiscale_algorithm}
+For $j < J$, $t_j < 2\sqrt d$, so $4d/t_j^2 > 1$ and
+$s_j \le 4d/t_j^2 + 1 \le 8d/t_j^2 = 8d\,4^{-j}/\eps^2$. Next,
+$\log(1/\delta_j) = L + j\log 2$, so
+$K_j \le 5120L + 5120\,j\log 2 + 1 \le 5121\,L + 3549\,j$ using $L \ge \log 4 > 1$ and
+$5120\log 2 \le 3549$. With $\sum_{j\ge0}4^{-j} = 4/3$ and $\sum_{j\ge0}j4^{-j} = 4/9$,
+\[
+  N_{\mathrm{ms}} \le \frac{8d}{\eps^2}\sum_{j\ge0}4^{-j}(5121L + 3549j)
+  = \frac{8d}{\eps^2}\Big( \frac{4}{3}\,5121\,L + \frac49\,3549 \Big)
+  \le \frac{8d}{\eps^2}\big( 6828\,L + 1578 \big).
+\]
+Finally $1578 \le 1139\,L$ (as $L \ge \log 4 \ge 1.386$), so
+$N_{\mathrm{ms}} \le 8\cdot 7967\,dL/\eps^2 \le 64000\,dL/\eps^2$.
+\end{proof}
+
+\section{The large-norm regime}
+\label{sec:norm_large}
+
+\begin{definition}[Large-norm estimator; Algorithm~3]\label{def:large_norm_algorithm}
+\uses{def:fixed_design, def:norm_estimator}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $n := \lceil 48\log(4/\delta)/\eps^2 \rceil$. The
+\emph{large-norm estimator} is the fixed-design estimation algorithm with budget $dn$ which
+plays each basis vector $e_i \in \ball_d$, $i = 1,\dots,d$, exactly $n$ times (in any fixed
+order), computes the empirical means $\hat\theta_i := \frac1n\sum_{t : x_t = e_i} y_t$, and
+outputs
+\[
+  \hat R := \norm{\hat\theta}^2 - \frac dn, \qquad
+  \hat r := \sqrt{\max(\hat R, 0)} .
+\]
+\end{definition}
+
+\begin{lemma}[Decomposition of the large-norm estimator]\label{lem:large_norm_decomposition}
+\uses{def:large_norm_algorithm, def:subexp}
+Under $\nu_\theta$, $\hat\theta = \theta + \Delta$ with $\Delta \sim \Normal(0, I_d/n)$, and
+\[
+  \hat R - r^2 = L + Q, \qquad
+  L := 2\ip{\theta}{\Delta} \sim \Normal\big(0, 4r^2/n\big), \qquad
+  Q := \norm{\Delta}^2 - \frac dn = \frac{\norm{g}^2 - d}{n},
+\]
+where $g := \sqrt n\,\Delta \sim \Normal(0, I_d)$; $Q$ has
+$\mathrm{HasSubexponentialMGF}\ Q\ (8d/n^2)\ (4/n)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:fixed_design_law, lem:gauss_pi, lem:gauss_linear_image, lem:chi_square_subexp, lem:subexp_const_mul}
+By Lemma~\ref{lem:fixed_design_law}, $y = X\theta + \eta$ with $\eta \sim \Normal(0, I_{dn})$;
+the coordinate $\hat\theta_i$ is $\theta_i$ plus the average of the $n$ noise variables of
+the rounds where $e_i$ is played. These $d$ averages are independent
+$\Normal(0,1/n)$ (Lemmas~\ref{lem:gauss_pi} and~\ref{lem:gauss_linear_image}), so
+$\Delta \sim \Normal(0, I_d/n)$. Expanding
+$\norm{\theta + \Delta}^2 = r^2 + 2\ip{\theta}{\Delta} + \norm{\Delta}^2$ gives the
+decomposition; $L$ is a linear image of $\Delta$ with variance $4\theta^\top(I/n)\theta$
+(Lemma~\ref{lem:gauss_linear_image}). Finally $\norm{g}^2 - d$ has parameters $(8d, 4)$ by
+Lemma~\ref{lem:chi_square_subexp}, and scaling by $1/n$ gives $(8d/n^2, 4/n)$ by
+Lemma~\ref{lem:subexp_const_mul}.
+\end{proof}
+
+\begin{theorem}[Guarantee in the large-norm regime]\label{thm:large_norm_guarantee}
+\uses{def:large_norm_algorithm}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $\theta$ with $r \ge \sqrt d$. Then
+\[
+  \Prob_\theta\big( \abs{\hat R - r^2} \ge \eps r \big) \le \frac{\delta}{2},
+  \qquad\text{hence}\qquad
+  \Prob_\theta\big( \abs{\hat r - r} \le \eps \big) \ge 1 - \frac{\delta}{2},
+\]
+and the budget satisfies $dn \le 48\,d\log(4/\delta)/\eps^2 + d \le 49\,d\log(4/\delta)/\eps^2$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:large_norm_decomposition, lem:gauss_tail, lem:subexp_tail, lem:gauss_law_of_cov}
+Write $L_\delta := \log(4/\delta) > 1$; then $n \ge 48L_\delta/\eps^2 \ge 48$ and
+$n\eps^2 \ge 48L_\delta$. By Lemma~\ref{lem:large_norm_decomposition},
+$\{|\hat R - r^2| \ge \eps r\} \subseteq \{|L| \ge \eps r/2\} \cup \{|Q| \ge \eps r/2\}$.
+
+\emph{Gaussian term.} $L \sim \Normal(0, 4r^2/n)$ and $-L$ has the same law
+(Lemma~\ref{lem:gauss_law_of_cov}), so by Lemma~\ref{lem:gauss_tail} applied to $L$ and $-L$,
+\[
+  \Prob(|L| \ge \eps r/2) \le 2\exp\Big( -\frac{(\eps r/2)^2}{2\cdot 4r^2/n} \Big)
+  = 2\exp\Big( -\frac{n\eps^2}{32} \Big)
+  \le 2\exp\Big( -\frac{3}{2}L_\delta \Big) = 2\Big(\frac{\delta}{4}\Big)^{3/2}
+  = \frac{\delta^{3/2}}{4} \le \frac{\delta}{4}.
+\]
+
+\emph{Chi-square term.} Lemma~\ref{lem:subexp_tail} (both tails) for $Q$ with parameters
+$(V,b) = (8d/n^2, 4/n)$ and $u := \eps r/2$:
+$u^2/(2V) = \eps^2r^2n^2/(64d) \ge n^2\eps^2/64$ (as $r^2 \ge d$), and
+$n^2\eps^2/64 = n(n\eps^2)/64 \ge 48\cdot 48 L_\delta/64 = 36L_\delta$; and
+$u/(2b) = \eps r n/16 \ge \eps n/16 \ge 48L_\delta/(16\eps) \ge 3L_\delta$ (as
+$r \ge \sqrt d \ge 1$ and $\eps \le 1$). Hence
+$\Prob(|Q| \ge \eps r/2) \le 2\exp(-3L_\delta) = 2(\delta/4)^3 \le \delta/4$.
+
+\emph{Union bound.} $\Prob(|\hat R - r^2| \ge \eps r) \le \delta/2$.
+
+\emph{From $r^2$ to $r$.} On the event $|\hat R - r^2| < \eps r$, since $\eps \le 1 \le r$,
+$\hat R > r(r - \eps) \ge 0$, so $\hat r = \sqrt{\hat R}$ and
+$|\hat r - r| = |\hat R - r^2|/(\sqrt{\hat R} + r) < \eps r/r = \eps$.
+
+\emph{Budget.} $n \le 48L_\delta/\eps^2 + 1$ and $1 \le L_\delta/\eps^2$.
+\end{proof}
+
+\begin{remark}[On the deterministic design and the constant $48$]\label{rem:norm_large_design}
+The paper draws $n$ random Rademacher rows and uses a random-matrix concentration bound
+(Vershynin \cite{vershynin2018high}, Section~4.7) to control the least-squares covariance
+$(X^\top X)^{-1}$, together with the Gaussian Hanson--Wright inequality. With the
+deterministic basis design the covariance of $\hat\theta$ is exactly $I_d/n$, so only the
+one-dimensional Gaussian tail and the chi-square tail are needed, and no invertibility
+event has to be handled. The value $n = \lceil 32\log(4/\delta)/\eps^2\rceil$ (which is what
+one would first write down, and what the blueprint outline suggested) is not sufficient
+for the stated failure probability $\delta/2$: it makes the Gaussian term alone equal to
+$2\exp(-\log(4/\delta)) = \delta/2$, leaving nothing for the chi-square term. With $48$ the
+two terms are $\delta^{3/2}/4$ and $\delta^3/32$, whose sum is at most $\delta/2$ for every
+$\delta \in (0,1)$. The paper also assumes $\eps \le r/2$
+for the final step; with $\eps \le 1 \le \sqrt d \le r$ the weaker $\eps \le r$ suffices.
+\end{remark}
+
+\section{The meta-algorithm}
+\label{sec:norm_meta}
+
+\begin{definition}[Meta-algorithm for norm estimation; Algorithm~4]\label{def:meta_algorithm}
+\uses{def:multiscale_algorithm, def:additive_algorithm, def:large_norm_algorithm, lem:composition, def:norm_estimator}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$. The \emph{meta-algorithm} $\mathrm{NormEst}(\eps,\delta)$
+is the sequential composition (Lemma~\ref{lem:composition}) of the multi-scale algorithm of
+Definition~\ref{def:multiscale_algorithm}, with output $r_0$, followed by the phase
+determined by $r_0$:
+\begin{enumerate}
+  \item[(a)] if $r_0 = \eps$: no further sampling; the estimate is $\hat r := \eps$;
+  \item[(b)] if $r_0 \ge 2\sqrt d$: run the large-norm estimator
+        (Definition~\ref{def:large_norm_algorithm}) with parameters $(\eps,\delta)$ and
+        return its estimate $\hat r$;
+  \item[(c)] if $\eps < r_0 < 2\sqrt d$: run Algorithm~1, $\mathrm{AddEst}(\eps,\delta,r_0)$
+        (Definition~\ref{def:additive_algorithm}), with parameters $(\eps, \delta, r_0)$ and
+        return its estimate $\hat r$.
+\end{enumerate}
+The second phase is padded with the action $0$ to the deterministic length
+$N_2 := \max\big( dn,\ \max\{ s(t_j)K(t_j) : j < J \} \big)$, where
+$s(t) = \lceil 4d/t^2\rceil$, $K(t) = \lceil 4096\,t^2\log(4/\delta)/\eps^2\rceil$ are the
+parameters of Algorithm~1 with $r_0 = t$ (Definition~\ref{def:additive_algorithm}) and $n$
+is that of Definition~\ref{def:large_norm_algorithm}. The total budget is
+$N_{\mathrm{norm}}(\eps,\delta) := N_{\mathrm{ms}} + N_2$.
+\end{definition}
+
+\textbf{Lean remark.} The second phase is ``$\mathrm{alg}_2(h)$'' in the notation of
+Lemma~\ref{lem:composition}, a measurable function of the first-phase history $h$ through
+$r_0(h) \in \{t_0,\dots,t_J\}$; since $r_0$ takes finitely many values, measurability is a
+finite case distinction. The estimate $\hat r$ is a deterministic measurable function of the
+whole history with values in $[0,\infty)$, i.e.\ a recommendation kernel in the sense of
+Definition~\ref{def:norm_estimator}. Padding with a constant action keeps the budget
+deterministic, as required by Definition~\ref{def:bai_alg}; the padded rounds are simply
+not used by the estimate.
+
+\begin{theorem}[Norm estimation; Theorem~8 of the paper]\label{thm:norm_estimation}
+\uses{def:meta_algorithm, def:norm_estimator}
+Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The meta-algorithm $\mathrm{NormEst}(\eps,\delta)$
+is an $(\eps,\delta)$-accurate estimation algorithm on $\ball_d$: for every
+$\theta \in \R^d$, $\Prob_\theta(|\hat r - \norm{\theta}| \le \eps) \ge 1 - 7\delta/8$. Its
+budget satisfies
+\[
+  N_{\mathrm{norm}}(\eps,\delta) \le C_{\mathrm{norm}}\,\frac{d\log(4/\delta)}{\eps^2},
+  \qquad C_{\mathrm{norm}} := 10^5 .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{thm:multiscale_guarantee, thm:additive_estimation, thm:large_norm_guarantee, lem:multiscale_samples, lem:composition}
+\emph{Correctness.} Let $G$ be the good event of Theorem~\ref{thm:multiscale_guarantee},
+$\Prob_\theta(G) \ge 1 - 3\delta/8$; $G$ is an event of the first-phase history. Fix a
+first-phase history $h \in G$ with output $r_0 = r_0(h)$; by
+Theorem~\ref{thm:multiscale_guarantee} one of three situations occurs.
+\begin{enumerate}
+  \item[(a)] $r_0 = \eps$ and $r < 2\eps$: then $\hat r = \eps$ and, since
+        $0 \le r < 2\eps$, $|\hat r - r| = |\eps - r| \le \eps$ deterministically (with
+        equality possible, at $r = 0$).
+  \item[(b)] $r_0 \ge 2\sqrt d$ and $r \ge \sqrt d$: the large-norm estimator is run and, by
+        Lemma~\ref{lem:composition} and Theorem~\ref{thm:large_norm_guarantee},
+        conditionally on $h$ it returns $|\hat r - r| \le \eps$ with probability at least
+        $1 - \delta/2$.
+  \item[(c)] $\eps < r_0 < 2\sqrt d$ and $r/2 < r_0 \le 2r$: Algorithm~1 is run with an
+        $r_0$ satisfying the hypotheses of Theorem~\ref{thm:additive_estimation}
+        ($\eps \le r_0$, $r/2 < r_0 \le 2r$), so conditionally on $h$ it returns
+        $|\hat r - r| \le \eps/2$ with probability at least $1 - \delta/2$.
+\end{enumerate}
+The padding rounds do not affect the estimates. By the last clause of
+Lemma~\ref{lem:composition} with $\delta' = 3\delta/8$ and the conditional bound $\delta/2$,
+$\Prob_\theta(|\hat r - r| \le \eps) \ge 1 - 3\delta/8 - \delta/2 = 1 - 7\delta/8$.
+
+\emph{Budget.} Lemma~\ref{lem:multiscale_samples} gives $N_{\mathrm{ms}} \le 64000\,dL/\eps^2$
+with $L = \log(4/\delta)$. For $j < J$, $t_j \in [\eps, 2\sqrt d)$, so
+Theorem~\ref{thm:additive_estimation} (budget clause with $r_0 = t_j$) gives
+$s(t_j)K(t_j) \le 32776\,dL/\eps^2$, and Theorem~\ref{thm:large_norm_guarantee} gives
+$dn \le 49\,dL/\eps^2$; hence $N_2 \le 32776\,dL/\eps^2$ and
+$N_{\mathrm{norm}} \le (64000 + 32776)\,dL/\eps^2 \le 10^5\,dL/\eps^2$.
+\end{proof}
+
+\begin{remark}[Reading of the constants]\label{rem:norm_constants}
+The budget is $O(d\log(1/\delta)/\eps^2)$ as in the paper: for $\delta \le 1/4$,
+$\log(4/\delta) \le 2\log(1/\delta)$. The constant $C_{\mathrm{norm}} = 10^5$ is dominated by the
+multi-scale phase ($64000$), itself driven by the test constant $c_1' = 5120$; the
+constants are what the union bounds produce and were not optimized. In the paper the
+sample complexity of the multi-scale phase is written $\sum_j s_jt_j$, a typo for
+$\sum_j s_jK_j$. The paper's failure probabilities are $\delta/2$ for the multi-scale phase
+and $\delta/2$ for the second phase; the sharper $3\delta/8$ of
+Lemma~\ref{lem:norm_multiscale_good_event} is the paper's own computation
+$\sum_j 3\delta_j/4$.
+\end{remark}

@@ -1,0 +1,405 @@
+\chapter{Median Elimination}
+\label{chap:pre_median}
+
+This chapter formalizes the Median Elimination algorithm of Even-Dar, Mannor and
+Mansour~\cite{even2002pac,evendar2006action} for $\eps$-best arm identification in a
+$K$-armed bandit with sub-Gaussian rewards, with a fixed (deterministic) budget of
+$O(K\log(1/\delta)/\eps^2)$ samples. It is the second phase of the algorithm of
+Chapter~\ref{chap:log_gains} (paper, Appendix~C), where the arms are $d$ candidate vectors of
+$\Xs$ selected from a first, non-adaptive phase. The algorithm is written as an LML
+\texttt{Algorithm} with a deterministic policy, and its guarantee is proved through the
+sequential composition of Lemma~\ref{lem:composition}, one elimination round at a time.
+
+\textbf{What Mathlib/LML provides.} Sub-Gaussian random variables
+\texttt{ProbabilityTheory.HasSubgaussianMGF X c μ} with the tail bounds \texttt{measure\_ge\_le}
+(Mathlib) and \texttt{measure\_le\_le} (LML \texttt{ForMathlib/Probability/Moments/SubGaussian.lean}),
+closure under sums of independent variables \texttt{HasSubgaussianMGF.sum\_of\_iIndepFun} and scaling
+\texttt{HasSubgaussianMGF.const\_mul}, and Hoeffding's inequality
+\texttt{measure\_sum\_ge\_le\_of\_iIndepFun}. LML provides stationary environments
+\texttt{stationaryEnv ν} for a kernel \texttt{ν : Kernel (Fin K) ℝ}, deterministic algorithms
+\texttt{detAlgorithm nextA} and the class \texttt{IsDeterministicAlg}, the round-robin
+algorithm \texttt{roundRobinAlgorithm} (\texttt{SequentialLearning/Algorithms/RoundRobin.lean}),
+pull counts \texttt{pullCount}, cumulative sums and empirical means \texttt{sumRewards},
+\texttt{empMean} (\texttt{SequentialLearning/SumRewards.lean}), the conditional law of the
+feedback given the history and the current action (the structure field
+\texttt{IsAlgEnvSeq.hasCondDistrib\_feedback n : HasCondDistrib (Y (n+1)) (history A Y n, A (n+1)) (env.feedback n) P},
+and \texttt{IsObliviousEnv.hasCondDistrib\_feedback\_history\_action} in
+\texttt{SequentialLearning/StationaryEnv.lean}; the lemma
+\texttt{hasCondDistrib\_feedback\_stationaryEnv} conditions on the current action only), and
+the sequential composition of Lemma~\ref{lem:composition}.
+
+\textbf{What is missing.} The Median Elimination algorithm, its per-round analysis and its
+sample complexity are not in LML. The empirical means used by the algorithm are per-round
+averages (not the cumulative \texttt{empMean}), so a small variant of \texttt{empMean}
+restricted to a time window is needed.
+
+\section{Sub-Gaussian bandits and fixed designs}
+\label{sec:pre_median_setting}
+
+\begin{definition}[Sub-Gaussian $K$-armed bandit]\label{def:pm_subgaussian_bandit}
+Let $K\ge1$. A \emph{$1$-sub-Gaussian $K$-armed bandit} is a Markov kernel
+$\nu : \mathrm{Fin}\,K\to\R$ (LML \texttt{Kernel (Fin K) ℝ}) such that, for every arm $a$, the
+mean $\mu_a := \int y\,\nu(a,dy)$ exists and the centered reward $y - \mu_a$ under $\nu(a)$ has
+sub-Gaussian moment generating function with constant $1$: $\int e^{\lambda(y-\mu_a)}\nu(a,dy)\le e^{\lambda^2/2}$
+for all $\lambda\in\R$ (Mathlib \texttt{HasSubgaussianMGF (fun y ↦ y - μ a) 1 (ν a)}). The
+associated environment is $\mathrm{stationaryEnv}(\nu)$. The Gaussian bandit
+$\nu(a) = \Normal(\mu_a,1)$ is $1$-sub-Gaussian (Mathlib \texttt{mgf\_gaussianReal}).
+\end{definition}
+
+\begin{lemma}[Rewards of a history-independent design are independent]\label{lem:pm_fixed_design_rewards}
+\uses{def:pm_subgaussian_bandit}
+Let $\nu$ be a Markov kernel from $\mathcal{A}$ to $\mathcal{Y}$, $a_0,a_1,\dots\in\mathcal{A}$ a
+deterministic sequence, and $\mathrm{alg}$ the deterministic algorithm playing $a_t$ at round $t$
+regardless of the history (LML \texttt{detAlgorithm} with a history-independent next action).
+Under any algorithm-environment sequence for $(\mathrm{alg},\mathrm{stationaryEnv}(\nu))$, the
+observations $(y_t)_{t\ge0}$ are independent and $y_t\sim\nu(a_t)$ for every $t$.
+\end{lemma}
+
+\begin{proof}
+By induction on $t$. The structure field \texttt{IsAlgEnvSeq.hasCondDistrib\_feedback n} of
+LML states that the conditional law of $y_{n+1}$ given the \emph{pair} (history up to time
+$n$, $x_{n+1}$) is the feedback kernel \texttt{env.feedback n} evaluated at that pair; for a
+stationary environment this kernel is $(h,a)\mapsto\nu(a)$ (\texttt{feedback\_stationaryEnv};
+equivalently \texttt{IsObliviousEnv.hasCondDistrib\_feedback\_history\_action} in
+\texttt{SequentialLearning/StationaryEnv.lean}, whose kernel is
+\texttt{(feedbackCondAction env (n+1)).prodMkLeft \_}). Since the algorithm is deterministic
+and history-independent, $x_{n+1} = a_{n+1}$ almost surely (\texttt{action\_ae\_eq}), so the
+conditional law of $y_{n+1}$ given $(\mathrm{hist}_n, x_{n+1})$ is the \emph{constant} kernel
+$\nu(a_{n+1})$: it depends neither on the past observations nor on the action. A conditional
+distribution given $(\mathrm{hist}_n,x_{n+1})$ that is a constant kernel means that $y_{n+1}$
+is independent of $(\mathrm{hist}_n,x_{n+1})$, hence of $(y_s)_{s\le n}$, with law
+$\nu(a_{n+1})$ (Mathlib \texttt{HasCondDistrib} with a constant kernel gives \texttt{IndepFun}
+and the marginal law). Note that \texttt{hasCondDistrib\_feedback\_stationaryEnv} conditions
+on the current action only and would \emph{not} give independence from the past. The case
+$t = 0$ is \texttt{hasCondDistrib\_feedback\_zero} (law $\nu(x_0) = \nu(a_0)$). Independence of
+$y_{n+1}$ from $(y_s)_{s\le n}$ for every $n$ gives joint independence of the whole sequence
+(\texttt{iIndepFun}, by induction on finite subfamilies). This is the argument of
+Lemma~\ref{lem:noise_representation} for a general kernel.
+\end{proof}
+
+\begin{lemma}[Tail of an empirical mean]\label{lem:pm_empmean_tail}
+\uses{def:pm_subgaussian_bandit}
+Let $Y_1,\dots,Y_n$ be independent real random variables such that each $Y_i - \mu$ has
+sub-Gaussian moment generating function with constant $1$, and let $\hat\mu := \frac1n\sum_iY_i$.
+Then $\hat\mu - \mu$ has sub-Gaussian moment generating function with constant $1/n$ and, for
+every $u\ge0$,
+\[
+  \Prob(\hat\mu - \mu\ge u)\le e^{-nu^2/2},\qquad \Prob(\hat\mu-\mu\le -u)\le e^{-nu^2/2}.
+\]
+In particular, if $n\ge 8\log(3/\delta)/\eps^2$ then each of $\Prob(\hat\mu-\mu\ge\eps/2)$ and
+$\Prob(\hat\mu-\mu\le-\eps/2)$ is at most $\delta/3$.
+\end{lemma}
+
+\begin{proof}
+Mathlib \texttt{HasSubgaussianMGF.sum\_of\_iIndepFun} (independent summands, constants add up to $n$) and
+\texttt{HasSubgaussianMGF.const\_mul} with the factor $1/n$ (constant $n\cdot(1/n)^2 = 1/n$),
+then \texttt{measure\_ge\_le} / \texttt{measure\_le\_le}: $\Prob(X\ge u)\le\exp(-u^2/(2c))$ with
+$c = 1/n$. With $u = \eps/2$ the bound is $\exp(-n\eps^2/8)\le\exp(-\log(3/\delta)) = \delta/3$.
+\end{proof}
+
+\section{The algorithm}
+\label{sec:pre_median_alg}
+
+\begin{definition}[Schedule of Median Elimination]\label{def:me_schedule}
+For $\eps>0$, $\delta\in(0,1)$ and $\ell\in\N$ (rounds are $0$-indexed) let
+\[
+  \eps_\ell := \frac{\eps}{4}\Big(\frac34\Big)^\ell,\qquad
+  \delta_\ell := \frac{\delta}{2^{\ell+1}},\qquad
+  n_\ell := \Big\lceil\frac{8\log(3/\delta_\ell)}{\eps_\ell^2}\Big\rceil ,
+\]
+so that $\eps_0 = \eps/4$, $\delta_0 = \delta/2$, $\eps_{\ell+1} = 3\eps_\ell/4$ and
+$\delta_{\ell+1} = \delta_\ell/2$.
+\end{definition}
+
+\begin{lemma}[Sums of the schedule]\label{lem:me_schedule_sums}
+\uses{def:me_schedule}
+$\sum_{\ell\ge0}\eps_\ell = \eps$ and $\sum_{\ell\ge0}\delta_\ell = \delta$; in particular every
+finite partial sum is at most $\eps$, resp.\ $\delta$. Moreover $n_\ell\ge 8\log(3/\delta_\ell)/\eps_\ell^2$
+and $\log(3/\delta_\ell) = \log(3/\delta) + (\ell+1)\log 2$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:me_schedule}
+Geometric series: $\frac\eps4\sum_\ell(3/4)^\ell = \frac\eps4\cdot4$ and
+$\frac\delta2\sum_\ell 2^{-\ell} = \delta$ (Mathlib \texttt{tsum\_geometric\_of\_lt\_one}); the
+rest is the definition and $\log(2^{\ell+1}) = (\ell+1)\log2$.
+\end{proof}
+
+\begin{definition}[Halving sizes and number of rounds]\label{def:pm_halving}
+For $K\ge1$ and $\ell\in\N$ let $s_\ell := \lceil K/2^\ell\rceil$ and
+$L := \min\{\ell : s_\ell = 1\} = \lceil\log_2K\rceil$. Then $s_0 = K$,
+$s_{\ell+1} = \lceil s_\ell/2\rceil$, $s_\ell\ge2$ for $\ell<L$, and $s_\ell\le 2K/2^\ell$ for
+$\ell<L$ (since $\lceil x\rceil\le x+1\le 2x$ when $x\ge1$, and $K/2^\ell>1$ when $s_\ell\ge2$).
+\end{definition}
+
+\begin{definition}[Top-half selection]\label{def:pm_top}
+Let $S\subseteq\mathrm{Fin}\,K$ be finite with $\abs S = s\ge2$ and $v : S\to\R$. Order $S$ by the
+strict total order $a\succ b$ iff $v_a>v_b$, or $v_a = v_b$ and $a<b$ (ties broken by index).
+$\mathrm{Top}(S,v)$ is the set of the $\lceil s/2\rceil$ largest elements of $S$ for $\succ$.
+It has the property that if $a\in S\setminus\mathrm{Top}(S,v)$ then $v_b\ge v_a$ for every
+$b\in\mathrm{Top}(S,v)$.
+\end{definition}
+
+\begin{definition}[Median Elimination]\label{def:median_elimination}
+\uses{def:pm_subgaussian_bandit, def:me_schedule, def:pm_halving, def:pm_top}
+Let $K\ge1$, $\eps>0$, $\delta\in(0,1)$. Median Elimination $\mathrm{ME}(K,\eps,\delta)$ is the
+deterministic algorithm with actions in $\mathrm{Fin}\,K$ and observations in $\R$ defined round
+by round. Set $S_0 := \mathrm{Fin}\,K$ and $\tau_0 := 0$. For $\ell<L$, given the surviving set
+$S_\ell$ (with $\abs{S_\ell} = s_\ell$) and the starting time $\tau_\ell$:
+\begin{enumerate}
+  \item[(i)] \emph{Round $\ell$} occupies the times $\tau_\ell\le t<\tau_{\ell+1} := \tau_\ell + s_\ell n_\ell$;
+        the action at time $\tau_\ell + j$ is the $(j\bmod s_\ell)$-th element of $S_\ell$ in
+        increasing order (round-robin over $S_\ell$), so each arm of $S_\ell$ is pulled exactly
+        $n_\ell$ times during the round, at times that do not depend on the observations.
+  \item[(ii)] For $a\in S_\ell$, $\hat\mu^{(\ell)}_a$ is the average of the $n_\ell$ observations
+        received when pulling $a$ during round $\ell$ (a measurable function of the history of
+        length $\tau_{\ell+1}$).
+  \item[(iii)] $S_{\ell+1} := \mathrm{Top}(S_\ell,\hat\mu^{(\ell)})$, of size $s_{\ell+1}$.
+\end{enumerate}
+The \emph{budget} of the algorithm is the deterministic integer
+$N_{\mathrm{ME}}(K,\eps,\delta) := \tau_L = \sum_{\ell<L}s_\ell n_\ell$, and its
+\emph{recommendation} is the unique element $\hat a$ of $S_L$, a measurable function of the
+history of length $N_{\mathrm{ME}}$. After time $\tau_L$ the algorithm plays an arbitrary fixed
+arm (its actions are irrelevant). Formally, $\mathrm{ME}(K,\eps,\delta)$ \emph{is} the LML
+deterministic algorithm \texttt{detAlgorithm nextA} whose next-action function
+$\mathrm{nextA}(n,h)$ recomputes $S_0,\dots,S_\ell$ from the history $h$ of length $n$ by
+(ii)--(iii), where $\ell$ is the round with $\tau_\ell\le n<\tau_{\ell+1}$, and returns the
+action prescribed by (i) (see the Lean remark below). Its relation to the sequential
+composition of Lemma~\ref{lem:composition} is the content of
+Lemma~\ref{lem:pm_policy_composition}; it is not part of the definition.
+\end{definition}
+
+\textbf{Lean remark.} The algorithm is \texttt{detAlgorithm nextA} where
+\texttt{nextA n h} decodes from $n$ the round $\ell$ with $\tau_\ell\le n<\tau_{\ell+1}$ and the
+offset $j = n-\tau_\ell$ (all deterministic functions of $(K,\eps,\delta,n)$), recomputes
+$S_0,\dots,S_\ell$ from the history \texttt{h : Iic (n-1) → Fin K × ℝ} by the recursion
+(ii)--(iii), and returns the $(j\bmod s_\ell)$-th element of $S_\ell$ (\texttt{Finset.sort} or
+\texttt{Finset.orderEmbOfFin}). Measurability of \texttt{nextA n} holds because it is a function
+of finitely many real coordinates of \texttt{h} through comparisons: the map
+$h\mapsto S_\ell(h)$ takes finitely many values and each fiber is a finite Boolean combination
+of measurable sets $\{\hat\mu^{(k)}_a\ge\hat\mu^{(k)}_b\}$. The per-round empirical mean
+$\hat\mu^{(\ell)}_a$ is \texttt{(∑ t ∈ Finset.Ico (τ ℓ) (τ (ℓ+1)) with (h t).1 = a, (h t).2) / n ℓ}.
+The definition deliberately does not go through the composition operation of
+Lemma~\ref{lem:composition} (an existence lemma cannot be part of a definition); the
+identification with the composition, round by round, is Lemma~\ref{lem:pm_policy_composition}.
+
+\begin{lemma}[Median Elimination as a sequential composition, round by round]
+\label{lem:pm_policy_composition}
+\uses{def:median_elimination, lem:composition}
+Let $\ell<L$ and $T_1 := \tau_\ell$. Let $\mathrm{alg}_1 := \mathrm{ME}(K,\eps,\delta)$ and, for a
+history $h$ of length $T_1$, let $\mathrm{alg}_2(h)$ be the history-independent deterministic
+algorithm playing the round-robin design of Definition~\ref{def:median_elimination}(i) over
+$S_\ell(h)$ (the set computed from $h$ by (ii)--(iii)) for $s_\ell n_\ell$ rounds, then an
+arbitrary fixed arm. Then $h\mapsto\mathrm{alg}_2(h)$ is measurable in the sense of
+Lemma~\ref{lem:composition}, and the policy of $\mathrm{ME}(K,\eps,\delta)$ at every time
+$t<\tau_{\ell+1}$ coincides with the policy of the sequential composition of $\mathrm{alg}_1$ and
+$\mathrm{alg}_2$ (Lemma~\ref{lem:composition}) with $T_1 = \tau_\ell$. Consequently, against
+every environment $\nu$, the law of the history of length $\tau_{\ell+1}$ under
+$\mathrm{ME}(K,\eps,\delta)$ is its law under the composition; in particular, conditionally
+on the history $h$ of length $\tau_\ell$, the actions and observations of round $\ell$ form an
+algorithm-environment sequence for $(\mathrm{alg}_2(h),\nu)$, and the probability bound of
+Lemma~\ref{lem:composition} applies to events of the history of length $\tau_{\ell+1}$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:median_elimination, lem:composition}
+For $t<\tau_\ell$ both algorithms follow the policy of $\mathrm{alg}_1 = \mathrm{ME}$. For
+$\tau_\ell\le t<\tau_{\ell+1}$ and a history $h'$ of length $t$ with prefix $h$ of length
+$\tau_\ell$, $\mathrm{nextA}(t,h')$ decodes the round $\ell$ and the offset $j = t-\tau_\ell$,
+recomputes $S_0,\dots,S_\ell$ from $h'$, and plays the $(j\bmod s_\ell)$-th element of
+$S_\ell$. The sets $S_k$, $k\le\ell$, only depend on the observations received before time
+$\tau_\ell$ (Definition~\ref{def:median_elimination}(ii)--(iii)), i.e.\ on $h$, so this action is
+the action of $\mathrm{alg}_2(h)$ at its time $j$: the two policy kernels at time $t$ are the
+same deterministic kernel of the same measurable function of $h'$. Measurability of
+$h\mapsto\mathrm{alg}_2(h)$: $\mathrm{alg}_2(h)$ is the fixed round-robin algorithm
+reparametrized by $S_\ell(h)$, a function with finitely many values whose fibers are finite
+Boolean combinations of the measurable sets $\{\hat\mu^{(k)}_a\ge\hat\mu^{(k)}_b\}$, $k<\ell$,
+so the policy of $\mathrm{alg}_2(h)$ at time $j$, as a function of $(h,\cdot)$, is a
+deterministic kernel of a measurable function. Since the trajectory measure is determined by
+the initial law and the policy kernels (\texttt{Learning.trajMeasure}) and the two algorithms
+agree at all times $t<\tau_{\ell+1}$, the laws of the histories of length $\tau_{\ell+1}$
+coincide (the policies at later times do not affect this law, by the consistency of
+\texttt{trajMeasure} under \texttt{frestrictLe}). The conditional statement and the
+probability bound are then those of Lemma~\ref{lem:composition}.
+\end{proof}
+
+\section{Analysis}
+\label{sec:pre_median_analysis}
+
+\begin{lemma}[The median counting argument]\label{lem:pm_selection}
+\uses{def:pm_top}
+Let $S$ be finite with $\abs S = s\ge2$, $\mu,v : S\to\R$, $\eps>0$, and $a_*\in S$ with
+$\mu_{a_*} = \max_{a\in S}\mu_a$. Define the set of \emph{bad} arms
+\[
+  B := \{a\in S : \mu_a < \mu_{a_*}-\eps \text{ and } v_a\ge v_{a_*}\}.
+\]
+If $\abs B < s/2$ then $\max_{a\in\mathrm{Top}(S,v)}\mu_a\ge\mu_{a_*}-\eps$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pm_top}
+Let $S' := \mathrm{Top}(S,v)$, of size $\lceil s/2\rceil\ge s/2>\abs B$. If $a_*\in S'$ the
+conclusion holds since $\mu_{a_*}\ge\mu_{a_*}-\eps$. Otherwise $a_*\in S\setminus S'$, so by the
+property of Definition~\ref{def:pm_top} every $b\in S'$ satisfies $v_b\ge v_{a_*}$. Since
+$\abs{S'}>\abs B$, there is $b\in S'\setminus B$; as $v_b\ge v_{a_*}$ and $b\notin B$, the first
+condition defining $B$ fails: $\mu_b\ge\mu_{a_*}-\eps$. Hence $\max_{a\in S'}\mu_a\ge\mu_b\ge\mu_{a_*}-\eps$.
+\end{proof}
+
+\begin{lemma}[One round of Median Elimination]\label{lem:me_round}
+\uses{def:pm_top, lem:pm_selection, lem:pm_empmean_tail, lem:pm_fixed_design_rewards, def:median_elimination, def:me_schedule}
+Let $S$ be finite with $\abs S = s\ge2$, $\eps>0$, $\delta\in(0,1)$, and let $(\hat\mu_a)_{a\in S}$
+be real random variables (not necessarily independent) and $(\mu_a)_{a\in S}$ real numbers such
+that for every $a\in S$,
+\[
+  \Prob(\hat\mu_a-\mu_a\ge\eps/2)\le\delta/3\qquad\text{and}\qquad\Prob(\hat\mu_a-\mu_a\le-\eps/2)\le\delta/3 .
+\]
+Then
+\[
+  \Prob\Big(\max_{a\in\mathrm{Top}(S,\hat\mu)}\mu_a\ge\max_{a\in S}\mu_a-\eps\Big)\ge1-\delta .
+\]
+In particular this applies, with $\delta = \delta_\ell$ and $\eps = \eps_\ell$, to the empirical
+means $\hat\mu^{(\ell)}$ of round $\ell$ of Median Elimination conditionally on the history
+before the round, by Lemmas~\ref{lem:pm_fixed_design_rewards} and~\ref{lem:pm_empmean_tail}.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pm_selection, lem:pm_empmean_tail, lem:pm_fixed_design_rewards, def:median_elimination, lem:me_schedule_sums, lem:pm_policy_composition}
+Fix $a_*\in S$ with $\mu_{a_*} = \max_S\mu$ and let $B$ be the (random) set of bad arms of
+Lemma~\ref{lem:pm_selection} with $v = \hat\mu$. Consider the events
+\[
+  E_1 := \{\hat\mu_{a_*}<\mu_{a_*}-\eps/2\},\qquad
+  N := \sum_{a\in S}\indic\{\hat\mu_a-\mu_a\ge\eps/2\},\qquad E_2 := \{N\ge s/2\}.
+\]
+By hypothesis $\Prob(E_1)\le\delta/3$ and $\E[N]\le s\delta/3$, so by Markov's inequality
+$\Prob(E_2)\le\frac{s\delta/3}{s/2} = 2\delta/3$; hence $\Prob(E_1\cup E_2)\le\delta$. On
+$E_1^c$, every bad arm $a\in B$ satisfies $\hat\mu_a\ge\hat\mu_{a_*}\ge\mu_{a_*}-\eps/2>\mu_a+\eps/2$,
+so $\indic_B(a)\le\indic\{\hat\mu_a-\mu_a\ge\eps/2\}$ and $\abs B\le N$. Therefore on
+$E_1^c\cap E_2^c$ we have $\abs B\le N<s/2$, and Lemma~\ref{lem:pm_selection} gives
+$\max_{\mathrm{Top}(S,\hat\mu)}\mu\ge\mu_{a_*}-\eps$. The last sentence: conditionally on the
+history before round $\ell$, the set $S_\ell$ is fixed and the actions of the round form a
+history-independent design (Definition~\ref{def:median_elimination}(i)), i.e.\ round $\ell$ is
+an algorithm-environment sequence for the fixed design $\mathrm{alg}_2(h)$ of
+Lemma~\ref{lem:pm_policy_composition}; so by
+Lemma~\ref{lem:pm_fixed_design_rewards} the $n_\ell$ observations of each arm $a\in S_\ell$ are
+independent with law $\nu(a)$, and Lemma~\ref{lem:pm_empmean_tail} with
+$n_\ell\ge8\log(3/\delta_\ell)/\eps_\ell^2$ (Lemma~\ref{lem:me_schedule_sums}) gives the two tail
+bounds with $\delta_\ell/3$.
+\end{proof}
+
+\begin{theorem}[Median Elimination is $(\eps,\delta)$-PAC]\label{thm:median_elimination}
+\uses{def:pm_subgaussian_bandit, def:median_elimination, lem:me_round, lem:me_schedule_sums, lem:composition, lem:pm_policy_composition}
+Let $\nu$ be a $1$-sub-Gaussian $K$-armed bandit with means $(\mu_a)_a$, $\eps>0$ and
+$\delta\in(0,1)$. Run against $\mathrm{stationaryEnv}(\nu)$, Median Elimination
+$\mathrm{ME}(K,\eps,\delta)$ uses the deterministic budget $N_{\mathrm{ME}}(K,\eps,\delta)$ and
+its recommendation $\hat a$ satisfies
+\[
+  \Prob\Big(\mu_{\hat a}\ge\max_{a}\mu_a-\eps\Big)\ge1-\delta .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{lem:me_round, lem:me_schedule_sums, lem:composition, lem:pm_fixed_design_rewards, lem:pm_policy_composition}
+If $K = 1$ then $L = 0$, $\hat a$ is the unique arm and there is nothing to prove. Let $K\ge2$.
+For $\ell<L$ let $G_\ell := \{\max_{a\in S_\ell}\mu_a\le\max_{a\in S_{\ell+1}}\mu_a+\eps_\ell\}$,
+an event of the history of length $\tau_{\ell+1}$. By Lemma~\ref{lem:pm_policy_composition},
+the history of length $\tau_{\ell+1}$ under $\mathrm{ME}$ has the law of the composition
+(Lemma~\ref{lem:composition}) of $\mathrm{ME}$ up to time $\tau_\ell$ with the fixed design
+of round $\ell$ parametrized by $S_\ell$, so by Lemma~\ref{lem:me_round} the conditional
+probability of $G_\ell$ given the history of length $\tau_\ell$ is at least $1-\delta_\ell$
+for every value of that history.
+Iterating the last clause of Lemma~\ref{lem:composition} over $\ell = 0,\dots,L-1$ (with
+$E_h := G_\ell$ and $\delta' := \sum_{k<\ell}\delta_k$ at step $\ell$),
+$\Prob(\bigcap_{\ell<L}G_\ell)\ge1-\sum_{\ell<L}\delta_\ell\ge1-\delta$ by
+Lemma~\ref{lem:me_schedule_sums}. On $\bigcap_{\ell<L}G_\ell$, telescoping,
+\[
+  \max_{a}\mu_a = \max_{a\in S_0}\mu_a\le\max_{a\in S_L}\mu_a+\sum_{\ell<L}\eps_\ell
+  = \mu_{\hat a}+\sum_{\ell<L}\eps_\ell\le\mu_{\hat a}+\eps ,
+\]
+again by Lemma~\ref{lem:me_schedule_sums}, since $S_L = \{\hat a\}$.
+\end{proof}
+
+\begin{lemma}[Budget of Median Elimination]\label{lem:me_budget}
+\uses{def:median_elimination, def:me_schedule, def:pm_halving, lem:me_schedule_sums}
+For all $K\ge1$, $\eps>0$, $\delta\in(0,1)$,
+\[
+  N_{\mathrm{ME}}(K,\eps,\delta)\le\frac{256K}{\eps^2}\Big(9\log\frac3\delta+81\log2\Big)+4K .
+\]
+If moreover $\eps\le1$, then $N_{\mathrm{ME}}(K,\eps,\delta)\le C_{\mathrm{ME}}\,K\log(3/\delta)/\eps^2$
+with $C_{\mathrm{ME}} := 16000$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:me_schedule_sums}
+By Definition~\ref{def:pm_halving}, $s_\ell\le2K/2^\ell$ for $\ell<L$, and
+$n_\ell\le8\log(3/\delta_\ell)/\eps_\ell^2+1$ with $1/\eps_\ell^2 = 16(16/9)^\ell/\eps^2$ and
+$\log(3/\delta_\ell) = \log(3/\delta)+(\ell+1)\log2$ (Lemma~\ref{lem:me_schedule_sums}). Hence
+\[
+  s_\ell n_\ell\le\frac{2K}{2^\ell}\cdot\frac{128\,(16/9)^\ell}{\eps^2}\Big(\log\frac3\delta+(\ell+1)\log2\Big)+\frac{2K}{2^\ell}
+  = \frac{256K}{\eps^2}\Big(\frac89\Big)^\ell\Big(\log\frac3\delta+(\ell+1)\log2\Big)+\frac{2K}{2^\ell}.
+\]
+Summing over $\ell<L$ and extending the sums to all $\ell\ge0$ (nonnegative terms), with
+$\sum_{\ell\ge0}(8/9)^\ell = 9$, $\sum_{\ell\ge0}(\ell+1)(8/9)^\ell = 1/(1-8/9)^2 = 81$ (Mathlib
+\texttt{tsum\_geometric\_of\_lt\_one}, \texttt{tsum\_coe\_mul\_geometric\_of\_norm\_lt\_one}) and
+$\sum_{\ell\ge0}2^{-\ell} = 2$,
+\[
+  N_{\mathrm{ME}} = \sum_{\ell<L}s_\ell n_\ell\le\frac{256K}{\eps^2}\Big(9\log\frac3\delta+81\log2\Big)+4K .
+\]
+For the second form, use $\log(3/\delta)\ge\log3>1.09$ (as $\delta<1$) and $\eps\le1$:
+$81\log2 = \frac{81\log2}{\log3}\log3\le 51.2\log(3/\delta)$ (since $81\cdot0.6932/1.0986<51.2$),
+so $9\log(3/\delta)+81\log2\le 60.2\log(3/\delta)$ and $256\cdot60.2<15412$; and
+$4K\le 4K\log(3/\delta)/(\eps^2\log3)\le 3.7K\log(3/\delta)/\eps^2$. Altogether
+$N_{\mathrm{ME}}\le(15412+3.7)K\log(3/\delta)/\eps^2\le16000\,K\log(3/\delta)/\eps^2$.
+\end{proof}
+
+\begin{remark}[Constants of the budget]\label{rem:pm_budget_constants}
+The outline announced the bound $(128K/\eps^2)(9\log(3/\delta)+81\log2)+2K$; the factor $128$
+there implicitly uses $s_\ell\le K/2^\ell$, which fails because of the ceilings
+($s_\ell = \lceil K/2^\ell\rceil$). The correct bookkeeping uses $s_\ell\le2K/2^\ell$ (valid while
+$s_\ell\ge2$), which doubles the constants: $256$ and $4K$. The resulting
+$C_{\mathrm{ME}} = 16000$ is far from optimal (the schedule of Definition~\ref{def:me_schedule}
+is the one of \cite{even2002pac} and was not tuned), but only its existence matters for
+Theorem~\ref{thm:log_gains}.
+\end{remark}
+
+\begin{corollary}[Median Elimination on candidate arms of a linear bandit]\label{cor:median_elimination_linear}
+\uses{def:env, def:median_elimination, thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail}
+Let $\Xs$ be an action set, $\theta\in\R^d$, $K\ge1$, and $x^{(1)},\dots,x^{(K)}\in\Xs$. Consider
+the algorithm with actions in $\Xs$ that runs $\mathrm{ME}(K,\eps,\delta)$ on the arms
+$\mathrm{Fin}\,K$ and plays $x^{(a)}$ whenever $\mathrm{ME}$ pulls $a$ (its next action is
+$x^{(\mathrm{nextA}(n,\cdot))}$ applied to the sequence of past observations). Against
+$\nu_\theta$ (Definition~\ref{def:env}) it uses the budget $N_{\mathrm{ME}}(K,\eps,\delta)\le C_{\mathrm{ME}}K\log(3/\delta)/\eps^2$
+(for $\eps\le1$) and its recommendation $\hat a$ satisfies
+\[
+  \Prob_\theta\Big(\ip{x^{(\hat a)}}{\theta}\ge\max_{a\le K}\ip{x^{(a)}}{\theta}-\eps\Big)\ge1-\delta .
+\]
+The same holds when the candidates $x^{(a)} = x^{(a)}(h)$ are measurable functions of a history $h$
+of a previous phase, conditionally on $h$, so that by Lemma~\ref{lem:composition} the composed
+algorithm satisfies the conclusion with $\delta$ replaced by $\delta+\delta'$ if the previous
+phase fails with probability at most $\delta'$.
+\end{corollary}
+
+\begin{proof}
+\uses{thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail}
+Let $\nu'(a) := \Normal(\ip{x^{(a)}}{\theta},1)$, a $1$-sub-Gaussian $K$-armed bandit with means
+$\mu_a = \ip{x^{(a)}}{\theta}$ (Definition~\ref{def:pm_subgaussian_bandit}; the Gaussian moment
+generating function is \texttt{mgf\_gaussianReal}, see also Lemma~\ref{lem:gauss_tail}). The
+sequence of arms pulled and observations received by the $\Xs$-valued algorithm against
+$\nu_\theta$ is an algorithm-environment sequence for $(\mathrm{ME},\mathrm{stationaryEnv}(\nu'))$:
+the next arm is the same deterministic function of past observations, and the conditional law
+of the observation given the past and the arm $a$ is $\Normal(\ip{x^{(a)}}{\theta},1) = \nu'(a)$
+(the structure field \texttt{IsAlgEnvSeq.hasCondDistrib\_feedback} for $\nu_\theta$, whose
+kernel is $(h,x)\mapsto\Normal(\ip{x}{\theta},1)$, composed with the map $a\mapsto x^{(a)}$). Hence Theorem~\ref{thm:median_elimination} applies and gives the
+probability bound, and Lemma~\ref{lem:me_budget} the budget. The conditional version is
+Lemma~\ref{lem:composition} with $\mathrm{alg}_2(h)$ the algorithm just described for the
+candidates $x^{(a)}(h)$; measurability in $h$ holds because $h\mapsto(x^{(a)}(h))_a$ is
+measurable and the policy of $\mathrm{alg}_2(h)$ is the deterministic kernel of a measurable
+function of $(h,\text{observations})$.
+\end{proof}
+
+\textbf{Lean remark.} The $\Xs$-valued algorithm is \texttt{detAlgorithm} with next action
+\texttt{fun n h ↦ x (nextA n (fun t ↦ (h t).2))}, where \texttt{nextA} only reads observations;
+this avoids having to recover the arm index from the played vector $x^{(a)}$ (the map
+$a\mapsto x^{(a)}$ need not be injective). The identification of the two
+algorithm-environment sequences is an instance of the general fact that mapping the actions of
+a deterministic algorithm through a measurable map $f$ turns an algorithm-environment sequence
+for the environment $\nu\circ f$ into one for $\nu$, to be contributed to LML.

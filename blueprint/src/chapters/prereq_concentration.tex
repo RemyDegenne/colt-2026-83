@@ -1,0 +1,505 @@
+\chapter{Gaussian concentration and the Borell--TIS inequality}
+\label{chap:pre_concentration}
+
+This chapter proves that the supremum $M = \sup_{x\in\Xs}\ip{x}{G}$ of a linear Gaussian
+process over a compact index set concentrates around its mean at the scale
+$\sigma := \sup_{x\in\Xs}\sqrt{x^\top S x}$ of the largest individual standard deviation
+(the Borell--TIS inequality, Theorem~\ref{thm:borell_tis}), in the form used by the
+fixed-design upper bound (Corollaries~\ref{cor:sup_bound_whp}
+and~\ref{cor:sup_bound_symmetric}). The route is the Maurey--Pisier argument
+\cite{pisier1986probabilistic} (see also \cite[Section~5.4]{vershynin2018high} and
+\cite[Chapter~5]{boucheron2013concentration}): a $C^1$ function $f$ of a standard Gaussian
+vector with $\norm{\nabla f} \le L$ has a sub-Gaussian moment generating function with
+constant $\cG L^2$, where
+\[
+  \cG := \pi^2/4 ,
+\]
+and the supremum of a finite family of linear forms is approximated by the smooth
+``log-sum-exp'' function. The optimal constant is $1$ (Gaussian isoperimetry, or the
+Gaussian log-Sobolev inequality, see \cite{adler2007random}); the factor $\cG$ is the price
+of an argument that uses only Jensen's inequality, the fundamental theorem of calculus, Fubini
+and the rotation invariance of Gaussian pairs, and it propagates as an explicit absolute
+constant into the upper bounds of Part~\ref{part:main}.
+
+\textbf{What Mathlib provides.} The structure \texttt{ProbabilityTheory.HasSubgaussianMGF X c μ}
+(\texttt{Mathlib/Probability/Moments/SubGaussian.lean}): integrability of $e^{tX}$ for all
+$t$ together with $\E e^{tX} \le e^{ct^2/2}$; its Chernoff bound
+\texttt{HasSubgaussianMGF.measure\_ge\_le}, and \texttt{measure\_le\_le} in LML
+(\texttt{ForMathlib/Probability/Moments/SubGaussian.lean}). Jensen's inequality
+\texttt{ConvexOn.map\_integral\_le} and \texttt{ConvexOn.map\_average\_le}
+(\texttt{Mathlib/Analysis/Convex/Integral.lean}) with \texttt{convexOn\_exp}. The fundamental
+theorem of calculus \texttt{intervalIntegral.integral\_eq\_sub\_of\_hasDerivAt}, the chain
+rule \texttt{HasFDerivAt.comp\_hasDerivAt}, the mean value inequality
+\texttt{lipschitzWith\_of\_nnnorm\_fderiv\_le}, Fubini \texttt{MeasureTheory.integral\_prod}
+and \texttt{integral\_integral\_swap}, dominated convergence
+\texttt{tendsto\_integral\_of\_dominated\_convergence}, Fernique's theorem
+\texttt{IsGaussian.exists\_integrable\_exp\_sq}, the rotation invariance of Gaussian pairs
+(Lemma~\ref{lem:gauss_rotation}, Mathlib \texttt{stdGaussian\_map} and
+\texttt{IsGaussian.map\_rotation\_eq\_self}), and the Gaussian MGF \texttt{mgf\_gaussianReal}.
+
+\textbf{What is missing.} Everything specific to concentration: the Maurey--Pisier inequality
+(Lemma~\ref{lem:maurey_pisier}), the log-sum-exp smoothing (Lemma~\ref{lem:logsumexp_props}),
+the passage from finite to compact index sets (Lemma~\ref{lem:compact_sup_subgaussian}) and
+the Borell--TIS inequality itself. Mathlib has no Gaussian concentration inequality for
+Lipschitz functions at the time of writing.
+
+\textbf{Lean remark.} Sub-Gaussianity of $M - \E M$ is stated with Mathlib's
+\texttt{HasSubgaussianMGF (fun ω ↦ M ω - P[M]) (cG * σ²) P}, whose constant is an
+\texttt{ℝ≥0}; all constants below are therefore nonnegative reals coerced to \texttt{ℝ≥0}.
+Gradients are \texttt{gradient f x} in \texttt{EuclideanSpace ℝ (Fin d)}, with
+$\ip{\nabla f(x)}{v} = f'(x)(v)$ (\texttt{HasGradientAt} / \texttt{HasFDerivAt}), and
+``$\norm{\nabla f} \le L$ everywhere'' is \texttt{∀ x, ‖gradient f x‖ ≤ L} together with
+differentiability; the class $C^1$ is \texttt{ContDiff ℝ 1 f}.
+
+\section{Preliminaries}
+\label{sec:pre_concentration_prelim}
+
+\begin{definition}[The Gaussian concentration constant]\label{def:pc_gaussian_constant}
+$\cG := \pi^2/4$ ($\approx 2.4674$).
+\end{definition}
+
+\begin{lemma}[MGF of a linear form of a standard Gaussian vector]\label{lem:gauss_mgf_inner}
+\uses{def:pg_gaussian_vector}
+Let $g' \sim \Normal(0, I_d)$ and $a \in \R^d$. Then $e^{\ip{a}{g'}}$ is integrable and
+$\E e^{\ip{a}{g'}} = e^{\norm{a}^2/2}$. More generally, for $s \in \R$,
+$\E e^{s\ip{a}{g'}} = e^{s^2\norm{a}^2/2}$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_linear_image, lem:gauss_1d_moments}
+$\ip{a}{g'} \sim \Normal(0,\norm{a}^2)$ by Lemma~\ref{lem:gauss_linear_image}, and
+Lemma~\ref{lem:gauss_1d_moments} (Mathlib \texttt{mgf\_gaussianReal} at the point $s$, with
+\texttt{integrable\_exp\_mul\_gaussianReal}) gives the value. Alternatively, by
+Lemma~\ref{lem:gauss_pi}, $\ip{a}{g'} = \sum_ia_ig'_i$ with independent coordinates, and
+$\E\prod_ie^{sa_ig'_i} = \prod_ie^{s^2a_i^2/2}$ (\texttt{iIndepFun.mgf\_sum}).
+\end{proof}
+
+\begin{lemma}[Exponential moments of Gaussian norms]\label{lem:pc_exp_norm_integrable}
+\uses{def:pg_gaussian_vector}
+Let $G \sim \Normal(\mu, S)$ in $\R^n$ and $c \ge 0$. Then $e^{c\norm{G}}$ is integrable.
+Consequently, if $F : \R^n \to \R$ is measurable with $\abs{F(x)} \le A + B\norm{x}$ for
+constants $A, B \ge 0$, then $F(G)$ is integrable and $e^{\lambda F(G)}$ is integrable for every
+$\lambda \in \R$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_1d_moments, lem:gauss_pi}
+By Fernique's theorem (Mathlib \texttt{IsGaussian.exists\_integrable\_exp\_sq}) there is
+$C > 0$ with $e^{C\norm{x}^2}$ integrable under the law of $G$; since
+$c\norm{x} \le C\norm{x}^2 + c^2/(4C)$ (AM--GM), $e^{c\norm{G}} \le e^{c^2/(4C)}e^{C\norm{G}^2}$
+is integrable. (Elementary alternative for $G = \mu + S^{1/2}g$: $\norm{G} \le \norm{\mu} +
+\norm{S^{1/2}}_{\mathrm{op}}\sum_i\abs{g_i}$, $e^{c'\abs{g_i}} \le e^{c'g_i} + e^{-c'g_i}$, and
+by independence of the coordinates (Lemma~\ref{lem:gauss_pi}) and
+Lemma~\ref{lem:gauss_1d_moments} the expectation of the product is a finite product of finite
+numbers.) For $F$: $\abs{F(G)} \le A + B\norm{G}$ is integrable, and
+$e^{\lambda F(G)} \le e^{\abs\lambda A}e^{\abs\lambda B\norm{G}}$ is integrable by the first
+part with $c = \abs{\lambda}B$.
+\end{proof}
+
+\begin{lemma}[Bounded gradient implies Lipschitz and linear growth]\label{lem:pc_lipschitz_of_grad}
+Let $f : \R^d \to \R$ be differentiable with $\norm{\nabla f(x)} \le L$ for every $x$, where
+$L \ge 0$. Then $\abs{f(x) - f(y)} \le L\norm{x-y}$ for all $x,y$, $\abs{f(x)} \le \abs{f(0)} +
+L\norm{x}$, and $\abs{\ip{\nabla f(x)}{v}} \le L\norm{v}$ for all $x, v$. In particular, for
+$g \sim \Normal(0,I_d)$, $f(g)$ is integrable and $e^{\lambda f(g)}$ is integrable for every
+$\lambda\in\R$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pc_exp_norm_integrable}
+The Lipschitz bound is the mean value inequality (Mathlib
+\texttt{lipschitzWith\_of\_nnnorm\_fderiv\_le}, the operator norm of $f'(x)$ being
+$\norm{\nabla f(x)}$ in an inner product space); $y = 0$ gives the growth bound; the last
+inequality is Cauchy--Schwarz. Integrability is Lemma~\ref{lem:pc_exp_norm_integrable} with
+$A = \abs{f(0)}$, $B = L$.
+\end{proof}
+
+\begin{lemma}[The log-sum-exp smoothing of a finite maximum]\label{lem:logsumexp_props}
+Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $\beta > 0$ and
+\[
+  f_\beta(v) := \frac1\beta\log\sum_{i\le m}e^{\beta\ip{x_i}{v}}, \qquad v \in \R^d .
+\]
+\begin{enumerate}
+  \item[(i)] $f_\beta$ is $C^\infty$ on $\R^d$, with gradient
+        $\nabla f_\beta(v) = \sum_{i\le m}p_i(v)\,x_i$ where
+        $p_i(v) := e^{\beta\ip{x_i}{v}}/\sum_{j\le m}e^{\beta\ip{x_j}{v}}$ satisfies $p_i(v) \ge 0$,
+        $\sum_ip_i(v) = 1$; hence $\norm{\nabla f_\beta(v)} \le \max_{i\le m}\norm{x_i}$ for all $v$.
+  \item[(ii)] For every $v$,
+        $\max_{i\le m}\ip{x_i}{v} \le f_\beta(v) \le \max_{i\le m}\ip{x_i}{v} + \frac{\log m}{\beta}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) $v \mapsto \sum_ie^{\beta\ip{x_i}{v}}$ is a finite sum of compositions of $\exp$ with
+linear forms, hence $C^\infty$ and strictly positive; $\log$ is $C^\infty$ on $(0,\infty)$
+(Mathlib \texttt{ContDiff.log}, \texttt{contDiff\_exp}, \texttt{ContDiff.inner}). The chain
+rule gives $\nabla f_\beta(v) = \frac1\beta\cdot\frac{\sum_i\beta e^{\beta\ip{x_i}{v}}x_i}
+{\sum_je^{\beta\ip{x_j}{v}}} = \sum_ip_i(v)x_i$. The $p_i(v)$ are positive with sum $1$, so by
+the triangle inequality $\norm{\nabla f_\beta(v)} \le \sum_ip_i(v)\norm{x_i} \le \max_i\norm{x_i}$.
+(ii) Let $M(v) := \max_i\ip{x_i}{v}$. Since $\exp$ and $\log$ are increasing,
+$e^{\beta M(v)} \le \sum_ie^{\beta\ip{x_i}{v}} \le m\,e^{\beta M(v)}$; take logarithms and
+divide by $\beta$.
+\end{proof}
+
+\section{The Maurey--Pisier argument}
+\label{sec:pre_concentration_mp}
+
+Throughout this section $f : \R^d \to \R$ is of class $C^1$ with $\norm{\nabla f(x)} \le L$
+for all $x$, and $g, g'$ are independent $\Normal(0,I_d)$ vectors on $(\Omega,\Prob)$. For
+$\theta \in \R$ we write, as in Lemma~\ref{lem:gauss_rotation},
+\[
+  g_\theta := g\sin\theta + g'\cos\theta, \qquad g'_\theta := g\cos\theta - g'\sin\theta,
+\]
+so that $g_0 = g'$, $g_{\pi/2} = g$ and $\frac{d}{d\theta}g_\theta = g'_\theta$.
+
+\begin{lemma}[Interpolation along a quarter circle]\label{lem:pc_interpolation_ftc}
+Let $f : \R^d \to \R$ be of class $C^1$ and $u, v \in \R^d$. Set
+$\gamma(\theta) := u\sin\theta + v\cos\theta$ and $\gamma'(\theta) := u\cos\theta - v\sin\theta$.
+Then $\theta \mapsto f(\gamma(\theta))$ is differentiable on $\R$ with derivative
+$\theta \mapsto \ip{\nabla f(\gamma(\theta))}{\gamma'(\theta)}$, this derivative is continuous,
+and
+\[
+  f(u) - f(v) = \int_0^{\pi/2}\ip{\nabla f(\gamma(\theta))}{\gamma'(\theta)}\,d\theta .
+\]
+\end{lemma}
+
+\begin{proof}
+$\gamma$ is differentiable with $\gamma'(\theta) = u\cos\theta - v\sin\theta$
+(\texttt{HasDerivAt.smul\_const} for $\sin$ and $\cos$, \texttt{HasDerivAt.add}). The chain
+rule (\texttt{HasFDerivAt.comp\_hasDerivAt}) gives that $f\circ\gamma$ has derivative
+$f'(\gamma(\theta))(\gamma'(\theta)) = \ip{\nabla f(\gamma(\theta))}{\gamma'(\theta)}$ at
+$\theta$. This derivative is continuous in $\theta$ as a composition of continuous maps
+($\nabla f$ is continuous since $f$ is $C^1$), hence interval integrable on $[0,\pi/2]$
+(\texttt{ContinuousOn.intervalIntegrable}). The fundamental theorem of calculus
+(\texttt{intervalIntegral.integral\_eq\_sub\_of\_hasDerivAt}) gives
+$\int_0^{\pi/2}(f\circ\gamma)' = f(\gamma(\pi/2)) - f(\gamma(0)) = f(u) - f(v)$.
+\end{proof}
+
+\begin{lemma}[{Jensen's inequality for the uniform measure on $[0,\pi/2]$}]
+\label{lem:pc_jensen_exp_average}
+Let $h : [0,\pi/2] \to \R$ be continuous and $s \in \R$. Then
+\[
+  \exp\Big(s\int_0^{\pi/2}h(\theta)\,d\theta\Big)
+  \le \frac2\pi\int_0^{\pi/2}\exp\Big(\frac{\pi s}{2}\,h(\theta)\Big)d\theta .
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\nu := \frac2\pi\,\mathrm{Leb}|_{[0,\pi/2]}$, a probability measure, and
+$k(\theta) := \frac{\pi s}{2}h(\theta)$, which is continuous, hence bounded on the compact
+interval; so $k$ and $e^{k}$ are $\nu$-integrable. Jensen's inequality for the convex
+continuous function $\exp$ on the closed convex set $\R$ (Mathlib
+\texttt{ConvexOn.map\_integral\_le} with \texttt{convexOn\_exp}, \texttt{continuous\_exp},
+\texttt{isClosed\_univ}) gives $\exp(\int k\,d\nu) \le \int e^{k}\,d\nu$. Finally
+$\int k\,d\nu = \frac2\pi\cdot\frac{\pi s}{2}\int_0^{\pi/2}h = s\int_0^{\pi/2}h$ and
+$\int e^k\,d\nu = \frac2\pi\int_0^{\pi/2}e^{k(\theta)}d\theta$.
+\end{proof}
+
+\begin{lemma}[MGF of the rotated gradient term]\label{lem:pc_rotated_mgf_bound}
+\uses{def:pg_gaussian_vector, lem:pc_lipschitz_of_grad}
+Let $f$ be $C^1$ with $\norm{\nabla f} \le L$ everywhere, $g, g'$ independent
+$\Normal(0,I_d)$ vectors, $s \in \R$ and $\theta \in \R$. Then
+$\omega \mapsto \exp(s\ip{\nabla f(g_\theta)}{g'_\theta})$ is integrable and
+\[
+  \E\exp\big(s\ip{\nabla f(g_\theta)}{g'_\theta}\big)
+  = \E\exp\big(s\ip{\nabla f(g)}{g'}\big)
+  = \E\exp\Big(\frac{s^2\norm{\nabla f(g)}^2}{2}\Big) \le \exp\Big(\frac{s^2L^2}{2}\Big).
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_rotation, lem:gauss_mgf_inner, lem:pc_lipschitz_of_grad, lem:pc_exp_norm_integrable}
+Let $\Phi(u,v) := \exp(s\ip{\nabla f(u)}{v})$, a continuous function on $\R^d\times\R^d$ with
+$0 < \Phi(u,v) \le \exp(\abs{s}L\norm{v})$ (Lemma~\ref{lem:pc_lipschitz_of_grad}). By
+Lemma~\ref{lem:gauss_rotation}(ii), $(g_\theta, g'_\theta)$ has the same law as $(g,g')$, so
+$\E\Phi(g_\theta,g'_\theta) = \E\Phi(g,g')$ (equality of laws; both sides are finite by the
+domination and Lemma~\ref{lem:pc_exp_norm_integrable}). The law of $(g,g')$ is the product
+$\Normal(0,I_d)\otimes\Normal(0,I_d)$ (independence), and $\Phi$ is integrable for it (dominated
+by $\exp(\abs sL\norm{v})$, which is integrable in $v$ and constant in $u$), so Fubini
+(\texttt{MeasureTheory.integral\_prod}) gives
+\[
+  \E\Phi(g,g') = \int\Big(\int\exp\big(\ip{s\nabla f(u)}{v}\big)\,\Normal(0,I_d)(dv)\Big)\Normal(0,I_d)(du)
+  = \int\exp\Big(\frac{s^2\norm{\nabla f(u)}^2}{2}\Big)\Normal(0,I_d)(du),
+\]
+by Lemma~\ref{lem:gauss_mgf_inner} with $a = s\nabla f(u)$. The last integrand is at most
+$\exp(s^2L^2/2)$ pointwise, and $\Normal(0,I_d)$ is a probability measure.
+\end{proof}
+
+\begin{lemma}[Maurey--Pisier Gaussian concentration]\label{lem:maurey_pisier}
+\uses{def:pg_gaussian_vector, def:pc_gaussian_constant}
+Let $L \ge 0$ and let $f : \R^d \to \R$ be of class $C^1$ with $\norm{\nabla f(x)} \le L$ for
+every $x \in \R^d$. Let $g \sim \Normal(0, I_d)$. Then $f(g)$ is integrable, and for every
+$\lambda \in \R$ the variable $e^{\lambda(f(g) - \E f(g))}$ is integrable with
+\[
+  \E\exp\big(\lambda(f(g) - \E f(g))\big) \le \exp\Big(\frac{\pi^2\lambda^2L^2}{8}\Big)
+  = \exp\Big(\frac{\cG L^2\,\lambda^2}{2}\Big).
+\]
+In Mathlib's terms, $f(g) - \E f(g)$ satisfies \texttt{HasSubgaussianMGF} with constant
+$\cG L^2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pc_lipschitz_of_grad, lem:pc_exp_norm_integrable, lem:pc_interpolation_ftc, lem:pc_jensen_exp_average, lem:pc_rotated_mgf_bound, lem:gauss_rotation}
+\emph{Step 0 (integrability).} By Lemma~\ref{lem:pc_lipschitz_of_grad}, $f$ is $L$-Lipschitz,
+$\abs{f(x)} \le \abs{f(0)} + L\norm{x}$, $f(g)$ is integrable, and $e^{\lambda f(g)}$ is
+integrable for every $\lambda$; hence so is $e^{\lambda(f(g)-\E f(g))}$. Fix $\lambda \in \R$
+(for $\lambda = 0$ there is nothing to prove). Enlarging the probability space if necessary
+(all quantities depend only on the law of $g$), let $g'$ be an independent copy of $g$; the
+law of $(g,g')$ is $\gamma\otimes\gamma$ with $\gamma := \Normal(0,I_d)$.
+
+\emph{Step 1 (symmetrization by Jensen in $g'$).} For fixed $u \in \R^d$, the variable
+$\lambda(f(u) - f(g'))$ is integrable, and $e^{\lambda(f(u)-f(g'))} \le
+e^{\abs\lambda(\abs{f(u)} + \abs{f(0)} + L\norm{g'})}$ is integrable
+(Lemma~\ref{lem:pc_exp_norm_integrable}); Jensen's inequality for $\exp$
+(\texttt{ConvexOn.map\_integral\_le}, \texttt{convexOn\_exp}) gives
+\[
+  \exp\big(\lambda(f(u) - \E f(g'))\big) \le \E\exp\big(\lambda(f(u) - f(g'))\big).
+\]
+Since $\E f(g') = \E f(g)$, evaluating at $u = g$ and integrating in $g$ (Fubini for
+$\gamma\otimes\gamma$, \texttt{MeasureTheory.integral\_prod}; the function
+$(u,v) \mapsto e^{\lambda(f(u)-f(v))}$ is dominated by
+$e^{2\abs\lambda\abs{f(0)}}e^{\abs\lambda L\norm{u}}e^{\abs\lambda L\norm{v}}$, integrable on the
+product by Lemma~\ref{lem:pc_exp_norm_integrable}),
+\[
+  \E\exp\big(\lambda(f(g) - \E f(g))\big) \le \E\exp\big(\lambda(f(g) - f(g'))\big).
+\]
+
+\emph{Step 2 (interpolation).} Pointwise in $\omega$, Lemma~\ref{lem:pc_interpolation_ftc}
+with $u = g(\omega)$, $v = g'(\omega)$ gives
+\[
+  f(g) - f(g') = \int_0^{\pi/2}h_\omega(\theta)\,d\theta, \qquad
+  h_\omega(\theta) := \ip{\nabla f(g_\theta)}{g'_\theta},
+\]
+where $\theta \mapsto h_\omega(\theta)$ is continuous.
+
+\emph{Step 3 (Jensen for the uniform measure on $[0,\pi/2]$).} By
+Lemma~\ref{lem:pc_jensen_exp_average} with $s = \lambda$, pointwise in $\omega$,
+\[
+  \exp\big(\lambda(f(g) - f(g'))\big)
+  \le \frac2\pi\int_0^{\pi/2}\exp\Big(\frac{\pi\lambda}{2}\,h_\omega(\theta)\Big)d\theta .
+\]
+
+\emph{Step 4 (Fubini and rotation invariance).} The function
+$(\omega,\theta) \mapsto \exp(\frac{\pi\lambda}{2}h_\omega(\theta))$ is measurable (a continuous
+function of $(g(\omega), g'(\omega), \theta)$) and satisfies, by
+Lemma~\ref{lem:pc_lipschitz_of_grad} and $\norm{g'_\theta} \le \norm{g} + \norm{g'}$,
+\[
+  0 < \exp\Big(\frac{\pi\lambda}{2}h_\omega(\theta)\Big)
+  \le \exp\Big(\frac{\pi\abs\lambda L}{2}\big(\norm{g(\omega)} + \norm{g'(\omega)}\big)\Big) =: D(\omega),
+\]
+where $D$ does not depend on $\theta$ and is integrable on $\Omega$ (product of two
+independent integrable variables, Lemma~\ref{lem:pc_exp_norm_integrable}); hence the function
+is integrable on $\Omega\times[0,\pi/2]$ and Fubini (\texttt{integral\_integral\_swap})
+applies:
+\[
+  \E\exp\big(\lambda(f(g) - f(g'))\big)
+  \le \frac2\pi\int_0^{\pi/2}\E\exp\Big(\frac{\pi\lambda}{2}\ip{\nabla f(g_\theta)}{g'_\theta}\Big)d\theta .
+\]
+For each fixed $\theta$, Lemma~\ref{lem:pc_rotated_mgf_bound} with $s = \pi\lambda/2$ gives
+\[
+  \E\exp\Big(\frac{\pi\lambda}{2}\ip{\nabla f(g_\theta)}{g'_\theta}\Big)
+  \le \exp\Big(\frac{(\pi\lambda/2)^2L^2}{2}\Big) = \exp\Big(\frac{\pi^2\lambda^2L^2}{8}\Big).
+\]
+
+\emph{Step 5 (conclusion).} Integrating the constant bound over $\theta \in [0,\pi/2]$ and
+multiplying by $2/\pi$,
+\[
+  \E\exp\big(\lambda(f(g) - \E f(g))\big) \le \frac2\pi\cdot\frac\pi2\cdot\exp\Big(\frac{\pi^2\lambda^2L^2}{8}\Big)
+  = \exp\Big(\frac{\pi^2\lambda^2L^2}{8}\Big).
+\]
+Finally $\frac{\pi^2L^2}{8}\lambda^2 = \frac{(\pi^2/4)L^2\,\lambda^2}{2} = \frac{\cG L^2\lambda^2}{2}$,
+which together with Step~0 is the statement \texttt{HasSubgaussianMGF} with constant
+$\cG L^2$.
+\end{proof}
+
+\begin{remark}[On the constant]\label{rem:pc_constant}
+The factor $\pi^2/8$ in the exponent comes from Step~3: Jensen's inequality replaces
+$\lambda\int_0^{\pi/2}h$ by an average of $\exp(\frac\pi2\lambda h(\theta))$, and the length
+$\pi/2$ of the interval is squared in the Gaussian MGF of Step~4. With the standard
+Gaussian interpolation $g_t = \sqrt t\,g + \sqrt{1-t}\,g'$ one would need the derivative
+$\frac{d}{dt}g_t$, which is singular at the endpoints; the quarter-circle parametrization
+avoids this at the cost of the constant. Sharper routes (Gaussian log-Sobolev + Herbst, or
+the Gaussian isoperimetric inequality) give $\cG = 1$ \cite{boucheron2013concentration,
+adler2007random}, and the Borell--TIS inequality with $\cG = 1$ is the form usually quoted;
+none of the results of Part~\ref{part:main} is sensitive to the value of $\cG$ beyond the
+absolute constants.
+\end{remark}
+
+\section{Suprema of linear Gaussian processes}
+\label{sec:pre_concentration_sup}
+
+\begin{lemma}[Concentration of a finite maximum of Gaussian linear forms]
+\label{lem:finite_sup_subgaussian}
+\uses{def:pg_gaussian_vector, def:pc_gaussian_constant}
+Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $S \in \PSD$ and $G \sim \Normal(0,S)$. Let
+$M := \max_{i\le m}\ip{x_i}{G}$ and $\sigma^2 := \max_{i\le m}x_i^\top Sx_i$. Then $M$ is
+integrable and $M - \E M$ has a sub-Gaussian MGF with constant $\cG\sigma^2$: for every
+$\lambda\in\R$, $e^{\lambda(M - \E M)}$ is integrable and
+$\E e^{\lambda(M-\E M)} \le \exp(\cG\sigma^2\lambda^2/2)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_law_of_cov, lem:maurey_pisier, lem:logsumexp_props, lem:pc_exp_norm_integrable}
+The statement only involves the law of $M$, a measurable function of $G$, so by
+Lemma~\ref{lem:gauss_law_of_cov}(iii) we may assume $G = S^{1/2}g$ with $g \sim \Normal(0,I_d)$
+(Mathlib \texttt{HasSubgaussianMGF.congr\_identDistrib} / \texttt{of\_map} transport the
+conclusion). Since $S^{1/2}$ is symmetric, $\ip{x_i}{S^{1/2}g} = \ip{y_i}{g}$ with
+$y_i := S^{1/2}x_i$, and $\norm{y_i}^2 = x_i^\top Sx_i \le \sigma^2$. Thus $M = F(g)$ with
+$F(v) := \max_{i\le m}\ip{y_i}{v}$, and $\abs{F(v)} \le \sigma\norm{v}$, so $M$ and
+$e^{\lambda M}$ are integrable (Lemma~\ref{lem:pc_exp_norm_integrable}).
+
+Fix $\lambda \in \R$ and $\beta > 0$, and let $f_\beta$ be the log-sum-exp function of
+Lemma~\ref{lem:logsumexp_props} for the vectors $y_1,\dots,y_m$. It is $C^\infty$ with
+$\norm{\nabla f_\beta} \le \max_i\norm{y_i} \le \sigma$, so Lemma~\ref{lem:maurey_pisier} with
+$L = \sigma$ gives $\E e^{\lambda(f_\beta(g) - \E f_\beta(g))} \le \exp(\cG\sigma^2\lambda^2/2)$.
+By Lemma~\ref{lem:logsumexp_props}(ii), $0 \le f_\beta(g) - M \le (\log m)/\beta$ pointwise,
+hence also $0 \le \E f_\beta(g) - \E M \le (\log m)/\beta$, and therefore
+\[
+  \abs{(M - \E M) - (f_\beta(g) - \E f_\beta(g))} \le \frac{2\log m}{\beta}
+  \quad\text{pointwise, so}\quad
+  \E e^{\lambda(M - \E M)} \le e^{2\abs\lambda(\log m)/\beta}\,\E e^{\lambda(f_\beta(g) - \E f_\beta(g))}
+  \le e^{2\abs\lambda(\log m)/\beta}\exp\Big(\frac{\cG\sigma^2\lambda^2}{2}\Big).
+\]
+The left-hand side does not depend on $\beta$; letting $\beta \to \infty$ (or taking the
+infimum over $\beta > 0$: a real number bounded by $a e^{\eps}$ for every $\eps > 0$ is bounded
+by $a$) gives $\E e^{\lambda(M-\E M)} \le \exp(\cG\sigma^2\lambda^2/2)$. No limit theorem for
+integrals is needed here.
+\end{proof}
+
+\begin{lemma}[Concentration of the supremum over a compact index set]
+\label{lem:compact_sup_subgaussian}
+\uses{def:pg_gaussian_vector, def:pc_gaussian_constant, lem:sup_countable_dense}
+Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$ and $G \sim \Normal(0,S)$. Let
+$M := \sup_{x\in\Xs}\ip{x}{G}$ (a random variable by Lemma~\ref{lem:sup_countable_dense})
+and $\sigma^2 := \sup_{x\in\Xs}x^\top Sx$ (finite, attained). Then $M$ is integrable and
+$M - \E M$ has a sub-Gaussian MGF with constant $\cG\sigma^2$: for every $\lambda\in\R$,
+$e^{\lambda(M-\E M)}$ is integrable and $\E e^{\lambda(M - \E M)} \le \exp(\cG\sigma^2\lambda^2/2)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sup_countable_dense, lem:finite_sup_subgaussian, lem:pc_exp_norm_integrable}
+Let $R := \max_{x\in\Xs}\norm{x}$ and let $(q_n)_{n\in\N}$ enumerate a countable dense subset
+of $\Xs$ (Lemma~\ref{lem:sup_countable_dense}(i)). $\sigma^2$ is the maximum of the continuous
+function $x\mapsto x^\top Sx = \norm{S^{1/2}x}^2$ on the compact $\Xs$. Define the partial
+maxima $M_n := \max_{i\le n}\ip{q_i}{G}$, $n \in \N$. By Lemma~\ref{lem:sup_countable_dense}(ii)
+applied pointwise to $v = G(\omega)$, $M_n \uparrow M$ everywhere, and
+$\abs{M_n} \le R\norm{G}$, $\abs{M} \le R\norm{G}$.
+
+\emph{Bound for each $n$.} Lemma~\ref{lem:finite_sup_subgaussian} applied to $q_0,\dots,q_n$
+gives, with $\sigma_n^2 := \max_{i\le n}q_i^\top Sq_i \le \sigma^2$, that
+$\E e^{\lambda(M_n - \E M_n)} \le \exp(\cG\sigma_n^2\lambda^2/2) \le \exp(\cG\sigma^2\lambda^2/2)$
+for every $\lambda$.
+
+\emph{Passage to the limit.} Fix $\lambda\in\R$. The dominating function
+$e^{\abs\lambda R\norm{G}}$ is integrable (Lemma~\ref{lem:pc_exp_norm_integrable}) and
+$e^{\lambda M_n} \le e^{\abs\lambda R\norm{G}}$ for all $n$, while $e^{\lambda M_n} \to e^{\lambda M}$
+pointwise (continuity of $\exp$). Dominated convergence
+(\texttt{tendsto\_integral\_of\_dominated\_convergence}) gives
+$\E e^{\lambda M_n} \to \E e^{\lambda M}$, and $e^{\lambda M}$ is integrable. Likewise
+$\abs{M_n} \le R\norm{G}$, $M_n \to M$, and $R\norm{G}$ is integrable, so
+$\E M_n \to \E M$ (dominated convergence again, or monotone convergence
+\texttt{integral\_tendsto\_of\_tendsto\_of\_monotone} since $M_n$ is nondecreasing); in
+particular $M$ is integrable. Therefore
+\[
+  \E e^{\lambda(M - \E M)} = e^{-\lambda\E M}\,\E e^{\lambda M}
+  = \lim_{n\to\infty}e^{-\lambda\E M_n}\,\E e^{\lambda M_n}
+  = \lim_{n\to\infty}\E e^{\lambda(M_n - \E M_n)} \le \exp\Big(\frac{\cG\sigma^2\lambda^2}{2}\Big),
+\]
+as a limit of numbers bounded by the right-hand side (\texttt{le\_of\_tendsto}). Integrability
+of $e^{\lambda(M-\E M)} = e^{-\lambda\E M}e^{\lambda M}$ was shown above.
+\end{proof}
+
+\textbf{Lean remark.} The supremum over $\Xs$ is encoded as an \texttt{iSup} over the dense
+sequence \texttt{q : ℕ → Xs} (Lemma~\ref{lem:sup_countable_dense}), so that $M_n$ is
+\texttt{⨆ i : Fin (n+1), ⟪q i, G ω⟫} (or a \texttt{Finset.sup'} over \texttt{Finset.range}),
+and the two limits are \texttt{Filter.Tendsto} statements along \texttt{atTop}. Lemma
+\ref{lem:finite_sup_subgaussian} is stated for an indexed family \texttt{x : Fin m → E}, $m \ge 1$,
+and the constant $\sigma^2$ is \texttt{⨆ i, ⟪x i, S (x i)⟫} coerced to \texttt{ℝ≥0}.
+
+\begin{theorem}[Borell--TIS inequality for linear Gaussian processes]\label{thm:borell_tis}
+\uses{def:pg_gaussian_vector, def:pc_gaussian_constant, lem:sup_countable_dense}
+Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$, $G \sim \Normal(0,S)$,
+$M := \sup_{x\in\Xs}\ip{x}{G}$ and $\sigma^2 := \sup_{x\in\Xs}x^\top Sx$, assumed positive.
+Then $M$ is integrable and for every $u \ge 0$,
+\[
+  \Prob\big(M - \E M \ge u\big) \le \exp\Big(-\frac{u^2}{2\cG\sigma^2}\Big), \qquad
+  \Prob\big(M - \E M \le -u\big) \le \exp\Big(-\frac{u^2}{2\cG\sigma^2}\Big).
+\]
+(If $\sigma = 0$ then $\ip{x}{G} = 0$ a.s.\ for every $x\in\Xs$, $M = 0$ a.s., and both
+probabilities vanish for $u > 0$.)
+\end{theorem}
+
+\begin{proof}
+\uses{lem:compact_sup_subgaussian}
+By Lemma~\ref{lem:compact_sup_subgaussian}, $M - \E M$ satisfies \texttt{HasSubgaussianMGF}
+with constant $c := \cG\sigma^2$. The upper tail is the Chernoff bound
+\texttt{HasSubgaussianMGF.measure\_ge\_le}: $\Prob(X \ge u) \le \exp(-u^2/(2c))$ for $u \ge 0$;
+the lower tail is \texttt{HasSubgaussianMGF.measure\_le\_le} (LML; it is
+\texttt{measure\_ge\_le} applied to $-X$, which is sub-Gaussian with the same constant by
+\texttt{HasSubgaussianMGF.neg}). The degenerate case: $\Var\ip{x}{G} = x^\top Sx = 0$ forces
+$\ip{x}{G} = 0$ a.s.\ for each $x$, hence for all $x$ in the countable dense set
+simultaneously, hence $M = 0$ a.s.\ by Lemma~\ref{lem:sup_countable_dense}(ii).
+\end{proof}
+
+\begin{remark}[The classical statement]\label{rem:pc_borell_tis_classical}
+The Borell--TIS inequality \cite[Theorem~2.1.1]{adler2007random} holds for every
+almost surely bounded centered Gaussian process with $\cG$ replaced by $1$, and its proof
+goes through the Gaussian isoperimetric inequality. Only the linear processes
+$x\mapsto\ip{x}{G}$ over compact $\Xs \subset \R^d$ are needed in this blueprint, and only up
+to the absolute constant $\cG$; the general statement is not pursued.
+\end{remark}
+
+\begin{corollary}[High-probability upper bound on the supremum]\label{cor:sup_bound_whp}
+\uses{thm:borell_tis}
+In the setting of Theorem~\ref{thm:borell_tis}, for every $\delta \in (0,1)$,
+\[
+  \Prob\Big(M \le \E M + \sigma\sqrt{2\cG\log(1/\delta)}\Big) \ge 1 - \delta, \qquad
+  \Prob\Big(M \ge \E M - \sigma\sqrt{2\cG\log(1/\delta)}\Big) \ge 1 - \delta .
+\]
+\end{corollary}
+
+\begin{proof}
+\uses{thm:borell_tis}
+Let $u := \sigma\sqrt{2\cG\log(1/\delta)} \ge 0$; then $u^2/(2\cG\sigma^2) = \log(1/\delta)$
+and Theorem~\ref{thm:borell_tis} gives $\Prob(M - \E M \ge u) \le e^{-\log(1/\delta)} = \delta$.
+The event $\{M \le \E M + u\}$ contains the complement of $\{M - \E M \ge u\}$ (in fact
+equals the complement of $\{M - \E M > u\}$), so its probability is at least $1 - \delta$. The
+second bound is the lower tail. If $\sigma = 0$ both events have probability one.
+\end{proof}
+
+\begin{corollary}[Symmetric index set]\label{cor:sup_bound_symmetric}
+\uses{thm:borell_tis, lem:gauss_law_of_cov}
+Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$, $G \sim \Normal(0,S)$,
+$\sigma^2 := \sup_{x\in\Xs}x^\top Sx$, and consider the difference set
+$\Xs - \Xs := \{x - x' : x, x' \in \Xs\}$, which is nonempty and compact. Let
+$D := \sup_{x,x'\in\Xs}\ip{x - x'}{G} = \sup_{z\in\Xs-\Xs}\ip{z}{G}$. Then
+\begin{enumerate}
+  \item[(i)] $\E D = 2\,\E\sup_{x\in\Xs}\ip{x}{G}$;
+  \item[(ii)] $\sigma^2_{\Xs-\Xs} := \sup_{z\in\Xs-\Xs}z^\top Sz \le 4\sigma^2$;
+  \item[(iii)] for every $\delta\in(0,1)$,
+        $\Prob\big(D \le \E D + 2\sigma\sqrt{2\cG\log(1/\delta)}\big) \ge 1 - \delta$.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+\uses{cor:sup_bound_whp, lem:gauss_law_of_cov, lem:sup_countable_dense}
+$\Xs - \Xs$ is the image of the compact $\Xs\times\Xs$ under the continuous map
+$(x,x')\mapsto x - x'$, hence compact. (i) Pointwise,
+$\sup_{x,x'}(\ip{x}{G} - \ip{x'}{G}) = \sup_x\ip{x}{G} + \sup_{x'}\ip{x'}{-G}$ (the two suprema
+are over independent variables $x, x'$), and $-G \sim \Normal(0,S)$
+(Lemma~\ref{lem:gauss_law_of_cov}(iv)), so $\E\sup_{x'}\ip{x'}{-G} = \E\sup_x\ip{x}{G}$; both
+terms are integrable by Lemma~\ref{lem:sup_countable_dense}. (ii) For $z = x - x'$,
+$z^\top Sz = \norm{S^{1/2}x - S^{1/2}x'}^2 \le (\norm{S^{1/2}x} + \norm{S^{1/2}x'})^2 \le (2\sigma)^2$.
+(iii) Apply Corollary~\ref{cor:sup_bound_whp} to the index set $\Xs - \Xs$: with probability
+at least $1 - \delta$, $D \le \E D + \sigma_{\Xs-\Xs}\sqrt{2\cG\log(1/\delta)} \le
+\E D + 2\sigma\sqrt{2\cG\log(1/\delta)}$ by (ii). (If $\sigma_{\Xs - \Xs} = 0$ the bound holds
+with probability one.)
+\end{proof}
+
+\textbf{Lean remark.} In the applications (Lemmas~\ref{lem:difference_process_concentration}
+and~\ref{lem:region_phase1}) the index set is $\Xs - \Xs$ for the action set or for one region
+of a partition, $S = \Sigma_T^{-1}$ for a fixed design, and $\sigma^2 = \max_{x}\norm{x}^2_{\Sigma_T^{-1}}$;
+the compact set $\Xs - \Xs$ is \texttt{Set.image2 (· - ·) Xs Xs}, which is the image of the
+product set $\Xs\times\Xs$ (\texttt{Set.prod}) under \texttt{fun p ↦ p.1 - p.2}
+(\texttt{Set.image\_prod}); with \texttt{hK : IsCompact Xs} it is compact by
+\texttt{(hK.prod hK).image continuous\_sub} (Mathlib \texttt{IsCompact.image}), or equivalently
+\texttt{(hK.prod hK).image\_of\_continuousOn continuous\_sub.continuousOn}.

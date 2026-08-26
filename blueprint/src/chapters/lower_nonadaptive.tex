@@ -1,0 +1,378 @@
+\chapter{Lower bound for non-adaptive fixed designs}
+\label{chap:lower_nonadaptive}
+
+This chapter proves Theorem~3 of the paper (Section~2.2 and Appendices~B.3 and~B.4): on a
+spanning action set $\Xs$, every non-adaptive fixed-design algorithm that is $(\eps,\delta)$-PAC
+with $\delta \le 1/10$ uses a budget $T \ge \gw(\Xs)^2/(70\,\eps^2)$
+(Theorem~\ref{thm:lower_nonadaptive}). The argument is
+Bayesian. Under the prior $\theta \sim \Normal(0, \tau^2 \Sigma_T^{-1})$, the expected simple
+regret of \emph{any} recommendation rule is at least a constant times
+$\gwidth{\Xs}{\Sigma_T}$ (Lemma~\ref{lem:bayes_regret_lower}), while the expected regret of an
+$(\eps,\delta)$-PAC algorithm is at most $\eps + \delta\,\E Z(\theta)$
+(Lemma~\ref{lem:pac_expected_regret}). Comparing the two bounds and using
+$\gwidth{\Xs}{\Sigma_T} \ge \gw(\Xs)/\sqrt T$ (Lemma~\ref{lem:width_empirical}) gives the
+theorem. Singular design matrices are handled separately
+(Lemma~\ref{lem:singular_design_fails}).
+
+From the prerequisite chapters we use the linear theory of Gaussian vectors of
+Chapter~\ref{chap:pre_gaussian}: linear images (Lemma~\ref{lem:gauss_linear_image}), joint
+Gaussianity of linear functionals of a Gaussian vector (Lemma~\ref{lem:gauss_joint_linear}),
+independence of uncorrelated jointly Gaussian vectors
+(Lemma~\ref{lem:gauss_uncorrelated_indep}, Mathlib
+\texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval}) and the vanishing of
+$\E\ip{f(V)}{W}$ for independent $V$, $W$ with $W$ centered
+(Lemma~\ref{lem:indep_integral_zero}).
+
+What is new with respect to the paper. The paper uses the Gaussian posterior mean
+$\E[\theta \mid y] = c\,\Sigma_T^{-1}X^\top y$; conditional expectations of Gaussian vectors
+are not convenient to formalize, so this step is replaced by the orthogonal decomposition
+$\theta = W + c\,\Sigma_T^{-1}X^\top y$ with $W$ independent of $y$
+(Lemma~\ref{lem:posterior_decomposition}), which yields the same identity for
+$\E\ip{\rec}{\theta}$ (Lemma~\ref{lem:bayes_regret_identity}). The recommendation is an
+arbitrary Markov kernel, so all statements hold for randomized recommendation rules. The
+singular case (Appendix~B.4 of the paper, stated there for finite $\Xs$) is proved for every
+compact spanning $\Xs$ and every recommendation kernel.
+
+\section{The Bayesian model and the orthogonal decomposition}
+\label{sec:lower_nonadaptive_bayes}
+
+Throughout this chapter $x_0, \dots, x_{T-1} \in \Xs$ is a fixed design of length $T$,
+$X \in \R^{T\times d}$ is the matrix with rows $x_t^\top$, $\Sigma_T = X^\top X$ is its design
+matrix (Definition~\ref{def:fixed_design}), and $\rho$ is a recommendation kernel from
+$\R^T$ to $\Xs$. In Sections~\ref{sec:lower_nonadaptive_bayes}
+and~\ref{sec:lower_nonadaptive_regret} we assume $T \ge 1$ and $\Sigma_T \succ 0$.
+
+\begin{definition}[Gaussian prior on the reward vector]\label{def:bayes_prior}
+\uses{def:fixed_design, lem:fixed_design_law}
+Let $\tau > 0$. In the \emph{Bayesian model with parameter $\tau$}, the reward vector
+$\theta$ is a random vector with law $\pi := \Normal(0, \tau^2\Sigma_T^{-1})$, the noise
+$\eta \sim \Normal(0, I_T)$ is independent of $\theta$, the observation vector is
+$y := X\theta + \eta \in \R^T$ and the recommendation is $\rec \sim \rho(y)$. That is, the
+joint law of $(\theta, \eta, \rec)$ is
+\[
+  \big(\Normal(0,\tau^2\Sigma_T^{-1}) \otimes \Normal(0, I_T)\big)
+  \otimes \big( (\theta,\eta) \mapsto \rho(X\theta + \eta) \big).
+\]
+Equivalently, the joint law of $(\theta, y, \rec)$ is $\pi \otimes \kappa$ for the Markov
+kernel $\kappa(\theta) := \Normal(X\theta, I_T) \otimes \rho$, and by
+Lemma~\ref{lem:fixed_design_law} $\kappa(\theta)$ is the law $\Prob_\theta$ of $(y, \rec)$ under
+the fixed-design algorithm run against $\nu_\theta$ (recall from
+Definition~\ref{def:fixed_design} that $(y, \rec)$ is identified with $(\hist_T, \rec)$). This
+is the setting of Lemma~\ref{lem:pac_expected_regret}. We write $\E$ for
+the expectation under this joint law.
+\end{definition}
+
+\textbf{Lean remark.} A randomized recommendation rule $\rec = f(y, U)$ using an internal
+seed $U \sim \mu$ independent of $(\theta, \eta)$, as in the paper, is the same thing as the
+Markov kernel $\rho(y) := f(y,\cdot)_\#\mu$; only the kernel form is used. The Bayesian model
+should be set up so that $(\theta,\eta)$ is visibly a linear image of a standard Gaussian
+vector of $\R^{d+T}$: take $(g, g') \sim \Normal(0, I_{d+T})$ (\texttt{stdGaussian}) and
+$\theta := \tau\,\Sigma_T^{-1/2} g$, $\eta := g'$; then every linear functional of
+$(\theta,\eta)$ has \texttt{HasGaussianLaw}, which is what
+Lemma~\ref{lem:posterior_decomposition} needs. The law of $\theta$ is Mathlib's
+\texttt{multivariateGaussian} with mean $0$ and covariance $\tau^2\Sigma_T^{-1}$ by Lemma~\ref{lem:gauss_law_of_cov}.
+
+\begin{lemma}[Orthogonal decomposition of the reward vector]\label{lem:posterior_decomposition}
+\uses{def:bayes_prior}
+In the Bayesian model with parameter $\tau$, let
+\[
+  c := \frac{\tau^2}{1+\tau^2} \in (0,1), \qquad
+  W := \theta - c\,\Sigma_T^{-1}X^\top y \in \R^d .
+\]
+Then $(W, y)$ is a centered jointly Gaussian vector of $\R^d \times \R^T$ with
+$\mathrm{Cov}(W, y) = \E[W y^\top] = 0 \in \R^{d \times T}$. Consequently $W$ and $y$ are
+independent, and $W$ is integrable with $\E W = 0$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:gauss_joint_linear, lem:gauss_uncorrelated_indep, lem:gauss_norm_moments}
+Since $\Sigma_T^{-1}X^\top X = I_d$,
+\[
+  W = \theta - c\,\Sigma_T^{-1}X^\top(X\theta + \eta) = (1-c)\,\theta - c\,\Sigma_T^{-1}X^\top\eta .
+\]
+\emph{Joint Gaussianity.} Let $V := (\theta, \eta) \in \R^{d+T}$. Let
+$(g, g') \sim \Normal(0, I_{d+T})$; its two blocks $g \sim \Normal(0,I_d)$ and
+$g' \sim \Normal(0, I_T)$ are independent (Lemma~\ref{lem:gauss_pi}), and
+$\tau\Sigma_T^{-1/2}g \sim \Normal(0, \tau^2\Sigma_T^{-1})$
+(Lemmas~\ref{lem:gauss_linear_image} and~\ref{lem:gauss_law_of_cov}). The law of a pair of
+independent random vectors is the product of the marginals, so
+$V \eqd D\,(g, g')$ with $D := \mathrm{diag}(\tau\Sigma_T^{-1/2}, I_T)$, and hence
+$V \sim \Normal(0, S)$ with $S := DD^\top = \mathrm{diag}(\tau^2\Sigma_T^{-1}, I_T)$
+(Lemma~\ref{lem:gauss_linear_image}). Now $W = L_1 V$ and $y = L_2 V$ for the linear maps
+\[
+  L_1 := \big[\, (1-c) I_d \;\; -c\,\Sigma_T^{-1}X^\top \,\big] \in \R^{d \times (d+T)}, \qquad
+  L_2 := \big[\, X \;\; I_T \,\big] \in \R^{T \times (d+T)},
+\]
+so by Lemma~\ref{lem:gauss_joint_linear} the pair $(W, y)$ is centered jointly Gaussian with
+cross-covariance $L_1 S L_2^\top$.
+
+\emph{Cross-covariance.} Using the block structure of $S$,
+\[
+  L_1 S L_2^\top
+  = (1-c)\,\tau^2\Sigma_T^{-1} X^\top \;-\; c\,\Sigma_T^{-1}X^\top I_T
+  = \big((1-c)\tau^2 - c\big)\,\Sigma_T^{-1}X^\top = 0,
+\]
+because $(1-c)\tau^2 = \tau^2/(1+\tau^2) = c$. (Equivalently, in the form of the outline:
+$\mathrm{Cov}(\theta, y) = \tau^2\Sigma_T^{-1}X^\top$,
+$\mathrm{Cov}(y,y) = \tau^2 X\Sigma_T^{-1}X^\top + I_T$, and
+$\Sigma_T^{-1}X^\top(\tau^2 X\Sigma_T^{-1}X^\top + I_T) = (1+\tau^2)\Sigma_T^{-1}X^\top$, so that
+$\mathrm{Cov}(W,y) = \tau^2\Sigma_T^{-1}X^\top - c(1+\tau^2)\Sigma_T^{-1}X^\top = 0$.)
+
+\emph{Independence and integrability.} Uncorrelated jointly Gaussian vectors are independent
+(Lemma~\ref{lem:gauss_uncorrelated_indep}). A Gaussian vector has finite second moments
+(Lemma~\ref{lem:gauss_norm_moments}), hence is integrable, and it is centered.
+\end{proof}
+
+\begin{lemma}[Bayes identity for the value of the recommendation]\label{lem:bayes_regret_identity}
+\uses{def:bayes_prior, lem:posterior_decomposition}
+In the Bayesian model with parameter $\tau$ and with $c = \tau^2/(1+\tau^2)$, the random
+variables $\ip{\rec}{\theta}$ and $\ip{\rec}{\Sigma_T^{-1}X^\top y}$ are integrable and
+\[
+  \E\ip{\rec}{\theta} = c\,\E\ip{\rec}{\Sigma_T^{-1}X^\top y} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:posterior_decomposition, lem:indep_integral_zero, lem:gauss_norm_moments}
+Let $R := \sup_{x\in\Xs}\norm{x} < \infty$ ($\Xs$ is compact). Integrability:
+$\abs{\ip{\rec}{\theta}} \le R\norm{\theta}$ and
+$\abs{\ip{\rec}{\Sigma_T^{-1}X^\top y}} \le R\norm{\Sigma_T^{-1}X^\top y}$, and Gaussian
+vectors are integrable (Lemma~\ref{lem:gauss_norm_moments}). By
+Lemma~\ref{lem:posterior_decomposition}, $\theta = W + c\,\Sigma_T^{-1}X^\top y$, so
+\[
+  \ip{\rec}{\theta} = \ip{\rec}{W} + c\,\ip{\rec}{\Sigma_T^{-1}X^\top y},
+\]
+and it remains to prove $\E\ip{\rec}{W} = 0$. Let
+$\bar\rho(y) := \int_{\Xs} x\,\rho(y, dx) \in \R^d$; it is a measurable function of $y$ with
+$\norm{\bar\rho(y)} \le R$. Since, given $(\theta, \eta)$, the recommendation has law
+$\rho(y)$ and $W$ is a function of $(\theta,\eta)$, Fubini for the composition-product gives
+$\E\ip{\rec}{W} = \E\ip{\bar\rho(y)}{W}$. Now $W$ is integrable and centered, $W$ is
+independent of $y$ (Lemma~\ref{lem:posterior_decomposition}) and $\bar\rho$ is bounded
+measurable, so Lemma~\ref{lem:indep_integral_zero} (with $V = y$ and $f = \bar\rho$) gives
+$\E\ip{\bar\rho(y)}{W} = 0$.
+\end{proof}
+
+\textbf{Lean remark.} The seed of a randomized rule never appears: integrating the kernel
+$\rho$ first reduces the claim to the deterministic bounded function $\bar\rho$ of $y$, and
+the only independence needed is $W \perp y$, which comes from Mathlib's
+\texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval} through
+Lemma~\ref{lem:gauss_uncorrelated_indep}. No conditional expectation is used anywhere in
+this chapter.
+
+\section{Lower bound on the Bayesian expected regret}
+\label{sec:lower_nonadaptive_regret}
+
+\begin{lemma}[Bayesian lower bound on the expected simple regret]\label{lem:bayes_regret_lower}
+\uses{def:bayes_prior, def:regret, def:width_matrix}
+In the Bayesian model with parameter $\tau > 0$, for every recommendation kernel $\rho$,
+$r(\rec,\theta)$ is integrable and
+\[
+  \E\big[ r(\rec, \theta) \big] \;\ge\; \frac{\tau(1-\tau)}{1+\tau^2}\,\gwidth{\Xs}{\Sigma_T} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:bayes_regret_identity, lem:width_matrix_wd, lem:gauss_linear_image, lem:gauss_law_of_cov}
+Write $w_T := \gwidth{\Xs}{\Sigma_T}$ and $c := \tau^2/(1+\tau^2)$.
+\begin{enumerate}
+  \item[(i)] \emph{Decomposition.} $r(\rec,\theta) = \max_{x\in\Xs}\ip{x}{\theta} - \ip{\rec}{\theta}$.
+    Both terms are integrable: the first by Lemma~\ref{lem:width_matrix_wd} (applied below)
+    and the second by Lemma~\ref{lem:bayes_regret_identity}. Hence
+    $\E[r(\rec,\theta)] = \E\max_x\ip{x}{\theta} - \E\ip{\rec}{\theta}$.
+  \item[(ii)] \emph{The prior term.} $G := \tau^{-1}\theta \sim \Normal(0, \Sigma_T^{-1})$
+    (Lemma~\ref{lem:gauss_linear_image}), and $\max_x\ip{x}{\theta} = \tau\max_x\ip{x}{G}$
+    since $\tau > 0$. By Lemma~\ref{lem:width_matrix_wd} (the width only depends on the law
+    of $G$), $\E\max_x\ip{x}{\theta} = \tau\,w_T$.
+  \item[(iii)] \emph{The recommendation term.} By Lemma~\ref{lem:bayes_regret_identity} and
+    $\Sigma_T^{-1}X^\top y = \Sigma_T^{-1}X^\top X\theta + \Sigma_T^{-1}X^\top\eta
+    = \theta + \Sigma_T^{-1}X^\top\eta$,
+    \[
+      \E\ip{\rec}{\theta} = c\,\E\ip{\rec}{\theta + \Sigma_T^{-1}X^\top\eta} .
+    \]
+    Pointwise, $\ip{\rec}{v} \le \max_{x\in\Xs}\ip{x}{v}$ for every $v \in \R^d$ because
+    $\rec \in \Xs$, and $\max_x\ip{x}{a+b} \le \max_x\ip{x}{a} + \max_x\ip{x}{b}$. Therefore
+    \[
+      \E\ip{\rec}{\theta} \le c\Big( \E\max_x\ip{x}{\theta} + \E\max_x\ip{x}{\Sigma_T^{-1}X^\top\eta} \Big).
+    \]
+  \item[(iv)] \emph{The noise term.} $\Sigma_T^{-1}X^\top\eta$ is a linear image of
+    $\eta \sim \Normal(0, I_T)$, so $\Sigma_T^{-1}X^\top\eta \sim
+    \Normal(0, \Sigma_T^{-1}X^\top X \Sigma_T^{-1}) = \Normal(0, \Sigma_T^{-1})$
+    (Lemmas~\ref{lem:gauss_linear_image} and~\ref{lem:gauss_law_of_cov}), and
+    Lemma~\ref{lem:width_matrix_wd} gives $\E\max_x\ip{x}{\Sigma_T^{-1}X^\top\eta} = w_T$.
+  \item[(v)] \emph{Conclusion.} Combining,
+    \[
+      \E[r(\rec,\theta)] \ge \tau w_T - c(\tau w_T + w_T)
+      = \Big(\tau - \frac{\tau^2(1+\tau)}{1+\tau^2}\Big) w_T
+      = \frac{\tau + \tau^3 - \tau^2 - \tau^3}{1+\tau^2}\, w_T
+      = \frac{\tau(1-\tau)}{1+\tau^2}\, w_T .
+    \]
+\end{enumerate}
+\end{proof}
+
+\begin{lemma}[Optimized constant]\label{lem:bayes_regret_lower_opt}
+\uses{lem:bayes_regret_lower}
+With $\tau := \sqrt2 - 1$, for every recommendation kernel $\rho$,
+\[
+  \E\big[ r(\rec,\theta) \big] \ge \frac{\sqrt2 - 1}{2}\,\gwidth{\Xs}{\Sigma_T}
+  \ge 0.207\,\gwidth{\Xs}{\Sigma_T} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:bayes_regret_lower}
+For $\tau = \sqrt2 - 1$: $\tau^2 = 3 - 2\sqrt2$, so $1 + \tau^2 = 4 - 2\sqrt2 = 2(2-\sqrt2)$,
+and $1 - \tau = 2 - \sqrt2$. Hence
+$\frac{\tau(1-\tau)}{1+\tau^2} = \frac{(\sqrt2-1)(2-\sqrt2)}{2(2-\sqrt2)} = \frac{\sqrt2-1}{2}$.
+Finally $1.414^2 = 1.999396 \le 2$ gives $\sqrt2 \ge 1.414$ and
+$(\sqrt2-1)/2 \ge 0.207$. Apply Lemma~\ref{lem:bayes_regret_lower} (the width is
+nonnegative by Lemma~\ref{lem:width_matrix_wd}).
+\end{proof}
+
+\begin{remark}[Choice of $\tau$]\label{rem:lower_nonadaptive_tau}
+The function $\tau \mapsto \tau(1-\tau)/(1+\tau^2)$ has derivative
+$(1 - 2\tau - \tau^2)/(1+\tau^2)^2$, which vanishes on $(0,1)$ exactly at $\tau = \sqrt2 - 1$;
+this is the maximizer, as stated in the paper. Only the value at $\sqrt2 - 1$ is used.
+\end{remark}
+
+\section{Singular designs}
+\label{sec:lower_nonadaptive_singular}
+
+\begin{lemma}[Singular designs fail]\label{lem:singular_design_fails}
+\uses{def:arm_set, def:fixed_design, lem:fixed_design_law, def:regret}
+Let $\Xs$ be spanning and let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design of length $T \ge 0$
+(Definition~\ref{def:fixed_design}) whose design matrix $\Sigma_T = \sum_{t<T}x_tx_t^\top$ is
+singular; if $T = 0$ (so that $\Sigma_0 = 0$), assume moreover that $\Xs$ has at least two points
+(for $T \ge 1$ this follows from the spanning hypothesis, see the proof). Let
+$\eps > 0$ and let $\rho$ be any recommendation kernel from $\R^T$ to $\Xs$. Then there are
+$\theta_+, \theta_- \in \R^d$ such that
+\begin{enumerate}
+  \item[(i)] the laws of $(y, \rec)$ under $\theta_+$ and under $\theta_-$ coincide:
+    $\Prob_{\theta_+} = \Prob_{\theta_-} = \Normal(0, I_T) \otimes \rho$;
+  \item[(ii)] $r(\rec, \theta_+) + r(\rec,\theta_-) = 4\eps$ for every $\rec \in \Xs$.
+\end{enumerate}
+Consequently there is $\theta \in \{\theta_+,\theta_-\}$ with
+$\Prob_\theta\big(r(\rec,\theta) > \eps\big) \ge 1/2$; in particular the fixed-design
+algorithm is not $(\eps,\delta)$-PAC for any $\delta < 1/2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:fixed_design_law, def:arm_set}
+\emph{Step 1: a direction invisible to the design but not to $\Xs$.} We claim there is
+$v \in \R^d$ such that $\ip{x_t}{v} = 0$ for all $t < T$ and $x \mapsto \ip{x}{v}$ is not
+constant on $\Xs$.
+If $T \ge 1$: since $\Sigma_T$ is singular there is $v \ne 0$ with $\Sigma_T v = 0$, and then
+$0 = v^\top\Sigma_T v = \sum_{t<T}\ip{x_t}{v}^2$ forces $\ip{x_t}{v} = 0$ for every $t$. If
+$\ip{\cdot}{v}$ were constant on $\Xs$, its value would be $\ip{x_0}{v} = 0$, so
+$v \perp \Xs$, hence $v \perp \Span(\Xs) = \R^d$ (spanning) and $v = 0$, a contradiction. (This also
+shows that $\Xs$ has at least two points when $T \ge 1$.)
+If $T = 0$: pick $x \ne x'$ in $\Xs$ and $v := x - x'$; then
+$\ip{x}{v} - \ip{x'}{v} = \norm{v}^2 > 0$, and the condition on the $x_t$ is vacuous.
+
+\emph{Step 2: the two instances.} Let $a := \max_{x\in\Xs}\ip{x}{v}$ and
+$b := \min_{x\in\Xs}\ip{x}{v}$ (compactness); by Step~1, $a > b$. Put
+$\alpha := 4\eps/(a-b) > 0$ and $\theta_\pm := \pm\alpha v$. Since $\ip{x_t}{v} = 0$ for all
+$t$, $X\theta_+ = X\theta_- = 0$, so by Lemma~\ref{lem:fixed_design_law} the law of
+$(y,\rec)$ is $\Normal(0, I_T)\otimes\rho$ under both instances. This is (i).
+
+\emph{Step 3: the regrets.} For every $\rec\in\Xs$,
+\[
+  r(\rec,\theta_+) = \max_x \alpha\ip{x}{v} - \alpha\ip{\rec}{v} = \alpha\big(a - \ip{\rec}{v}\big),
+  \qquad
+  r(\rec,\theta_-) = \max_x \big(-\alpha\ip{x}{v}\big) + \alpha\ip{\rec}{v} = \alpha\big(\ip{\rec}{v} - b\big),
+\]
+so $r(\rec,\theta_+) + r(\rec,\theta_-) = \alpha(a-b) = 4\eps$. This is (ii).
+
+\emph{Step 4: conclusion.} By (ii), for every $\rec \in \Xs$ at least one of
+$r(\rec,\theta_+)$, $r(\rec,\theta_-)$ is $\ge 2\eps > \eps$. With $\mu := \Normal(0,I_T)\otimes\rho$
+and $E_\pm := \{(y, x) \in \R^T\times\Xs : r(x,\theta_\pm) > \eps\}$ (measurable, since
+$x \mapsto r(x,\theta)$ is continuous), $E_+ \cup E_- = \R^T\times\Xs$, hence
+$\mu(E_+) + \mu(E_-) \ge 1$ and one of them is at least $1/2$. By (i),
+$\Prob_{\theta_\pm}(r(\rec,\theta_\pm) > \eps) = \mu(E_\pm)$.
+\end{proof}
+
+\begin{remark}[The case $T = 0$]\label{rem:lower_nonadaptive_singleton}
+Budget $T = 0$ is a legitimate fixed design (Definitions~\ref{def:bai_alg}
+and~\ref{def:fixed_design}): the design is empty, $\Sigma_0 = 0$ is singular and $\rho$ is a
+probability measure on $\Xs$. For $T = 0$ the hypothesis that $\Xs$ has at least two points
+cannot be dropped: if $\Xs = \{x_0\}$ with $x_0 \ne 0$ (a spanning action set when $d = 1$),
+then every recommendation equals $x_0$ and the regret is identically $0$, so the length-$0$
+design is $(\eps,\delta)$-PAC. For $T \ge 1$ no such assumption is needed. This is harmless for
+Theorem~\ref{thm:lower_nonadaptive}, which assumes $T \ge 1$; its conclusion also holds for
+$T = 0$, since either $\Xs$ has two points and no length-$0$ design is $(\eps,\delta)$-PAC with
+$\delta \le 1/10$, or $\Xs = \{x_0\}$ and $\gw(\{x_0\}) = 0$ (as $\E\ip{x_0}{A^{-1/2}g} = 0$).
+\end{remark}
+
+\section{The lower bound}
+\label{sec:lower_nonadaptive_theorem}
+
+\begin{theorem}[Lower bound for non-adaptive fixed designs]\label{thm:lower_nonadaptive}
+\uses{def:arm_set, def:fixed_design, def:pac, def:width}
+Let $\Xs$ be spanning, $\eps > 0$ and $\delta \in (0, 1/10]$. If a fixed-design algorithm with budget $T \ge 1$
+(design $x_0,\dots,x_{T-1} \in \Xs$ and any recommendation kernel $\rho$) is
+$(\eps,\delta)$-PAC on $\Xs$, then
+\[
+  T \;\ge\; \frac{\gw(\Xs)^2}{70\,\eps^2} .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{lem:singular_design_fails, def:bayes_prior, def:fixed_design, lem:fixed_design_law, lem:pac_expected_regret, lem:width_symm, lem:width_matrix_wd, lem:gauss_linear_image, lem:bayes_regret_lower_opt, lem:width_empirical}
+\emph{Step 1: $\Sigma_T$ is positive definite.} Otherwise Lemma~\ref{lem:singular_design_fails}
+(with $T \ge 1$ and $\Xs$ spanning) gives $\theta$ with $\Prob_\theta(r(\rec,\theta) > \eps) \ge 1/2 > \delta$,
+contradicting the PAC property. So $\Sigma_T \succ 0$, and we write
+$w_T := \gwidth{\Xs}{\Sigma_T} \ge 0$.
+
+\emph{Step 2: upper bound on the Bayesian regret.} Let $\tau := \sqrt2 - 1$ and consider the
+Bayesian model of Definition~\ref{def:bayes_prior} with prior $\pi = \Normal(0,\tau^2\Sigma_T^{-1})$.
+Its joint law is $\pi \otimes \kappa$ with the Markov kernel
+$\kappa(\theta) = \Normal(X\theta, I_T) \otimes \rho$ (a Gaussian kernel whose mean depends
+linearly on $\theta$, composed with $\rho$), and $\kappa(\theta) = \Prob_\theta$ for every
+$\theta$ by Lemma~\ref{lem:fixed_design_law}, with $(\hist_T, \rec)$ identified with
+$(y, \rec)$ as in Definition~\ref{def:fixed_design}. Hence Lemma~\ref{lem:pac_expected_regret}
+applies with this $\kappa$, provided $\int Z\,d\pi < \infty$. With $G := \tau^{-1}\theta \sim \Normal(0,\Sigma_T^{-1})$
+(Lemma~\ref{lem:gauss_linear_image}) and $Z(\theta) = \tau Z(G)$, Lemma~\ref{lem:width_symm}
+gives $\int Z\,d\pi = \E Z(\theta) = \tau\,\E Z(G) = 2\tau w_T < \infty$. Hence
+\[
+  \E\big[r(\rec,\theta)\big] \le \eps + \delta \cdot 2\tau\, w_T .
+\]
+
+\emph{Step 3: lower bound on the Bayesian regret.} By Lemma~\ref{lem:bayes_regret_lower_opt},
+$\E[r(\rec,\theta)] \ge 0.207\, w_T$.
+
+\emph{Step 4: arithmetic.} Combining, $(0.207 - 2\tau\delta)\, w_T \le \eps$. Since
+$1.4143^2 = 2.00024 \ge 2$ we have $\tau = \sqrt2 - 1 \le 0.4143$, so with $\delta \le 1/10$,
+$2\tau\delta \le 0.08286 \le 0.083$, and $0.207 - 0.083 = 0.124 \ge 0.12$. Therefore
+$0.12\, w_T \le \eps$.
+
+\emph{Step 5: from $w_T$ to $\gw(\Xs)$.} By Lemma~\ref{lem:width_empirical},
+$w_T \ge \gw(\Xs)/\sqrt T$, so $0.12\,\gw(\Xs) \le \eps\sqrt T$; squaring (both sides are
+nonnegative), $0.0144\,\gw(\Xs)^2 \le \eps^2 T$. Since $0.0144 \cdot 70 = 1.008 \ge 1$, this
+gives $T \ge \gw(\Xs)^2/(70\,\eps^2)$.
+\end{proof}
+
+\begin{corollary}[The paper's form of the lower bound]\label{cor:lower_nonadaptive_H}
+\uses{thm:lower_nonadaptive}
+Let $\eps > 0$ and $0 \le H_1 \le H_2$. Suppose that for every $\delta \in (0,1)$ there is a
+fixed-design algorithm that is $(\eps,\delta)$-PAC on $\Xs$ with budget
+$T_\delta \le (H_1\log(1/\delta) + H_2)/\eps^2$. Then
+\[
+  H_2 \;\ge\; \frac{\gw(\Xs)^2}{70\,(\log 10 + 1)} .
+\]
+\end{corollary}
+
+\begin{proof}
+\uses{thm:lower_nonadaptive}
+Only $\delta = 1/10$ is used. Theorem~\ref{thm:lower_nonadaptive} gives
+$T_{1/10} \ge \gw(\Xs)^2/(70\eps^2)$, while
+$T_{1/10} \le (H_1 \log 10 + H_2)/\eps^2 \le H_2(\log 10 + 1)/\eps^2$ because $H_1 \le H_2$.
+Hence $H_2(\log 10 + 1) \ge \gw(\Xs)^2/70$.
+\end{proof}
+
+\begin{remark}[Comparison with the paper]\label{rem:lower_nonadaptive_paper}
+The paper obtains $H_2 \ge 0.0144\,\gw(\Xs)^2/(\log 10 + 1)$; we lose slightly by rounding
+$0.0144$ down to $1/70$. The statement of Theorem~\ref{thm:lower_nonadaptive} is for a single
+algorithm and a single $\delta$, which is the form used in Chapter~\ref{chap:separation}.
+The lower bound $\Omega(d\log(1/\delta)/\eps^2)$ that the paper states alongside
+Theorem~3 is the adaptive lower bound of Chapter~\ref{chap:lower_adaptive}, which applies in
+particular to fixed designs.
+\end{remark}

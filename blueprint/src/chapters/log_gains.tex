@@ -1,0 +1,844 @@
+\chapter{Structured sets with only logarithmic gains from adaptivity}
+\label{chap:log_gains}
+
+This chapter formalizes Section~2.4 of the paper. Its first part
+(Section~\ref{sec:log_gains_algorithm}) makes the fixed-design algorithm of
+Chapter~\ref{chap:upper} adaptive, following Appendix~C of the paper: the finite action set is
+partitioned into regions, a fixed design identifies a candidate arm in each region, and
+Median Elimination (Chapter~\ref{chap:pre_median}) selects among the candidates. The
+resulting sample complexity, Theorem~6 of the paper (Theorem~\ref{thm:log_gains}), is
+$O(d\log((\abs\Xs/d)_+/\delta)/\eps^2)$, a $\log d$ improvement over the finite-set bound of
+Theorem~\ref{thm:upper} in some regimes. The second part
+(Section~\ref{sec:log_gains_lower}) proves, for adaptive and randomized algorithms, the
+lower bounds on the $\delta$-independent term of the sample complexity summarized in
+Table~1 of the paper: multi-task bandits (Theorem~\ref{thm:lower_multitask}), the two
+hypercubes (Theorems~\ref{thm:lower_hypercube_pm} and~\ref{thm:lower_hypercube_01}), the
+$m$-sets (Theorem~\ref{thm:lower_msets}) and the unit ball
+(Corollary~\ref{cor:lower_ball_adaptive}, from Chapter~\ref{chap:pre_bayes}).
+
+Inputs: the $G$-optimal design and the rounding theorem of Chapter~\ref{chap:design}, the
+least-squares estimator and the concentration of Chapters~\ref{chap:upper}
+and~\ref{chap:pre_concentration}, Median Elimination (Theorem~\ref{thm:median_elimination},
+Corollary~\ref{cor:median_elimination_linear}) and the sequential composition of
+Lemma~\ref{lem:composition}; for the lower bounds, Pinsker's inequality and the divergence
+decomposition of Chapter~\ref{chap:pre_info}. Deviations from the paper (decided in the
+overview): the algorithm only uses the $G$-optimal design (not the width minimizer), the
+lower bounds are proved directly for randomized algorithms without Yao's principle (the
+uniform average over a finite family of instances is a finite sum of probabilities under
+each instance), and the multi-task lower bound treats all block sizes $d_j \ge 2$ at once by
+a single Pinsker--Cauchy--Schwarz argument instead of the paper's two cases $d_j \ge 100$ and
+$d_j < 100$. All constants are explicit.
+
+\section{An adaptive version of the fixed-design algorithm}
+\label{sec:log_gains_algorithm}
+
+Throughout this section $\Xs \subset \R^d$ is a \emph{finite spanning} action set
+($\Span(\Xs) = \R^d$, hence $\abs\Xs \ge d$), $\eps \in (0,1]$ and $\delta \in (0,1)$. The
+spanning hypothesis is what makes the $G$-optimal design of
+Theorem~\ref{thm:kiefer_wolfowitz} available; it is repeated in each statement.
+
+\begin{definition}[Region-based adaptive algorithm]\label{def:region_algorithm}
+\uses{def:bai_alg, def:regionalized_width, thm:kiefer_wolfowitz, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:median_elimination, cor:median_elimination_linear, lem:composition}
+Let $\Xs$ be a finite spanning action set and let $\mathcal R = (R_1,\dots,R_K)$, $K \ge 1$,
+be a partition of $\Xs$ into nonempty subsets. Let $\lambda_G \in \simplex_{\Xs}$ and
+$A_G = A(\lambda_G) \succ 0$ be the $G$-optimal design of Theorem~\ref{thm:kiefer_wolfowitz}
+(which exists since $\Xs$ is spanning), and let
+$w_{\mathcal R} := \gw(A_G;\Xs,\mathcal R)$ (Definition~\ref{def:regionalized_width}). Set
+\[
+  T_1 := \Big\lceil \frac{640\,\big(w_{\mathcal R}^2 + d\log(4/\delta)\big)}{\eps^2}\Big\rceil ,
+\]
+which satisfies $T_1 \ge 640\log 4\cdot d \ge 4d$. The \emph{region algorithm} with
+parameters $(\mathcal R, \eps, \delta)$ is the sequential composition
+(Lemma~\ref{lem:composition}) of the following two phases.
+\begin{enumerate}
+  \item[(1)] \emph{Fixed design.} Let $x_0,\dots,x_{T_1-1} \in \supp\lambda_G$ be the design
+        given by Theorem~\ref{thm:rounding} applied to $\lambda_G$ and $T_1$, so that
+        $\Sigma_{T_1} := \sum_{t<T_1}x_tx_t^\top \succeq \frac{T_1}{4}A_G$. Play it, observe
+        $y \in \R^{T_1}$, and form the least-squares estimator
+        $\hat\theta := \Sigma_{T_1}^{-1}X^\top y$ (Definition~\ref{def:least_squares}). For each
+        $i \le K$ let $x^{(i)} := s_i(\hat\theta)$, where $s_i : \R^d \to R_i$ is a measurable
+        exact argmax selector for the finite set $R_i$ (Lemma~\ref{lem:approx_argmax_selector}
+        with $\eta = 0$): $\ip{x^{(i)}}{\hat\theta} = \max_{x\in R_i}\ip{x}{\hat\theta}$.
+  \item[(2)] \emph{Median Elimination.} Run Median Elimination
+        (Definition~\ref{def:median_elimination}) with parameters $(\eps/2, \delta/2)$ on the
+        $K$-armed bandit induced by the candidates $x^{(1)},\dots,x^{(K)}$
+        (Corollary~\ref{cor:median_elimination_linear}: arm $a$ plays $x^{(a)}$); it uses
+        exactly $N_{ME}(K,\eps/2,\delta/2)$ rounds and returns an index $\hat a$.
+\end{enumerate}
+The recommendation is $\rec := x^{(\hat a)}$. The budget is the deterministic number
+$T := T_1 + N_{ME}(K, \eps/2, \delta/2)$.
+\end{definition}
+
+\textbf{Lean remark.} Phase~(2) is the algorithm $\mathrm{alg}_2(h)$ of
+Lemma~\ref{lem:composition}: it depends on the phase-(1) history $h$ only through the finite
+list of candidates $(x^{(i)})_{i\le K}$, which is a measurable function of $\hat\theta(h)$,
+itself a linear function of $y$. The fixed design of phase~(1) is obtained from the existence
+statement of Theorem~\ref{thm:rounding} by choice. The final recommendation kernel is
+deterministic: it maps the full history to $x^{(\hat a)}$, where both the candidates and
+$\hat a$ are functions of the history.
+
+\begin{lemma}[Width of a region under a scalar Loewner bound]\label{lem:log_gains_region_width_bound}
+\uses{def:width_matrix, lem:width_matrix_wd}
+Let $R \subset \R^d$ be nonempty and compact (typically a region of a partition of $\Xs$),
+$A, B \in \PD$ and $c > 0$ with $B \succeq cA$. Then, in the notation of
+Definition~\ref{def:width_matrix} with the index set $R$ (for $g \sim \Normal(0,I_d)$,
+$\gwidth{R}{A} = \E[\max_{x\in R}\ip{x}{A^{-1/2}g}]$, well defined by
+Lemma~\ref{lem:width_matrix_wd}),
+\[
+  \gwidth{R}{B} \le \frac{1}{\sqrt c}\,\gwidth{R}{A},
+  \qquad\text{i.e.}\qquad
+  \E\Big[\max_{x\in R}\ip{x}{B^{-1/2}g}\Big] \le \frac{1}{\sqrt c}\,\E\Big[\max_{x\in R}\ip{x}{A^{-1/2}g}\Big].
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:width_mono, lem:width_homog}
+Both lemmas invoked below are stated in Chapter~\ref{chap:model} for an arbitrary nonempty
+compact index set, here $R$. Since $cA \in \PD$ and $cA \preceq B$, Lemma~\ref{lem:width_mono}
+(monotonicity in the Loewner order, index set $R$) gives $\gwidth{R}{B} \le \gwidth{R}{cA}$,
+and Lemma~\ref{lem:width_homog} (homogeneity, index set $R$) gives
+$\gwidth{R}{cA} = c^{-1/2}\gwidth{R}{A}$.
+\end{proof}
+
+\begin{lemma}[The candidate of the optimal region is good]\label{lem:region_phase1}
+\uses{def:region_algorithm}
+Let $\Xs$ be a finite spanning action set and $\mathcal R$ a partition of $\Xs$ as in
+Definition~\ref{def:region_algorithm}.
+Fix $\theta \in \R^d$, let $x_\star \in \argmax_{x\in\Xs}\ip{x}{\theta}$ and let $i_*$ be
+the index of the region containing $x_\star$. Under $\nu_\theta$, phase~(1) of the region
+algorithm satisfies
+\[
+  \Prob_\theta\Big( \ip{x^{(i_*)}}{\theta} \ge \max_{x\in\Xs}\ip{x}{\theta} - \frac\eps2 \Big)
+  \ge 1 - \frac\delta2 .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{cor:fixed_design_from_distribution, cor:g_optimal_norm_bound, lem:least_squares_law, lem:log_gains_region_width_bound, cor:sup_bound_symmetric, lem:width_matrix_wd}
+Let $\Delta := \hat\theta - \theta$ and $D := \max_{x,x'\in R_{i_*}}\ip{x-x'}{\Delta}$.
+
+\emph{Deterministic step.} Since $x^{(i_*)}$ maximizes $\ip{\cdot}{\hat\theta}$ over
+$R_{i_*} \ni x_\star$,
+\[
+  \ip{x^{(i_*)}}{\theta} = \ip{x^{(i_*)}}{\hat\theta} - \ip{x^{(i_*)}}{\Delta}
+  \ge \ip{x_\star}{\hat\theta} - \ip{x^{(i_*)}}{\Delta}
+  = \ip{x_\star}{\theta} + \ip{x_\star - x^{(i_*)}}{\Delta} \ge \ip{x_\star}{\theta} - D .
+\]
+So it suffices to show $\Prob_\theta(D \le \eps/2) \ge 1 - \delta/2$.
+
+\emph{Law of $\Delta$.} By Corollary~\ref{cor:fixed_design_from_distribution} (applied to
+$\lambda_G$ and the design of phase~(1)), $\Sigma_{T_1} \succ 0$ and
+$\norm{x}^2_{\Sigma_{T_1}^{-1}} \le \frac{4}{T_1}\norm{x}^2_{A_G^{-1}} \le \frac{4d}{T_1}$ for
+all $x \in \Xs$ (Corollary~\ref{cor:g_optimal_norm_bound}). By
+Lemma~\ref{lem:least_squares_law}, $\Delta \sim \Normal(0, \Sigma_{T_1}^{-1})$.
+
+\emph{Expectation.} Since the expectation of the supremum of the process
+$x \mapsto \ip{x}{\Delta}$ over the compact index set $R_{i_*}$ only depends on the law of
+$\Delta$ (Lemma~\ref{lem:width_matrix_wd} with the index set $R_{i_*}$),
+$\E\max_{x\in R_{i_*}}\ip{x}{\Delta} = \gwidth{R_{i_*}}{\Sigma_{T_1}}$, and
+Lemma~\ref{lem:log_gains_region_width_bound} with $B = \Sigma_{T_1} \succeq \frac{T_1}{4}A_G$,
+$c = T_1/4$, gives
+$\gwidth{R_{i_*}}{\Sigma_{T_1}} \le \frac{2}{\sqrt{T_1}}\gwidth{R_{i_*}}{A_G}
+\le \frac{2 w_{\mathcal R}}{\sqrt{T_1}}$, the last step by Definition~\ref{def:regionalized_width}
+($w_{\mathcal R} = \max_i\gwidth{R_i}{A_G}$).
+
+\emph{Concentration.} Corollary~\ref{cor:sup_bound_symmetric} for the centered Gaussian
+process $x \mapsto \ip{x}{\Delta}$ on the finite index set $R_{i_*}$, with
+$\sigma^2 := \max_{x\in R_{i_*}}\norm{x}^2_{\Sigma_{T_1}^{-1}} \le 4d/T_1$ and failure
+probability $\delta/2$: $\E D = 2\E\max_{x\in R_{i_*}}\ip{x}{\Delta}$ and, with probability at
+least $1 - \delta/2$,
+\[
+  D \le \E D + 2\sigma\sqrt{2\cG\log(2/\delta)}
+  \le \frac{4 w_{\mathcal R}}{\sqrt{T_1}} + \frac{4\sqrt d}{\sqrt{T_1}}\sqrt{2\cG\log(2/\delta)}
+  = \frac{4}{\sqrt{T_1}}\Big(w_{\mathcal R} + \sqrt{2\cG\,d\log(2/\delta)}\Big).
+\]
+
+\emph{Arithmetic.} Using $(a+b)^2 \le 2a^2 + 2b^2$, $2\cG = \pi^2/2 < 5$ and
+$\log(2/\delta) \le \log(4/\delta)$,
+\[
+  \frac{16}{T_1}\Big(w_{\mathcal R} + \sqrt{2\cG\,d\log(2/\delta)}\Big)^2
+  \le \frac{32\,(w_{\mathcal R}^2 + 5\,d\log(4/\delta))}{T_1}
+  \le \frac{160\,(w_{\mathcal R}^2 + d\log(4/\delta))}{T_1} \le \frac{\eps^2}{4},
+\]
+by the choice $T_1 \ge 640(w_{\mathcal R}^2 + d\log(4/\delta))/\eps^2$. Hence $D \le \eps/2$
+on the good event.
+\end{proof}
+
+\begin{theorem}[Theorem~6 of the paper]\label{thm:log_gains}
+\uses{def:region_algorithm, def:pac}
+Let $\Xs$ be a finite spanning action set, $\eps\in(0,1]$, $\delta\in(0,1)$.
+\begin{enumerate}
+  \item[(i)] For every partition $\mathcal R = (R_1,\dots,R_K)$ of $\Xs$, the region
+        algorithm of Definition~\ref{def:region_algorithm} is $(\eps,\delta)$-PAC on $\Xs$,
+        with budget $T_1 + N_{ME}(K,\eps/2,\delta/2)$.
+  \item[(ii)] Let $m := \abs\Xs$, $K := d$, and let $\mathcal R$ be a partition of $\Xs$ into
+        $d$ nonempty regions of size at most $\lceil m/d\rceil$ (it exists since $m \ge d$).
+        Then the budget of the region algorithm satisfies
+        \[
+          T \le C_{\mathrm{reg}}\ \frac{d\,\big(\log((m/d)_+) + \log(4/\delta)\big)}{\eps^2},
+          \qquad C_{\mathrm{reg}} := 1281 + 6\,C_{ME},
+        \]
+        where $(u)_+ := \max(1,u)$ and $C_{ME}$ is the constant of Lemma~\ref{lem:me_budget}.
+        In particular, for $\delta \le 1/4$,
+        $T \le 2C_{\mathrm{reg}}\, d\log\big((m/d)_+/\delta\big)/\eps^2$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\uses{lem:region_phase1, cor:median_elimination_linear, lem:composition, lem:me_budget, prop:width_partition}
+(i) Fix $\theta$, $x_\star$ and $i_*$ as in Lemma~\ref{lem:region_phase1}. Let $E_1$ be the
+event $\{\ip{x^{(i_*)}}{\theta} \ge \max_x\ip{x}{\theta} - \eps/2\}$, which depends on the
+phase-(1) history only and has probability at least $1-\delta/2$
+(Lemma~\ref{lem:region_phase1}). For every phase-(1) history $h$ (with candidates
+$x^{(1)},\dots,x^{(K)}$ determined by $h$), Corollary~\ref{cor:median_elimination_linear}
+gives, for the induced $K$-armed Gaussian bandit with means $\ip{x^{(a)}}{\theta}$, that the
+output $\hat a$ satisfies $\ip{x^{(\hat a)}}{\theta} \ge \max_{a\le K}\ip{x^{(a)}}{\theta} - \eps/2$
+with probability at least $1 - \delta/2$; call $E_2(h)$ this event of the phase-(2)
+trajectory. By Lemma~\ref{lem:composition} (with $\delta' = \delta/2$ for the set of
+histories $E_1$ and $\delta/2$ for the conditional bound), the composed algorithm satisfies
+$\Prob_\theta(E_1 \cap E_2(\hist_{T_1})) \ge 1 - \delta$. On this event,
+\[
+  \ip{\rec}{\theta} = \ip{x^{(\hat a)}}{\theta} \ge \ip{x^{(i_*)}}{\theta} - \frac\eps2
+  \ge \max_{x\in\Xs}\ip{x}{\theta} - \eps ,
+\]
+i.e.\ $r(\rec,\theta) \le \eps$. Since $\theta$ is arbitrary, the algorithm is
+$(\eps,\delta)$-PAC.
+
+(ii) \emph{Phase (1).} By Proposition~\ref{prop:width_partition} with $p = \lceil m/d\rceil$,
+$w_{\mathcal R}^2 \le 2d\log\lceil m/d\rceil$. Now $\lceil u\rceil = 1$ for $u \le 1$ and
+$\lceil u\rceil \le 2u$ for $u \ge 1$, so $\log\lceil m/d\rceil \le \log((m/d)_+) + \log 2$.
+Hence, using $2\log 2 = \log 4 \le \log(4/\delta)$,
+\[
+  T_1 \le \frac{640\big(2d\log((m/d)_+) + 2d\log2 + d\log(4/\delta)\big)}{\eps^2} + 1
+  \le \frac{1280\,d\big(\log((m/d)_+) + \log(4/\delta)\big)}{\eps^2} + 1 ,
+\]
+and $1 \le d\log(4/\delta)/\eps^2$ (as $\eps \le 1$, $\log 4 > 1$), so
+$T_1 \le 1281\,d(\log((m/d)_+) + \log(4/\delta))/\eps^2$.
+
+\emph{Phase (2).} Lemma~\ref{lem:me_budget} with $K = d$ and parameters $(\eps/2,\delta/2)$
+(admissible: $\eps/2 \le 1$, $\delta/2 < 1$):
+$N_{ME}(d,\eps/2,\delta/2) \le C_{ME}\,d\log(6/\delta)/(\eps/2)^2 = 4C_{ME}\,d\log(6/\delta)/\eps^2$.
+Since $\log(6/\delta) = \log(4/\delta) + \log(3/2)$ and $\log(3/2) < 0.41 < 0.3\log 4 \le 0.3\log(4/\delta)$,
+we get $\log(6/\delta) \le 1.3\log(4/\delta)$ and
+$N_{ME}(d,\eps/2,\delta/2) \le 5.2\,C_{ME}\,d\log(4/\delta)/\eps^2 \le 6C_{ME}\,d\log(4/\delta)/\eps^2$.
+
+\emph{Total.} $T = T_1 + N_{ME} \le (1281 + 6C_{ME})\,d(\log((m/d)_+) + \log(4/\delta))/\eps^2$.
+For $\delta \le 1/4$, $\log(4/\delta) \le 2\log(1/\delta)$ (equivalent to $\delta \le 1/4$),
+so $\log((m/d)_+) + \log(4/\delta) \le 2\log((m/d)_+/\delta)$.
+\end{proof}
+
+\begin{remark}[On the form of the bound]
+The paper states the budget as $O(d\log((\abs\Xs/d)_+/\delta)/\eps^2)$. That form cannot
+hold uniformly in $\delta \in (0,1)$ with a fixed constant (the right-hand side tends to
+$d\log((\abs\Xs/d)_+)/\eps^2$, possibly $0$, as $\delta \to 1$, while any algorithm with the
+guarantee needs a positive budget), which is why the statement carries the additive
+$\log(4/\delta)$ and the clean form is given for $\delta \le 1/4$. When $\abs\Xs \le d$
+(only possible with $\abs\Xs = d$, a basis), $\log((m/d)_+) = 0$ and the bound is
+$O(d\log(1/\delta)/\eps^2)$, matching the adaptive lower bound
+Theorem~\ref{thm:lower_adaptive}. The improvement over Theorem~\ref{thm:upper} (whose
+finite-set form is $O(d\log(\abs\Xs/\delta)/\eps^2)$ by Proposition~\ref{prop:width_finite})
+is the replacement of $\log\abs\Xs$ by $\log(\abs\Xs/d)$, e.g.\ a factor $\log d$ when
+$\abs\Xs = d^{1+o(1)}$. For the multi-armed bandit ($\Xs = \{e_1,\dots,e_d\}$) this is the
+classical $\log d$ gain of Median Elimination~\cite{even2002pac}.
+\end{remark}
+
+\section{Adaptive lower bounds for structured sets}
+\label{sec:log_gains_lower}
+
+All statements of this section concern an arbitrary identification algorithm
+$\mathsf{Alg}$ with budget $T \ge 1$ on the action set at hand (Definition~\ref{def:bai_alg});
+both the sampling rule and the recommendation may be randomized. The action sets of this
+section are nonempty compact sets that need not be spanning (the multi-task set of
+Definition~\ref{def:multitask_set} is not): Definitions~\ref{def:env}, \ref{def:bai_alg},
+\ref{def:regret} and~\ref{def:pac} and the information-theoretic tools
+(Corollary~\ref{cor:divergence_decomposition_gaussian},
+Lemma~\ref{lem:kl_data_processing_recommendation}) are stated for arbitrary action sets in
+the sense of Definition~\ref{def:arm_set}, so nothing below requires spanning. Lower bounds are obtained
+by exhibiting a finite family of reward vectors $(\theta_I)_{I\in\mathcal I}$ and bounding the
+\emph{uniform average} $\frac{1}{\abs{\mathcal I}}\sum_{I\in\mathcal I}\E_{\theta_I}[\cdot]$ of
+expectations under the individual instances. No minimax (Yao) principle is needed: a bound
+on the average implies the existence of an instance realizing it.
+
+\textbf{Lean remark.} A family of instances is a function $\theta : \mathcal I \to \R^d$ on a
+\texttt{Fintype} $\mathcal I$ (in most cases $\mathcal I = \Xs$ itself, or a type of
+subsets), and the uniform average is
+\texttt{(∑ I, E[θ I] f) / Fintype.card ℐ}. The conclusion ``some $I$ has
+$\Prob_{\theta_I}(\cdot) \ge p$'' follows from \texttt{Finset.exists\_le\_of\_sum\_le}
+(or \texttt{Finset.exists\_lt\_of\_sum\_lt}) applied to the average.
+
+\begin{lemma}[Two-instance Pinsker inequality for identification algorithms]\label{lem:two_point_pinsker}
+\uses{def:bai_alg, def:arm_set}
+Let $\Xs$ be an arbitrary action set (nonempty compact, not necessarily spanning), let
+$\mathsf{Alg}$ be an identification algorithm with budget $T \ge 1$ on $\Xs$, and
+let $\theta, \theta' \in \R^d$. Define
+\[
+  \KL(\theta,\theta') := \frac12\sum_{t<T}\E_\theta\big[\ip{x_t}{\theta - \theta'}^2\big].
+\]
+Then for every measurable event $E$ of $(\hist_T, \rec)$,
+\[
+  \Prob_{\theta'}(E) \le \Prob_\theta(E) + \sqrt{\KL(\theta,\theta')/2}
+  \qquad\text{and}\qquad
+  \Prob_{\theta}(E) \le \Prob_{\theta'}(E) + \sqrt{\KL(\theta,\theta')/2}.
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pinsker, cor:divergence_decomposition_gaussian, lem:kl_data_processing_recommendation}
+By Corollary~\ref{cor:divergence_decomposition_gaussian} (stated for an arbitrary action
+set: it only uses that $\sup_{x\in\Xs}\norm x < \infty$), the Kullback--Leibler divergence
+between the laws of $\hist_T$ under $\nu_\theta$ and $\nu_{\theta'}$ equals
+$\KL(\theta,\theta')$, and by Lemma~\ref{lem:kl_data_processing_recommendation} the same
+holds for the laws $\Prob_\theta$, $\Prob_{\theta'}$ of $(\hist_T,\rec)$ (the recommendation
+kernel is common to both). Pinsker's inequality (Lemma~\ref{lem:pinsker}) applied to
+$\mu = \Prob_\theta$, $\nu = \Prob_{\theta'}$ and the set $E$ gives the second inequality;
+applied to the complement $E^c$ it gives
+$\Prob_\theta(E^c) - \Prob_{\theta'}(E^c) \le \sqrt{\KL/2}$, i.e.\ the first one.
+\end{proof}
+
+\begin{lemma}[Three-point inequality]\label{lem:log_gains_three_point}
+\uses{def:bai_alg}
+Let $\mathsf{Alg}$ be an identification algorithm with budget $T$, let
+$\theta^0, \theta^+, \theta^- \in \R^d$ and $\kappa \ge 0$ with
+$\KL(\theta^0,\theta^+) \le \kappa$ and $\KL(\theta^0,\theta^-) \le \kappa$ (notation of
+Lemma~\ref{lem:two_point_pinsker}). Then for every measurable event $E$ of $(\hist_T,\rec)$,
+\[
+  \Prob_{\theta^+}(E) + \Prob_{\theta^-}(E^c) \ge 1 - 2\sqrt{\kappa/2} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:two_point_pinsker}
+Lemma~\ref{lem:two_point_pinsker} with $(\theta,\theta') = (\theta^0,\theta^+)$ and the event
+$E^c$ gives $\Prob_{\theta^+}(E^c) \le \Prob_{\theta^0}(E^c) + \sqrt{\kappa/2}$, i.e.\
+$\Prob_{\theta^+}(E) \ge \Prob_{\theta^0}(E) - \sqrt{\kappa/2}$; with
+$(\theta^0,\theta^-)$ and the event $E$ it gives
+$\Prob_{\theta^-}(E^c) \ge \Prob_{\theta^0}(E^c) - \sqrt{\kappa/2}$. Sum and use
+$\Prob_{\theta^0}(E) + \Prob_{\theta^0}(E^c) = 1$.
+\end{proof}
+
+\begin{lemma}[From an average regret bound to a failure probability]\label{lem:fail_prob_from_expected_value}
+\uses{def:bai_alg, def:regret}
+Let $\mathsf{Alg}$ be an identification algorithm on a compact $\Xs$, let $\eps_* > 0$ and let
+$(\theta_I)_{I\in\mathcal I}$ be a finite family of reward vectors with
+$Z(\theta_I) = \max_{x,y\in\Xs}\ip{x-y}{\theta_I} = 10\eps_*$ for every $I$. If
+\[
+  \frac{1}{\abs{\mathcal I}}\sum_{I\in\mathcal I}\E_{\theta_I}\big[r(\rec,\theta_I)\big] \ge b\,\eps_*
+  \qquad\text{for some } b > 1,
+\]
+then there exists $I \in \mathcal I$ with
+$\Prob_{\theta_I}\big(r(\rec,\theta_I) > \eps_*\big) \ge (b-1)/9$. Equivalently, writing
+$G(\rec,\theta) := \ip{\rec}{\theta} - \min_{x\in\Xs}\ip{x}{\theta} = Z(\theta) - r(\rec,\theta)$
+for the gap to the worst arm: if
+$\frac{1}{\abs{\mathcal I}}\sum_I\E_{\theta_I}[G(\rec,\theta_I)] \le a\,\eps_*$ with $a < 9$,
+then some $I$ has $\Prob_{\theta_I}(r(\rec,\theta_I) > \eps_*) \ge (9-a)/9$. In particular,
+when $\min_x\ip{x}{\theta_I} = 0$ for all $I$, $G(\rec,\theta_I) = \ip{\rec}{\theta_I}$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:regret}
+For each $I$, $0 \le r(\rec,\theta_I) \le Z(\theta_I) = 10\eps_*$ pathwise, so
+$r \le \eps_*\indic\{r \le \eps_*\} + 10\eps_*\indic\{r > \eps_*\} \le \eps_* + 9\eps_*\indic\{r > \eps_*\}$
+and $\E_{\theta_I}[r] \le \eps_* + 9\eps_*\,p_I$ with $p_I := \Prob_{\theta_I}(r > \eps_*)$.
+Averaging over $I$: $b\eps_* \le \eps_* + 9\eps_*\,\frac{1}{\abs{\mathcal I}}\sum_Ip_I$, so the
+average of the $p_I$ is at least $(b-1)/9$ and some $p_I$ is at least that. The second
+formulation is the first with $b = 10 - a$, since $\E[G] = 10\eps_* - \E[r]$.
+\end{proof}
+
+\subsection{Multi-task bandits}
+\label{sec:log_gains_lower_multitask}
+
+\begin{definition}[Hard instances for the multi-task set]\label{def:multitask_instances}
+\uses{def:multitask_set, def:regret}
+Let $\Xs$ be the multi-task action set of Definition~\ref{def:multitask_set} (blocks
+$B_1,\dots,B_m$ of sizes $d_j \ge 2$) and $\eps > 0$. Let
+\[
+  S_d := \sum_{s\le m}\sqrt{d_s}, \qquad \eps_j := \frac{\eps\sqrt{d_j}}{S_d}\ (j\le m),
+  \qquad\text{so that}\qquad \sum_{j\le m}\eps_j = \eps .
+\]
+Let $\tilde{\Xs} := \{\tilde x \in \{0,1\}^d : \sum_{i\in B_j}\tilde x_i \le 1\ \forall j\} \supseteq \Xs$.
+For $\tilde x \in \tilde{\Xs}$ the reward vector $\theta_{\tilde x} \in \R^d$ is
+$\theta_{\tilde x}[i] := 10\,\eps_j\,\tilde x[i]$ for $i \in B_j$. For $j \le m$ let
+$\Xs^{(j)} := \{x \in \tilde{\Xs} : \sum_{i\in B_\ell}x_i = 1 \text{ for } \ell\ne j,\ \sum_{i\in B_j}x_i = 0\}$
+and, for $x \in \Xs^{(j)}$ and $i \in B_j$, $x^{+i} := x + e_i \in \Xs$. The map
+$(x, i) \mapsto x^{+i}$ is a bijection from $\Xs^{(j)}\times B_j$ onto $\Xs$, and
+$\abs{\Xs^{(j)}} = \prod_{s\ne j}d_s$.
+
+For $x \in \Xs$ and $\tilde x \in \tilde{\Xs}$,
+$\ip{x}{\theta_{\tilde x}} = \sum_{j}10\eps_j\sum_{i\in B_j}x_i\tilde x_i \in [0, 10\eps]$; for
+$\tilde x \in \Xs$, $\max_{x\in\Xs}\ip{x}{\theta_{\tilde x}} = 10\eps$ (attained at
+$x = \tilde x$) and $\min_{x\in\Xs}\ip{x}{\theta_{\tilde x}} = 0$ (choose in every block a
+position different from that of $\tilde x$, possible since $d_j \ge 2$); hence
+$Z(\theta_{\tilde x}) = 10\eps$.
+\end{definition}
+
+\textbf{Lean remark.} The multi-task set does not span $\R^d$. This is allowed: an action
+set in the sense of Definition~\ref{def:arm_set} is any nonempty compact set, spanning is a
+separate hypothesis, and Definitions~\ref{def:env}, \ref{def:bai_alg}, \ref{def:regret}
+and~\ref{def:pac} as well as Lemma~\ref{lem:two_point_pinsker} apply to $\Xs$ as they stand,
+so the lower bound below needs no transport. (Should one prefer to work on a spanning set,
+Lemma~\ref{lem:log_gains_subspace_transport} identifies identification algorithms on $\Xs$
+with those on $U^\top\Xs \subset \R^{d-m+1}$, $U$ as in Definition~\ref{def:width_subspace},
+through $\theta \mapsto U^\top\theta$; this is what the non-adaptive upper bound of
+Remark~\ref{rem:table} uses.)
+In the family $(\theta_{\tilde x})$, the coordinate $i \in B_j$ of $\rec$ is written
+$\rec_i \in \{0,1\}$, and $\rec$ has exactly one nonzero coordinate in each block.
+
+\begin{lemma}[Average value of a block]\label{lem:multitask_block_average}
+\uses{def:multitask_instances, def:bai_alg}
+Let $\mathsf{Alg}$ be an identification algorithm with budget $T$ on the multi-task set
+$\Xs$. Fix $j \le m$ and $x \in \Xs^{(j)}$. For $i \in B_j$ let
+$p_i := \Prob_{\theta_x}(\rec_i = 1)$ and $N_i := \sum_{t<T}x_t[i]$. Then
+\begin{enumerate}
+  \item[(i)] $\sum_{i\in B_j}p_i = 1$ and $\sum_{i\in B_j}\E_{\theta_x}[N_i] = T$;
+  \item[(ii)] $\KL(\theta_x, \theta_{x^{+i}}) = 50\,\eps_j^2\,\E_{\theta_x}[N_i]$ for every
+        $i \in B_j$ (notation of Lemma~\ref{lem:two_point_pinsker});
+  \item[(iii)] $\Prob_{\theta_{x^{+i}}}(\rec_i = 1) \le p_i + 5\eps_j\sqrt{\E_{\theta_x}[N_i]}$
+        for every $i \in B_j$;
+  \item[(iv)] the block-$j$ value, averaged over the $d_j$ instances $x^{+i}$, satisfies
+        \[
+          \frac{1}{d_j}\sum_{i\in B_j}\E_{\theta_{x^{+i}}}\Big[\sum_{i'\in B_j}\rec_{i'}\,\theta_{x^{+i}}[i']\Big]
+          \le \frac{10\,\eps_j}{d_j}\Big(1 + 5\,\eps_j\sqrt{d_j\,T}\Big).
+        \]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{lem:two_point_pinsker, def:multitask_instances}
+(i) Both $\rec$ and every $x_t$ belong to $\Xs$, so they have exactly one coordinate equal to
+$1$ in $B_j$: $\sum_{i\in B_j}\rec_i = 1$ pathwise, and $\sum_{i\in B_j}N_i = T$ pathwise;
+take expectations.
+
+(ii) $\theta_x - \theta_{x^{+i}} = -10\eps_j e_i$, so
+$\ip{x_t}{\theta_x - \theta_{x^{+i}}}^2 = 100\eps_j^2x_t[i]^2 = 100\eps_j^2x_t[i]$ (as
+$x_t[i]\in\{0,1\}$), and $\KL(\theta_x,\theta_{x^{+i}}) = \frac12\sum_t\E_{\theta_x}[100\eps_j^2x_t[i]]
+= 50\eps_j^2\E_{\theta_x}[N_i]$.
+
+(iii) Lemma~\ref{lem:two_point_pinsker} with $\theta = \theta_x$, $\theta' = \theta_{x^{+i}}$
+and $E = \{\rec_i = 1\}$: $\Prob_{\theta_{x^{+i}}}(E) \le p_i + \sqrt{25\eps_j^2\E_{\theta_x}[N_i]}$.
+
+(iv) In block $j$ the vector $\theta_{x^{+i}}$ has the single nonzero coordinate
+$\theta_{x^{+i}}[i] = 10\eps_j$, so $\sum_{i'\in B_j}\rec_{i'}\theta_{x^{+i}}[i'] = 10\eps_j\rec_i$
+and its expectation is $10\eps_j\Prob_{\theta_{x^{+i}}}(\rec_i = 1)$. Summing (iii) over
+$i \in B_j$ and using (i) and the Cauchy--Schwarz inequality,
+\[
+  \sum_{i\in B_j}\Prob_{\theta_{x^{+i}}}(\rec_i = 1) \le 1 + 5\eps_j\sum_{i\in B_j}\sqrt{\E_{\theta_x}[N_i]}
+  \le 1 + 5\eps_j\sqrt{d_j\sum_{i\in B_j}\E_{\theta_x}[N_i]} = 1 + 5\eps_j\sqrt{d_jT}.
+\]
+Multiply by $10\eps_j/d_j$.
+\end{proof}
+
+\begin{theorem}[Lower bound for multi-task bandits]\label{thm:lower_multitask}
+\uses{def:multitask_instances, def:pac}
+Let $\Xs$ be the multi-task action set, $\eps > 0$, and let $\mathsf{Alg}$ be an
+identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
+\[
+  T \le \frac{S_d^2}{20000\,\eps^2}, \qquad S_d = \sum_{j\le m}\sqrt{d_j}.
+\]
+Then $\frac{1}{\abs\Xs}\sum_{\tilde x\in\Xs}\E_{\theta_{\tilde x}}\ip{\rec}{\theta_{\tilde x}} \le 5.36\,\eps$,
+and there exists $\tilde x \in \Xs$ with
+$\Prob_{\theta_{\tilde x}}\big(r(\rec,\theta_{\tilde x}) > \eps\big) \ge 0.4$. Consequently an
+$(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 0.4$ must have
+$T > S_d^2/(20000\,\eps^2)$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:multitask_block_average, lem:fail_prob_from_expected_value, def:multitask_instances}
+For $\tilde x \in \Xs$, $\ip{\rec}{\theta_{\tilde x}} = \sum_{j\le m}V_j(\tilde x)$ with
+$V_j(\tilde x) := \sum_{i\in B_j}\rec_i\theta_{\tilde x}[i]$. Fix $j$. Using the bijection
+$\Xs^{(j)}\times B_j \to \Xs$, $(x,i)\mapsto x^{+i}$, and $\abs\Xs = \abs{\Xs^{(j)}}\,d_j$,
+\[
+  \frac{1}{\abs\Xs}\sum_{\tilde x\in\Xs}\E_{\theta_{\tilde x}}[V_j(\tilde x)]
+  = \frac{1}{\abs{\Xs^{(j)}}}\sum_{x\in\Xs^{(j)}}\frac{1}{d_j}\sum_{i\in B_j}\E_{\theta_{x^{+i}}}[V_j(x^{+i})]
+  \le \frac{10\eps_j}{d_j}\Big(1 + 5\eps_j\sqrt{d_jT}\Big)
+\]
+by Lemma~\ref{lem:multitask_block_average}(iv). With the budget assumption,
+\[
+  \eps_j\sqrt{d_jT} = \frac{\eps\sqrt{d_j}}{S_d}\sqrt{d_j}\sqrt T
+  \le \frac{\eps\,d_j}{S_d}\cdot\frac{S_d}{\sqrt{20000}\,\eps} = \frac{d_j}{\sqrt{20000}},
+\]
+so, using $d_j \ge 2$ and $50/\sqrt{20000} < 0.36$,
+\[
+  \frac{10\eps_j}{d_j}\Big(1 + 5\eps_j\sqrt{d_jT}\Big) \le \frac{10\eps_j}{d_j} + \frac{50\,\eps_j}{\sqrt{20000}}
+  \le 5\eps_j + 0.36\,\eps_j = 5.36\,\eps_j .
+\]
+Summing over $j$ and using $\sum_j\eps_j = \eps$ gives the bound $5.36\,\eps$ on the
+average value. Since $\min_x\ip{x}{\theta_{\tilde x}} = 0$ and $Z(\theta_{\tilde x}) = 10\eps$
+for $\tilde x \in \Xs$ (Definition~\ref{def:multitask_instances}),
+Lemma~\ref{lem:fail_prob_from_expected_value} (gap form, $\eps_* = \eps$, $a = 5.36$) gives
+an instance with failure probability at least $(9 - 5.36)/9 = 0.4044 \ge 0.4$. The PAC
+consequence is immediate: an $(\eps,\delta)$-PAC algorithm has failure probability at most
+$\delta < 0.4$ on every instance.
+\end{proof}
+
+\begin{remark}
+The paper proves this bound (with the average value $7\eps$ and failure probability $0.1$)
+by splitting into $d_j \ge 100$ and $d_j < 100$ and using deterministic algorithms plus Yao's
+principle. The argument above, a single Pinsker plus Cauchy--Schwarz step per block, handles
+all $d_j \ge 2$ uniformly and directly for randomized algorithms; the equality
+$\eps_j\sqrt{d_jT} = d_j/\sqrt{20000}$ at the maximal budget makes the dependence on $d_j$
+cancel exactly. Since $d \le S_d^2 \le md$, the lower bound is at least $d/(20000\eps^2)$
+and at most $md/(20000\eps^2)$; for $m = 1$ it is the classical $\Omega(K/\eps^2)$ bound for
+$K = d_1$ arms.
+\end{remark}
+
+\subsection{Hypercubes}
+\label{sec:log_gains_lower_hypercubes}
+
+\begin{theorem}[Lower bound for the hypercube $\{-1,1\}^d$]\label{thm:lower_hypercube_pm}
+\uses{def:bai_alg, def:pac, def:regret}
+Let $\Xs = \{-1,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \frac{5\eps}{d}s$.
+Let $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
+$T \le d^2/(100\,\eps^2)$. Then
+$\frac{1}{2^d}\sum_{s}\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there exists
+$s \in \{-1,1\}^d$ with $\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$. Consequently an
+$(\eps,\delta)$-PAC algorithm on $\{-1,1\}^d$ with budget $T \ge 1$ and $\delta < 1/6$ has
+$T > d^2/(100\,\eps^2)$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
+\emph{Regret as a Hamming distance.} $\max_{x\in\Xs}\ip{x}{\theta_s} = 5\eps$ (at $x = s$),
+$\min_x\ip{x}{\theta_s} = -5\eps$ (at $x = -s$), so $Z(\theta_s) = 10\eps$, and for
+$\rec\in\{-1,1\}^d$,
+\[
+  r(\rec,\theta_s) = \frac{5\eps}{d}\sum_{j\le d}(1 - \rec_js_j) = \frac{10\eps}{d}\sum_{j\le d}\indic\{\rec_j \ne s_j\}.
+\]
+
+\emph{One coordinate.} Fix $j \le d$ and $s_{-j} \in \{-1,1\}^{d-1}$ (the coordinates other
+than $j$); let $s^+, s^-$ be the two completions (with $s_j = +1$, resp.\ $-1$) and let
+$\theta^0 \in \R^d$ be $\theta_{s^\pm}$ with coordinate $j$ set to $0$ (the same vector for
+both). Then $\theta^0 - \theta_{s^\pm} = \mp\frac{5\eps}{d}e_j$ and, since $x_t[j]^2 = 1$,
+$\KL(\theta^0,\theta_{s^\pm}) = \frac12\sum_{t<T}\E_{\theta^0}\big[\tfrac{25\eps^2}{d^2}x_t[j]^2\big]
+= \frac{25\eps^2T}{2d^2} =: \kappa$. Lemma~\ref{lem:log_gains_three_point} with the event
+$E := \{\rec_j = -1\}$ gives
+\[
+  \Prob_{\theta_{s^+}}(\rec_j \ne s^+_j) + \Prob_{\theta_{s^-}}(\rec_j \ne s^-_j)
+  = \Prob_{\theta_{s^+}}(E) + \Prob_{\theta_{s^-}}(E^c) \ge 1 - 2\sqrt{\kappa/2}
+  = 1 - \frac{5\eps\sqrt T}{d} \ge \frac12 ,
+\]
+using $T \le d^2/(100\eps^2)$. Averaging over the $2^{d-1}$ choices of $s_{-j}$:
+$\frac{1}{2^d}\sum_{s}\Prob_{\theta_s}(\rec_j \ne s_j) \ge \frac14$.
+
+\emph{Average regret.} Summing over $j$,
+$\frac{1}{2^d}\sum_s\E_{\theta_s}[r(\rec,\theta_s)] = \frac{10\eps}{d}\sum_{j\le d}\frac{1}{2^d}\sum_s\Prob_{\theta_s}(\rec_j\ne s_j)
+\ge \frac{10\eps}{d}\cdot d\cdot\frac14 = 2.5\,\eps$.
+Lemma~\ref{lem:fail_prob_from_expected_value} with $\eps_* = \eps$, $b = 2.5$ gives an
+instance with failure probability at least $1.5/9 = 1/6$.
+\end{proof}
+
+\begin{theorem}[Lower bound for the hypercube $\{0,1\}^d$]\label{thm:lower_hypercube_01}
+\uses{def:bai_alg, def:pac, def:regret}
+Let $\Xs = \{0,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \frac{10\eps}{d}s$
+and $\sigma(s) := \indic\{s = 1\} \in \{0,1\}^d$ (coordinatewise). Let $\mathsf{Alg}$ be an
+identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying $T \le d^2/(400\,\eps^2)$. Then
+$\frac{1}{2^d}\sum_s\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there exists $s$ with
+$\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$. Consequently an $(\eps,\delta)$-PAC
+algorithm on $\{0,1\}^d$ with budget $T \ge 1$ and $\delta < 1/6$ has $T > d^2/(400\,\eps^2)$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
+\emph{Regret.} $\max_{x\in\{0,1\}^d}\ip{x}{\theta_s} = \frac{10\eps}{d}\abs{\{j : s_j = 1\}}$
+(at $x = \sigma(s)$) and $\min_x\ip{x}{\theta_s} = -\frac{10\eps}{d}\abs{\{j : s_j = -1\}}$, so
+$Z(\theta_s) = 10\eps$, and for $\rec \in \{0,1\}^d$,
+\[
+  r(\rec,\theta_s) = \frac{10\eps}{d}\sum_{j\le d}\big(\sigma(s)_j - \rec_js_j\big)
+  = \frac{10\eps}{d}\sum_{j\le d}\indic\{\rec_j \ne \sigma(s)_j\},
+\]
+since $\sigma_j - \rec_js_j$ equals $1 - \rec_j$ when $s_j = 1$ and $\rec_j$ when $s_j = -1$.
+
+\emph{One coordinate.} Fix $j$ and $s_{-j}$, with completions $s^\pm$ and the common
+alternative $\theta^0$ (coordinate $j$ zeroed). Now
+$\KL(\theta^0,\theta_{s^\pm}) = \frac12\sum_t\E_{\theta^0}\big[\tfrac{100\eps^2}{d^2}x_t[j]^2\big]
+= \frac{50\eps^2}{d^2}\E_{\theta^0}[N_j] \le \frac{50\eps^2T}{d^2} =: \kappa$, where
+$N_j := \sum_{t<T}x_t[j] \le T$ (as $x_t[j]\in\{0,1\}$).
+Lemma~\ref{lem:log_gains_three_point} with $E := \{\rec_j = 0\}$ gives
+\[
+  \Prob_{\theta_{s^+}}(\rec_j \ne \sigma(s^+)_j) + \Prob_{\theta_{s^-}}(\rec_j \ne \sigma(s^-)_j)
+  \ge 1 - 2\sqrt{\kappa/2} = 1 - \frac{10\eps\sqrt T}{d} \ge \frac12 ,
+\]
+using $T \le d^2/(400\eps^2)$. The rest is identical to the proof of
+Theorem~\ref{thm:lower_hypercube_pm}: averaging over $s_{-j}$ and summing over $j$ gives the
+average regret bound $2.5\eps$, and Lemma~\ref{lem:fail_prob_from_expected_value} with
+$b = 2.5$ gives the failure probability $1/6$.
+\end{proof}
+
+\begin{remark}
+The paper's Appendix on hypercubes only sketches these proofs (``analogous to the $d_j = 2$
+case of the multi-task argument, with the expected gap to the worst arm instead of the
+expected value''). The constant differs between the two hypercubes: for $\{-1,1\}^d$ the
+instances are at distance $5\eps/d$ from the zeroed alternative in coordinate $j$, for
+$\{0,1\}^d$ at distance $10\eps/d$ (the range of $\ip{x}{\theta}$ over the cube must be
+$10\eps$ in both cases), so the divergence is four times larger and the admissible budget
+four times smaller. Both give $H_2 \ge \Omega(d^2/\eps^2)$, matching the upper bound
+$O((d\log(1/\delta) + d^2)/\eps^2)$ of Theorem~\ref{thm:upper} since $\gw \le d$
+(Proposition~\ref{prop:width_le_d}).
+\end{remark}
+
+\subsection{\texorpdfstring{$m$}{m}-sets}
+\label{sec:log_gains_lower_msets}
+
+\begin{definition}[$m$-sets and their hard instances]\label{def:msets}
+\uses{def:arm_set, def:regret}
+Let $1 \le m \le d-1$. The \emph{$m$-set} action set is
+$\Xs := \{x \in \{0,1\}^d : \sum_{i\le d}x_i = m\}$, with $\abs\Xs = \binom dm$; it spans
+$\R^d$ (it contains $x_S$ for every $m$-subset $S$; $x_S - x_{S'}$ with
+$S \triangle S' = \{i,i'\}$ gives $e_i - e_{i'}$, and $\sum_S x_S$ is a positive multiple of
+$\mathbf 1$; together these span $\R^d$). We write $n := d - m + 1$ and, for $\eps > 0$,
+$\Delta := 10\eps/m$. For every $S \subseteq [d]$ (of any size) let
+$\theta^{(S)} := \Delta\,\indic_S \in \R^d$ ($\Delta$ on $S$, $0$ elsewhere). For a
+recommendation $\rec \in \Xs$ let $\hat S := \supp\rec$, so $\abs{\hat S} = m$ and
+$\ip{\rec}{\theta^{(S)}} = \Delta\abs{\hat S\cap S}$. If $\abs S = m$ and $d \ge 2m$, then
+$\max_{x\in\Xs}\ip{x}{\theta^{(S)}} = m\Delta = 10\eps$, $\min_{x\in\Xs}\ip{x}{\theta^{(S)}} = 0$
+and $Z(\theta^{(S)}) = 10\eps$.
+\end{definition}
+
+\begin{lemma}[Equivalent sampling of $(B, i)$]\label{lem:msets_equivalent_sampling}
+\uses{def:msets}
+For every function $F$ on pairs $(B, i)$ with $B \subseteq [d]$, $\abs B = m-1$, $i \notin B$,
+\[
+  \frac{1}{\binom dm}\sum_{\abs S = m}\frac1m\sum_{i\in S}F(S\setminus\{i\}, i)
+  = \frac{1}{\binom{d}{m-1}}\sum_{\abs B = m-1}\frac1n\sum_{i\notin B}F(B, i).
+\]
+In words: drawing $S$ uniformly among $m$-subsets and then $i$ uniformly in $S$ gives the
+same law for $(S\setminus\{i\}, i)$ as drawing $B$ uniformly among $(m-1)$-subsets and then
+$i$ uniformly in $[d]\setminus B$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:msets}
+The map $(S, i) \mapsto (S\setminus\{i\}, i)$ is a bijection from
+$\{(S,i) : \abs S = m,\ i \in S\}$ onto $\{(B,i) : \abs B = m-1,\ i\notin B\}$ (inverse
+$(B,i)\mapsto(B\cup\{i\},i)$), so both sides are sums of $F$ over the same set of pairs,
+with the constant weights $1/(m\binom dm)$ and $1/(n\binom{d}{m-1})$ respectively. These
+are equal: $n\binom{d}{m-1} = (d-m+1)\frac{d!}{(m-1)!\,(d-m+1)!} = \frac{d!}{(m-1)!\,(d-m)!} = m\binom dm$.
+\end{proof}
+
+\begin{lemma}[Good coordinates under an alternative instance]\label{lem:msets_good_set}
+\uses{def:msets, def:bai_alg}
+Let $\mathsf{Alg}$ be an identification algorithm with budget $T$ on the $m$-sets and let
+$B \subseteq [d]$ with $\abs B = m-1$. For $i \in [d]$ let $N_i := \sum_{t<T}x_t[i]$ and
+$A_i := \{i \in \hat S\}$. Then
+$\sum_{i\notin B}\E_{\theta^{(B)}}[N_i] \le mT$ and $\sum_{i\notin B}\Prob_{\theta^{(B)}}(A_i) \le m$,
+and the set
+\[
+  G_B := \Big\{i \in [d]\setminus B : \E_{\theta^{(B)}}[N_i] \le \frac{4mT}{n}
+  \ \text{ and }\ \Prob_{\theta^{(B)}}(A_i) \le \frac{4m}{n}\Big\}
+\]
+satisfies $\abs{G_B} \ge n/2$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:msets}
+Every $x_t$ and $\rec$ have exactly $m$ ones, so $\sum_{i\le d}N_i = mT$ and
+$\sum_{i\le d}\indic_{A_i} = m$ pathwise; restrict to $i \notin B$ and take expectations.
+Let $G^1 := \{i\notin B : \E N_i > 4mT/n\}$; then $\abs{G^1}\cdot 4mT/n < \sum_{i\in G^1}\E N_i \le mT$
+unless $G^1 = \emptyset$, so $\abs{G^1} < n/4$. Likewise
+$G^2 := \{i \notin B : \Prob(A_i) > 4m/n\}$ has $\abs{G^2} < n/4$. Since
+$\abs{[d]\setminus B} = n$, $\abs{G_B} = n - \abs{G^1\cup G^2} > n/2$.
+\end{proof}
+
+\begin{lemma}[Pinsker step for $m$-sets]\label{lem:msets_pinsker_step}
+\uses{def:msets, lem:msets_good_set}
+In the setting of Lemma~\ref{lem:msets_good_set}, for every $i \in G_B$,
+\[
+  \KL(\theta^{(B)}, \theta^{(B\cup\{i\})}) \le \frac{2\Delta^2 mT}{n}
+  \qquad\text{and}\qquad
+  \Prob_{\theta^{(B\cup\{i\})}}(i \in \hat S) \le \frac{4m}{n} + \Delta\sqrt{\frac{mT}{n}} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:two_point_pinsker, lem:msets_good_set}
+$\theta^{(B)} - \theta^{(B\cup\{i\})} = -\Delta e_i$, so
+$\KL(\theta^{(B)},\theta^{(B\cup\{i\})}) = \frac12\sum_t\E_{\theta^{(B)}}[\Delta^2x_t[i]^2]
+= \frac{\Delta^2}{2}\E_{\theta^{(B)}}[N_i] \le \frac{\Delta^2}{2}\cdot\frac{4mT}{n}$ by
+Lemma~\ref{lem:msets_good_set}. Lemma~\ref{lem:two_point_pinsker} with $E = A_i$ gives
+$\Prob_{\theta^{(B\cup\{i\})}}(A_i) \le \Prob_{\theta^{(B)}}(A_i) + \sqrt{\KL/2}
+\le \frac{4m}{n} + \sqrt{\Delta^2mT/n}$.
+\end{proof}
+
+\begin{theorem}[Lower bound for $m$-sets]\label{thm:lower_msets}
+\uses{def:msets, def:pac}
+Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$, let $\eps > 0$ and let
+$\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
+\[
+  T \le \frac{m\,n}{2500\,\eps^2}.
+\]
+Then $\frac{1}{\binom dm}\sum_{\abs S = m}\E_{\theta^{(S)}}\ip{\rec}{\theta^{(S)}} \le 7\eps$ and
+there exists an $m$-subset $S$ with $\Prob_{\theta^{(S)}}(r(\rec,\theta^{(S)}) > \eps) \ge 2/9$.
+Consequently an $(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 2/9$ has
+$T > mn/(2500\,\eps^2)$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:msets_good_set, lem:msets_pinsker_step, lem:msets_equivalent_sampling, lem:fail_prob_from_expected_value, def:msets}
+Note that $n \ge 20m$ implies $d = n + m - 1 \ge 21m - 1 \ge 2m$, so
+Definition~\ref{def:msets} gives $Z(\theta^{(S)}) = 10\eps$ and
+$\min_x\ip{x}{\theta^{(S)}} = 0$ for every $m$-subset $S$.
+
+\emph{Constants.} $4m/n \le 0.2$, and
+$\Delta\sqrt{mT/n} \le \frac{10\eps}{m}\sqrt{\frac{m}{n}\cdot\frac{mn}{2500\eps^2}} = \frac{10\eps}{m}\cdot\frac{m}{50\eps} = 0.2$.
+Hence, by Lemma~\ref{lem:msets_pinsker_step}, $\Prob_{\theta^{(B\cup\{i\})}}(i\in\hat S) \le 0.4$
+for every $(m-1)$-subset $B$ and every $i \in G_B$.
+
+\emph{Average over $i \notin B$.} For fixed $B$, bounding the terms with $i \in G_B$ by
+$0.4$ and the others by $1$, and using $\abs{G_B} \ge n/2$ (Lemma~\ref{lem:msets_good_set}),
+\[
+  \frac1n\sum_{i\notin B}\Prob_{\theta^{(B\cup\{i\})}}(i \in \hat S)
+  \le \frac1n\Big(0.4\,\abs{G_B} + (n - \abs{G_B})\Big) \le \frac1n\Big(0.4\cdot\frac n2 + \frac n2\Big) = 0.7 .
+\]
+
+\emph{Average value.} For an $m$-subset $S$,
+$\E_{\theta^{(S)}}\ip{\rec}{\theta^{(S)}} = \Delta\,\E_{\theta^{(S)}}\abs{\hat S\cap S}
+= \Delta\sum_{i\in S}\Prob_{\theta^{(S)}}(i\in\hat S) = 10\eps\cdot\frac1m\sum_{i\in S}\Prob_{\theta^{(S)}}(i\in\hat S)$.
+Averaging over $S$ and applying Lemma~\ref{lem:msets_equivalent_sampling} to
+$F(B,i) := \Prob_{\theta^{(B\cup\{i\})}}(i\in\hat S)$ (note $\theta^{(S)} = \theta^{(B\cup\{i\})}$ for
+$B = S\setminus\{i\}$),
+\[
+  \frac{1}{\binom dm}\sum_{\abs S = m}\E_{\theta^{(S)}}\ip{\rec}{\theta^{(S)}}
+  = 10\eps\cdot\frac{1}{\binom{d}{m-1}}\sum_{\abs B = m-1}\frac1n\sum_{i\notin B}\Prob_{\theta^{(B\cup\{i\})}}(i\in\hat S)
+  \le 10\eps\cdot 0.7 = 7\eps .
+\]
+
+\emph{Conclusion.} Lemma~\ref{lem:fail_prob_from_expected_value} (gap form, $a = 7$) gives
+an $m$-subset $S$ with $\Prob_{\theta^{(S)}}(r > \eps) \ge 2/9$.
+\end{proof}
+
+\textbf{Lean remark.} The instances are indexed by \texttt{Finset (Fin d)} of card $m$
+(\texttt{Finset.powersetCard m Finset.univ}) and the alternatives by subsets of card $m-1$;
+$\hat S$ is the support of $\rec$ viewed as a \texttt{Finset}. Lemma~\ref{lem:msets_equivalent_sampling}
+is a reindexing of a double sum along the bijection $(S,i)\mapsto(S\setminus\{i\},i)$
+together with the identity $n\binom{d}{m-1} = m\binom dm$ (\texttt{Nat.choose\_succ\_right\_eq}
+or \texttt{Nat.succ\_mul\_choose\_eq}). Lemma~\ref{lem:msets_good_set} is a counting
+(Markov) argument on a finite sum.
+
+\subsection{The unit ball}
+\label{sec:log_gains_lower_ball}
+
+\begin{corollary}[Adaptive lower bound for the unit ball]\label{cor:lower_ball_adaptive}
+\uses{def:pac, cor:ball_pac_lower}
+Let $d \ge 2$, $\eps > 0$ and $\delta \le 1/500$. Every $(\eps,\delta)$-PAC identification
+algorithm on $\ball_d$ with budget $T$ satisfies $T \ge d^2/(1000\,\eps^2)$.
+\end{corollary}
+
+\begin{proof}
+\uses{cor:ball_pac_lower}
+This is Corollary~\ref{cor:ball_pac_lower} of Chapter~\ref{chap:pre_bayes}, which replaces
+the citation of~\cite{chen2024assouad} in the paper's Appendix on the unit ball: the
+Gaussian-prior argument (Theorem~\ref{thm:ball_simple_regret_lower}(ii)) gives an instance
+$\theta$ with $\E_\theta[r(\rec,\theta)] \ge 3d/(40\sqrt T)$ and
+$\norm\theta \le 10d/\sqrt T$, and the PAC property bounds
+$\E_\theta[r] \le \eps + 2\norm\theta\delta \le \eps + 20\delta d/\sqrt T$; for
+$\delta \le 1/500$ this gives $(3/40 - 1/25)\,d/\sqrt T \le \eps$, i.e.\
+$T \ge (7/200)^2d^2/\eps^2 = 49d^2/(40000\eps^2) \ge d^2/(1000\eps^2)$.
+\end{proof}
+
+\section{Summary of the sample complexities}
+\label{sec:log_gains_table}
+
+The non-adaptive upper bound of Theorem~\ref{thm:upper} requires a spanning action set. For
+the multi-task set, which is not spanning, it is applied to the spanning set
+$U^\top\Xs \subset \R^{d-m+1}$ of Definition~\ref{def:width_subspace} and transported back
+by the following lemma, the analogue for a subspace of the transformation lemma
+\ref{lem:transform_preserves_pac} (which handles invertible maps of $\R^d$).
+
+\begin{lemma}[Transport of identification algorithms along the span]\label{lem:log_gains_subspace_transport}
+\uses{def:arm_set, def:bai_alg, def:pac, def:width_subspace}
+Let $\Xs \subset \R^d$ be an action set with $V := \Span(\Xs)$ of dimension $r \ge 1$, let
+$U \in \R^{d\times r}$ have orthonormal columns with range $V$, and let
+$\Xs_r := U^\top\Xs \subset \R^r$, a spanning action set in $\R^r$
+(Definition~\ref{def:width_subspace}). The map $\phi : \Xs_r \to \Xs$, $u \mapsto Uu$, is a
+homeomorphism with inverse $x \mapsto U^\top x$, and for all $u \in \R^r$, $\theta \in \R^d$,
+\[
+  \ip{Uu}{\theta} = \ip{u}{U^\top\theta}, \qquad\text{in particular}\qquad
+  \ip{U^\top x}{U^\top\theta} = \ip{x}{\theta} \ \text{ for } x \in \Xs,\ \theta \in V .
+\]
+For every identification algorithm $\mathsf{Alg}_r = (\mathrm{alg}_r,\rho_r)$ on $\Xs_r$ with
+budget $T$ there is an identification algorithm $\mathsf{Alg} = (\mathrm{alg},\rho)$ on
+$\Xs$ with budget $T$ (the \emph{transported algorithm}: play $Uu$ whenever $\mathsf{Alg}_r$
+plays $u$, feed it the same observations, recommend $U\rec_r$) such that, for every
+$\theta \in \R^d$ with $\theta_r := U^\top\theta$, the law of $(\hist_T,\rec)$ under
+$\nu_\theta$ is the image of the law of $(\hist_{T,r},\rec_r)$ under $\nu_{\theta_r}$ by
+$((u_t,y_t)_{t<T},\rec_r) \mapsto ((Uu_t,y_t)_{t<T},U\rec_r)$, and the simple regrets agree
+pathwise: $r_{\Xs}(U\rec_r,\theta) = r_{\Xs_r}(\rec_r,\theta_r)$. Consequently
+$\mathsf{Alg}$ is $(\eps,\delta)$-PAC on $\Xs$ if and only if $\mathsf{Alg}_r$ is
+$(\eps,\delta)$-PAC on $\Xs_r$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:env, def:regret, lem:transform_preserves_pac}
+The identities: $\ip{Uu}{\theta} = u^\top U^\top\theta$, and for $\theta \in V$,
+$UU^\top\theta = \theta$ ($UU^\top$ is the orthogonal projection onto $V$), so
+$\ip{U^\top x}{U^\top\theta} = \ip{x}{UU^\top\theta} = \ip{x}{\theta}$. The map $\phi$ is
+continuous with continuous inverse $U^\top$ (as $U^\top Uu = u$ and $UU^\top x = x$ for
+$x \in \Xs \subset V$), hence a measurable bijection $\Xs_r \to \Xs$ with measurable
+inverse. The reward kernel of $\nu_\theta$ at $Uu$ is $\Normal(\ip{Uu}{\theta},1)
+= \Normal(\ip{u}{\theta_r},1)$, the reward kernel of $\nu_{\theta_r}$ at $u$: the
+environments correspond under $\phi$. The transported algorithm is obtained by mapping the
+policy kernels of $\mathrm{alg}_r$ through $\phi$ (and the histories back through
+$\phi^{-1}$), exactly as in Lemma~\ref{lem:transform_preserves_pac}, whose proof only uses
+that $x \mapsto Mx$ is a measurable bijection of action sets under which the environments
+correspond; the same argument (trajectory measures are characterized by their kernels,
+Ionescu--Tulcea) gives the image-law statement. For the regrets,
+$\max_{x\in\Xs}\ip{x}{\theta} = \max_{u\in\Xs_r}\ip{Uu}{\theta} = \max_{u\in\Xs_r}\ip{u}{\theta_r}$
+($\phi$ is onto $\Xs$) and $\ip{U\rec_r}{\theta} = \ip{\rec_r}{\theta_r}$, so the regrets
+agree. Finally, $\theta \mapsto U^\top\theta$ is onto $\R^r$ (with right inverse
+$\theta_r \mapsto U\theta_r$), so ``for every $\theta$'' on $\Xs$ and ``for every $\theta_r$''
+on $\Xs_r$ are the same condition, and the PAC equivalence follows from the equality of the
+probabilities of the events $\{r \le \eps\}$.
+\end{proof}
+
+\textbf{Lean remark.} The lemma is a special case of a general ``change of action type''
+statement for LML algorithms along a measurable bijection $\phi$ with measurable inverse
+between action types, such that the environments correspond
+($\kappa_\theta \circ \phi = \kappa_{\theta_r}$); Lemma~\ref{lem:transform_preserves_pac} and
+Lemma~\ref{lem:separation_block_embedding} are two more instances. Only the direction
+``from $\Xs_r$ to $\Xs$'' is used (to transport the upper bound of Theorem~\ref{thm:upper});
+the converse direction uses the identity $\ip{U^\top x}{U^\top\theta} = \ip{x}{\theta}$ for
+$\theta \in V$ together with the fact that the environment only sees $\ip{x}{\theta}$,
+$x \in \Xs$, i.e.\ $\theta$ only through its projection $UU^\top\theta \in V$.
+
+\begin{remark}[Table~1 of the paper]\label{rem:table}
+For the structured sets of this chapter, the minimax sample complexity has the form
+$H_1\log(1/\delta) + H_2$ with $H_1 = \Theta(d/\eps^2)$ (upper bound: Theorem~\ref{thm:upper};
+lower bound: Theorem~\ref{thm:lower_adaptive}). The chapter establishes the following
+bounds on $H_2$; the non-adaptive upper bounds come from Theorem~\ref{thm:upper} and the
+width bounds of Chapter~\ref{chap:width}, the adaptive lower bounds from
+Section~\ref{sec:log_gains_lower}, so that on each of these sets adaptivity can only improve
+the sample complexity of the fixed-design algorithm by logarithmic factors.
+\begin{itemize}
+  \item Unit ball $\ball_d$: non-adaptive upper bound $O((d\log(1/\delta) + d^2)/\eps^2)$
+        (Proposition~\ref{prop:width_ball}, $\gw(\ball_d) \le d$); adaptive lower bound
+        $T \ge d^2/(1000\eps^2)$ for $\delta \le 1/500$ (Corollary~\ref{cor:lower_ball_adaptive}).
+  \item Hypercubes $\{-1,1\}^d$ and $\{0,1\}^d$: non-adaptive upper bound
+        $O((d\log(1/\delta) + d^2)/\eps^2)$ (Proposition~\ref{prop:width_le_d}); adaptive lower
+        bounds $T > d^2/(100\eps^2)$, resp.\ $T > d^2/(400\eps^2)$, for $\delta < 1/6$
+        (Theorems~\ref{thm:lower_hypercube_pm} and~\ref{thm:lower_hypercube_01}).
+  \item $m$-sets with $d - m + 1 \ge 20m$ (the paper writes $m \le d/21$): non-adaptive
+        upper bound $O((d\log(1/\delta) + md\log(ed/m))/\eps^2)$
+        (Proposition~\ref{prop:width_finite} with $\log\binom dm \le m\log(ed/m)$); adaptive
+        lower bound $T > m(d-m+1)/(2500\eps^2)$ for $\delta < 2/9$ (Theorem~\ref{thm:lower_msets}).
+        The gap is the factor $\log(d/m)$.
+  \item Multi-task bandits with block sizes $d_1,\dots,d_m \ge 2$: non-adaptive upper bound
+        $O\big((d\log(1/\delta) + (\sum_j\sqrt{d_j\log d_j})^2)/\eps^2\big)$. Here the
+        multi-task set $\Xs$ is not spanning, so Theorem~\ref{thm:upper} is applied to the
+        spanning action set $\Xs_r := U^\top\Xs \subset \R^{r}$, $r = d - m + 1 \le d$, with
+        $U$ the orthonormal basis of $\Span\Xs$ of Lemma~\ref{lem:multitask_basis}: it gives
+        a fixed-design $(\eps,\delta)$-PAC algorithm on $\Xs_r$ with budget
+        $\lceil 600(\gw(\Xs_r)^2 + r\log(2/\delta))/\eps^2\rceil$, where
+        $\gw(\Xs_r) = \gw_{\mathrm{int}}(\Xs) \le \sum_j\sqrt{2d_j\log d_j}$
+        (Definition~\ref{def:width_subspace}, Proposition~\ref{prop:width_multitask}); this
+        algorithm is transported to $\Xs$ by Lemma~\ref{lem:log_gains_subspace_transport}
+        (play $Uu$ instead of $u$; $\ip{Uu}{\theta} = \ip{u}{U^\top\theta}$), and the transported
+        algorithm is again a deterministic fixed design on $\Xs$ with a deterministic
+        recommendation. Adaptive lower bound
+        $T > (\sum_j\sqrt{d_j})^2/(20000\eps^2)$ for $\delta < 0.4$
+        (Theorem~\ref{thm:lower_multitask}). The gap is at most the factor $\max_j\log d_j$.
+\end{itemize}
+For the hypercubes and the $m$-sets, the adaptive lower bounds are also what yields the
+width lower bounds of Corollary~\ref{cor:width_structured}. The region algorithm of
+Theorem~\ref{thm:log_gains} gives, for the multi-armed bandit $\Xs = \{e_1,\dots,e_d\}$, the
+bound $O(d\log(1/\delta)/\eps^2)$ of Median Elimination, and more generally saves a factor
+$\log d$ over the finite-set bound whenever $\abs\Xs = d^{O(1)}$ and $\delta$ is constant.
+\end{remark}

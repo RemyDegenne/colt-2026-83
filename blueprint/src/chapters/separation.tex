@@ -1,0 +1,382 @@
+\chapter{A polynomial separation between adaptive and non-adaptive algorithms}
+\label{chap:separation}
+
+This chapter formalizes Section~2.5 and Appendix~I of the paper: an action set
+$\Xs \subset \R^{kd}$, a union of $k$ unit balls living in $k$ disjoint blocks of $d$
+coordinates, on which every non-adaptive algorithm needs $\Omega(kd^2/\eps^2)$ samples while
+an adaptive algorithm succeeds with $O(kd\log(k/\delta)/\eps^2 + d^2/\eps^2)$ samples. The
+target is Theorem~7 of the paper (Theorem~\ref{thm:separation}). The adaptive algorithm
+first runs the norm estimation procedure of Chapter~\ref{chap:norm} on each block to locate
+the block containing a near-optimal arm, then identifies a good arm in that block with the
+basis design of Lemma~\ref{lem:ball_identification}; the two phases are composed with
+Lemma~\ref{lem:composition}. The non-adaptive lower bound deviates from the paper: instead of
+the cited adaptive lower bound of Chen et al.\ \cite{chen2024assouad} we restrict a fixed
+design to the block receiving the fewest points (Lemma~\ref{lem:block_restriction}) and apply
+our own non-adaptive lower bound (Theorem~\ref{thm:lower_nonadaptive}) with the width of the
+unit ball (Proposition~\ref{prop:width_ball}, $\gw(\ball_d)^2 \ge d^2/3$). The class of
+non-adaptive algorithms is therefore that of Definition~\ref{def:fixed_design}: deterministic
+fixed designs with an arbitrary (possibly randomized) recommendation kernel, whereas the
+paper's Theorem~7 speaks of ``possibly randomized non-adaptive'' algorithms
+(Remark~\ref{rem:separation_gap}). The block-ball set is spanning
+(Lemma~\ref{lem:block_ball_basic}), which is the hypothesis needed wherever
+Theorem~\ref{thm:lower_nonadaptive}, Theorem~\ref{thm:lower_adaptive} or the Gaussian width
+(Definition~\ref{def:width}, Proposition~\ref{prop:width_ball} on the spanning set $\ball_d$)
+is used below. Throughout,
+$k, d \ge 1$ are integers with $kd \ge 2$; the comparison of the two bounds uses
+$d \le k \le d^2$.
+
+\section{The block-ball action set}
+\label{sec:separation_set}
+
+\begin{definition}[Block-ball action set]\label{def:block_ball_set}
+\uses{def:arm_set}
+For $i \in \{1,\dots,k\}$ let $B_i := \{(i-1)d + 1, \dots, id\}$ be the $i$-th block of
+coordinates of $\R^{kd}$, let $\iota_i : \R^d \to \R^{kd}$ be the isometric embedding which
+places a vector on the coordinates of $B_i$ and $0$ elsewhere, and let
+$\pi_i : \R^{kd} \to \R^d$ be the projection on the coordinates of $B_i$, so that
+$\pi_i\circ\iota_i = \mathrm{id}$, $\ip{\iota_i u}{v} = \ip{u}{\pi_i v}$ and
+$\norm{\iota_i u} = \norm u$. Define
+\[
+  \Xs_i := \{ x \in \R^{kd} : \supp(x) \subseteq B_i,\ \norm{x} \le 1 \} = \iota_i(\ball_d),
+  \qquad
+  \Xs := \bigcup_{i=1}^k \Xs_i .
+\]
+For $\theta \in \R^{kd}$ we write $\theta^{(i)} := \pi_i\theta \in \R^d$ for its $i$-th block,
+so $\theta = \sum_i\iota_i\theta^{(i)}$ and $\norm{\theta}^2 = \sum_i\norm{\theta^{(i)}}^2$.
+\end{definition}
+
+\textbf{Lean remark.} With $\R^{kd}$ encoded as \texttt{EuclideanSpace ℝ (Fin k × Fin d)}
+the blocks are $\{i\}\times\mathrm{Fin}\ d$ (0-indexed) and $\iota_i$, $\pi_i$ are the
+obvious linear maps; $\Xs_i \cap \Xs_j = \{0\}$ for $i \ne j$, so an element of $\Xs$
+determines its block unless it is $0$. Where a block index is needed for a point of $\Xs$
+we use the smallest one.
+
+\begin{lemma}[Basic properties of the block-ball set]\label{lem:block_ball_basic}
+\uses{def:block_ball_set, def:regret}
+$\Xs$ is a compact subset of $\ball_{kd}$ with $\Span(\Xs) = \R^{kd}$, hence an action set in
+the sense of Definition~\ref{def:arm_set}. For every $\theta \in \R^{kd}$ and every $i$,
+\[
+  \max_{x \in \Xs_i}\ip{x}{\theta} = \norm{\theta^{(i)}},
+  \qquad
+  \max_{x \in \Xs}\ip{x}{\theta} = \max_{1\le i\le k}\norm{\theta^{(i)}},
+\]
+and for $x \in \Xs_i$, $\ip{x}{\theta} = \ip{\pi_i x}{\theta^{(i)}}$ with $\pi_i x \in \ball_d$.
+Consequently the simple regret of $\rec \in \Xs_i$ is
+$r(\rec,\theta) = \max_j\norm{\theta^{(j)}} - \ip{\pi_i\rec}{\theta^{(i)}}$ and
+$Z(\theta) \le 2\max_j\norm{\theta^{(j)}} \le 2\norm{\theta}$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:block_ball_set}
+Each $\Xs_i = \iota_i(\ball_d)$ is the continuous image of a compact set, and a finite union
+of compact sets is compact. $\Xs$ contains every basis vector $e_m$ ($m \in B_i$ for some
+$i$), so it spans $\R^{kd}$; and $\norm{\iota_i u} = \norm u \le 1$ gives $\Xs \subseteq \ball_{kd}$.
+For $x = \iota_i u$ with $u \in \ball_d$, $\ip{x}{\theta} = \ip{u}{\theta^{(i)}} \le \norm{\theta^{(i)}}$
+by Cauchy--Schwarz, with equality for $u = \theta^{(i)}/\norm{\theta^{(i)}}$ (any $u$ if
+$\theta^{(i)} = 0$). Taking the maximum over $i$ gives the second identity, and the regret
+formula follows from Definition~\ref{def:regret}. Finally
+$Z(\theta) = \max_x\ip{x}{\theta} + \max_y\ip{y}{-\theta} = 2\max_j\norm{\theta^{(j)}}$.
+\end{proof}
+
+\section{Lower bound for non-adaptive algorithms}
+\label{sec:separation_lower}
+
+\begin{lemma}[Restriction of a fixed design to a block]\label{lem:block_restriction}
+\uses{def:fixed_design, def:block_ball_set, lem:block_ball_basic, def:pac}
+Let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design with recommendation kernel $\rho$ (from
+$\R^T$ to $\Xs$), and for $t < T$ let $\beta(t)$ be the smallest $j$ with $x_t \in \Xs_j$;
+let $S_i := \{t < T : \beta(t) = i\}$ and $T_i := \abs{S_i}$, so that $\sum_i T_i = T$. Fix
+a block $i$ and consider the fixed design $(\pi_i x_t)_{t \in S_i}$ on $\ball_d$ (of length
+$T_i$, in the order of $S_i$) with the recommendation kernel $\rho_i$ from $\R^{T_i}$ to
+$\ball_d$ defined as follows: given $y' \in \R^{T_i}$, draw $\eta'' \sim \Normal(0, I_{T - T_i})$,
+form $y \in \R^T$ by placing $y'$ on the coordinates $S_i$ and $\eta''$ on the others, draw
+$\rec \sim \rho(y)$ and output $\pi_i\rec \in \ball_d$. Then for every $\vartheta \in \R^d$,
+with $\theta := \iota_i\vartheta$:
+\begin{enumerate}
+  \item[(i)] under $\nu_\theta$ on $\Xs$ the observations outside $S_i$ are pure noise:
+        $y_t = \eta_t$ for $t \notin S_i$;
+  \item[(ii)] the law of $(y, \rec)$ for the original design under $\nu_\theta$ coincides
+        with the law of $(y, \rec)$ constructed inside $\rho_i$ when the restricted design is
+        run on $\ball_d$ under $\nu_\vartheta$;
+  \item[(iii)] $r_{\Xs}(\rec, \theta) = r_{\ball_d}(\pi_i\rec, \vartheta)$ pathwise.
+\end{enumerate}
+Consequently, if the original algorithm is $(\eps,\delta)$-PAC on $\Xs$, the restricted
+fixed-design algorithm (budget $T_i$) is $(\eps,\delta)$-PAC on $\ball_d$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:fixed_design_law, lem:block_ball_basic, lem:gauss_pi}
+(i) For $t \notin S_i$, $x_t \in \Xs_j$ with $j \ne i$ (if $x_t \in \Xs_i$ then
+$\beta(t) \le i$, and $\beta(t) < i$ means $x_t \in \Xs_{\beta(t)}$; in both cases
+$\supp x_t \cap B_i = \emptyset$ unless $x_t = 0$), so $\ip{x_t}{\theta} = 0$ since
+$\supp\theta \subseteq B_i$; for $t \in S_i$, $\ip{x_t}{\theta} = \ip{\pi_ix_t}{\vartheta}$
+(Lemma~\ref{lem:block_ball_basic}).
+
+(ii) By Lemma~\ref{lem:fixed_design_law} the original observation vector is
+$y = X\theta + \eta$, $\eta \sim \Normal(0,I_T)$, i.e.\ $y_{S_i} = X_i\vartheta + \eta_{S_i}$ with
+$X_i$ the matrix of the restricted design and $y_{S_i^c} = \eta_{S_i^c}$, where
+$\eta_{S_i}$ and $\eta_{S_i^c}$ are independent standard Gaussian vectors
+(Lemma~\ref{lem:gauss_pi}). The restricted design on $\ball_d$ under $\nu_\vartheta$ produces
+$y' = X_i\vartheta + \eta'$ with $\eta' \sim \Normal(0, I_{T_i})$, and $\rho_i$ adds an
+independent $\eta'' \sim \Normal(0, I_{T-T_i})$; so the assembled $y$ has the law
+$\Normal(X\theta, I_T)$ in both constructions, and $\rec \sim \rho(y)$ in both.
+
+(iii) By Lemma~\ref{lem:block_ball_basic},
+$\max_{x\in\Xs}\ip{x}{\theta} = \max_j\norm{\theta^{(j)}} = \norm\vartheta = \max_{u\in\ball_d}\ip{u}{\vartheta}$,
+and $\ip{\rec}{\theta} = \ip{\pi_i\rec}{\vartheta}$ for every $\rec \in \R^{kd}$ since
+$\theta = \iota_i\vartheta$. Note that $\pi_i\rec \in \ball_d$ because
+$\norm{\pi_i\rec} \le \norm{\rec} \le 1$; if $\rec \in \Xs_j$ with $j \ne i$ then
+$\pi_i\rec = 0$.
+
+The PAC claim follows from (ii) and (iii): the events $\{r_{\Xs}(\rec,\theta) \le \eps\}$
+and $\{r_{\ball_d}(\pi_i\rec,\vartheta) \le \eps\}$ have the same probability. The case
+$T_i = 0$ is inside the framework (Definition~\ref{def:bai_alg} allows budget $0$): the
+restricted design is empty, $y' \in \R^0$ carries no information, and $\rho_i$ is the
+probability measure on $\ball_d$ obtained by drawing $\eta'' \sim \Normal(0,I_T)$,
+$\rec \sim \rho(\eta'')$ and projecting; its law does not depend on $\vartheta$, and
+Lemma~\ref{lem:singular_design_fails} (with $T = 0$) shows that such a procedure is not
+$(\eps,\delta)$-PAC for $\delta < 1/2$.
+\end{proof}
+
+\textbf{Lean remark.} The recommendation kernel $\rho_i$ is the composition of the kernel
+$y' \mapsto \Normal(0,I_{T-T_i})$ (assembling $y$) with $\rho$ and with the deterministic
+kernel of $\pi_i$; this is where the randomness allowed in Definition~\ref{def:bai_alg}
+is used. The equality of laws in (ii) is an equality of two composition-products of a
+Gaussian measure with kernels, obtained from Lemma~\ref{lem:fixed_design_law} on both sides.
+
+\begin{theorem}[Non-adaptive lower bound for the block-ball set]\label{thm:separation_lower_nonadaptive}
+\uses{def:block_ball_set, lem:block_ball_basic, def:fixed_design, def:pac}
+Let $\eps \in (0,1]$. Recall that $\Xs$ is a spanning action set in $\R^{kd}$
+(Lemma~\ref{lem:block_ball_basic}).
+\begin{enumerate}
+  \item[(i)] If a fixed-design algorithm (Definition~\ref{def:fixed_design}: a deterministic
+        design $x_0,\dots,x_{T-1} \in \Xs$ with an arbitrary, possibly randomized,
+        recommendation kernel; budget $T \ge 0$) is $(\eps,\delta)$-PAC on $\Xs$ with
+        $\delta \le 1/10$, then
+        \[
+          T \ge \frac{k d^2}{210\,\eps^2} .
+        \]
+  \item[(ii)] If any identification algorithm (adaptive or not) with budget $T$ is
+        $(\eps,\delta)$-PAC on $\Xs$ with $\delta < 1/16$, then
+        $T \ge c_{\mathrm{ad}}\,kd\log(1/\delta)/\eps^2$, where $c_{\mathrm{ad}}$ is the constant of
+        Theorem~\ref{thm:lower_adaptive}.
+\end{enumerate}
+In particular every fixed-design $(\eps,\delta)$-PAC algorithm with $\delta < 1/16$ has
+budget at least
+$\tfrac12\big( c_{\mathrm{ad}}\,kd\log(1/\delta) + kd^2/210 \big)/\eps^2$.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:block_restriction, thm:lower_nonadaptive, prop:width_ball, thm:lower_adaptive, lem:singular_design_fails, lem:block_ball_basic}
+(i) With the notation of Lemma~\ref{lem:block_restriction}, $\sum_i T_i = T$, so some block
+$i^*$ has $T_{i^*} \le T/k$ (pigeonhole). By Lemma~\ref{lem:block_restriction} the restricted
+design on $\ball_d$ with budget $T_{i^*}$ is $(\eps,\delta)$-PAC on $\ball_d$.
+
+\emph{The case $T_{i^*} = 0$} (which includes $T = 0$) is excluded by
+Lemma~\ref{lem:singular_design_fails} applied to the empty restricted design on $\ball_d$
+(budget $0$, $\Sigma_0 = 0$ singular), which contradicts $\delta \le 1/10 < 1/2$. The direct
+argument is one paragraph: if $T_{i^*} = 0$, no design point lies in block $i^*$, so for
+$\theta = \iota_{i^*}\vartheta$ every observation is pure noise, $y = \eta \sim \Normal(0,I_T)$
+(Lemma~\ref{lem:block_restriction}(i)), and the law of $(y,\rec)$, namely
+$\Normal(0,I_T)\otimes\rho$, does not depend on $\vartheta$. Take a unit vector $u \in \R^d$
+and $\vartheta_\pm := \pm 2\eps u$. By Lemma~\ref{lem:block_ball_basic},
+$\max_{x\in\Xs}\ip{x}{\iota_{i^*}\vartheta_\pm} = \norm{\vartheta_\pm} = 2\eps$, so for every
+$\rec \in \Xs$,
+$r(\rec,\iota_{i^*}\vartheta_+) + r(\rec,\iota_{i^*}\vartheta_-)
+= 4\eps - \ip{\rec}{\iota_{i^*}(\vartheta_+ + \vartheta_-)} = 4\eps$ pathwise; hence at least
+one of the two regrets exceeds $\eps$ on every outcome, and since both are evaluated under
+the same law, $\Prob_{\theta_+}(r > \eps) + \Prob_{\theta_-}(r > \eps) \ge 1$ with
+$\theta_\pm := \iota_{i^*}\vartheta_\pm$. One of the two instances therefore fails with
+probability at least $1/2 > \delta$, contradicting the PAC property.
+
+\emph{The case $T_{i^*} \ge 1$.} The unit ball $\ball_d$ is spanning, so
+Theorem~\ref{thm:lower_nonadaptive} applies on $\ball_d$ (budget $T_{i^*} \ge 1$,
+$\delta \le 1/10$) and gives
+$T_{i^*} \ge \gw(\ball_d)^2/(70\eps^2)$, and Proposition~\ref{prop:width_ball} gives
+$\gw(\ball_d)^2 \ge d^2/3$. Hence $T \ge kT_{i^*} \ge kd^2/(210\eps^2)$.
+
+(ii) $\Xs$ is a spanning action set in $\R^{kd}$ with $kd \ge 2$
+(Lemma~\ref{lem:block_ball_basic}), so Theorem~\ref{thm:lower_adaptive} applies directly with
+dimension $kd$.
+
+The last claim is $T \ge \max(a,b) \ge (a+b)/2$.
+\end{proof}
+
+\section{The adaptive block algorithm}
+\label{sec:separation_algorithm}
+
+\begin{lemma}[Transporting an algorithm on $\ball_d$ to a block]\label{lem:separation_block_embedding}
+\uses{def:block_ball_set, def:env, def:bai_alg, def:norm_estimator}
+Let $\mathrm{alg}$ be an algorithm with actions in $\ball_d$ and budget $N$, and fix a block $i$.
+The \emph{transported algorithm} $\iota_i\mathrm{alg}$ is an algorithm with action type
+$\Xs$ (its actions lie in $\Xs_i \subseteq \Xs$: the map used is $\iota_i : \ball_d \to \Xs_i$
+composed with the inclusion $\Xs_i \hookrightarrow \Xs$): it
+runs $\mathrm{alg}$ on the history with actions projected by $\pi_i$ and plays $\iota_i(x) \in \Xs$
+whenever $\mathrm{alg}$ would play $x$. For every $\theta \in \R^{kd}$, if $(x_t,y_t)_{t<N}$ is
+an algorithm-environment sequence for $(\iota_i\mathrm{alg}, \nu_\theta)$ on $\Xs$, then
+$(\pi_ix_t, y_t)_{t<N}$ is an algorithm-environment sequence for $(\mathrm{alg}, \nu_{\theta^{(i)}})$
+on $\ball_d$. In particular any estimate or recommendation computed by $\mathrm{alg}$ from its
+history has, under $\nu_\theta$, the law it has under $\nu_{\theta^{(i)}}$ on $\ball_d$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:env, lem:block_ball_basic}
+The reward kernel of $\nu_\theta$ at $\iota_i(x)$ is
+$\Normal(\ip{\iota_ix}{\theta}, 1) = \Normal(\ip{x}{\theta^{(i)}}, 1)$
+(Lemma~\ref{lem:block_ball_basic}), which is the reward kernel of $\nu_{\theta^{(i)}}$ at $x$.
+The policy of $\iota_i\mathrm{alg}$ is the image by $\iota_i$ of the policy of $\mathrm{alg}$
+applied to the projected history, and $\pi_i\circ\iota_i = \mathrm{id}$, so the projected
+process satisfies the defining conditional-law conditions of an algorithm-environment
+sequence for $(\mathrm{alg},\nu_{\theta^{(i)}})$ (LML \texttt{IsAlgEnvSeq}); uniqueness of the
+trajectory law gives the claim about estimates.
+\end{proof}
+
+\textbf{Lean remark.} This is the analogue, for the non-invertible isometric embedding
+$\iota_i$, of the transformation lemma \ref{lem:transform_preserves_pac} used for the
+adaptive lower bound; it is a statement about mapping actions by a measurable map $\phi$
+such that the environments correspond ($\kappa_\theta \circ \phi = \kappa_{\theta'}$), which
+holds for any stationary environments and could be stated at that level of generality. The
+map $\phi : \ball_d \to \Xs$, $u \mapsto \iota_i u$, is continuous hence measurable between
+the subtypes, and the policy kernels of $\iota_i\mathrm{alg}$ are the images of those of
+$\mathrm{alg}$ by $\phi$ (\texttt{Kernel.map}), applied to the history mapped by $\pi_i$ on
+its action coordinates; the action type of $\iota_i\mathrm{alg}$ is the subtype $\Xs$, as
+required to compose it with other algorithms on $\Xs$ (Lemma~\ref{lem:composition}).
+
+\begin{definition}[Block algorithm]\label{def:block_algorithm}
+\uses{def:block_ball_set, def:meta_algorithm, lem:ball_identification, lem:composition, lem:separation_block_embedding}
+Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The \emph{block algorithm} on $\Xs$ is the
+sequential composition (Lemma~\ref{lem:composition}) of the following phases.
+\begin{enumerate}
+  \item[(1)] For $i = 1, \dots, k$ in turn, run the transported meta-algorithm
+        $\iota_i\mathrm{NormEst}(\eps/4, \delta/(2k))$ (Definition~\ref{def:meta_algorithm},
+        Lemma~\ref{lem:separation_block_embedding}) and record its estimate $\hat r_i$. This
+        phase uses $k\,N_{\mathrm{norm}}(\eps/4, \delta/(2k))$ rounds. Let
+        $\hat i := \argmax_i\hat r_i$ (smallest index in case of ties).
+  \item[(2)] Run the transported basis-design algorithm of
+        Lemma~\ref{lem:ball_identification} with parameters $(\eps/2, \delta/2)$ on block
+        $\hat i$: with $n_2 := \lceil 4(8d + 48\log(2/\delta))/\eps^2 \rceil$, play
+        $\iota_{\hat i}(e_m)$ for each $m \le d$, $n_2$ times each, let $\hat\vartheta \in \R^d$
+        be the vector of empirical means, and recommend
+        $\rec := \iota_{\hat i}(\hat\vartheta/\norm{\hat\vartheta})$ (or $\iota_{\hat i}(e_1)$ if
+        $\hat\vartheta = 0$). This phase uses $dn_2$ rounds.
+\end{enumerate}
+The total budget is $N_{\mathrm{sep}}(\eps,\delta) := k\,N_{\mathrm{norm}}(\eps/4,\delta/(2k)) + dn_2$.
+\end{definition}
+
+\textbf{Lean remark.} Phase (1) is itself a $k$-fold composition of algorithms with action
+type $\Xs$ (each $\iota_i\mathrm{NormEst}$ has action type $\Xs$ by
+Lemma~\ref{lem:separation_block_embedding}); the index $\hat i$ is a
+measurable function of the phase-(1) history $h$ with values in $\{1,\dots,k\}$, and phase (2)
+is the fixed design of Lemma~\ref{lem:ball_identification} transported by $\iota_{\hat i}$,
+again with action type $\Xs$: a deterministic algorithm parametrized by $\hat i$, which is
+the ``$\mathrm{alg}_2(h)$'' of Lemma~\ref{lem:composition}. The map
+$h \mapsto \iota_{\hat i(h)}\mathrm{alg}$ is measurable in $h$ because $\hat i$ takes finitely
+many values: on each of the measurable sets $\{\hat i = i\}$ it is the constant algorithm
+$\iota_i\mathrm{alg}$, so its policy kernels are finite case distinctions of kernels
+(\texttt{Kernel.piecewise}), and Lemma~\ref{lem:composition} applies.
+
+\begin{lemma}[Selection of a good block]\label{lem:block_selection}
+\uses{def:block_algorithm}
+For every $\theta \in \R^{kd}$, with probability at least $1 - \delta/2$ under the block
+algorithm run against $\nu_\theta$,
+\[
+  \abs{\hat r_i - \norm{\theta^{(i)}}} \le \frac{\eps}{4} \ \text{ for all } i \le k,
+  \qquad\text{and hence}\qquad
+  \norm{\theta^{(\hat i)}} \ge \max_{1\le i\le k}\norm{\theta^{(i)}} - \frac{\eps}{2} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{thm:norm_estimation, lem:separation_block_embedding, lem:composition}
+By Lemma~\ref{lem:separation_block_embedding} and Theorem~\ref{thm:norm_estimation}, the
+run on block $i$ is a run of $\mathrm{NormEst}(\eps/4,\delta/(2k))$ against $\nu_{\theta^{(i)}}$ on
+$\ball_d$, so $\Prob(|\hat r_i - \norm{\theta^{(i)}}| > \eps/4) \le \delta/(2k)$; by
+Lemma~\ref{lem:composition} this bound holds conditionally on the history of the earlier
+blocks, hence unconditionally. A union bound over the $k$ blocks gives the first claim with
+probability at least $1 - \delta/2$. On this event, with $i_* \in \argmax_i\norm{\theta^{(i)}}$,
+\[
+  \norm{\theta^{(\hat i)}} \ge \hat r_{\hat i} - \frac\eps4 \ge \hat r_{i_*} - \frac\eps4
+  \ge \norm{\theta^{(i_*)}} - \frac\eps2 .
+\]
+\end{proof}
+
+\begin{theorem}[Polynomial separation; Theorem~7 of the paper]\label{thm:separation}
+\uses{def:block_algorithm, def:pac, thm:separation_lower_nonadaptive}
+Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The block algorithm is $(\eps,\delta)$-PAC on $\Xs$,
+with budget
+\[
+  N_{\mathrm{sep}}(\eps,\delta)
+  \le \frac{1600192\,kd\log(8k/\delta) + 33\,d^2}{\eps^2}
+  \le C_{\mathrm{sep}}\,\frac{kd\log(8k/\delta) + d^2}{\eps^2},
+  \qquad C_{\mathrm{sep}} := 2\cdot 10^6 .
+\]
+If $d \le k$, this is at most $2C_{\mathrm{sep}}\,kd\big(\log(1/\delta) + \log(8k)\big)/\eps^2$,
+whereas by Theorem~\ref{thm:separation_lower_nonadaptive} every non-adaptive
+$(\eps,\delta)$-PAC algorithm with $\delta < 1/16$ needs at least
+$\tfrac12\big(c_{\mathrm{ad}}\,kd\log(1/\delta) + kd^2/210\big)/\eps^2$ samples. Here
+``non-adaptive'' means a deterministic fixed design with an arbitrary (possibly randomized)
+recommendation kernel, the class of Definition~\ref{def:fixed_design} and of
+Theorem~\ref{thm:lower_nonadaptive}; see Remark~\ref{rem:separation_gap}.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:block_selection, lem:ball_identification, lem:separation_block_embedding, lem:composition, lem:block_ball_basic, thm:norm_estimation, thm:separation_lower_nonadaptive}
+\emph{Correctness.} Let $G_1$ be the event of Lemma~\ref{lem:block_selection},
+$\Prob_\theta(G_1) \ge 1 - \delta/2$, an event of the phase-(1) history. Conditionally on a
+phase-(1) history in $G_1$ (which fixes $\hat i$), phase (2) is, by
+Lemma~\ref{lem:separation_block_embedding}, a run of the algorithm of
+Lemma~\ref{lem:ball_identification} with parameters $(\eps/2,\delta/2)$ against
+$\nu_{\theta^{(\hat i)}}$ on $\ball_d$ (that lemma needs no width machinery and no spanning
+hypothesis beyond $\ball_d$ itself), so with conditional probability at least $1 - \delta/2$
+its recommendation $\rec' := \hat\vartheta/\norm{\hat\vartheta}$ satisfies
+$\norm{\theta^{(\hat i)}} - \ip{\rec'}{\theta^{(\hat i)}} \le \eps/2$. On this event, by
+Lemma~\ref{lem:block_ball_basic} with $\rec = \iota_{\hat i}\rec' \in \Xs_{\hat i}$,
+\[
+  r(\rec,\theta)
+  = \Big( \max_i\norm{\theta^{(i)}} - \norm{\theta^{(\hat i)}} \Big)
+  + \Big( \norm{\theta^{(\hat i)}} - \ip{\rec'}{\theta^{(\hat i)}} \Big)
+  \le \frac\eps2 + \frac\eps2 = \eps .
+\]
+Lemma~\ref{lem:composition} (with $\delta' = \delta/2$ and conditional failure $\delta/2$)
+gives $\Prob_\theta(r(\rec,\theta) \le \eps) \ge 1 - \delta$.
+
+\emph{Budget.} By Theorem~\ref{thm:norm_estimation} with $(\eps/4, \delta/(2k))$, each run of
+phase (1) uses at most $10^5\,d\log(8k/\delta)\cdot 16/\eps^2$ rounds, so phase (1) uses at
+most $1.6\cdot10^6\,kd\log(8k/\delta)/\eps^2$ rounds. Phase (2) uses
+$dn_2 \le d\big( (32d + 192\log(2/\delta))/\eps^2 + 1 \big) \le (33d^2 + 192\,d\log(2/\delta))/\eps^2$
+(using $d \le d^2/\eps^2$), and $192\,d\log(2/\delta) \le 192\,kd\log(8k/\delta)$. Summing gives
+the first bound, and $1600192 \le C_{\mathrm{sep}}$, $33 \le C_{\mathrm{sep}}$ give the second. If
+$d \le k$ then $d^2 \le kd \le kd\log(8k/\delta)$ (as $\log(8k/\delta) \ge \log 8 > 1$), whence
+the third bound with $\log(8k/\delta) = \log(1/\delta) + \log(8k)$. The lower bound is
+Theorem~\ref{thm:separation_lower_nonadaptive}.
+\end{proof}
+
+\begin{remark}[The size of the gap]\label{rem:separation_gap}
+For $d \le k \le d^2$ and a fixed $\delta$, the adaptive budget is
+$O(kd\log k/\eps^2) = O(kd\log d/\eps^2)$ (since $\log k \le 2\log d$) while every
+non-adaptive algorithm needs $\Omega(kd^2/\eps^2)$: adaptivity gains a factor
+$\Omega(d/\log d)$, polynomial in the ambient dimension $kd \le d^3$. The paper phrases the
+lower bound as $\Omega(kd\log(1/\delta)/\eps^2 + kd^2/\eps^2)$ using the adaptive lower bound
+of Chen et al.\ \cite{chen2024assouad} on each block together with a padding argument for
+expected budgets; the route above through Theorem~\ref{thm:lower_nonadaptive} gives the same
+$kd^2$ term with the explicit constant $1/210$ for deterministic budgets and $\delta \le 1/10$,
+without any citation.
+
+\emph{Restriction of the comparison class.} The paper's Theorem~7 states the lower bound for
+``possibly randomized non-adaptive'' algorithms. The lower bound proved here
+(Theorem~\ref{thm:separation_lower_nonadaptive}(i)) covers only \emph{deterministic} fixed
+designs, with an arbitrary randomized recommendation rule: this is the class of
+Definition~\ref{def:fixed_design} and of Theorem~\ref{thm:lower_nonadaptive}, and it is the
+class in which Theorem~\ref{thm:separation} compares the block algorithm with non-adaptive
+ones. A non-adaptive algorithm whose design is drawn at random (independently of the
+observations) is not covered: for such an algorithm the pigeonhole step selects a
+block depending on the realized design, and the fixed-design lower bound would have to be
+applied conditionally on the design and integrated, which is not done here. The adaptive
+lower bound (ii) applies to every algorithm, randomized designs included, but only gives the
+$kd\log(1/\delta)$ term. This restriction is recorded in the list of deviations from the
+paper in the overview.
+
+The constant $C_{\mathrm{sep}}$ inherits the (unoptimized) constant
+$C_{\mathrm{norm}}$ of Theorem~\ref{thm:norm_estimation} multiplied by $16$ because the
+norm-estimation accuracy is $\eps/4$.
+\end{remark}

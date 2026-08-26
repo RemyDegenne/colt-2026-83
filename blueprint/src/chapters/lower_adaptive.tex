@@ -1,0 +1,542 @@
+\chapter{Lower bound for adaptive algorithms}
+\label{chap:lower_adaptive}
+
+This chapter proves Theorem~2 of the paper (Appendix~B.2, Theorem~\emph{main} and
+Lemma~\emph{baseline} there): for $d \ge 2$ and $\delta < 1/16$, every $(\eps,\delta)$-PAC
+identification algorithm on a spanning action set $\Xs$, adaptive or not, with a randomized
+recommendation or not,
+uses a budget $n \ge c_{\mathrm{ad}}\, d\log(1/\delta)/\eps^2$ with the explicit constant
+$c_{\mathrm{ad}} = 1/(11556 + 5760\sqrt2) \ge 1/20000$ (Theorem~\ref{thm:lower_adaptive}).
+The proof has three steps. First, a linear change of coordinates
+(Lemma~\ref{lem:transform_preserves_pac}) reduces to a \emph{normalized instance}
+$\Xs' \subseteq \ball_d$ containing unit vectors $v_1,\dots,v_m$ with
+$\sum_j \lambda_j v_jv_j^\top = I_d/d$ (Definition~\ref{def:normalized_instance}). Second, a
+two-point argument gives the baseline $n \ge c_0\log(1/(4\delta))/\eps^2$
+(Lemma~\ref{lem:baseline_lower}). Third, a PAC algorithm is turned into a test between
+$\theta = 0$ and the mixture of the $\theta^{(j)} = 3\eps v_j$
+(Lemma~\ref{lem:test_from_alg}), and the mixture's KL to $\Prob_0$ is at most
+$9N\eps^2/(2d)$ (Lemma~\ref{lem:mixture_kl}), which forces $N \ge (2d/(9\eps^2))\log(1/(8\delta))$
+(Lemma~\ref{lem:test_lower}).
+
+From the prerequisite chapters we use the divergence decomposition for algorithm-environment
+sequences (Theorem~\ref{thm:divergence_decomposition},
+Corollary~\ref{cor:divergence_decomposition_gaussian}), the fact that a common recommendation
+kernel does not change the KL (Lemma~\ref{lem:kl_data_processing_recommendation}), the
+Bretagnolle--Huber inequality (Lemma~\ref{lem:bretagnolle_huber}) and the convexity of the KL
+in its second argument for finite mixtures (Lemma~\ref{lem:kl_mixture_convex}), all from
+Chapter~\ref{chap:pre_info} (Mathlib \texttt{ProbabilityTheory.klDiv}; see
+\cite[Chapters~14 and~15]{lattimore2020bandit}), together with Gaussian mean concentration
+(Lemma~\ref{lem:gauss_mean_concentration}) and the sequential composition of algorithms
+(Lemma~\ref{lem:composition}).
+
+What is new with respect to the paper. The paper normalizes the instance with the L\"owner
+ellipsoid of $\conv(\Xs\cup(-\Xs))$ and John's theorem \cite{ball1997elementary}; we use
+instead the Kiefer--Wolfowitz theorem on $G$-optimal designs
+(Theorem~\ref{thm:kiefer_wolfowitz}, \cite{kiefer1960equivalence,pukelsheim2006optimal}),
+which is needed anyway for the upper bound and gives exactly the structure the argument
+uses (Remark~\ref{rem:lower_adaptive_john}). All constants are explicit, the recommendation
+is a Markov kernel, and the test built from the algorithm is an honest sequential
+composition in the sense of Lemma~\ref{lem:composition}. Throughout, $d \ge 2$; the spanning
+hypothesis on $\Xs$ enters only through Theorem~\ref{thm:kiefer_wolfowitz} and is stated where
+it is needed.
+
+\section{Linear transformations and the normalized instance}
+\label{sec:lower_adaptive_transform}
+
+\begin{lemma}[Linear transformation of an instance]\label{lem:transform_preserves_pac}
+\uses{def:arm_set, def:env, def:bai_alg, def:regret, def:pac}
+Let $M \in \R^{d\times d}$ be invertible and $\Xs' := M\Xs = \{Mx : x \in \Xs\}$. Then $\Xs'$
+is an action set (nonempty and compact), and it is spanning if $\Xs$ is. For every identification algorithm
+$\mathsf{Alg} = (\mathrm{alg}, \rho)$ on $\Xs$ with budget $n$ there is an identification
+algorithm $\mathsf{Alg}' = (\mathrm{alg}',\rho')$ on $\Xs'$ with budget $n$, the
+\emph{transformed algorithm}, with the following property. For $\theta \in \R^d$ put
+$\theta' := M^{-\top}\theta$ and let
+$\Phi\big((x_t,y_t)_{t<n}, \rec\big) := \big((Mx_t, y_t)_{t<n}, M\rec\big)$. Then the law
+$\Prob'_{\theta'}$ of $(\hist'_n, \rec')$ for $\mathsf{Alg}'$ against the environment
+$\nu'_{\theta'}$ on $\Xs'$ is the image of $\Prob_\theta$ by $\Phi$:
+\[
+  \Prob'_{\theta'} = \Phi_\#\Prob_\theta .
+\]
+Moreover $\ip{Mx}{\theta'} = \ip{x}{\theta}$ for all $x \in \R^d$, hence the simple regrets
+satisfy $r'(M\rec, \theta') = r(\rec,\theta)$ (with $r'$ the simple regret on $\Xs'$), and
+$\mathsf{Alg}'$ is $(\eps,\delta)$-PAC on $\Xs'$ if and only if $\mathsf{Alg}$ is
+$(\eps,\delta)$-PAC on $\Xs$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:env, def:bai_alg, def:pac, lem:noise_representation}
+\emph{$\Xs'$ is an action set.} $\Xs'$ is the nonempty image of a compact set by a continuous map,
+and if $\Span(\Xs) = \R^d$ then $\Span(M\Xs) = M\,\Span(\Xs) = M\R^d = \R^d$ since $M$ is invertible.
+
+\emph{Values.} $\ip{Mx}{M^{-\top}\theta} = x^\top M^\top M^{-\top}\theta = \ip{x}{\theta}$.
+Hence $\max_{x'\in\Xs'}\ip{x'}{\theta'} = \max_{x\in\Xs}\ip{Mx}{\theta'} = \max_{x\in\Xs}\ip{x}{\theta}$
+and $\ip{M\rec}{\theta'} = \ip{\rec}{\theta}$, so $r'(M\rec,\theta') = r(\rec,\theta)$.
+
+\emph{The transformed algorithm.} Let $\phi := (x \mapsto Mx)$, a homeomorphism from $\Xs$
+onto $\Xs'$, and let $\Phi_t$ be the induced bijection of histories of length $t$,
+$\Phi_t((x_s,y_s)_{s<t}) := ((Mx_s,y_s)_{s<t})$. Define $\mathrm{alg}'$ by pushing forward the
+initial action distribution of $\mathrm{alg}$ by $\phi$, and, at time $t \ge 1$, given a
+history $h'$ of length $t$ on $\Xs'$, by playing the image by $\phi$ of the action drawn by
+the policy of $\mathrm{alg}$ given $\Phi_t^{-1}(h')$. Define
+$\rho'(h') := \phi_\#\,\rho(\Phi_n^{-1}(h'))$. These are Markov kernels since $\phi$ and
+$\Phi_t^{-1}$ are measurable.
+
+\emph{Identification of the law.} Let $(\hist_n,\rec)$ have law $\Prob_\theta$, i.e.\ be an
+algorithm-environment sequence for $(\mathrm{alg},\nu_\theta)$ followed by
+$\rec \sim \rho(\hist_n)$. We check that $\Phi(\hist_n,\rec)$ is an algorithm-environment
+sequence for $(\mathrm{alg}',\nu'_{\theta'})$ followed by $\rho'$. Conditionally on the past
+$\Phi_t(\hist_t)$, the action $Mx_t$ has the image by $\phi$ of the conditional law of $x_t$
+given $\hist_t$, which is the policy of $\mathrm{alg}$ at $\Phi_t^{-1}\Phi_t(\hist_t) = \hist_t$,
+i.e.\ the policy of $\mathrm{alg}'$ at $\Phi_t(\hist_t)$. Conditionally on the past and on
+$Mx_t$, the observation $y_t$ has law $\Normal(\ip{x_t}{\theta}, 1) = \Normal(\ip{Mx_t}{\theta'},1)$,
+which is the reward kernel of $\nu'_{\theta'}$ evaluated at $Mx_t$
+(Definition~\ref{def:env}). Finally, conditionally on $\Phi_n(\hist_n)$, $M\rec$ has law
+$\phi_\#\rho(\hist_n) = \rho'(\Phi_n(\hist_n))$. By uniqueness of the law of an
+algorithm-environment sequence (\texttt{Learning.isAlgEnvSeq\_unique},
+Definition~\ref{def:bai_alg}), $\Phi_\#\Prob_\theta = \Prob'_{\theta'}$.
+
+\emph{PAC equivalence.} For every $\theta$,
+$\Prob'_{\theta'}(r'(\rec',\theta') \le \eps) = \Prob_\theta(r'(M\rec,\theta') \le \eps)
+= \Prob_\theta(r(\rec,\theta)\le\eps)$. Since $\theta \mapsto M^{-\top}\theta$ is a bijection
+of $\R^d$, the PAC condition for all $\theta'$ on $\Xs'$ is equivalent to the PAC condition
+for all $\theta$ on $\Xs$.
+\end{proof}
+
+\textbf{Lean remark.} The instance transformation acts on the \emph{action type}: the
+algorithms of $\mathsf{Alg}$ have actions in the subtype $\Xs$ and those of $\mathsf{Alg}'$ in
+the subtype $M\Xs$; $\phi$ is a \texttt{MeasurableEquiv} (indeed a \texttt{Homeomorph})
+between the two subtypes, and $\mathrm{alg}'$ is obtained by transporting the initial
+distribution and the policy kernels of $\mathrm{alg}$ along $\phi$ and $\Phi_t$
+(\texttt{Kernel.map} and \texttt{Kernel.comap}). The identification of the law is a general
+statement about LML algorithm-environment sequences transported along a measurable
+equivalence of the action type; it should be proved once in that generality (the
+environment $\nu'_{\theta'}$ composed with $\phi$ is $\nu_\theta$).
+
+\begin{definition}[Normalized instance]\label{def:normalized_instance}
+\uses{def:arm_set, thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, cor:g_optimal_normalized, lem:transform_preserves_pac}
+Let $\Xs$ be spanning and let $\lambda_G \in \simplex_{\Xs}$ be a $G$-optimal design with
+$A_G := A(\lambda_G) \succ 0$ (Theorem~\ref{thm:kiefer_wolfowitz}), with support $\{x_1, \dots, x_m\}$ ($m \ge 1$ distinct
+points of $\Xs$) and weights $\lambda_j := \lambda_{G,x_j} > 0$, $\sum_{j=1}^m \lambda_j = 1$.
+Set
+\[
+  M := d^{-1/2} A_G^{-1/2}, \qquad \Xs' := M\Xs, \qquad v_j := M x_j \quad (1 \le j \le m).
+\]
+By Corollaries~\ref{cor:g_optimal_norm_bound} and~\ref{cor:g_optimal_normalized}:
+$\Xs' \subseteq \ball_d$ is a spanning action set (Lemma~\ref{lem:transform_preserves_pac}),
+$v_j \in \Xs'$, $\norm{v_j} = 1$ for every $j$, and
+\[
+  \sum_{j=1}^m \lambda_j\, v_j v_j^\top = \frac{1}{d} I_d .
+\]
+In particular $m \ge d \ge 2$ (the left-hand side has rank at most $m$). We let $J$ be a random
+index in $\{1,\dots,m\}$ with $\Prob(J = j) = \lambda_j$, so that
+$\E[v_J v_J^\top] = I_d/d$. The statements of Sections~\ref{sec:lower_adaptive_baseline}
+and~\ref{sec:lower_adaptive_test} are about algorithms on the normalized instance $\Xs'$; there
+we write $\Prob_\theta$, $\E_\theta$ for the law of $(\hist, \rec)$ of the algorithm under
+consideration against the environment $\nu'_\theta$ of $\Xs'$ (Definition~\ref{def:bai_alg}),
+and $r$ for the simple regret on $\Xs'$.
+\end{definition}
+
+\begin{remark}[Kiefer--Wolfowitz instead of John]\label{rem:lower_adaptive_john}
+The paper obtains points $u_j \in \Xs\cap\sphere^{d-1}$ (after normalization by the L\"owner
+ellipsoid of $\conv(\Xs\cup(-\Xs))$) and weights $c_j > 0$ with $\sum_j c_j u_ju_j^\top = I_d$,
+$\sum_j c_j = d$, by John's theorem applied to the polar body. Definition~\ref{def:normalized_instance}
+provides the same data with $c_j = d\lambda_j$: after the linear map $M = d^{-1/2}A_G^{-1/2}$
+the support points of the $G$-optimal design are unit vectors whose weighted second-moment
+matrix is $I_d/d$, and $\Xs' \subseteq \ball_d$ because $\norm{A_G^{-1/2}x}^2 \le d$ for
+all $x \in \Xs$. Only these three facts are used below.
+\end{remark}
+
+\section{The baseline lower bound}
+\label{sec:lower_adaptive_baseline}
+
+\begin{lemma}[A well-separated pair of unit arms]\label{lem:separated_pair}
+\uses{def:normalized_instance}
+In the setting of Definition~\ref{def:normalized_instance},
+\[
+  \E\big[\ip{v_1}{v_J}^2\big] = \sum_{j=1}^m \lambda_j \ip{v_1}{v_j}^2 = \frac1d .
+\]
+Consequently there is $k \in \{1,\dots,m\}$ with $\ip{v_1}{v_k} \le 1/\sqrt d \le 1/\sqrt2$.
+Moreover, every $k$ with $\ip{v_1}{v_k} \le 1/\sqrt2$ satisfies $k \ne 1$ and
+\[
+  \norm{v_1 - v_k}^2 = 2 - 2\ip{v_1}{v_k} \ge 2 - \sqrt2 > 0 .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:normalized_instance}
+$\sum_j\lambda_j\ip{v_1}{v_j}^2 = v_1^\top\big(\sum_j\lambda_jv_jv_j^\top\big)v_1
+= v_1^\top (I_d/d) v_1 = \norm{v_1}^2/d = 1/d$. A weighted average with weights
+$\lambda_j > 0$, $\sum_j\lambda_j = 1$, is at least its smallest term, so some $k$ has
+$\ip{v_1}{v_k}^2 \le 1/d$, hence $\ip{v_1}{v_k} \le \abs{\ip{v_1}{v_k}} \le 1/\sqrt d$, and
+$1/\sqrt d \le 1/\sqrt2$ because $d \ge 2$. Now let $k$ be any index with
+$\ip{v_1}{v_k} \le 1/\sqrt2$. Since $\ip{v_1}{v_1} = 1 > 1/\sqrt2$, $k \ne 1$.
+Finally $\norm{v_1 - v_k}^2 = \norm{v_1}^2 + \norm{v_k}^2 - 2\ip{v_1}{v_k} = 2 - 2\ip{v_1}{v_k}
+\ge 2 - \sqrt2$.
+\end{proof}
+
+\begin{definition}[The two-point instance]\label{def:lower_adaptive_two_point_instance}
+\uses{def:normalized_instance, lem:separated_pair}
+In the setting of Definition~\ref{def:normalized_instance}, let $\eps > 0$ and let
+$k \in \{1,\dots,m\}$ be an index with $\ip{v_1}{v_k} \le 1/\sqrt2$, which exists by
+Lemma~\ref{lem:separated_pair}; by the same lemma $k \ne 1$, and the distance
+$\varrho := \norm{v_1 - v_k}$ satisfies $\varrho^2 \ge 2 - \sqrt2 > 0$. Define
+\[
+  u := \frac{v_1 - v_k}{\varrho} \in \sphere^{d-1}, \qquad
+  s := \frac{\ip{v_1}{u} + \ip{v_k}{u}}{2}, \qquad
+  \theta_+ := \frac{4\eps}{\varrho}\, u, \qquad \theta_- := -\frac{4\eps}{\varrho}\, u .
+\]
+(The letter $\varrho$ is used for this distance to avoid a clash with the recommendation
+kernel $\rho$.) Since $\ip{v_1 - v_k}{u} = \norm{v_1-v_k}^2/\varrho = \varrho$, we have
+$\ip{v_1}{u} = s + \varrho/2$ and $\ip{v_k}{u} = s - \varrho/2$.
+\end{definition}
+
+\begin{lemma}[Two-point instances and the induced test]\label{lem:two_point_test}
+\uses{def:lower_adaptive_two_point_instance, def:regret, def:pac}
+Let $\eps > 0$ and let $\varrho$, $u$, $s$, $\theta_\pm$ be as in
+Definition~\ref{def:lower_adaptive_two_point_instance}. For every $\rec \in \Xs'$:
+\begin{enumerate}
+  \item[(i)] if $r(\rec,\theta_+) \le \eps$ then $\ip{\rec}{u} \ge s + \varrho/4$;
+  \item[(ii)] if $r(\rec,\theta_-) \le \eps$ then $\ip{\rec}{u} \le s - \varrho/4$.
+\end{enumerate}
+Consequently, if an identification algorithm on $\Xs'$ with budget $n$ is
+$(\eps,\delta)$-PAC, then the $\{0,1\}$-valued measurable function
+$\hat H := \indic\{\ip{\rec}{u} \ge s\}$ of the recommendation satisfies
+\[
+  \Prob_{\theta_+}(\hat H = 0) \le \delta, \qquad \Prob_{\theta_-}(\hat H = 1) \le \delta .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:lower_adaptive_two_point_instance, def:regret, def:pac}
+Recall from Definition~\ref{def:lower_adaptive_two_point_instance} that
+$\ip{v_1}{u} = s + \varrho/2$ and $\ip{v_k}{u} = s - \varrho/2$.
+
+(i) $r(\rec,\theta_+) \le \eps$ means $\ip{\rec}{\theta_+} \ge \max_{x\in\Xs'}\ip{x}{\theta_+} - \eps
+\ge \ip{v_1}{\theta_+} - \eps$ (as $v_1 \in \Xs'$), i.e.\
+$\frac{4\eps}{\varrho}\ip{\rec}{u} \ge \frac{4\eps}{\varrho}\big(s + \frac\varrho2\big) - \eps$.
+Multiplying by $\varrho/(4\eps) > 0$: $\ip{\rec}{u} \ge s + \varrho/2 - \varrho/4 = s + \varrho/4$.
+
+(ii) Similarly $\ip{\rec}{\theta_-} \ge \ip{v_k}{\theta_-} - \eps$ reads
+$-\frac{4\eps}{\varrho}\ip{\rec}{u} \ge -\frac{4\eps}{\varrho}\big(s - \frac\varrho2\big) - \eps$, i.e.\
+$\ip{\rec}{u} \le s - \varrho/2 + \varrho/4 = s - \varrho/4$.
+
+For the last claim: by (i), $\{\hat H = 0\} = \{\ip{\rec}{u} < s\} \subseteq \{r(\rec,\theta_+) > \eps\}$,
+whose $\Prob_{\theta_+}$-probability is at most $\delta$ by the PAC property; by (ii),
+$\{\hat H = 1\} = \{\ip{\rec}{u} \ge s\} \subseteq \{r(\rec,\theta_-) > \eps\}$, of
+$\Prob_{\theta_-}$-probability at most $\delta$.
+\end{proof}
+
+\textbf{Lean remark.} $\hat H$ is the composition of the recommendation kernel $\rho$ with the
+measurable map $x \mapsto \indic\{\ip{x}{u}\ge s\}$ from $\Xs'$ to \texttt{Bool}; the pair
+(sampling rule, this composed kernel) is a \emph{test} in the sense of
+Definition~\ref{def:mixture_test} below. The events $\{\hat H = 0\}$, $\{\hat H = 1\}$ are
+events of $(\hist_n,\rec)$, as required by Lemma~\ref{lem:kl_data_processing_recommendation}.
+
+\begin{lemma}[KL divergence between the two-point instances]\label{lem:kl_two_instances}
+\uses{def:normalized_instance, def:lower_adaptive_two_point_instance, def:bai_alg}
+Let $\eps > 0$ and let $\varrho$, $\theta_\pm$ be as in
+Definition~\ref{def:lower_adaptive_two_point_instance}. For every identification algorithm on
+the normalized instance $\Xs' \subseteq \ball_d$ (Definition~\ref{def:normalized_instance})
+with budget $n$ (any sampling rule, any recommendation kernel),
+\[
+  \KL\big(\Prob_{\theta_+} \,\big\|\, \Prob_{\theta_-}\big) \le \frac{32\, n\, \eps^2}{\varrho^2} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:kl_data_processing_recommendation, cor:divergence_decomposition_gaussian, def:normalized_instance}
+By Lemma~\ref{lem:kl_data_processing_recommendation}, the KL between the laws of
+$(\hist_n,\rec)$ equals the KL between the laws of $\hist_n$ (the recommendation kernel is
+the same under both instances). By Corollary~\ref{cor:divergence_decomposition_gaussian} with
+$\theta_+ - \theta_- = \frac{8\eps}{\varrho}u$,
+\[
+  \KL\big(\Prob_{\theta_+}\big\|\Prob_{\theta_-}\big)
+  = \frac12\sum_{t<n}\E_{\theta_+}\big[\ip{x_t}{\theta_+ - \theta_-}^2\big]
+  = \frac{32\eps^2}{\varrho^2}\sum_{t<n}\E_{\theta_+}\big[\ip{x_t}{u}^2\big]
+  \le \frac{32\, n\,\eps^2}{\varrho^2},
+\]
+using $\abs{\ip{x_t}{u}} \le \norm{x_t}\norm{u} \le 1$ since $x_t \in \Xs' \subseteq \ball_d$
+(Definition~\ref{def:normalized_instance}) and $\norm{u} = 1$.
+\end{proof}
+
+\begin{lemma}[Baseline lower bound]\label{lem:baseline_lower}
+\uses{def:normalized_instance, def:pac}
+Let $\eps > 0$ and $\delta \in (0, 1/4)$. Every $(\eps,\delta)$-PAC identification algorithm
+on $\Xs'$ with budget $n$ satisfies
+\[
+  n \;\ge\; \frac{2 - \sqrt2}{32\,\eps^2}\,\log\frac{1}{4\delta} .
+\]
+In particular this holds for $\delta < 1/16$, the range of Theorem~\ref{thm:lower_adaptive}.
+\end{lemma}
+
+\begin{proof}
+\uses{def:lower_adaptive_two_point_instance, lem:two_point_test, lem:kl_two_instances, lem:bretagnolle_huber, lem:separated_pair}
+Fix $k$, $\varrho$, $u$, $s$ and $\theta_\pm$ as in
+Definition~\ref{def:lower_adaptive_two_point_instance} (the index $k$ exists by
+Lemma~\ref{lem:separated_pair}). Let $\hat H$ be the test of Lemma~\ref{lem:two_point_test} and $A := \{\hat H = 0\}$, an
+event of $(\hist_n,\rec)$. The Bretagnolle--Huber inequality (Lemma~\ref{lem:bretagnolle_huber})
+applied to $\mu = \Prob_{\theta_+}$, $\nu = \Prob_{\theta_-}$ gives
+\[
+  \Prob_{\theta_+}(\hat H = 0) + \Prob_{\theta_-}(\hat H = 1)
+  \ge \frac12\exp\big(-\KL(\Prob_{\theta_+}\|\Prob_{\theta_-})\big).
+\]
+The left-hand side is at most $2\delta$ by Lemma~\ref{lem:two_point_test}, so
+$\exp(-\KL) \le 4\delta$, i.e.\ $\KL(\Prob_{\theta_+}\|\Prob_{\theta_-}) \ge \log\frac{1}{4\delta}$,
+which is positive since $\delta < 1/4$. With Lemma~\ref{lem:kl_two_instances},
+$\frac{32n\eps^2}{\varrho^2} \ge \log\frac{1}{4\delta}$, i.e.\
+$n \ge \frac{\varrho^2}{32\eps^2}\log\frac1{4\delta}$, and $\varrho^2 \ge 2 - \sqrt2$
+(Lemma~\ref{lem:separated_pair}) together with $\log\frac{1}{4\delta} > 0$ gives the claim.
+\end{proof}
+
+\section{The mixture testing problem}
+\label{sec:lower_adaptive_test}
+
+\begin{definition}[Tests and the mixture testing problem]\label{def:mixture_test}
+\uses{def:normalized_instance, def:bai_alg}
+Let $\eps > 0$ and, for $1 \le j \le m$, $\theta^{(j)} := 3\eps\, v_j$. A \emph{test with budget
+$N \ge 1$} on $\Xs'$ is a pair $\mathsf{Test} = (\mathrm{alg}, \kappa)$ of an LML algorithm
+$\mathrm{alg}$ with actions in $\Xs'$ and observations in $\R$, and a Markov kernel $\kappa$
+from histories of length $N$ to $\{0,1\}$; run against $\nu'_\theta$ it produces
+$\hist_N$ and the \emph{decision} $\hat H \sim \kappa(\hist_N)$, and we write
+$\Prob^{\mathrm{test}}_\theta$ for the law of $(\hist_N,\hat H)$ (a probability measure on the
+product of the history space with $\{0,1\}$). A test is thus an identification algorithm in the
+sense of Definition~\ref{def:bai_alg} whose recommendation type is $\{0,1\}$ instead of $\Xs'$,
+and $\Prob^{\mathrm{test}}_\theta$ is its law in the sense of that definition; when the test is
+obtained from an identification algorithm $(\mathrm{alg},\rho)$ with budget $N$ by composing
+$\rho$ with a measurable map $f : \Xs' \to \{0,1\}$ (as in Lemma~\ref{lem:two_point_test}),
+$\Prob^{\mathrm{test}}_\theta$ is the image of the law $\Prob_\theta$ of $(\hist_N,\rec)$ under
+$(h, x) \mapsto (h, f(x))$. The two hypotheses are
+\[
+  H_0 :\ \theta = 0, \qquad H_1 :\ \theta = \theta^{(J)} \text{ with } J \sim \lambda_G ,
+\]
+with the corresponding laws
+\[
+  \Prob_0 := \Prob^{\mathrm{test}}_0 \quad\text{and}\quad
+  \Prob_1 := \sum_{j=1}^m \lambda_j\,\Prob^{\mathrm{test}}_{\theta^{(j)}} ,
+\]
+the latter being the finite mixture (with the weights $\lambda_j$ of
+Definition~\ref{def:normalized_instance}) of the laws of $(\hist_N,\hat H)$; it is a
+probability measure. We write $\E_0$ for the expectation under $\Prob_0$. The \emph{errors} of
+the test are $\Prob_0(\hat H = 1)$ and
+$\Prob_1(\hat H = 0) = \sum_j\lambda_j\Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0)$.
+\end{definition}
+
+\textbf{Lean remark.} A test is an identification algorithm whose recommendation type is
+\texttt{Bool} instead of $\Xs'$; both are instances of ``LML algorithm plus a recommendation
+kernel into a measurable type'', and the KL statements of Chapter~\ref{chap:pre_info}
+(Lemma~\ref{lem:kl_data_processing_recommendation}) are stated for an arbitrary
+recommendation type. The mixture $\Prob_1$ is the finite weighted sum of measures
+$\sum_j \lambda_j \bullet \Prob^{\mathrm{test}}_{\theta^{(j)}}$ (\texttt{Finset.sum} of \texttt{Measure}s with
+\texttt{ENNReal} weights); it is not the law of an algorithm-environment sequence for a
+single $\theta$, which is why the KL to it is controlled by convexity
+(Lemma~\ref{lem:kl_mixture_convex}) rather than by the divergence decomposition directly.
+
+\begin{lemma}[KL divergence to the mixture]\label{lem:mixture_kl}
+\uses{def:mixture_test}
+For every test with budget $N$ on $\Xs'$,
+\[
+  \KL(\Prob_0\|\Prob_1)
+  \le \sum_{j=1}^m \lambda_j\, \KL\big(\Prob_0 \big\| \Prob^{\mathrm{test}}_{\theta^{(j)}}\big)
+  = \frac{9\eps^2}{2}\sum_{t<N}\E_0\Big[ x_t^\top \Big(\sum_{j=1}^m\lambda_j v_jv_j^\top\Big) x_t \Big]
+  = \frac{9\eps^2}{2d}\sum_{t<N}\E_0\big[\norm{x_t}^2\big]
+  \le \frac{9 N \eps^2}{2d} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:kl_mixture_convex, lem:kl_data_processing_recommendation, cor:divergence_decomposition_gaussian, def:normalized_instance}
+The first inequality is the convexity of $\nu \mapsto \KL(\mu\|\nu)$ for the finite mixture
+$\Prob_1 = \sum_j\lambda_j\Prob^{\mathrm{test}}_{\theta^{(j)}}$ (Lemma~\ref{lem:kl_mixture_convex}). For each
+$j$, by Lemma~\ref{lem:kl_data_processing_recommendation} the KL between the laws of
+$(\hist_N,\hat H)$ under $0$ and $\theta^{(j)}$ equals the KL between the laws of $\hist_N$,
+and by Corollary~\ref{cor:divergence_decomposition_gaussian}
+\[
+  \KL\big(\Prob_0\big\|\Prob^{\mathrm{test}}_{\theta^{(j)}}\big)
+  = \frac12\sum_{t<N}\E_0\big[\ip{x_t}{0 - \theta^{(j)}}^2\big]
+  = \frac{9\eps^2}{2}\sum_{t<N}\E_0\big[\ip{x_t}{v_j}^2\big] .
+\]
+Note that the expectation is under $\Prob_0$ for every $j$. Multiplying by $\lambda_j$,
+summing over $j$ and exchanging the finite sum with the expectation,
+$\sum_j\lambda_j\ip{x_t}{v_j}^2 = x_t^\top\big(\sum_j\lambda_jv_jv_j^\top\big)x_t = \norm{x_t}^2/d$
+by Definition~\ref{def:normalized_instance}, which gives the two equalities. Finally
+$\norm{x_t} \le 1$ since $x_t \in \Xs' \subseteq \ball_d$.
+\end{proof}
+
+\begin{lemma}[Lower bound for the testing problem]\label{lem:test_lower}
+\uses{def:mixture_test}
+Let $\delta \in (0,1/8)$. Every test with budget $N$ on $\Xs'$ such that
+$\Prob_0(\hat H = 1) \le 2\delta$ and $\Prob_1(\hat H = 0) \le 2\delta$ satisfies
+\[
+  N \;\ge\; \frac{2d}{9\,\eps^2}\,\log\frac{1}{8\delta} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:bretagnolle_huber, lem:mixture_kl}
+Apply the Bretagnolle--Huber inequality (Lemma~\ref{lem:bretagnolle_huber}) to the
+probability measures $\mu = \Prob_0$, $\nu = \Prob_1$ and the event $A := \{\hat H = 1\}$:
+\[
+  4\delta \ge \Prob_0(\hat H = 1) + \Prob_1(\hat H = 0) \ge \frac12\exp\big(-\KL(\Prob_0\|\Prob_1)\big),
+\]
+so $\KL(\Prob_0\|\Prob_1) \ge \log\frac{1}{8\delta} > 0$ (as $\delta < 1/8$). By
+Lemma~\ref{lem:mixture_kl}, $\frac{9N\eps^2}{2d} \ge \log\frac{1}{8\delta}$.
+\end{proof}
+
+\begin{lemma}[A test built from a PAC algorithm]\label{lem:test_from_alg}
+\uses{def:mixture_test, def:pac, lem:composition}
+Let $\eps > 0$, $\delta \in (0,1)$ and let $\mathsf{Alg} = (\mathrm{alg},\rho)$ be an
+$(\eps,\delta)$-PAC identification algorithm on $\Xs'$ with budget $n$. Let
+\[
+  n_{\mathrm{est}} := \Big\lceil \frac{8\log(2/\delta)}{\eps^2} \Big\rceil, \qquad N := n + n_{\mathrm{est}} .
+\]
+Define the test $\mathsf{Test}$ with budget $N$ on $\Xs'$ as follows: for $t < n$ play as
+$\mathrm{alg}$; at time $n$ draw $x_n \sim \rho(\hist_n)$ (the recommendation of
+$\mathsf{Alg}$); for $n < t < N$ play $x_t := x_n$; let
+$\hat v := \frac{1}{n_{\mathrm{est}}}\sum_{s < n_{\mathrm{est}}} y_{n+s}$ and decide
+$\hat H := \indic\{\hat v > \eps\}$. Then
+\[
+  \Prob_0(\hat H = 1) \le \delta, \qquad
+  \Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0) \le 2\delta \ \text{ for every } j ,
+\]
+and therefore $\Prob_1(\hat H = 0) \le 2\delta$ as well.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:composition, lem:noise_representation, lem:gauss_mean_concentration, def:normalized_instance, def:pac, def:bai_alg}
+\emph{Construction.} $\mathsf{Test}$ is the sequential composition (Lemma~\ref{lem:composition})
+of $\mathrm{alg}_1 := \mathrm{alg}$ with $T_1 := n$ and, for a history $h$ of length $n$, the
+algorithm $\mathrm{alg}_2(h)$ whose initial action distribution is $\rho(h)$ and whose policy
+at every later time is deterministic: repeat the first action of the phase. The map
+$h \mapsto \mathrm{alg}_2(h)$ is measurable because $\rho$ is a kernel. The decision
+$\hat H$ is a deterministic measurable function of $\hist_N$, so $\kappa$ is the
+deterministic kernel, and $\Prob^{\mathrm{test}}_\theta$ is the law of $(\hist_N,\hat H)$ under
+the composition run against $\nu'_\theta$. Fix $\theta \in \R^d$.
+
+\emph{The second phase for a fixed first history.} Fix a history $h$ of length $n$ and write
+$\Prob^{h}$ for the law of the algorithm-environment sequence
+$(x_{n+s}, y_{n+s})_{s < n_{\mathrm{est}}}$ for $(\mathrm{alg}_2(h), \nu'_\theta)$. Under
+$\Prob^{h}$, $x_n \sim \rho(h)$, $x_{n+s} = x_n$ for all $s$, and by
+Lemma~\ref{lem:noise_representation} $y_{n+s} = \ip{x_n}{\theta} + \eta_{n+s}$ with
+$(\eta_{n+s})_{s<n_{\mathrm{est}}}$ i.i.d.\ $\Normal(0,1)$ independent of $x_n$. Let
+\[
+  \bar\eta := \frac{1}{n_{\mathrm{est}}}\sum_{s < n_{\mathrm{est}}}\big(y_{n+s} - \ip{x_{n+s}}{\theta}\big),
+  \qquad\text{so that}\qquad \hat v = \ip{x_n}{\theta} + \bar\eta ;
+\]
+$\bar\eta$ is a measurable function of the second-phase trajectory alone, and
+Lemma~\ref{lem:gauss_mean_concentration} gives
+$\Prob^{h}(\abs{\bar\eta} \ge \eps/2) \le 2\exp(-n_{\mathrm{est}}\eps^2/8) \le \delta$, because
+$n_{\mathrm{est}} \ge 8\log(2/\delta)/\eps^2$.
+
+\emph{Transfer to the composition.} Let $E := \{\abs{\bar\eta} < \eps/2\}$, a measurable set of
+second-phase trajectories, and $E_h := E$ for every $h$. The family $(E_h)_h$ does not depend on
+$h$, so it is jointly measurable in $(h,\cdot)$, and $\Prob^{h}(E_h) \ge 1 - \delta$ for
+\emph{every} $h$. The last assertion of Lemma~\ref{lem:composition}, applied with this family
+and $\delta' = 0$, gives $\Prob^{\mathrm{test}}_\theta(\abs{\bar\eta} < \eps/2) \ge 1 - \delta$.
+Moreover, by the composition-product structure of Lemma~\ref{lem:composition} ($\hist_n$ has the
+law of $\mathrm{alg}$ against $\nu'_\theta$, and given $\hist_n = h$ the first action of the
+second phase has law $\rho(h)$), the joint law of $(\hist_n, x_n)$ under the composition is
+$(\text{law of } \hist_n)\otimes\rho$, which is exactly the law $\Prob_\theta$ of $(\hist_n,\rec)$
+of $\mathsf{Alg}$ against $\nu'_\theta$ (Definition~\ref{def:bai_alg}); so every statement about
+$(\hist_n,\rec)$ under $\mathsf{Alg}$ holds for $(\hist_n, x_n)$ under $\mathsf{Test}$.
+
+\emph{Under $H_0$.} With $\theta = 0$, $\hat v = \bar\eta$, so
+$\{\hat H = 1\} = \{\bar\eta > \eps\} \subseteq \{\abs{\bar\eta} \ge \eps/2\}$ and
+$\Prob_0(\hat H = 1) \le \delta$. (The PAC property is not needed here.)
+
+\emph{Under $\theta^{(j)}$.} Since $v_j \in \Xs'$ and $\norm{v_j} = 1$,
+$\max_{x\in\Xs'}\ip{x}{\theta^{(j)}} \ge \ip{v_j}{3\eps v_j} = 3\eps$. By the PAC property
+of $\mathsf{Alg}$ transferred to $(\hist_n,x_n)$, with
+$\Prob^{\mathrm{test}}_{\theta^{(j)}}$-probability at least $1-\delta$,
+$\ip{x_n}{\theta^{(j)}} \ge \max_x\ip{x}{\theta^{(j)}} - \eps \ge 2\eps$. On the
+intersection of this event with $\{\abs{\bar\eta} < \eps/2\}$, which has probability at least
+$1 - 2\delta$ by the union bound, $\hat v \ge 2\eps - \eps/2 = 3\eps/2 > \eps$, i.e.\ $\hat H = 1$.
+Hence $\Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0) \le 2\delta$.
+
+\emph{Under $H_1$.} $\Prob_1(\hat H = 0) = \sum_j\lambda_j\Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0)
+\le 2\delta\sum_j\lambda_j = 2\delta$.
+\end{proof}
+
+\textbf{Lean remark.} The test is built by Lemma~\ref{lem:composition} and not by adding
+$\rec$ to the state: the second-phase algorithm $\mathrm{alg}_2(h)$ is the LML algorithm with
+initial distribution $\rho(h)$ and the deterministic policy ``play the action recorded at
+index $n$ of the history''; the recommendation of $\mathsf{Alg}$ is thus the action $x_n$,
+and the identity between the law of $(\hist_n, x_n)$ and $\Prob_\theta$ of
+Definition~\ref{def:bai_alg} is the composition-product structure of
+Lemma~\ref{lem:composition}; the good event is the $h$-independent family
+$E_h = \{\abs{\bar\eta} < \eps/2\}$, fed to Lemma~\ref{lem:composition} with $\delta' = 0$, so
+no conditional probability given $\hist_n$ has to be manipulated. The estimate $\hat v$ is the empirical mean of the observations
+of the second phase (LML \texttt{empMean}-style sums over the index range $[n, N)$), and
+$\kappa$ is \texttt{Kernel.deterministic} of the map $\hist_N \mapsto \indic\{\hat v > \eps\}$.
+
+\section{The adaptive lower bound}
+\label{sec:lower_adaptive_theorem}
+
+\begin{theorem}[Lower bound for adaptive algorithms]\label{thm:lower_adaptive}
+\uses{def:arm_set, def:pac}
+Let $\Xs$ be spanning, $d \ge 2$, $\eps > 0$ and $\delta \in (0, 1/16)$. Every $(\eps,\delta)$-PAC identification
+algorithm on $\Xs$ (adaptive or not, with any recommendation kernel) with budget $n$
+satisfies
+\[
+  n \;\ge\; c_{\mathrm{ad}}\,\frac{d\log(1/\delta)}{\eps^2},
+  \qquad
+  c_{\mathrm{ad}} := \frac{1}{11556 + 5760\sqrt2} \;\ge\; \frac{1}{20000} .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{lem:transform_preserves_pac, def:normalized_instance, lem:baseline_lower, lem:test_from_alg, lem:test_lower}
+\emph{Step 0: normalization.} Let $\mathsf{Alg}$ be $(\eps,\delta)$-PAC on $\Xs$ with budget
+$n$. By Lemma~\ref{lem:transform_preserves_pac} with $M = d^{-1/2}A_G^{-1/2}$
+(Definition~\ref{def:normalized_instance}, which uses that $\Xs$ is spanning), the transformed algorithm $\mathsf{Alg}'$ is
+$(\eps,\delta)$-PAC on $\Xs'$ with the same budget $n$. We apply the lemmas of
+Sections~\ref{sec:lower_adaptive_baseline} and~\ref{sec:lower_adaptive_test} to $\mathsf{Alg}'$.
+
+\emph{Step 1: three consequences of $\delta < 1/16$.} Write $L := \log(1/\delta) > \log 16 = 4\log 2$.
+Then
+\begin{enumerate}
+  \item[(a)] $\log\frac{1}{4\delta} = L - 2\log 2 \ge L - L/2 = L/2$;
+  \item[(b)] $\log\frac{2}{\delta} = L + \log 2 \le L + L/4 = \frac54 L$;
+  \item[(c)] $\log\frac{1}{8\delta} = L - 3\log 2 \ge L - \frac34 L = L/4$.
+\end{enumerate}
+
+\emph{Step 2: the baseline.} Let $c_0 := (2-\sqrt2)/32$. Lemma~\ref{lem:baseline_lower} and (a)
+give $n \ge c_0 L/(2\eps^2)$, i.e.\ $L/\eps^2 \le 2n/c_0$.
+
+\emph{Step 3: the budget of the test.} By (b) and $n \ge 1$,
+\[
+  n_{\mathrm{est}} = \Big\lceil\frac{8\log(2/\delta)}{\eps^2}\Big\rceil
+  \le \frac{8\log(2/\delta)}{\eps^2} + 1 \le \frac{10 L}{\eps^2} + 1
+  \le \frac{20}{c_0}\, n + n ,
+\]
+so the test of Lemma~\ref{lem:test_from_alg} built from $\mathsf{Alg}'$ has budget
+$N = n + n_{\mathrm{est}} \le (2 + 20/c_0)\, n$.
+
+\emph{Step 4: the testing lower bound.} That test has errors $\Prob_0(\hat H = 1) \le \delta \le 2\delta$
+and $\Prob_1(\hat H = 0) \le 2\delta$ (Lemma~\ref{lem:test_from_alg}), so Lemma~\ref{lem:test_lower}
+(applicable since $\delta < 1/16 < 1/8$) and (c) give
+\[
+  N \ge \frac{2d}{9\eps^2}\log\frac{1}{8\delta} \ge \frac{2d}{9\eps^2}\cdot\frac{L}{4} = \frac{d L}{18\,\eps^2}.
+\]
+
+\emph{Step 5: the constant.} Combining Steps~3 and~4,
+$n \ge \frac{N}{2 + 20/c_0} \ge \frac{dL}{18(2 + 20/c_0)\,\eps^2}$. Now
+$20/c_0 = 640/(2-\sqrt2) = 320(2+\sqrt2) = 640 + 320\sqrt2$, so
+$18(2 + 20/c_0) = 18(642 + 320\sqrt2) = 11556 + 5760\sqrt2$, which is $c_{\mathrm{ad}}^{-1}$.
+Finally $\sqrt2 \le 1.4143$ gives $5760\sqrt2 \le 8146.4$ and
+$11556 + 5760\sqrt2 \le 19702.4 \le 20000$, so $c_{\mathrm{ad}} \ge 1/20000$.
+\end{proof}
+
+\begin{remark}[On the constant and the hypotheses]\label{rem:lower_adaptive_constant}
+The paper only states $n = \Omega(d\log(1/\delta)/\eps^2)$; the constant
+$c_{\mathrm{ad}} \approx 5.1\cdot 10^{-5}$ obtained here is not optimized (the bound
+$n_{\mathrm{est}} \le (20/c_0 + 1)n$ of Step~3 is very crude: for the regime of interest,
+$n_{\mathrm{est}}$ is a small multiple of $\log(1/\delta)/\eps^2$ while $n$ is of order
+$d\log(1/\delta)/\eps^2$). The hypothesis $d \ge 2$ is used only in Lemma~\ref{lem:separated_pair}
+(through $1/\sqrt d \le 1/\sqrt2$), the spanning hypothesis only through
+Theorem~\ref{thm:kiefer_wolfowitz} in Definition~\ref{def:normalized_instance}, and $\delta < 1/16$ only in Step~1 of the proof of
+Theorem~\ref{thm:lower_adaptive}; the baseline lemma holds for $\delta < 1/4$ and the testing
+lower bound for $\delta < 1/8$. No upper bound on $\eps$ is needed. The bound applies in
+particular to fixed-design algorithms (Definition~\ref{def:fixed_design}), which are
+identification algorithms, and it is the $d\log(1/\delta)/\eps^2$ part of the paper's
+Theorem~3; the unit-ball case is sharpened in Corollary~\ref{cor:lower_ball_adaptive}.
+\end{remark}

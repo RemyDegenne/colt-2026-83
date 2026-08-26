@@ -1,0 +1,162 @@
+% In this file you should put the actual content of the blueprint.
+% It will be used both by the web and the print version.
+% It should *not* include the \begin{document}
+%
+% If you want to split the blueprint content into several files then
+% the current file can be a simple sequence of \input. Otherwise It
+% can start with a \section or \chapter for instance.
+
+\part{The power of adaptivity for \texorpdfstring{$\eps$}{epsilon}-best arm identification in linear bandits}
+\label{part:main}
+
+\textbf{Overview}
+
+This blueprint guides the Lean formalization of the paper
+\emph{On the Power of Adaptivity for $\eps$-Best Arm Identification in Linear Bandits}
+by Arnab Maiti, Yunbei Xu and Kevin Jamieson (COLT 2026). The paper studies the minimax
+sample complexity of $\eps$-best arm identification in linear bandits with Gaussian noise:
+a compact action set $\Xs \subset \R^d$ spanning $\R^d$, an unknown reward vector $\theta$,
+observations $y_t = \ip{x_t}{\theta} + \eta_t$, and the goal of returning $\rec \in \Xs$ with
+$\max_{x \in \Xs} \ip{x - \rec}{\theta} \le \eps$ with probability at least $1 - \delta$.
+Its results are:
+\begin{enumerate}
+  \item[(i)] a non-adaptive fixed-design algorithm with sample complexity
+        $O\big((d\log(1/\delta) + \gw(\Xs)^2)/\eps^2\big)$, where $\gw(\Xs)$ is a Gaussian
+        width term of the action set (Theorem~\ref{thm:upper});
+  \item[(ii)] matching lower bounds: $\Omega(d\log(1/\delta)/\eps^2)$ for every algorithm,
+        adaptive or not (Theorem~\ref{thm:lower_adaptive}), and
+        $\Omega(\gw(\Xs)^2/\eps^2)$ for non-adaptive fixed designs
+        (Theorem~\ref{thm:lower_nonadaptive});
+  \item[(iii)] properties of the Gaussian width term and its computation for structured
+        action sets (Chapter~\ref{chap:width});
+  \item[(iv)] structured action sets on which adaptivity yields at most logarithmic
+        improvements (Chapter~\ref{chap:log_gains}), through a Median-Elimination based
+        adaptive algorithm and adaptive lower bounds;
+  \item[(v)] an $\ell_2$-norm estimation procedure with sample complexity
+        $O(d\log(1/\delta)/\eps^2)$ (Theorem~\ref{thm:norm_estimation});
+  \item[(vi)] an action set on which adaptivity yields a polynomial-factor improvement over
+        every non-adaptive algorithm (Theorem~\ref{thm:separation}).
+\end{enumerate}
+
+\textbf{Goals of the formalization.} Two goals drive the organization of this document.
+First, formalize the main results of the paper. Second, build a reusable library, to be
+contributed to \emph{Lean Machine Learning} (LML) and Mathlib: the objects (linear bandits,
+PAC identification algorithms, fixed designs, optimal experimental design, Gaussian width,
+Gaussian concentration, sub-exponential variables, divergence decompositions, Median
+Elimination) are therefore introduced in the generality in which they are useful, even when
+the paper only needs a special case, and extra work is done when needed to reach that
+generality.
+
+\textbf{Deviations from the paper.} The blueprint departs from the paper whenever a
+different route is simpler to formalize while giving the same (or a stronger) statement;
+every such point is recorded in a remark next to the statement it concerns. The main ones:
+\begin{itemize}
+  \item The rounding of a design distribution to a fixed design of size $O(d)$ is proved by
+        a one-sided barrier argument in the style of Batson--Spielman--Srivastava
+        (Section~\ref{sec:rounding}) instead of the cited rounding procedures; the constant
+        $360$ of the paper becomes another absolute constant.
+  \item The Sudakov--Fernique inequality is only used in its ``covariance domination''
+        special case, which has a one-line proof by Jensen's inequality
+        (Lemma~\ref{lem:gauss_comparison}); the general inequality is only needed for the
+        secondary lower bound $\gw(\Xs) \ge \Omega(\sqrt{d \log d})$
+        (Chapter~\ref{chap:pre_sudakov}).
+  \item John's theorem in the proof of the adaptive lower bound is replaced by the
+        Kiefer--Wolfowitz theorem on $G$-optimal designs, which is needed anyway.
+  \item The Bayesian argument of the non-adaptive lower bound is done without Gaussian
+        conditioning, through an orthogonal decomposition and independence of uncorrelated
+        jointly Gaussian vectors.
+  \item Borell--TIS is obtained from the Maurey--Pisier Gaussian concentration argument,
+        with the constant $\cG = \pi^2/4$ in the exponent instead of $1$.
+  \item The large-norm regime of the $\ell_2$-norm estimation uses a deterministic
+        basis design instead of random Rademacher rows, which removes the need for
+        random-matrix concentration.
+  \item The lower bounds for structured sets are proved directly for randomized algorithms
+        (no Yao principle) and with a single argument for all block sizes.
+  \item Non-adaptive algorithms are deterministic fixed designs with an arbitrary (possibly
+        randomized) recommendation rule, the class of the paper's Theorem~3; the
+        $\Omega(kd^2/\eps^2)$ lower bound of the polynomial separation
+        (Theorem~\ref{thm:separation_lower_nonadaptive}) is stated for this class, whereas the
+        paper's Theorem~7 says ``possibly randomized non-adaptive''. Budgets are
+        deterministic (Remark~\ref{rem:stopping_times}).
+  \item The rank-one Hanson--Wright inequality used for the Rademacher directions is replaced
+        by an MGF bound for the square of a sub-Gaussian variable
+        (Lemma~\ref{lem:rademacher_square_subexp}), and the Gaussian Hanson--Wright inequality
+        by diagonalization (Lemma~\ref{lem:gauss_quadratic_form_subexp}); the paper's
+        tail-to-MGF lemma is not needed.
+\end{itemize}
+
+\textbf{Reading guide.}
+Part~\ref{part:main} follows the paper: Chapter~\ref{chap:model} sets up the model,
+Chapter~\ref{chap:design} the experimental design tools, Chapters~\ref{chap:upper}
+to~\ref{chap:lower_adaptive} the fixed-design upper bound and the lower bounds,
+Chapter~\ref{chap:width} the Gaussian width, Chapter~\ref{chap:log_gains} the structured
+sets, Chapter~\ref{chap:norm} the $\ell_2$-norm estimation and Chapter~\ref{chap:separation}
+the polynomial separation.
+Part~\ref{part:prereq} collects the probabilistic and information-theoretic prerequisites
+that are not in Mathlib or LML, decomposed into small lemmas: Gaussian vectors and linear
+Gaussian processes, Gaussian concentration, sub-exponential variables, divergences of
+algorithm-environment sequences, the Sudakov--Fernique inequality, Median Elimination and
+Gaussian posteriors of adaptively collected data.
+
+\textbf{Conventions.} An \emph{action set} is a nonempty compact subset of $\R^d$; the
+paper's standing assumption $\Span(\Xs) = \R^d$ (``spanning'') is stated explicitly in the
+results that need it (designs, widths, upper bounds), because the structured sets of
+Chapter~\ref{chap:log_gains} are not spanning. Time is $0$-indexed, as in LML: an algorithm with budget $T$ plays the
+actions $x_0, \dots, x_{T-1}$ and sums over $t < T$. All random objects live on a probability
+space $(\Omega, \mathcal{F}, \Prob)$ and $\E$ is the expectation under $\Prob$; when the
+reward vector matters we write $\Prob_\theta$, $\E_\theta$. Norms are Euclidean unless stated
+otherwise, and for a positive definite matrix $W$ we write $\norm{x}_W^2 := x^\top W x$.
+
+\textbf{Status.} Nothing is formalized yet. Each statement will carry a \verb+\lean+ tag naming
+its Lean declaration once formalized.
+
+\textbf{Blueprint author.} Rémy Degenne. Anyone is welcome to contribute!
+
+\input{chapters/model.tex}
+\input{chapters/design.tex}
+\input{chapters/upper.tex}
+\input{chapters/lower_nonadaptive.tex}
+\input{chapters/lower_adaptive.tex}
+\input{chapters/width.tex}
+\input{chapters/log_gains.tex}
+\input{chapters/norm_estimation.tex}
+\input{chapters/separation.tex}
+
+\part{Prerequisites to be added to Mathlib and LML}
+\label{part:prereq}
+
+\textbf{Overview}
+
+The proofs of Part~\ref{part:main} rely on several results of probability theory,
+information theory and bandit theory that are standard but not yet available in Mathlib or
+in LML. This part develops them, at the level of generality of a library: each chapter is a
+self-contained area that can be formalized (and contributed upstream) independently of the
+rest.
+\begin{itemize}
+  \item Chapter~\ref{chap:pre_gaussian}: Gaussian vectors, linear Gaussian processes,
+        suprema over compact index sets, comparison by covariance domination, expectation
+        of maxima and of norms.
+  \item Chapter~\ref{chap:pre_concentration}: Gaussian concentration for Lipschitz
+        functions (Maurey--Pisier) and the Borell--TIS inequality for linear Gaussian
+        processes.
+  \item Chapter~\ref{chap:pre_subexp}: sub-exponential random variables, squares of
+        Gaussian and Rademacher linear forms, Bernstein-type bounds.
+  \item Chapter~\ref{chap:pre_info}: Pinsker and Bretagnolle--Huber inequalities,
+        convexity of the Kullback--Leibler divergence, and the divergence decomposition for
+        algorithm-environment sequences.
+  \item Chapter~\ref{chap:pre_sudakov}: the Sudakov--Fernique inequality and the
+        expectation of the maximum of independent Gaussians (lower bound).
+  \item Chapter~\ref{chap:pre_median}: the Median Elimination algorithm for multi-armed
+        bandits.
+  \item Chapter~\ref{chap:pre_bayes}: likelihood ratios and Gaussian posteriors for
+        adaptively collected linear-Gaussian data, and the adaptive simple-regret lower
+        bound on the unit ball.
+\end{itemize}
+
+\input{chapters/prereq_gaussian.tex}
+\input{chapters/prereq_concentration.tex}
+\input{chapters/prereq_subexp.tex}
+\input{chapters/prereq_info.tex}
+\input{chapters/prereq_sudakov.tex}
+\input{chapters/prereq_median.tex}
+\input{chapters/prereq_bayes.tex}

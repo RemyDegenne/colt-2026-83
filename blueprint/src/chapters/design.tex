@@ -1,0 +1,841 @@
+\chapter{Optimal experimental design and rounding}
+\label{chap:design}
+
+This chapter collects the deterministic (linear-algebraic and convex-analytic) tools on which
+the fixed-design algorithm of Chapter~\ref{chap:upper} and the lower bounds of
+Chapters~\ref{chap:lower_nonadaptive} and~\ref{chap:lower_adaptive} rest. It proves:
+\begin{itemize}
+  \item the facts about the Loewner order, eigenvalues and matrix square roots that are used
+        throughout (Section~\ref{sec:design_loewner}); Mathlib already provides the order
+        (\texttt{Matrix.instPartialOrder}, scoped in \texttt{MatrixOrder}), positive
+        (semi)definiteness (\texttt{Matrix.PosDef}, \texttt{Matrix.PosSemidef}), the spectral
+        theorem (\texttt{Matrix.IsHermitian.spectral\_theorem}) and the square root through the
+        continuous functional calculus (\texttt{CFC.sqrt});
+  \item the existence of a $G$-optimal design, i.e.\ the ``$D$-optimal implies $G$-optimal''
+        half of the Kiefer--Wolfowitz theorem (Section~\ref{sec:design_kw}). This replaces the
+        use of John's theorem in the paper (Appendix~B.2) and gives the lemma stated without
+        proof in the paper's Appendix~B.1;
+  \item Carath\'eodory's theorem for design matrices, and the continuity and coercivity of
+        $A \mapsto \gwidth{\Xs}{A}$, which give a minimizer of the Gaussian width
+        (Section~\ref{sec:design_caratheodory});
+  \item a rounding theorem (Section~\ref{sec:rounding}): every design distribution $\lambda$ can
+        be rounded, for every budget $T \ge 4d$, to a multiset of $T$ points of its support whose
+        design matrix dominates $(T/4)A(\lambda)$ in the Loewner order. This replaces the rounding
+        procedures cited by the paper \cite{katz2020empirical,allen2021near}; the proof is the
+        one-sided barrier argument of Batson, Spielman and Srivastava \cite{batson2012twice}
+        with unit weights.
+\end{itemize}
+Nothing in this chapter is probabilistic except the two lemmas on the width, which only use
+the Gaussian facts of Chapter~\ref{chap:pre_gaussian}. Since action sets
+(Definition~\ref{def:arm_set}) are not assumed to span $\R^d$, every statement of this chapter
+that relies on the existence of a positive definite design
+(Lemma~\ref{lem:exists_posdef_design}) or on the width $\gw(\Xs)$ (Definition~\ref{def:width})
+carries an explicit hypothesis ``$\Xs$ is spanning''; the linear-algebra facts,
+Carath\'eodory's theorem, the continuity of the width and the rounding theorem hold for every
+action set.
+
+\textbf{Notation.} $\Sym$ is the space of symmetric real $d \times d$ matrices, $\PSD \subset
+\Sym$ the positive semidefinite ones and $\PD \subset \PSD$ the positive definite ones. For
+$A, B \in \Sym$ we write $A \preceq B$ if $B - A \in \PSD$ and $A \prec B$ if $B - A \in \PD$
+(the \emph{Loewner order}). For $A \in \Sym$ we write $\lambda_1(A) \le \dots \le \lambda_d(A)$
+for its eigenvalues with multiplicity, $\lambda_{\min}(A) := \lambda_1(A)$,
+$\lambda_{\max}(A) := \lambda_d(A)$, and $\norm{A}_{\mathrm{op}}$ for the operator norm,
+$\norm{A}_F$ for the Frobenius norm. For $W \in \PD$, $\norm{x}_W^2 := x^\top W x$.
+
+\section{The Loewner order and matrix square roots}
+\label{sec:design_loewner}
+
+\begin{lemma}[Loewner order and quadratic forms]\label{lem:loewner_quadratic}
+Let $A, B \in \Sym$. Then $A \preceq B$ if and only if $x^\top A x \le x^\top B x$ for every
+$x \in \R^d$, and $A \prec B$ if and only if $x^\top A x < x^\top B x$ for every $x \ne 0$.
+In particular $\preceq$ is a partial order on $\Sym$ compatible with addition and with
+multiplication by nonnegative scalars, and $A \preceq B$ together with $B \preceq A$ implies
+$A = B$.
+\end{lemma}
+
+\begin{proof}
+By definition $B - A \in \PSD$ means that $x^\top(B-A)x \ge 0$ for all $x$, which is the first
+claim; the second is the definition of $\PD$. Compatibility with addition and nonnegative
+scalars is immediate on quadratic forms. Antisymmetry: if $x^\top(B-A)x = 0$ for all $x$ then
+the symmetric matrix $B - A$ vanishes (polarization: $2\,x^\top(B-A)y = (x+y)^\top(B-A)(x+y) -
+x^\top(B-A)x - y^\top(B-A)y = 0$ for all $x, y$).
+\end{proof}
+
+\textbf{Lean remark.} Mathlib's \texttt{Matrix.PosSemidef} is defined through
+\texttt{Matrix.posSemidef\_iff\_dotProduct\_mulVec} (Hermitian plus nonnegative quadratic form),
+and the order instance is \texttt{Matrix.le\_iff : A ≤ B ↔ (B - A).PosSemidef} in
+\texttt{Mathlib/Analysis/Matrix/Order.lean} (\texttt{open scoped MatrixOrder}). Over $\R$ the
+Hermitian condition is symmetry. Antisymmetry is part of the \texttt{PartialOrder} instance.
+
+\begin{lemma}[Congruence preserves the Loewner order]\label{lem:loewner_congruence}
+\uses{lem:loewner_quadratic}
+Let $A, B \in \Sym$ with $A \preceq B$ and let $M \in \R^{k \times d}$. Then
+$M A M^\top \preceq M B M^\top$ in $\mathcal{S}^k$; in particular (take $A = 0$) congruence by
+an arbitrary matrix $M$ maps positive semidefinite matrices to positive semidefinite matrices.
+If moreover $k = d$, $M$ is invertible and
+$A \prec B$, then $M A M^\top \prec M B M^\top$; in particular congruence by an invertible
+matrix maps $\PD$ into $\PD$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_quadratic}
+For $z \in \R^k$, $z^\top M (B-A) M^\top z = (M^\top z)^\top (B - A) (M^\top z) \ge 0$ by
+Lemma~\ref{lem:loewner_quadratic}; with $A = 0$ this says that $MBM^\top$ is positive
+semidefinite whenever $B$ is, for every $M$. If $M$ is invertible and $z \ne 0$ then $M^\top z \ne 0$, so
+the quantity is $> 0$ when $A \prec B$.
+\end{proof}
+
+\textbf{Lean remark.} \texttt{Matrix.PosSemidef.mul\_mul\_conjTranspose\_same} and
+\texttt{Matrix.PosDef.mul\_mul\_conjTranspose\_same} (the latter needs injectivity of
+$M^\top$, i.e.\ \texttt{Function.Injective M.vecMul}) applied to $B - A$.
+
+\begin{lemma}[Eigenvalues and quadratic forms]\label{lem:eigen_quadratic_bounds}
+\uses{lem:loewner_quadratic}
+Let $A \in \Sym$. There is an orthonormal basis $u_1, \dots, u_d$ of $\R^d$ with
+$A u_j = \lambda_j(A) u_j$, i.e.\ $A = U \operatorname{diag}(\lambda_1(A),\dots,\lambda_d(A))
+U^\top = \sum_j \lambda_j(A) u_j u_j^\top$ with $U = [u_1 \cdots u_d]$ orthogonal. Consequently:
+\begin{enumerate}
+  \item[(i)] $\lambda_{\min}(A)\norm{x}^2 \le x^\top A x \le \lambda_{\max}(A)\norm{x}^2$ for all
+        $x$, with equality on the left at $x = u_1$ and on the right at $x = u_d$; hence
+        $\lambda_{\min}(A) = \min_{\norm{x} = 1} x^\top A x$, $A \in \PSD$ iff
+        $\lambda_{\min}(A) \ge 0$, $A \in \PD$ iff $\lambda_{\min}(A) > 0$, and for $c \in \R$,
+        $cI \preceq A$ iff $\lambda_{\min}(A) \ge c$.
+  \item[(ii)] If $A \preceq B$ then $\lambda_{\min}(A) \le \lambda_{\min}(B)$; in particular
+        $\lambda_{\min}(A + P) \ge \lambda_{\min}(A)$ for $P \in \PSD$.
+  \item[(iii)] $\norm{A}_{\mathrm{op}} = \max_j \abs{\lambda_j(A)}$, which equals
+        $\lambda_{\max}(A)$ when $A \in \PSD$.
+  \item[(iv)] $\tr A = \sum_j \lambda_j(A)$, $\det A = \prod_j \lambda_j(A)$,
+        $\tr(A^2) = \sum_j \lambda_j(A)^2 \le d\,\max_j\lambda_j(A)^2$, and for every $c \in \R$
+        the matrix $A - cI$ has the same eigenvectors with eigenvalues $\lambda_j(A) - c$.
+  \item[(v)] If $A \in \PD$ then $A^{-1} = U \operatorname{diag}(1/\lambda_j(A)) U^\top \in \PD$,
+        $A^{-2} = U\operatorname{diag}(1/\lambda_j(A)^2)U^\top$, $\tr(A^{-1}) = \sum_j 1/\lambda_j(A)$,
+        $\tr(A^{-2}) = \sum_j 1/\lambda_j(A)^2$ and $\norm{A^{-1}}_{\mathrm{op}} =
+        1/\lambda_{\min}(A)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_quadratic}
+The existence of the orthonormal eigenbasis is the spectral theorem for real symmetric
+matrices. Writing $x = \sum_j \ip{x}{u_j} u_j$ gives $x^\top A x = \sum_j \lambda_j \ip{x}{u_j}^2$
+and $\norm{x}^2 = \sum_j \ip{x}{u_j}^2$, from which (i) follows by bounding each $\lambda_j$ by
+$\lambda_{\min}$ and $\lambda_{\max}$. (ii) is (i) combined with
+Lemma~\ref{lem:loewner_quadratic}: $\lambda_{\min}(B) = \min_{\norm{x}=1} x^\top B x \ge
+\min_{\norm{x}=1} x^\top A x$. (iii): $\norm{Ax}^2 = \sum_j \lambda_j^2 \ip{x}{u_j}^2 \le
+\max_j \lambda_j^2 \norm{x}^2$ with equality at the corresponding $u_j$. (iv): trace and
+determinant are invariant under conjugation by $U$; $A^2 = U\operatorname{diag}(\lambda_j^2)U^\top$;
+$A - cI = U\operatorname{diag}(\lambda_j - c)U^\top$. (v): $U\operatorname{diag}(1/\lambda_j)U^\top$
+is a two-sided inverse of $A$ since $U^\top U = I$, and the remaining identities are (iii) and
+(iv) applied to $A^{-1}$.
+\end{proof}
+
+\textbf{Lean remark.} \texttt{Matrix.IsHermitian.spectral\_theorem},
+\texttt{Matrix.IsHermitian.eigenvalues}, \texttt{Matrix.IsHermitian.eigenvectorUnitary},
+\texttt{Matrix.IsHermitian.det\_eq\_prod\_eigenvalues},
+\texttt{Matrix.IsHermitian.trace\_eq\_sum\_eigenvalues} (in
+\texttt{Mathlib/Analysis/Matrix/Spectrum.lean}); \texttt{Matrix.PosDef.eigenvalues\_pos},
+\texttt{Matrix.PosSemidef.eigenvalues\_nonneg}. Mathlib's eigenvalues are indexed by the
+index type of the matrix (not sorted), so $\lambda_{\min}$ is
+\texttt{Finset.univ.inf'} of the eigenvalue function; statement (i) is the only place where
+sorting matters and it is best stated as ``$\min_j \lambda_j \norm{x}^2 \le x^\top A x$''.
+The identity $x^\top A x = \sum_j \lambda_j \ip{x}{u_j}^2$ is the coordinate form of the
+spectral theorem in the eigenbasis (\texttt{OrthonormalBasis} of \texttt{EuclideanSpace}).
+
+\begin{lemma}[Square roots of positive definite matrices]\label{lem:sqrt_props}
+\uses{lem:eigen_quadratic_bounds}
+Let $A \in \PD$ with spectral decomposition $A = U\operatorname{diag}(\lambda_j)U^\top$. The
+matrix $A^{1/2} := U\operatorname{diag}(\sqrt{\lambda_j})U^\top$ is the unique $S \in \PSD$ with
+$S^2 = A$ (for $A \in \PSD$ the same formula defines the unique positive semidefinite square
+root). Moreover:
+\begin{enumerate}
+  \item[(i)] $A^{1/2} \in \PD$, it commutes with $A$, its eigenvalues are $\sqrt{\lambda_j(A)}$
+        and $\lambda_{\min}(A^{1/2}) = \sqrt{\lambda_{\min}(A)}$;
+  \item[(ii)] $A^{-1/2} := (A^{1/2})^{-1} = (A^{-1})^{1/2} = U\operatorname{diag}(\lambda_j^{-1/2})U^\top
+        \in \PD$, $(A^{-1/2})^2 = A^{-1}$, $\norm{A^{-1/2}}_{\mathrm{op}} = \lambda_{\min}(A)^{-1/2}$;
+  \item[(iii)] $A^{1/2} A^{-1/2} = A^{-1/2} A^{1/2} = I$ and $A^{-1/2} A A^{-1/2} = I$,
+        $A^{1/2} A^{-1} A^{1/2} = I$;
+  \item[(iv)] $x^\top A x = \norm{A^{1/2}x}^2$ and $x^\top A^{-1} x = \norm{A^{-1/2}x}^2$ for all
+        $x$; in particular $\norm{x}_{A^{-1}} = \norm{A^{-1/2}x}$;
+  \item[(v)] $\ip{u}{v} = \ip{A^{1/2}u}{A^{-1/2}v}$ for all $u, v \in \R^d$;
+  \item[(vi)] for $c > 0$, $(cA)^{1/2} = \sqrt c\, A^{1/2}$ and $(cA)^{-1/2} = c^{-1/2}A^{-1/2}$;
+        and $I^{1/2} = I$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{lem:eigen_quadratic_bounds}
+$S_0 := U\operatorname{diag}(\sqrt{\lambda_j})U^\top$ is symmetric with $S_0^2 =
+U\operatorname{diag}(\lambda_j)U^\top = A$ and is positive definite by
+Lemma~\ref{lem:eigen_quadratic_bounds}(i) since $\sqrt{\lambda_j} > 0$. Uniqueness: if $S \in
+\PSD$ and $S^2 = A$, then $S$ commutes with $A = S^2$, hence preserves the eigenspaces of $A$;
+on the eigenspace of $A$ for $\lambda$, $S$ is a positive semidefinite operator whose square is
+$\lambda\,\mathrm{id}$, hence (diagonalizing $S$ there) equals $\sqrt\lambda\,\mathrm{id}$; so
+$S = S_0$. (i) is read off the decomposition. (ii): $U\operatorname{diag}(\lambda_j^{-1/2})U^\top$
+is the inverse of $A^{1/2}$ and the positive square root of $A^{-1} =
+U\operatorname{diag}(\lambda_j^{-1})U^\top$ (Lemma~\ref{lem:eigen_quadratic_bounds}(v)), and its
+largest eigenvalue is $\lambda_{\min}(A)^{-1/2}$. (iii) follows from (ii). (iv): $x^\top A x =
+x^\top A^{1/2} A^{1/2} x = \norm{A^{1/2}x}^2$ since $A^{1/2}$ is symmetric, and likewise for
+$A^{-1}$. (v): $\ip{A^{1/2}u}{A^{-1/2}v} = u^\top A^{1/2}A^{-1/2} v = \ip{u}{v}$ by (iii).
+(vi): $cA = U\operatorname{diag}(c\lambda_j)U^\top$ and $\sqrt{c\lambda_j} = \sqrt c\sqrt{\lambda_j}$.
+\end{proof}
+
+\textbf{Lean remark.} Mathlib defines the square root through the continuous functional
+calculus: \texttt{CFC.sqrt} (\texttt{Mathlib/Analysis/SpecialFunctions/ContinuousFunctionalCalculus/Rpow/Basic.lean}),
+with \texttt{CFC.sqrt\_mul\_sqrt\_self}, \texttt{CFC.sqrt\_nonneg}, \texttt{CFC.sqrt\_unique},
+\texttt{CFC.sqrt\_eq\_iff}, and for matrices \texttt{Matrix.PosSemidef.inv\_sqrt :
+(CFC.sqrt A)⁻¹ = CFC.sqrt A⁻¹} and \texttt{Matrix.PosSemidef.det\_sqrt} in
+\texttt{Mathlib/Analysis/Matrix/Order.lean}. The explicit spectral formula is available through
+\texttt{Matrix.IsHermitian.cfc} and \texttt{Matrix.IsHermitian.cfc\_eq}
+(\texttt{Mathlib/Analysis/Matrix/HermitianFunctionalCalculus.lean}), which state that \texttt{cfc f A} equals $U\operatorname{diag}(f(\lambda_j))U^\top$; this is
+the bridge between the abstract \texttt{CFC.sqrt} and the concrete computations of this chapter.
+Since Lemma~\ref{lem:sqrt_props} is the only place where the definition of $A^{1/2}$ is unfolded,
+the rest of the blueprint can use whichever definition is convenient. Note that
+\texttt{CFC.sqrt A = 0} for $A$ not positive semidefinite; all uses below are for $A \in \PD$.
+
+\begin{lemma}[Inversion reverses the Loewner order]\label{lem:loewner_inv}
+\uses{lem:loewner_congruence, lem:eigen_quadratic_bounds, lem:sqrt_props}
+Let $A \in \PD$ and $B \in \Sym$ with $A \preceq B$. Then $B \in \PD$ and $B^{-1} \preceq A^{-1}$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_congruence, lem:loewner_quadratic, lem:eigen_quadratic_bounds, lem:sqrt_props}
+$B \in \PD$: for $x \ne 0$, $x^\top B x \ge x^\top A x > 0$ (Lemma~\ref{lem:loewner_quadratic}).
+Let $C := A^{-1/2} B A^{-1/2} \in \Sym$. Congruence of $A \preceq B$ by $M = A^{-1/2}$
+(Lemma~\ref{lem:loewner_congruence}) gives $I = A^{-1/2} A A^{-1/2} \preceq C$
+(Lemma~\ref{lem:sqrt_props}(iii)). By Lemma~\ref{lem:eigen_quadratic_bounds}(i) applied to
+$C - I$, every eigenvalue $\mu_j$ of $C$ satisfies $\mu_j \ge 1$; in particular $C \in \PD$.
+Write $C = V\operatorname{diag}(\mu_j)V^\top$ with $V$ orthogonal. Then
+$I - C^{-1} = V\operatorname{diag}(1 - 1/\mu_j)V^\top$ has nonnegative eigenvalues
+$1 - 1/\mu_j \ge 0$ (Lemma~\ref{lem:eigen_quadratic_bounds}(v)), so $C^{-1} \preceq I$. Now
+$C^{-1} = A^{1/2} B^{-1} A^{1/2}$ (indeed $A^{-1/2}BA^{-1/2}\cdot A^{1/2}B^{-1}A^{1/2} = I$ by
+Lemma~\ref{lem:sqrt_props}(iii)), and congruence of $C^{-1} \preceq I$ by $A^{-1/2}$ gives
+$B^{-1} = A^{-1/2} C^{-1} A^{-1/2} \preceq A^{-1/2} I A^{-1/2} = A^{-1}$.
+\end{proof}
+
+\textbf{Lean remark.} With the C$^*$-algebra structure on $\texttt{Matrix (Fin d) (Fin d) ℝ}$
+(scoped instances of \texttt{Mathlib/Analysis/CStarAlgebra/Matrix.lean}, operator norm), this is
+\texttt{CStarAlgebra.inv\_le\_inv} in
+\texttt{Mathlib/Analysis/CStarAlgebra/ContinuousFunctionalCalculus/Order.lean}, stated for units
+$a, b$ with $0 \le a \le b$. The proof above is the elementary route in case the instance
+plumbing (the order on matrices versus the C$^*$-algebra order,
+\texttt{Matrix.instStarOrderedRing}) turns out to be painful.
+
+\begin{lemma}[Scalar domination and inverses]\label{lem:loewner_scalar}
+\uses{lem:loewner_inv, lem:loewner_quadratic}
+Let $c > 0$, $A \in \PD$ and $B \in \Sym$ with $cA \preceq B$. Then $B \in \PD$,
+$B^{-1} \preceq c^{-1}A^{-1}$, and $\norm{x}_{B^{-1}}^2 \le c^{-1}\norm{x}_{A^{-1}}^2$ for every
+$x \in \R^d$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_inv, lem:loewner_quadratic}
+$cA \in \PD$, so Lemma~\ref{lem:loewner_inv} gives $B \in \PD$ and
+$B^{-1} \preceq (cA)^{-1} = c^{-1}A^{-1}$; the quadratic-form inequality is
+Lemma~\ref{lem:loewner_quadratic}.
+\end{proof}
+
+\begin{lemma}[Trace of the inverse: AM--HM]\label{lem:trace_inv_amhm}
+\uses{lem:eigen_quadratic_bounds}
+For $A \in \PD$, $\tr(A^{-1}) \ge d^2/\tr(A)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:eigen_quadratic_bounds}
+By Lemma~\ref{lem:eigen_quadratic_bounds}(iv)--(v), $\tr A = \sum_j \lambda_j$ and $\tr(A^{-1}) =
+\sum_j 1/\lambda_j$ with all $\lambda_j > 0$. By the Cauchy--Schwarz inequality,
+$d^2 = \big(\sum_j \sqrt{\lambda_j}\cdot\lambda_j^{-1/2}\big)^2 \le \sum_j\lambda_j\cdot\sum_j
+\lambda_j^{-1}$.
+\end{proof}
+
+\section{Kiefer--Wolfowitz: existence of a \texorpdfstring{$G$}{G}-optimal design}
+\label{sec:design_kw}
+
+Recall (Definition~\ref{def:design_matrix}) that design distributions $\lambda \in \simplex_{\Xs}$
+are finitely supported and that $\designset(\Xs) = \{A(\lambda)\} = \conv\{xx^\top : x \in \Xs\}$.
+The Kiefer--Wolfowitz theorem \cite{kiefer1960equivalence} (see also
+\cite[Chapter~9]{pukelsheim2006optimal} and \cite[Chapter~21]{lattimore2020bandit}) states that
+a design maximizes $\det A(\lambda)$ if and only if it minimizes $\max_{x \in \Xs}
+\norm{x}_{A(\lambda)^{-1}}^2$, and that the minimal value is $d$. We only need the implication
+``$D$-optimal $\Rightarrow$ $G$-optimal'' together with the value $d$.
+
+\begin{definition}[$G$-value of a matrix]\label{def:g_value}
+\uses{def:arm_set, lem:eigen_quadratic_bounds}
+For $A \in \PD$ the \emph{$G$-value} of $A$ on $\Xs$ is
+\[
+  g_{\Xs}(A) := \max_{x \in \Xs} x^\top A^{-1} x = \max_{x\in\Xs}\norm{x}_{A^{-1}}^2 .
+\]
+The maximum exists since $x \mapsto x^\top A^{-1} x$ is continuous and $\Xs$ is compact and
+nonempty.
+\end{definition}
+
+\begin{lemma}[The $G$-value of a design matrix is at least $d$]\label{lem:g_ge_d}
+\uses{def:g_value, def:design_matrix}
+Let $\lambda \in \simplex_{\Xs}$ with $A(\lambda) \in \PD$. Then
+\[
+  \sum_{x \in \supp\lambda} \lambda_x\, x^\top A(\lambda)^{-1} x = d ,
+\]
+hence $g_{\Xs}(A(\lambda)) \ge \max_{x\in\supp\lambda} x^\top A(\lambda)^{-1}x \ge d$. If
+$g_{\Xs}(A(\lambda)) = d$, then $x^\top A(\lambda)^{-1} x = d$ for every $x \in \supp\lambda$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:g_value, def:design_matrix}
+Write $A := A(\lambda)$. For each $x$, $x^\top A^{-1} x = \tr(A^{-1} x x^\top)$ (cyclicity of the
+trace). By linearity of the trace,
+$\sum_x \lambda_x x^\top A^{-1} x = \tr\big(A^{-1}\sum_x \lambda_x xx^\top\big) = \tr(A^{-1}A) =
+\tr(I_d) = d$. Since the $\lambda_x$ are nonnegative and sum to one, a weighted average equal to
+$d$ forces the maximum over the support to be $\ge d$, and $g_{\Xs}(A) \ge$ that maximum because
+$\supp\lambda \subset \Xs$. If $g_{\Xs}(A) = d$, all terms $x^\top A^{-1}x$, $x \in \supp\lambda$,
+are $\le d$ and their $\lambda$-average is $d$, so each equals $d$ (a nonnegative combination
+$\sum_x \lambda_x (d - x^\top A^{-1} x) = 0$ of nonnegative terms with $\lambda_x > 0$ vanishes
+termwise).
+\end{proof}
+
+\begin{definition}[$D$-optimal design matrix]\label{def:d_optimal}
+\uses{def:design_matrix}
+A \emph{$D$-optimal design matrix} is a matrix $A_D \in \designset(\Xs)$ maximizing $\det$ over
+$\designset(\Xs)$: $\det A_D = \max_{A \in \designset(\Xs)} \det A$.
+\end{definition}
+
+\begin{lemma}[Existence and positivity of a $D$-optimal design]\label{lem:exists_d_optimal}
+\uses{def:arm_set, def:d_optimal, lem:designset_basic, lem:exists_posdef_design, lem:eigen_quadratic_bounds}
+A $D$-optimal design matrix $A_D$ exists. Assume moreover that $\Xs$ is spanning. Then
+$\det A_D > 0$; consequently $A_D \in \PD$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:designset_basic, lem:exists_posdef_design, lem:eigen_quadratic_bounds}
+$\designset(\Xs)$ is compact and nonempty (Lemma~\ref{lem:designset_basic}) and $\det$ is
+continuous (a polynomial in the entries), so a maximizer exists. If $\Xs$ is spanning,
+Lemma~\ref{lem:exists_posdef_design} gives $A' \in \designset(\Xs) \cap \PD$, and
+$\det A' = \prod_j \lambda_j(A') > 0$ (Lemma~\ref{lem:eigen_quadratic_bounds}(i),(iv)); hence
+$\det A_D \ge \det A' > 0$. Finally $A_D \in \PSD$ (Lemma~\ref{lem:designset_basic}), so its
+eigenvalues are $\ge 0$ with product $\det A_D > 0$, so they are all $> 0$ and $A_D \in \PD$.
+\end{proof}
+
+\textbf{Lean remark.} \texttt{IsCompact.exists\_isMaxOn} with \texttt{Continuous.matrix\_det};
+the last step is \texttt{Matrix.PosSemidef.posDef\_iff\_det\_ne\_zero}
+(\texttt{Mathlib/Analysis/Matrix/Order.lean}).
+
+\begin{lemma}[Directional derivative of $\log\det$]\label{lem:logdet_directional}
+\uses{lem:eigen_quadratic_bounds, lem:sqrt_props}
+Let $A \in \PD$ and $M \in \Sym$. There is $t_0 > 0$ such that $A + tM \in \PD$ for all
+$\abs{t} < t_0$, and
+\[
+  \lim_{t \to 0,\ t \ne 0} \frac{\log\det(A + tM) - \log\det A}{t} = \tr(A^{-1}M) .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:eigen_quadratic_bounds, lem:sqrt_props, lem:loewner_congruence}
+Let $C := A^{-1/2} M A^{-1/2} \in \Sym$, with spectral decomposition
+$C = V\operatorname{diag}(\mu_1,\dots,\mu_d)V^\top$ (Lemma~\ref{lem:eigen_quadratic_bounds}). Set
+$t_0 := 1/(1 + \max_j\abs{\mu_j})$. For $\abs{t} < t_0$ all $1 + t\mu_j$ are $> 0$, so
+$I + tC = V\operatorname{diag}(1+t\mu_j)V^\top \in \PD$, and
+$A + tM = A^{1/2}(I + tC)A^{1/2}$ (Lemma~\ref{lem:sqrt_props}(iii)) is in $\PD$ by congruence
+(Lemma~\ref{lem:loewner_congruence}). Taking determinants,
+$\det(A + tM) = \det(A^{1/2})^2\det(I + tC) = \det A\cdot\prod_j(1 + t\mu_j)$ (using
+$\det(A^{1/2})^2 = \det((A^{1/2})^2) = \det A$ and $\det(I+tC) = \det(\operatorname{diag}(1+t\mu_j))$
+by invariance under conjugation by $V$). Hence, for $0 < \abs{t} < t_0$,
+\[
+  \frac{\log\det(A+tM) - \log\det A}{t} = \sum_{j} \frac{\log(1 + t\mu_j)}{t}
+  \xrightarrow[t \to 0]{} \sum_j \mu_j ,
+\]
+since $\log(1 + t\mu)/t \to \mu$ as $t \to 0$ (derivative of $\log$ at $1$; the term is $0$ when
+$\mu = 0$). Finally $\sum_j\mu_j = \tr C = \tr(A^{-1/2}MA^{-1/2}) = \tr(A^{-1}M)$ by cyclicity of
+the trace and $A^{-1/2}A^{-1/2} = A^{-1}$ (Lemma~\ref{lem:sqrt_props}(ii)).
+\end{proof}
+
+\textbf{Lean remark.} The limit of $\log(1+t\mu)/t$ is \texttt{HasDerivAt.log} composed with
+the affine map, or \texttt{Real.hasDerivAt\_log}; the sum of limits is \texttt{Filter.Tendsto}
+over \texttt{Finset.sum}. The statement is deliberately about a one-dimensional limit along
+$t \to 0$ (\texttt{nhdsWithin 0 \{0\}ᶜ}) rather than the Fr\'echet derivative of $\det$, which
+keeps the proof inside elementary calculus. Only the one-sided limit $t \to 0^+$ is used below.
+
+\begin{theorem}[Kiefer--Wolfowitz: existence of a $G$-optimal design]\label{thm:kiefer_wolfowitz}
+\uses{def:arm_set, def:g_value, def:design_matrix, lem:g_ge_d}
+Assume that $\Xs$ is spanning. There is a design distribution $\lambda_G \in \simplex_{\Xs}$
+(finitely supported, as every design distribution) such that $A_G := A(\lambda_G)
+\in \PD$ and $g_{\Xs}(A_G) = d$, i.e.\ $\max_{x\in\Xs}\norm{x}_{A_G^{-1}}^2 = d$; in particular
+$A_G$ minimizes $g_{\Xs}$ over $\designset(\Xs)\cap\PD$ (Lemma~\ref{lem:g_ge_d}). Moreover every
+$x \in \supp\lambda_G$ satisfies $x^\top A_G^{-1} x = d$. (A numerical bound on
+$\abs{\supp\lambda_G}$ is available but deliberately not part of the statement; see
+Remark~\ref{rem:design_kw_support}.)
+\end{theorem}
+
+\begin{proof}
+\uses{lem:exists_d_optimal, def:design_matrix, lem:caratheodory_design, lem:designset_basic, lem:logdet_directional, lem:g_ge_d}
+Let $A_D$ be a $D$-optimal design matrix; since $\Xs$ is spanning, $A_D \in \PD$
+(Lemma~\ref{lem:exists_d_optimal}). By definition of $\designset(\Xs)$
+(Definition~\ref{def:design_matrix}) there is a finitely supported $\lambda_G \in \simplex_{\Xs}$
+with $A(\lambda_G) = A_D$ (Lemma~\ref{lem:caratheodory_design} shows that it can even be chosen
+with $\abs{\supp\lambda_G} \le d(d+1)/2+1$, which we do not need); write $A_G := A_D$.
+
+Fix $x \in \Xs$ and let $B := xx^\top = A(\delta_x) \in \designset(\Xs)$ and $M := B - A_G \in
+\Sym$. By convexity of $\designset(\Xs)$ (Lemma~\ref{lem:designset_basic}),
+$A_G + tM = (1-t)A_G + tB \in \designset(\Xs)$ for all $t \in [0,1]$, so by $D$-optimality
+$\det(A_G + tM) \le \det A_G$ for $t \in [0,1]$. Let $t_0$ be given by
+Lemma~\ref{lem:logdet_directional}; for $0 < t < \min(t_0, 1)$ both determinants are positive and
+$\log$ is increasing, so $\big(\log\det(A_G + tM) - \log\det A_G\big)/t \le 0$. Letting $t \to
+0^+$, Lemma~\ref{lem:logdet_directional} yields $\tr(A_G^{-1}M) \le 0$, i.e.
+\[
+  \tr(A_G^{-1}xx^\top) - \tr(A_G^{-1}A_G) = x^\top A_G^{-1}x - d \le 0 .
+\]
+As $x \in \Xs$ was arbitrary, $g_{\Xs}(A_G) \le d$. Lemma~\ref{lem:g_ge_d} gives
+$g_{\Xs}(A_G) \ge d$, hence $g_{\Xs}(A_G) = d$, and the same lemma gives
+$x^\top A_G^{-1}x = d$ on the support.
+\end{proof}
+
+\begin{remark}[Support size of the $G$-optimal design]\label{rem:design_kw_support}
+The proof of Theorem~\ref{thm:kiefer_wolfowitz} may produce $\lambda_G$ through
+Lemma~\ref{lem:caratheodory_design}, hence with $\abs{\supp\lambda_G} \le d(d+1)/2 + 1$; the
+paper (Appendix~B.1) states the existence of a $G$-optimal design with
+$\abs{\supp\lambda_*} \le d(d+1)/2$ (the sharper bound uses that the optimal matrices lie on
+the boundary of the hull). This numerical bound is deliberately kept out of the statements of
+Theorem~\ref{thm:kiefer_wolfowitz} and Lemma~\ref{lem:width_attained}: only the finiteness of
+the support is ever used, and the formalization may prove Lemma~\ref{lem:caratheodory_design}
+with the weaker bound $d^2 + 1$ (see the Lean remark there) without changing either statement. In
+Chapter~\ref{chap:lower_adaptive}, $\lambda_G$ replaces the John ellipsoid of the paper:
+Corollary~\ref{cor:g_optimal_normalized} provides exactly the normalized points and the isotropy
+identity that the paper extracts from John's theorem.
+\end{remark}
+
+\begin{corollary}[Whitened arms have norm at most $\sqrt d$]\label{cor:g_optimal_norm_bound}
+\uses{thm:kiefer_wolfowitz, lem:sqrt_props}
+Let $\Xs$ be spanning and let $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz}. Every $x \in \Xs$ satisfies
+$\norm{A_G^{-1/2}x}^2 = x^\top A_G^{-1}x \le d$.
+\end{corollary}
+
+\begin{proof}
+\uses{thm:kiefer_wolfowitz, lem:sqrt_props}
+$\norm{A_G^{-1/2}x}^2 = x^\top A_G^{-1}x$ by Lemma~\ref{lem:sqrt_props}(iv), and
+$x^\top A_G^{-1} x \le g_{\Xs}(A_G) = d$.
+\end{proof}
+
+\begin{corollary}[Normalized $G$-optimal design]\label{cor:g_optimal_normalized}
+\uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:sqrt_props}
+Let $\Xs$ be spanning, let $\lambda_G$, $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz} and set $M := d^{-1/2}A_G^{-1/2}$,
+$v_x := Mx = A_G^{-1/2}x/\sqrt d$ for $x \in \supp\lambda_G$, and
+$\Xs' := M\Xs = \{Mx : x \in \Xs\}$. Then:
+\begin{enumerate}
+  \item[(i)] $\norm{v_x} = 1$ for every $x \in \supp\lambda_G$;
+  \item[(ii)] $\sum_{x \in \supp\lambda_G}\lambda_{G,x}\, v_xv_x^\top = I_d/d$;
+  \item[(iii)] $\Xs' \subset \ball_d$, and $v_x \in \Xs'$ for every $x \in \supp\lambda_G$;
+        $\Xs'$ is compact and spans $\R^d$.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+\uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:sqrt_props}
+(i): $\norm{v_x}^2 = x^\top A_G^{-1}x/d = 1$ by Lemma~\ref{lem:sqrt_props}(iv) and the support
+property of Theorem~\ref{thm:kiefer_wolfowitz}. (ii):
+$\sum_x\lambda_{G,x}v_xv_x^\top = \frac1d A_G^{-1/2}\big(\sum_x\lambda_{G,x}xx^\top\big)A_G^{-1/2}
+= \frac1d A_G^{-1/2}A_GA_G^{-1/2} = I_d/d$ (Lemma~\ref{lem:sqrt_props}(iii)). (iii): for
+$x \in \Xs$, $\norm{Mx}^2 = x^\top A_G^{-1}x/d \le 1$ by Corollary~\ref{cor:g_optimal_norm_bound};
+$v_x = Mx$ with $x \in \supp\lambda_G \subset \Xs$; $M$ is invertible, so $M\Xs$ is compact and
+spanning.
+\end{proof}
+
+\section{Carath\'eodory, continuity and attainment of the width}
+\label{sec:design_caratheodory}
+
+\begin{lemma}[Carath\'eodory for design matrices]\label{lem:caratheodory_design}
+\uses{def:design_matrix}
+Every $A \in \designset(\Xs)$ is of the form $A = A(\lambda)$ for a design distribution
+$\lambda \in \simplex_{\Xs}$ with $\abs{\supp\lambda} \le d(d+1)/2 + 1$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:design_matrix}
+$\designset(\Xs) = \conv S$ with $S := \{xx^\top : x \in \Xs\} \subset \Sym$, and $\Sym$ is a real
+vector space of dimension $n := d(d+1)/2$. By Carath\'eodory's theorem, every point of $\conv S$
+is a convex combination of an affinely independent family of points of $S$, which has at most
+$n + 1$ elements: $A = \sum_{i=1}^k \alpha_i s_i$ with $k \le n+1$, $\alpha_i > 0$,
+$\sum_i\alpha_i = 1$, $s_i \in S$ pairwise distinct. Choose $x_i \in \Xs$ with $s_i = x_ix_i^\top$;
+the $x_i$ are pairwise distinct since the $s_i$ are. Define $\lambda_{x_i} := \alpha_i$; then
+$\lambda \in \simplex_{\Xs}$, $A(\lambda) = A$ and $\abs{\supp\lambda} = k \le n + 1$.
+\end{proof}
+
+\textbf{Lean remark.} \texttt{convexHull\_eq\_union} (\texttt{Mathlib/Analysis/Convex/Caratheodory.lean})
+writes the hull as a union over affinely independent finite subsets, and
+\texttt{AffineIndependent.card\_le\_finrank\_succ} bounds their cardinality by
+$\texttt{finrank} + 1$. The ambient space must be the submodule of symmetric matrices to get
+$n = d(d+1)/2$ (its \texttt{finrank} is not in Mathlib and would have to be computed from the
+basis of matrices $E_{ii}$ and $E_{ij} + E_{ji}$, $i < j$). Applying Carath\'eodory in the full
+matrix space $\texttt{Matrix (Fin d) (Fin d) ℝ}$ instead gives the weaker bound $d^2 + 1$, which
+is sufficient for every use in this blueprint (the support size of $\lambda_G$ and $\lambda_1$
+only needs to be finite); the formalization may take this shortcut. Note also that if design
+distributions are encoded as finitely supported functions $\Xs \to [0,1]$ (\texttt{Finsupp}),
+the definition of $\designset(\Xs)$ as $\{A(\lambda)\}$ and the equality with the convex hull is
+itself a small lemma (\texttt{Finset.centerMass\_mem\_convexHull} and
+\texttt{convexHull\_eq\_union\_convexHull\_finite\_subsets}).
+
+\begin{lemma}[Local Lipschitz continuity of the square root]\label{lem:design_sqrt_continuous}
+\uses{lem:sqrt_props, lem:eigen_quadratic_bounds}
+For $B, B' \in \PD$,
+\[
+  \norm{B^{1/2} - B'^{1/2}}_{\mathrm{op}} \le \norm{B^{1/2} - B'^{1/2}}_F \le
+  \frac{d\,\norm{B - B'}_{\mathrm{op}}}{\sqrt{\lambda_{\min}(B)} + \sqrt{\lambda_{\min}(B')}} .
+\]
+Consequently $B \mapsto B^{1/2}$ is continuous on $\PD$, and $A \mapsto A^{-1/2}$ is continuous
+on $\PD$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sqrt_props, lem:eigen_quadratic_bounds}
+Let $X := B^{1/2} - B'^{1/2}$. Then $B^{1/2}X + XB'^{1/2} = B - B'$ (expand, using
+$(B^{1/2})^2 = B$ and $(B'^{1/2})^2 = B'$). Let $(u_i, a_i)_i$ be an orthonormal eigenbasis of
+$B^{1/2}$ and $(v_j, b_j)_j$ one of $B'^{1/2}$; by Lemma~\ref{lem:sqrt_props}(i),
+$a_i \ge \alpha := \sqrt{\lambda_{\min}(B)}$ and $b_j \ge \beta := \sqrt{\lambda_{\min}(B')}$.
+Since $B^{1/2}$ is symmetric, $u_i^\top B^{1/2} = a_iu_i^\top$, hence
+$u_i^\top(B - B')v_j = u_i^\top B^{1/2}Xv_j + u_i^\top XB'^{1/2}v_j = (a_i + b_j)\,u_i^\top Xv_j$, so
+$\abs{u_i^\top X v_j} \le \norm{B - B'}_{\mathrm{op}}/(\alpha + \beta)$. The Frobenius norm is
+invariant under orthogonal changes of basis, so $\norm{X}_F^2 = \sum_{i,j}(u_i^\top Xv_j)^2 \le
+d^2\norm{B-B'}_{\mathrm{op}}^2/(\alpha+\beta)^2$. The operator norm is bounded by the Frobenius
+norm. Continuity at $B_0 \in \PD$: the bound with $B' = B_0$ gives
+$\norm{B^{1/2} - B_0^{1/2}}_{\mathrm{op}} \le d\,\norm{B - B_0}_{\mathrm{op}}/\sqrt{\lambda_{\min}(B_0)}$
+for every $B \in \PD$, with a constant independent of $B$. Finally $A \mapsto A^{-1}$ is
+continuous on the (open) set of invertible matrices (entries of $A^{-1} = \operatorname{adj}(A)/\det A$
+are rational functions with nonvanishing denominator), maps $\PD$ to $\PD$, and
+$A^{-1/2} = (A^{-1})^{1/2}$ (Lemma~\ref{lem:sqrt_props}(ii)).
+\end{proof}
+
+\textbf{Lean remark.} This lemma is not in the outline; it is stated locally because the
+continuity of \texttt{CFC.sqrt} in its argument is not readily available in Mathlib for
+matrices, whereas the Sylvester-equation argument above is elementary. Continuity of the inverse
+is \texttt{continuousAt\_matrix\_inv} (\texttt{Mathlib/Topology/Instances/Matrix.lean}) or
+\texttt{NormedRing.inverse\_continuousAt}. All norms on the finite-dimensional space of matrices
+are equivalent, so the choice of norm in the statement is immaterial for continuity.
+
+\begin{lemma}[Continuity of the width in the matrix]\label{lem:width_matrix_continuous}
+\uses{def:width_matrix, lem:width_matrix_wd, lem:design_sqrt_continuous, lem:gauss_norm_moments}
+Let $R := \sup_{x\in\Xs}\norm{x}$. For $A, A' \in \PD$,
+\[
+  \abs{\gwidth{\Xs}{A} - \gwidth{\Xs}{A'}} \le R\sqrt d\,\norm{A^{-1/2} - A'^{-1/2}}_{\mathrm{op}} .
+\]
+Consequently $A \mapsto \gwidth{\Xs}{A}$ is continuous on $\PD$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:width_matrix_wd, lem:design_sqrt_continuous, lem:gauss_norm_moments}
+For every $g \in \R^d$, two suprema of functions on $\Xs$ differ by at most the supremum of the
+difference:
+$\abs{\sup_x\ip{A^{-1/2}x}{g} - \sup_x\ip{A'^{-1/2}x}{g}} \le \sup_x\abs{\ip{(A^{-1/2} - A'^{-1/2})x}{g}}
+\le R\,\norm{A^{-1/2} - A'^{-1/2}}_{\mathrm{op}}\norm{g}$ (Cauchy--Schwarz). Both suprema are
+integrable (Lemma~\ref{lem:width_matrix_wd}); taking expectations and using
+$\E\norm{g} \le \sqrt d$ (Lemma~\ref{lem:gauss_norm_moments}) gives the inequality. Continuity
+follows from the continuity of $A \mapsto A^{-1/2}$ on $\PD$
+(Lemma~\ref{lem:design_sqrt_continuous}).
+\end{proof}
+
+\begin{lemma}[Coercivity of the width on design matrices]\label{lem:width_coercive}
+\uses{def:arm_set, def:width_matrix, def:design_matrix, lem:sqrt_props, lem:gauss_1d_moments, lem:gauss_linear_image}
+Let $\Xs$ be spanning and let $(A_n)_n$ be a sequence in $\designset(\Xs) \cap \PD$ converging to a singular matrix
+$A_\infty$. Then $\gwidth{\Xs}{A_n} \to +\infty$. More precisely, for every $A \in \PD$, every
+unit vector $u$ and all $x, x' \in \Xs$,
+\[
+  \gwidth{\Xs}{A} \ \ge\ \frac{\norm{A^{-1/2}(x - x')}}{\sqrt{2\pi}}
+  \ \ge\ \frac{\abs{\ip{u}{x - x'}}}{\sqrt{2\pi}\,\sqrt{u^\top A u}} ,
+\]
+and if $A_n \in \designset(\Xs)$ with $u^\top A_n u \to 0$ then there are $x, x' \in \Xs$ with
+$\ip{u}{x - x'} \ne 0$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sqrt_props, lem:gauss_1d_moments, lem:gauss_linear_image, lem:width_matrix_wd, lem:designset_basic}
+\emph{Lower bound.} Let $a := A^{-1/2}x$, $b := A^{-1/2}x'$. For all $g$,
+$\sup_{z\in\Xs}\ip{A^{-1/2}z}{g} \ge \max(\ip{a}{g},\ip{b}{g}) = \tfrac12\ip{a+b}{g} +
+\tfrac12\abs{\ip{a-b}{g}}$. Taking expectations, $\E\ip{a+b}{g} = 0$ and $\ip{a-b}{g} \sim
+\Normal(0,\norm{a-b}^2)$ (Lemma~\ref{lem:gauss_linear_image}) has $\E\abs{\ip{a-b}{g}} =
+\norm{a-b}\sqrt{2/\pi}$ (Lemma~\ref{lem:gauss_1d_moments}), so $\gwidth{\Xs}{A} \ge
+\norm{a-b}/\sqrt{2\pi} = \norm{A^{-1/2}(x-x')}/\sqrt{2\pi}$. Next, by
+Lemma~\ref{lem:sqrt_props}(v) and Cauchy--Schwarz,
+$\abs{\ip{u}{x-x'}} = \abs{\ip{A^{1/2}u}{A^{-1/2}(x-x')}} \le \norm{A^{1/2}u}\,\norm{A^{-1/2}(x-x')}$
+with $\norm{A^{1/2}u}^2 = u^\top A u$ (Lemma~\ref{lem:sqrt_props}(iv)).
+
+\emph{A separating pair exists.} Suppose $A_n = A(\lambda^{(n)}) \in \designset(\Xs)$ with
+$u^\top A_n u \to 0$, and suppose for contradiction that $\ip{u}{x - x'} = 0$ for all
+$x, x' \in \Xs$, i.e.\ $\ip{u}{x} = c$ for all $x \in \Xs$ and some constant $c$. Then
+$u^\top A_nu = \sum_x\lambda^{(n)}_x\ip{u}{x}^2 = c^2$ for all $n$, so $c = 0$, so $u \perp \Xs$
+and hence $u \perp \Span(\Xs) = \R^d$ (this is where the spanning hypothesis is used),
+contradicting $\norm{u} = 1$.
+
+\emph{Divergence.} $A_\infty \in \PSD$ since $\PSD$ is closed and $A_n \in \PSD$, and $A_\infty$
+is singular, so there is a unit vector $u$ with $A_\infty u = 0$; then $u^\top A_nu \to
+u^\top A_\infty u = 0$, and $u^\top A_n u > 0$ for each $n$. Pick $x, x'$ as in the previous
+paragraph. The lower bound gives $\gwidth{\Xs}{A_n} \ge \abs{\ip{u}{x-x'}}/(\sqrt{2\pi}\sqrt{u^\top A_nu})
+\to +\infty$.
+\end{proof}
+
+\begin{remark}
+The restriction to $A_n \in \designset(\Xs)$ (rather than arbitrary $A_n \in \PD$, as the
+outline of the chapter first suggested) is necessary: for $\Xs = \{e_1 + e_2, e_1 - e_2\}
+\subset \R^2$ and $A_n = \operatorname{diag}(1/n, 1)$, one has $\gwidth{\Xs}{A_n} =
+\E[\sqrt n g_1 + \abs{g_2}] = \sqrt{2/\pi}$ for all $n$, although $A_n \to \operatorname{diag}(0,1)$
+is singular. The point is that a design matrix built from $\Xs$ cannot degenerate in a direction
+$u$ along which $\Xs$ is not constant.
+\end{remark}
+
+\begin{lemma}[The width is attained on a positive definite design]\label{lem:width_attained}
+\uses{def:arm_set, def:width, def:design_matrix, lem:designset_basic, lem:width_matrix_continuous, lem:width_coercive}
+Let $\Xs$ be spanning. There is $A_1 \in \designset(\Xs)\cap\PD$ with $\gwidth{\Xs}{A_1} = \gw(\Xs)$,
+i.e.\ a (finitely supported) design distribution $\lambda_1 \in \simplex_{\Xs}$ with
+$A_1 = A(\lambda_1) \in \PD$ and $\gwidth{\Xs}{A(\lambda_1)} = \gw(\Xs)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:width, def:design_matrix, lem:designset_basic, lem:width_matrix_continuous, lem:width_coercive, lem:exists_posdef_design}
+Since $\Xs$ is spanning, the infimum defining $\gw(\Xs)$ is over a nonempty set (Lemma~\ref{lem:exists_posdef_design})
+and is finite, so there is a sequence $A_n \in \designset(\Xs)\cap\PD$ with
+$\gwidth{\Xs}{A_n} \to \gw(\Xs)$. By compactness of $\designset(\Xs)$
+(Lemma~\ref{lem:designset_basic}) a subsequence $A_{n_k}$ converges to some
+$A_\infty \in \designset(\Xs)$. If $A_\infty$ were singular, Lemma~\ref{lem:width_coercive}
+would give $\gwidth{\Xs}{A_{n_k}} \to +\infty$, contradicting convergence to the finite value
+$\gw(\Xs)$. Hence $A_\infty \in \PD$ ($A_\infty \in \PSD$ and nonsingular), and by continuity
+(Lemma~\ref{lem:width_matrix_continuous}) $\gwidth{\Xs}{A_\infty} = \lim_k\gwidth{\Xs}{A_{n_k}} =
+\gw(\Xs)$. Take $A_1 := A_\infty$; the representation $A_1 = A(\lambda_1)$ with a finitely
+supported $\lambda_1 \in \simplex_{\Xs}$ is the definition of $\designset(\Xs)$
+(Definition~\ref{def:design_matrix}).
+\end{proof}
+
+\textbf{Lean remark.} The argument is a standard ``minimize a continuous coercive function on a
+compact set'': it can be organized as follows. The set $K_c := \{A \in \designset(\Xs) :
+\gwidth{\Xs}{A} \le c\}$ for $c > \gw(\Xs)$ is nonempty, contained in $\PD$ (by coercivity and
+closedness of $\designset$), and closed in $\designset(\Xs)$ (sequential closedness: a limit of
+elements of $K_c$ is nonsingular by coercivity, and then the width is continuous there), hence
+compact, and a minimizer of the continuous function $\gwidth{\Xs}{\cdot}$ on $K_c$
+(\texttt{IsCompact.exists\_isMinOn}) is a global minimizer. Subsequence extraction is
+\texttt{IsCompact.tendsto\_subseq}. As for Theorem~\ref{thm:kiefer_wolfowitz},
+Lemma~\ref{lem:caratheodory_design} shows that $\lambda_1$ can be chosen with
+$\abs{\supp\lambda_1} \le d(d+1)/2+1$; this numerical bound is kept out of the statement
+(Remark~\ref{rem:design_kw_support}).
+
+\section{Rounding a design distribution to a fixed design}
+\label{sec:rounding}
+
+Throughout this section, $\lambda \in \simplex_{\Xs}$ is a design distribution with
+$A := A(\lambda) \in \PD$, support $\supp\lambda = \{v_1,\dots,v_m\}$ and weights
+$p_i := \lambda_{v_i} > 0$, $\sum_{i=1}^m p_i = 1$. The \emph{whitened} vectors are
+$u_i := A^{-1/2}v_i$, so that (Lemma~\ref{lem:sqrt_props}(iii))
+\[
+  \sum_{i=1}^m p_i\,u_iu_i^\top = A^{-1/2}\Big(\sum_i p_iv_iv_i^\top\Big)A^{-1/2} = A^{-1/2}AA^{-1/2} = I_d .
+\]
+The goal is Theorem~\ref{thm:rounding}: for every $T \ge 4d$ one can pick $T$ points of the
+support (with repetitions) whose empirical design matrix is at least $(T/4)A$. This is the
+lower-barrier half of the argument of \cite{batson2012twice}, with all added rank-one
+matrices given weight one (no upper barrier is needed since only a lower bound on
+$\Sigma_T$ is used).
+
+\begin{definition}[Lower barrier potential]\label{def:barrier_potential}
+\uses{lem:eigen_quadratic_bounds}
+For $B \in \Sym$ and $l \in \R$ with $l < \lambda_{\min}(B)$, so that $B - lI \in \PD$, the
+\emph{lower barrier potential} is
+\[
+  \Phi_l(B) := \tr\big((B - lI)^{-1}\big) = \sum_{j=1}^d \frac{1}{\lambda_j(B) - l} .
+\]
+\end{definition}
+
+The second expression is Lemma~\ref{lem:eigen_quadratic_bounds}(iv)--(v). Note that
+$\Phi_l(B) \ge 1/(\lambda_{\min}(B) - l)$ (keep only the smallest eigenvalue), that $\Phi_l(B)$ is
+increasing in $l$, and that $\Phi_{-d}(0) = \tr((dI)^{-1}) = 1$.
+
+\begin{lemma}[Sherman--Morrison, trace form]\label{lem:sherman_morrison_trace}
+\uses{lem:loewner_quadratic, lem:eigen_quadratic_bounds}
+Let $M \in \PD$ and $u \in \R^d$. Then $M + uu^\top \in \PD$, $1 + u^\top M^{-1}u > 0$,
+\[
+  (M + uu^\top)^{-1} = M^{-1} - \frac{M^{-1}uu^\top M^{-1}}{1 + u^\top M^{-1}u},
+  \qquad
+  \tr\big((M + uu^\top)^{-1}\big) = \tr(M^{-1}) - \frac{u^\top M^{-2}u}{1 + u^\top M^{-1}u} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_quadratic, lem:eigen_quadratic_bounds}
+$M + uu^\top \in \PD$ since $x^\top(M+uu^\top)x = x^\top Mx + \ip{u}{x}^2 > 0$ for $x \ne 0$; and
+$u^\top M^{-1}u \ge 0$ since $M^{-1} \in \PD$ (Lemma~\ref{lem:eigen_quadratic_bounds}(v)). Set
+$s := u^\top M^{-1}u$ and $N := M^{-1} - M^{-1}uu^\top M^{-1}/(1+s)$. Then
+\[
+  (M + uu^\top)N = I - \frac{uu^\top M^{-1}}{1+s} + uu^\top M^{-1} - \frac{u\,(u^\top M^{-1}u)\,u^\top M^{-1}}{1+s}
+  = I + uu^\top M^{-1}\Big(1 - \frac{1}{1+s} - \frac{s}{1+s}\Big) = I ,
+\]
+so $N = (M+uu^\top)^{-1}$ (a right inverse of a square matrix is the inverse). Taking traces,
+$\tr(M^{-1}uu^\top M^{-1}) = \tr(u^\top M^{-1}M^{-1}u) = u^\top M^{-2}u$ by cyclicity.
+\end{proof}
+
+\textbf{Lean remark.} This is the special case $U = u$ (a $d \times 1$ matrix), $V = u^\top$,
+$C = (1)$ of the Woodbury identity \texttt{Matrix.add\_mul\_mul\_inv\_eq\_sub} in
+\texttt{Mathlib/LinearAlgebra/Matrix/NonsingularInverse.lean}; the direct verification above is
+probably shorter than instantiating it (\texttt{Matrix.inv\_eq\_right\_inv} turns the one-sided
+computation $(M + uu^\top)N = I$ into $(M+uu^\top)^{-1} = N$). The rank-one
+matrix $uu^\top$ is \texttt{Matrix.vecMulVec u u}.
+
+\begin{lemma}[One barrier step]\label{lem:barrier_step}
+\uses{def:barrier_potential, lem:sherman_morrison_trace, lem:eigen_quadratic_bounds}
+Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with $\lambda_{\min}(B) > l'$. Set
+$M := B - l'I \in \PD$, $\Delta := \Phi_{l'}(B) - \Phi_l(B)$, and for $u \in \R^d$
+\[
+  L_B(u) := \frac{u^\top M^{-2}u}{\Delta} - u^\top M^{-1}u .
+\]
+Then $\Delta > 0$, and if $L_B(u) \ge 1$ then
+$\lambda_{\min}(B + uu^\top) > l'$ and $\Phi_{l'}(B + uu^\top) \le \Phi_l(B)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:barrier_potential, lem:sherman_morrison_trace, lem:eigen_quadratic_bounds}
+$\Delta > 0$: with $\lambda_j := \lambda_j(B)$, $\Phi_{l'}(B) - \Phi_l(B) = \sum_j\big(\tfrac{1}{\lambda_j - l'} -
+\tfrac{1}{\lambda_j - l}\big)$ and each term is positive since $0 < \lambda_j - l' < \lambda_j - l$.
+Next, $uu^\top \in \PSD$, so $\lambda_{\min}(B + uu^\top) \ge \lambda_{\min}(B) > l'$
+(Lemma~\ref{lem:eigen_quadratic_bounds}(ii)), and $\Phi_{l'}(B + uu^\top)$ is defined. Since
+$(B + uu^\top) - l'I = M + uu^\top$, Lemma~\ref{lem:sherman_morrison_trace} gives
+\[
+  \Phi_{l'}(B + uu^\top) = \tr(M^{-1}) - \frac{u^\top M^{-2}u}{1 + u^\top M^{-1}u}
+  = \Phi_{l'}(B) - \frac{u^\top M^{-2}u}{1 + u^\top M^{-1}u} .
+\]
+The hypothesis $L_B(u) \ge 1$ reads $u^\top M^{-2}u/\Delta \ge 1 + u^\top M^{-1}u$; multiplying by
+$\Delta/(1 + u^\top M^{-1}u) > 0$ gives $u^\top M^{-2}u/(1 + u^\top M^{-1}u) \ge \Delta$, hence
+$\Phi_{l'}(B + uu^\top) \le \Phi_{l'}(B) - \Delta = \Phi_l(B)$.
+\end{proof}
+
+\begin{lemma}[Averaging the barrier criterion]\label{lem:barrier_average}
+\uses{def:barrier_potential, lem:barrier_step, lem:eigen_quadratic_bounds}
+Let $u_1,\dots,u_m \in \R^d$ and $p_1,\dots,p_m \ge 0$ with $\sum_ip_i = 1$ and
+$\sum_i p_iu_iu_i^\top = I_d$. Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with
+$\lambda_{\min}(B) > l$ and $\Phi_l(B) \le 1$. Then $\lambda_{\min}(B) \ge l + 1 > l'$, and with
+$L_B$ as in Lemma~\ref{lem:barrier_step},
+\[
+  \sum_{i=1}^m p_i\,L_B(u_i) \ \ge\ 2 - \Phi_l(B) \ \ge\ 1 ;
+\]
+in particular there is an index $i$ with $L_B(u_i) \ge 1$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:barrier_potential, lem:barrier_step, lem:eigen_quadratic_bounds}
+Since $1/(\lambda_{\min}(B) - l) \le \Phi_l(B) \le 1$ and $\lambda_{\min}(B) - l > 0$, we get
+$\lambda_{\min}(B) - l \ge 1$, so $\lambda_{\min}(B) \ge l + 1 > l + 1/2 = l'$ and
+Lemma~\ref{lem:barrier_step} applies: $M = B - l'I \in \PD$ and $\Delta > 0$.
+
+Let $\lambda_j := \lambda_j(B)$, $a_j := \lambda_j - l \ge 1$ and $b_j := a_j - 1/2 = \lambda_j - l'
+\ge 1/2$, so that $M$ has eigenvalues $b_j$ (Lemma~\ref{lem:eigen_quadratic_bounds}(iv)). Define
+\[
+  P := \tr(M^{-2}) = \sum_j\frac{1}{b_j^2},\qquad
+  Q := \sum_j\frac{1}{a_jb_j} > 0,\qquad
+  \Phi_l(B) = \sum_j\frac1{a_j},\qquad \Phi_{l'}(B) = \tr(M^{-1}) = \sum_j\frac1{b_j} .
+\]
+By linearity of the trace and $\sum_ip_iu_iu_i^\top = I$: $\sum_ip_i\,u_i^\top M^{-2}u_i =
+\tr(M^{-2}\sum_ip_iu_iu_i^\top) = P$ and $\sum_ip_i\,u_i^\top M^{-1}u_i = \tr(M^{-1}) =
+\Phi_{l'}(B)$. Hence $\sum_ip_iL_B(u_i) = P/\Delta - \Phi_{l'}(B)$. Now
+\[
+  \Delta = \sum_j\Big(\frac1{b_j} - \frac1{a_j}\Big) = \sum_j\frac{a_j - b_j}{a_jb_j} = \frac{Q}{2},
+  \qquad
+  \Phi_{l'}(B) = \Phi_l(B) + \Delta = \Phi_l(B) + \frac Q2 ,
+\]
+so $\sum_ip_iL_B(u_i) = 2P/Q - \Phi_l(B) - Q/2$, and the claim $\sum_ip_iL_B(u_i) \ge 2 - \Phi_l(B)$
+is equivalent to $2P/Q - Q/2 \ge 2$, i.e.\ (multiplying by $Q/2 > 0$) to $P - Q \ge Q^2/4$.
+We have $P - Q = \sum_j\big(\tfrac1{b_j^2} - \tfrac1{a_jb_j}\big) = \sum_j\tfrac{a_j-b_j}{a_jb_j^2} =
+\tfrac12\sum_j\tfrac1{a_jb_j^2} \ge 0$, and by Cauchy--Schwarz,
+\[
+  Q = \sum_j\frac{1}{\sqrt{a_j}\,b_j}\cdot\frac{1}{\sqrt{a_j}}
+  \le \Big(\sum_j\frac1{a_jb_j^2}\Big)^{1/2}\Big(\sum_j\frac1{a_j}\Big)^{1/2}
+  = \sqrt{2(P-Q)}\,\sqrt{\Phi_l(B)} \le \sqrt{2(P-Q)} ,
+\]
+using $\Phi_l(B) \le 1$. Thus $Q^2 \le 2(P - Q)$ and $Q^2/4 \le (P-Q)/2 \le P - Q$. Finally
+$2 - \Phi_l(B) \ge 1$ because $\Phi_l(B) \le 1$, and a $p$-weighted average of the numbers
+$L_B(u_i)$ being $\ge 1$ forces $\max_iL_B(u_i) \ge 1$.
+\end{proof}
+
+\begin{theorem}[Rounding to a fixed design of any size $T \ge 4d$]\label{thm:rounding}
+\uses{def:design_matrix, lem:sqrt_props, def:barrier_potential}
+Let $\lambda \in \simplex_{\Xs}$ with $A := A(\lambda) \in \PD$ and let $T \ge 4d$ be an integer.
+There exist $x_0, \dots, x_{T-1} \in \supp\lambda$ (with repetitions allowed) such that
+\[
+  \Sigma_T := \sum_{t<T}x_tx_t^\top \ \succeq\ \frac T4\,A(\lambda) .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{lem:barrier_average, lem:barrier_step, lem:loewner_congruence, lem:eigen_quadratic_bounds, lem:sqrt_props, def:barrier_potential}
+Use the notation of the beginning of the section: $v_1,\dots,v_m$, $p_i$, $u_i = A^{-1/2}v_i$
+with $\sum_ip_iu_iu_i^\top = I$. We construct by induction on $t \le T$ indices
+$i_0,\dots,i_{t-1} \in \{1,\dots,m\}$ such that $B_t := \sum_{s<t}u_{i_s}u_{i_s}^\top$ and
+$l_t := -d + t/2$ satisfy the invariant
+\[
+  \lambda_{\min}(B_t) > l_t \qquad\text{and}\qquad \Phi_{l_t}(B_t) \le 1 .
+\]
+\emph{Base case} $t = 0$: $B_0 = 0$ has $\lambda_{\min}(B_0) = 0 > -d = l_0$ and
+$\Phi_{-d}(0) = \tr((dI)^{-1}) = d\cdot\frac1d = 1$.
+\emph{Step:} given the invariant at $t$, Lemma~\ref{lem:barrier_average} (with $l = l_t$,
+$l' = l_t + 1/2 = l_{t+1}$, $B = B_t$) provides an index $i_t$ with $L_{B_t}(u_{i_t}) \ge 1$, and
+Lemma~\ref{lem:barrier_step} then gives, for $B_{t+1} = B_t + u_{i_t}u_{i_t}^\top$,
+$\lambda_{\min}(B_{t+1}) > l_{t+1}$ and $\Phi_{l_{t+1}}(B_{t+1}) \le \Phi_{l_t}(B_t) \le 1$.
+
+After $T$ steps, $\lambda_{\min}(B_T) > l_T = -d + T/2 \ge T/4$, where the last inequality is
+$T/4 \ge d$, i.e.\ $T \ge 4d$. By Lemma~\ref{lem:eigen_quadratic_bounds}(i), $B_T \succeq (T/4)I$.
+Set $x_t := v_{i_t} \in \supp\lambda$. Since $v_i = A^{1/2}u_i$ (Lemma~\ref{lem:sqrt_props}(iii)),
+\[
+  \sum_{t<T}x_tx_t^\top = \sum_{t<T}A^{1/2}u_{i_t}u_{i_t}^\top A^{1/2} = A^{1/2}B_TA^{1/2}
+  \ \succeq\ A^{1/2}\Big(\frac T4 I\Big)A^{1/2} = \frac T4 A
+\]
+by congruence with $M = A^{1/2}$ (Lemma~\ref{lem:loewner_congruence}) and $A^{1/2}A^{1/2} = A$.
+\end{proof}
+
+\textbf{Lean remark.} The proof is an existence statement proved by induction on $t$:
+``for every $t \le T$ there is a list of $t$ indices whose $B_t$ satisfies the invariant''.
+The greedy choice at each step is \texttt{Classical.choose} applied to
+Lemma~\ref{lem:barrier_average}; no explicit sequence needs to be defined. The design matrix
+$\Sigma_T$ is $\sum_{t<T}$ \texttt{vecMulVec (x t) (x t)} for \texttt{x : Fin T → Xs}. Note that
+the theorem produces a design of length exactly $T$ with points in the support of $\lambda$,
+which is what Definition~\ref{def:fixed_design} consumes.
+
+\begin{corollary}[Fixed design with controlled inverse and width]\label{cor:fixed_design_from_distribution}
+\uses{thm:rounding, def:width_matrix, lem:loewner_scalar, lem:width_mono, lem:width_homog}
+In the setting of Theorem~\ref{thm:rounding}, let $x_0,\dots,x_{T-1}$ be the design it provides
+and $\Sigma_T := \sum_{t<T}x_tx_t^\top$. Then $\Sigma_T \in \PD$,
+\[
+  \norm{x}_{\Sigma_T^{-1}}^2 \le \frac 4T\,\norm{x}_{A(\lambda)^{-1}}^2 \quad\text{for all } x \in \R^d,
+  \qquad\text{and}\qquad
+  \gwidth{\Xs}{\Sigma_T} \le \frac{2}{\sqrt T}\,\gwidth{\Xs}{A(\lambda)} .
+\]
+\end{corollary}
+
+\begin{proof}
+\uses{thm:rounding, lem:loewner_scalar, lem:width_mono, lem:width_homog}
+Theorem~\ref{thm:rounding} gives $(T/4)A \preceq \Sigma_T$ with $A = A(\lambda) \in \PD$.
+Lemma~\ref{lem:loewner_scalar} with $c = T/4$ yields $\Sigma_T \in \PD$ and
+$\norm{x}_{\Sigma_T^{-1}}^2 \le (4/T)\norm{x}_{A^{-1}}^2$. For the width,
+Lemma~\ref{lem:width_mono} applied to $(T/4)A \preceq \Sigma_T$ (both in $\PD$) gives
+$\gwidth{\Xs}{\Sigma_T} \le \gwidth{\Xs}{(T/4)A} = (T/4)^{-1/2}\gwidth{\Xs}{A} =
+(2/\sqrt T)\gwidth{\Xs}{A}$ by Lemma~\ref{lem:width_homog}.
+\end{proof}
+
+\begin{lemma}[Naive rounding by ceilings]\label{lem:naive_rounding}
+\uses{def:design_matrix, lem:loewner_quadratic}
+Let $\lambda \in \simplex_{\Xs}$ with support $\{v_1,\dots,v_m\}$ and weights $p_i > 0$, and let
+$T \ge 2m$ be an integer. Set $\kappa_i := \lceil (T-m)p_i \rceil \in \N$. Then
+$\sum_i\kappa_i \le T$, and any sequence $x_0,\dots,x_{T-1}$ consisting of $\kappa_i$ copies of
+$v_i$ for each $i$, padded with $T - \sum_i\kappa_i$ further copies of $v_1$, satisfies
+\[
+  \sum_{t<T}x_tx_t^\top \ \succeq\ \sum_i\kappa_iv_iv_i^\top \ \succeq\ (T-m)\,A(\lambda) \ \succeq\ \frac T2\,A(\lambda) .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:design_matrix, lem:loewner_quadratic}
+Since $\lceil y\rceil < y + 1$, $\sum_i\kappa_i < (T-m)\sum_ip_i + m = T$, so $\sum_i\kappa_i \le T$
+(integers) and the padding is well defined. Each $v_iv_i^\top \in \PSD$, so adding the padding
+copies only increases the sum in the Loewner order (Lemma~\ref{lem:loewner_quadratic}). Next,
+$\sum_i\kappa_iv_iv_i^\top - (T-m)A(\lambda) = \sum_i(\kappa_i - (T-m)p_i)v_iv_i^\top$ is a
+combination of positive semidefinite matrices with nonnegative coefficients
+$\kappa_i - (T-m)p_i \ge 0$, hence positive semidefinite. Finally $T - m \ge T/2$ because
+$T \ge 2m$, and $A(\lambda) \in \PSD$, so $(T-m)A(\lambda) \succeq (T/2)A(\lambda)$.
+\end{proof}
+
+\begin{remark}
+Lemma~\ref{lem:naive_rounding} is a one-line substitute for Theorem~\ref{thm:rounding} with a
+better constant ($T/2$ instead of $T/4$), but it requires $T \ge 2m$ where $m = \abs{\supp\lambda}$
+is only known to be finite (at most $d(d+1)/2+1$ when $\lambda$ is produced by
+Lemma~\ref{lem:caratheodory_design}); it therefore only gives
+fixed designs with budget $T = \Omega(d^2)$, which is not enough for the $d\log(1/\delta)/\eps^2$
+term of Theorem~\ref{thm:upper} when $\log(1/\delta) \ll d$. Theorem~\ref{thm:rounding} removes
+this restriction. Either lemma may be used in a first version of the formalization of
+Chapter~\ref{chap:upper}, at the price of a weaker theorem in the naive case.
+\end{remark}

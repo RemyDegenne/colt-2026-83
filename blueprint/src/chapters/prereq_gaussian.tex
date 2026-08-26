@@ -1,0 +1,524 @@
+\chapter{Gaussian vectors and linear Gaussian processes}
+\label{chap:pre_gaussian}
+
+This chapter collects the facts about Gaussian vectors in $\R^n$ and about \emph{linear
+Gaussian processes} $x \mapsto \ip{x}{G}$ ($G$ a centered Gaussian vector, $x$ ranging over
+a compact index set $\Xs \subset \R^d$) that are used throughout Part~\ref{part:main}: closure
+of Gaussian vectors under affine maps, identification of the law by mean and covariance,
+rotation invariance of pairs of independent standard vectors, independence of uncorrelated
+jointly Gaussian vectors, moments of Gaussian norms, tails of empirical means, measurability
+and integrability of suprema over compact index sets, the expectation of a maximum of $m$
+Gaussians, and comparison by covariance domination (the special case of the
+Sudakov--Fernique inequality that suffices for the monotonicity of the Gaussian width,
+Lemma~\ref{lem:width_mono}). Everything here is classical
+\cite{vershynin2018high, boucheron2013concentration}; the point is to fix the statements at
+the level of generality of a library and to name what exists.
+
+\textbf{What Mathlib provides.} The standard Gaussian measure on a finite-dimensional inner
+product space, \texttt{ProbabilityTheory.stdGaussian}, and the multivariate Gaussian
+\texttt{multivariateGaussian μ S} on \texttt{EuclideanSpace ℝ ι}, defined as the image of
+\texttt{stdGaussian} under $x \mapsto \mu + S^{1/2}x$ with $S^{1/2} = $ \texttt{CFC.sqrt S}
+(\texttt{Mathlib/Probability/Distributions/Gaussian/Multivariate.lean}), with
+\texttt{integral\_id\_multivariateGaussian}, \texttt{covarianceBilin\_multivariateGaussian},
+\texttt{charFun\_multivariateGaussian}, \texttt{multivariateGaussian\_zero\_one},
+\texttt{stdGaussian\_map} (invariance under linear isometry equivalences),
+\texttt{map\_pi\_eq\_stdGaussian} and \texttt{stdGaussian\_eq\_map\_pi\_orthonormalBasis}
+(coordinates are i.i.d.\ standard). The class \texttt{IsGaussian} of Gaussian measures
+(\texttt{Gaussian/Basic.lean}: every continuous linear functional has a real Gaussian law),
+closed under continuous linear maps (\texttt{isGaussian\_map}), translations, negation and
+products, characterized by its characteristic function
+(\texttt{IsGaussian.charFun\_eq}, \texttt{isGaussian\_iff\_charFun\_eq}); the predicate
+\texttt{HasGaussianLaw X P} on random variables
+(\texttt{Gaussian/HasGaussianLaw/Basic.lean}: \texttt{HasGaussianLaw.map}, \texttt{.smul},
+\texttt{.neg}, \texttt{.add}, \texttt{.eval}, \texttt{.integrable}, \texttt{.memLp}), and the
+independence results of \texttt{Gaussian/HasGaussianLaw/Independence.lean}
+(\texttt{iIndepFun.hasGaussianLaw}, \texttt{IndepFun.hasGaussianLaw},
+\texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval}, \texttt{\_inner},
+\texttt{\_eq\_zero}). Fernique's theorem \texttt{IsGaussian.exists\_integrable\_exp\_sq}
+(\texttt{Gaussian/Fernique.lean}) and the rotation invariance
+\texttt{IsGaussian.map\_rotation\_eq\_self} of $\mu \otimes \mu$ for centered $\mu$. On the real
+line, \texttt{gaussianReal}, \texttt{mgf\_gaussianReal}, \texttt{integral\_id\_gaussianReal},
+\texttt{variance\_id\_gaussianReal}, \texttt{gaussianReal\_map\_const\_mul},
+\texttt{gaussianReal\_add\_gaussianReal\_of\_indepFun} (\texttt{Gaussian/Real.lean}).
+Sub-Gaussian tails: \texttt{HasSubgaussianMGF} with \texttt{measure\_ge\_le}
+(\texttt{Mathlib/Probability/Moments/SubGaussian.lean}) and \texttt{measure\_le\_le}
+(LML, \texttt{ForMathlib/Probability/Moments/SubGaussian.lean}).
+
+\textbf{What is missing.} The matrix form of the linear-image lemma (mean and covariance
+matrix of $b + LV$), the uniqueness of the law given mean and covariance matrix in the
+matrix language of Part~\ref{part:main}, the fourth moment of a Gaussian norm, the
+lower bound $\E\norm{Y} \ge \sqrt{\tr S}/\sqrt 3$, the expectation bound for a maximum of $m$
+Gaussians, the countable-dense reduction for suprema over compact index sets, and the
+covariance-domination comparison lemma. All are short.
+
+\textbf{Lean remark.} Vectors live in \texttt{EuclideanSpace ℝ (Fin d)} and matrices in
+\texttt{Matrix (Fin d) (Fin d) ℝ}, acting through \texttt{Matrix.toEuclideanLin} /
+\texttt{toEuclideanCLM}. The positive semidefinite square root of $S \in \PSD$ is
+\texttt{CFC.sqrt S}, the one used by \texttt{multivariateGaussian}; for $S \in \PD$ it agrees
+with the square root of Lemma~\ref{lem:sqrt_props}. The random vectors of this chapter are
+functions \texttt{Ω → EuclideanSpace ℝ (Fin d)} with \texttt{HasLaw} a given Gaussian measure,
+or with \texttt{HasGaussianLaw} together with prescribed mean and covariance.
+
+\section{Gaussian vectors}
+\label{sec:pre_gaussian_vectors}
+
+\begin{definition}[Gaussian measures and Gaussian vectors]\label{def:pg_gaussian_vector}
+Let $n \ge 1$, $\mu \in \R^n$ and $S \in \PSD$ (an $n \times n$ positive semidefinite
+matrix). The \emph{Gaussian measure} $\Normal(\mu, S)$ on $\R^n$ is the image of the standard
+Gaussian measure $\Normal(0, I_n)$ (Mathlib \texttt{stdGaussian}) under
+$x \mapsto \mu + S^{1/2}x$, where $S^{1/2}$ is the positive semidefinite square root of $S$
+(Mathlib \texttt{multivariateGaussian μ S}). A random vector $V : \Omega \to \R^n$ satisfies
+$V \sim \Normal(\mu, S)$ if its law is $\Normal(\mu,S)$. More generally $V$ is a
+\emph{Gaussian vector} if $\ip{t}{V}$ has a (possibly degenerate) real Gaussian law for every
+$t \in \R^n$ (Mathlib \texttt{HasGaussianLaw V P}); its \emph{mean} is $\E V$ and its
+\emph{covariance matrix} is $\operatorname{Cov}(V) := \E[(V - \E V)(V - \E V)^\top]$.
+For $n = 1$, $\Normal(\mu, \sigma^2)$ is Mathlib's \texttt{gaussianReal μ σ²}; for
+$\sigma = 0$ it is the Dirac mass at $\mu$.
+\end{definition}
+
+We recall the facts that Mathlib attaches to this definition: $\Normal(\mu,S)$ is a
+probability measure with mean $\mu$ (\texttt{integral\_id\_multivariateGaussian}), covariance
+bilinear form $(s,t) \mapsto s^\top S t$ (\texttt{covarianceBilin\_multivariateGaussian}, for
+$S \in \PSD$), and characteristic function
+$t \mapsto \exp(i\ip{t}{\mu} - \tfrac12 t^\top S t)$ (\texttt{charFun\_multivariateGaussian});
+$\Normal(0, I_n) = $ \texttt{stdGaussian} (\texttt{multivariateGaussian\_zero\_one}); every
+Gaussian vector is integrable with all moments (\texttt{HasGaussianLaw.memLp}).
+
+\begin{lemma}[Standard Gaussian vectors have i.i.d.\ coordinates]\label{lem:gauss_pi}
+\uses{def:pg_gaussian_vector}
+Let $T \ge 1$.
+\begin{enumerate}
+  \item[(i)] If $\eta_0, \dots, \eta_{T-1}$ are independent real random variables, each with
+        law $\Normal(0,1)$, then the random vector $\eta := (\eta_t)_{t<T} \in \R^T$
+        satisfies $\eta \sim \Normal(0, I_T)$.
+  \item[(ii)] Conversely, if $\eta \sim \Normal(0, I_T)$ then its coordinates
+        $\eta_0,\dots,\eta_{T-1}$ are independent with law $\Normal(0,1)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+(i) The joint law of independent random variables is the product of their laws
+(Mathlib \texttt{iIndepFun\_iff\_map\_fun\_eq\_pi\_map}), so the law of $\eta$, seen in
+$\R^T = $ \texttt{EuclideanSpace ℝ (Fin T)}, is the image of
+$\bigotimes_{t<T}\Normal(0,1)$ under the identification \texttt{WithLp.toLp 2}, which is
+\texttt{stdGaussian} by \texttt{map\_pi\_eq\_stdGaussian}; conclude with
+\texttt{multivariateGaussian\_zero\_one}. (ii) The same identity read backwards through the
+measurable equivalence \texttt{WithLp.toLp 2}: the law of $(\eta_t)_t$ as an element of
+$\mathrm{Fin}\,T \to \R$ is the product measure, which is the independence of the
+coordinates with the stated marginals (\texttt{iIndepFun\_iff\_map\_fun\_eq\_pi\_map} again,
+or \texttt{measurePreserving\_eval\_multivariateGaussian} for the marginals).
+\end{proof}
+
+\begin{lemma}[The law of a Gaussian vector is determined by its mean and covariance]
+\label{lem:gauss_law_of_cov}
+\uses{def:pg_gaussian_vector}
+Let $V, V'$ be Gaussian vectors in $\R^n$ (possibly on different probability spaces).
+\begin{enumerate}
+  \item[(i)] If $\E V = \E V'$ and $\operatorname{Cov}(V) = \operatorname{Cov}(V')$, then $V$
+        and $V'$ have the same law.
+  \item[(ii)] If $\E V = \mu$ and $\operatorname{Cov}(V) = S$, then $V \sim \Normal(\mu, S)$.
+  \item[(iii)] For $S \in \PSD$ and $g \sim \Normal(0, I_n)$, $S^{1/2} g \sim \Normal(0,S)$.
+  \item[(iv)] If $G \sim \Normal(0, S)$ then $-G \sim \Normal(0,S)$, i.e.\ $-G \eqd G$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+(i) The characteristic function of a Gaussian vector is
+$t \mapsto \exp\big(i\,\E\ip{t}{V} - \tfrac12\Var\ip{t}{V}\big)$
+(Mathlib \texttt{IsGaussian.charFun\_eq}, \texttt{HasGaussianLaw.charFun\_map\_eq}), and
+$\E\ip{t}{V} = \ip{t}{\E V}$, $\Var\ip{t}{V} = t^\top\operatorname{Cov}(V)\,t$ (bilinearity of
+the covariance, Mathlib \texttt{covarianceBilin}). Hence $V$ and $V'$ have the same
+characteristic function, and a finite measure on a finite-dimensional inner product space is
+determined by its characteristic function (\texttt{Measure.ext\_of\_charFun}). (ii) The
+measure $\Normal(\mu,S)$ is Gaussian (\texttt{isGaussian\_multivariateGaussian}) with mean
+$\mu$ and covariance $S$ (the facts recalled after Definition~\ref{def:pg_gaussian_vector});
+apply (i) to $V$ and to the identity on $(\R^n, \Normal(\mu,S))$. (iii) is the definition of
+$\Normal(0,S)$ (Mathlib \texttt{multivariateGaussian}, as the image of \texttt{stdGaussian}),
+using that the law of $S^{1/2}g$ is the image of the law of $g$. (iv) $-G$ is a Gaussian
+vector (\texttt{HasGaussianLaw.neg}) with mean $0$ and covariance
+$\E[(-G)(-G)^\top] = S$; apply (ii).
+\end{proof}
+
+\begin{lemma}[Affine images of Gaussian vectors]\label{lem:gauss_linear_image}
+\uses{def:pg_gaussian_vector}
+Let $V \sim \Normal(\mu, S)$ in $\R^n$, $L \in \R^{m \times n}$ and $b \in \R^m$. Then
+$b + LV \sim \Normal(b + L\mu,\ L S L^\top)$. In particular, for $g \sim \Normal(0, I_n)$,
+$M \in \R^{m\times n}$ and $\mu \in \R^m$: $\mu + Mg \sim \Normal(\mu, MM^\top)$; and for
+$a \in \R^n$, $\ip{a}{g} \sim \Normal(0, \norm{a}^2)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector, lem:gauss_law_of_cov}
+$b + LV$ is a Gaussian vector: $V$ is one, $L$ is a continuous linear map
+(\texttt{HasGaussianLaw.map}) and translations preserve Gaussianity
+(\texttt{IsGaussian} instance for \texttt{μ.map (· + c)}). Its mean is $b + L\mu$ by
+linearity of the integral, and for $s, t \in \R^m$,
+$\operatorname{Cov}(\ip{s}{b + LV}, \ip{t}{b+LV}) = \operatorname{Cov}(\ip{L^\top s}{V},
+\ip{L^\top t}{V}) = (L^\top s)^\top S (L^\top t) = s^\top (LSL^\top) t$, i.e.\ the covariance
+matrix is $LSL^\top$. Conclude with Lemma~\ref{lem:gauss_law_of_cov}(ii). The special cases
+are $S = I_n$ and $L = a^\top$ (with $m = 1$, $\Normal(0, a^\top a)$ on $\R$ being
+\texttt{gaussianReal 0 ‖a‖²}).
+\end{proof}
+
+\textbf{Lean remark.} With $V$ given by \texttt{HasLaw V (multivariateGaussian μ S) P}, the
+conclusion is \texttt{HasLaw (fun ω ↦ b + L (V ω)) (multivariateGaussian (b + L μ) (L * S * Lᵀ)) P}.
+The proof through characteristic functions is an alternative to the one through
+\texttt{HasGaussianLaw}: $\E e^{i\ip{t}{b + LV}} = e^{i\ip{t}{b}}\,\E e^{i\ip{L^\top t}{V}}$
+and \texttt{charFun\_multivariateGaussian} on both sides.
+
+\begin{lemma}[Independent Gaussian vectors are jointly Gaussian]\label{lem:pg_indep_gaussian_pair}
+\uses{def:pg_gaussian_vector}
+Let $V_1 \sim \Normal(\mu_1, S_1)$ in $\R^{n_1}$ and $V_2 \sim \Normal(\mu_2, S_2)$ in
+$\R^{n_2}$ be independent, on the same probability space. Then the pair $(V_1, V_2)$, seen in
+$\R^{n_1 + n_2}$, satisfies
+$(V_1,V_2) \sim \Normal\big((\mu_1,\mu_2), \operatorname{diag}(S_1, S_2)\big)$.
+If $n_1 = n_2$ then $V_1 + V_2 \sim \Normal(\mu_1 + \mu_2, S_1 + S_2)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector, lem:gauss_law_of_cov, lem:gauss_linear_image}
+The pair is a Gaussian vector (Mathlib \texttt{IndepFun.hasGaussianLaw}: the law of the pair
+is the product measure, and a product of Gaussian measures is Gaussian). Its mean is
+$(\mu_1,\mu_2)$ and its covariance matrix is block diagonal: the cross covariances
+$\operatorname{Cov}(\ip{s}{V_1}, \ip{t}{V_2})$ vanish because $\ip{s}{V_1}$ and $\ip{t}{V_2}$
+are independent and square-integrable (the covariance of independent variables vanishes:
+Mathlib \texttt{IndepFun.covariance\_eq\_zero} in \texttt{Mathlib/Probability/Moments/Covariance.lean},
+or the product formula \texttt{IndepFun.integral\_mul\_eq\_mul\_integral}). Conclude with
+Lemma~\ref{lem:gauss_law_of_cov}(ii). For the sum apply Lemma~\ref{lem:gauss_linear_image}
+with $L = [I_n\ I_n]$: $L\operatorname{diag}(S_1,S_2)L^\top = S_1 + S_2$.
+\end{proof}
+
+\begin{lemma}[Orthogonal invariance and rotation of pairs]\label{lem:gauss_rotation}
+\uses{def:pg_gaussian_vector}
+\begin{enumerate}
+  \item[(i)] If $g \sim \Normal(0, I_d)$ and $U \in \R^{d\times d}$ is orthogonal
+        ($U^\top U = I_d$), then $Ug \sim \Normal(0, I_d)$.
+  \item[(ii)] If $g, g'$ are independent, each with law $\Normal(0, I_d)$, then for every
+        $\theta \in \R$ the pair
+        \[
+          (g_\theta, g'_\theta) := \big(g\sin\theta + g'\cos\theta,\ g\cos\theta - g'\sin\theta\big)
+        \]
+        has the same law as $(g, g')$, namely $\Normal(0, I_{2d})$ on $\R^d \times \R^d$;
+        in particular $g_\theta$ and $g'_\theta$ are independent $\Normal(0,I_d)$ vectors.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector, lem:pg_indep_gaussian_pair, lem:gauss_pi, lem:gauss_uncorrelated_indep}
+(i) $U$ is a linear isometry equivalence of $\R^d$ and the standard Gaussian measure is
+invariant under linear isometry equivalences (Mathlib \texttt{stdGaussian\_map}); the law of
+$Ug$ is the image of the law of $g$. (ii) By Lemma~\ref{lem:pg_indep_gaussian_pair} the pair
+$(g,g')$ has law $\Normal(0, I_{2d})$. The map
+$R_\theta(u,v) := (u\sin\theta + v\cos\theta,\ u\cos\theta - v\sin\theta)$ is linear and
+\[
+  \norm{u\sin\theta + v\cos\theta}^2 + \norm{u\cos\theta - v\sin\theta}^2
+  = \norm{u}^2(\sin^2\theta + \cos^2\theta) + \norm{v}^2(\cos^2\theta + \sin^2\theta)
+    + 2\ip{u}{v}(\sin\theta\cos\theta - \cos\theta\sin\theta) = \norm{u}^2 + \norm{v}^2,
+\]
+so $R_\theta$ is a linear isometry of $\R^{2d}$ (bijective since it is an isometry of a
+finite-dimensional space, or explicitly $R_\theta^{-1} = R_\theta^\top$). Apply (i) in
+dimension $2d$. (Mathlib's \texttt{IsGaussian.map\_rotation\_eq\_self} is the same statement
+for the map \texttt{ContinuousLinearMap.rotation θ} of
+\texttt{Mathlib/Probability/Distributions/Fernique.lean}, namely
+$(u,v)\mapsto(u\cos\theta + v\sin\theta,\ -u\sin\theta + v\cos\theta)$, applied to
+$\mu\otimes\mu$ with $\mu$ a centered Gaussian measure. Since
+$\mathrm{rotation}(-\theta)(u,v) = (u\cos\theta - v\sin\theta,\ u\sin\theta + v\cos\theta)$,
+one has $R_\theta = \mathrm{swap}\circ\mathrm{rotation}(-\theta)$ with
+$\mathrm{swap}(u,v) := (v,u)$, and the swap also preserves $\mu\otimes\mu$
+(\texttt{Measure.prod\_swap}).) Independence of the components of
+a $\Normal(0,I_{2d})$ vector is Lemma~\ref{lem:gauss_pi}(ii) applied blockwise, or
+Lemma~\ref{lem:gauss_uncorrelated_indep}.
+\end{proof}
+
+\begin{lemma}[Joint law of two linear images]\label{lem:gauss_joint_linear}
+\uses{def:pg_gaussian_vector}
+Let $V \sim \Normal(\mu,S)$ in $\R^n$ and $L_1 \in \R^{m_1\times n}$, $L_2 \in \R^{m_2\times n}$.
+Then $(L_1 V, L_2 V)$ is a Gaussian vector in $\R^{m_1}\times\R^{m_2}$ with
+\[
+  (L_1V, L_2V) \sim \Normal\Big( (L_1\mu, L_2\mu),
+  \begin{pmatrix} L_1SL_1^\top & L_1SL_2^\top \\ L_2SL_1^\top & L_2SL_2^\top\end{pmatrix}\Big),
+\]
+and in particular the cross covariance is
+$\operatorname{Cov}(L_1V, L_2V) := \E[(L_1V - L_1\mu)(L_2V - L_2\mu)^\top] = L_1 S L_2^\top$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector, lem:gauss_linear_image}
+$(L_1V, L_2V) = LV$ with $L := \binom{L_1}{L_2} \in \R^{(m_1+m_2)\times n}$;
+Lemma~\ref{lem:gauss_linear_image} gives $LV \sim \Normal(L\mu, LSL^\top)$ and
+$LSL^\top$ is the displayed block matrix. The cross covariance is its off-diagonal block.
+\end{proof}
+
+\begin{lemma}[Uncorrelated jointly Gaussian vectors are independent]\label{lem:gauss_uncorrelated_indep}
+\uses{def:pg_gaussian_vector}
+Let $(V_1, V_2)$ be a Gaussian vector in $\R^{m_1}\times\R^{m_2}$ (i.e.\ the pair is jointly
+Gaussian) such that $\operatorname{Cov}(V_1, V_2) = 0$, i.e.\
+$\operatorname{Cov}((V_1)_i, (V_2)_j) = 0$ for all $i \le m_1$, $j \le m_2$. Then $V_1$ and
+$V_2$ are independent.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+Mathlib: \texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval} (coordinates) or
+\texttt{HasGaussianLaw.indepFun\_of\_covariance\_inner} (all $\operatorname{Cov}(\ip{s}{V_1},
+\ip{t}{V_2}) = 0$, which follows from the coordinatewise hypothesis by bilinearity).
+\end{proof}
+
+\begin{lemma}[Expectation of an inner product with an independent centered vector]
+\label{lem:indep_integral_zero}
+Let $W : \Omega \to \R^d$ be integrable with $\E W = 0$, let $V : \Omega \to \mathcal V$ be a
+random variable with values in a measurable space, independent of $W$, and let
+$f : \mathcal V \to \R^d$ be bounded and measurable. Then $\ip{f(V)}{W}$ is integrable and
+$\E\ip{f(V)}{W} = 0$.
+\end{lemma}
+
+\begin{proof}
+$\ip{f(V)}{W} = \sum_{i<d} f_i(V)\,W_i$. For each $i$, $f_i(V)$ is bounded and measurable and
+$W_i$ is integrable, so their product is integrable; $f_i(V)$ and $W_i$ are independent
+(compositions of independent variables with measurable maps, Mathlib \texttt{IndepFun.comp}),
+so $\E[f_i(V)W_i] = \E[f_i(V)]\,\E[W_i] = 0$ (product formula for independent integrable
+variables, Mathlib \texttt{IndepFun.integral\_mul\_eq\_mul\_integral}). Sum over $i$.
+\end{proof}
+
+\section{Moments and tails}
+\label{sec:pre_gaussian_moments}
+
+\begin{lemma}[Moments of a centered real Gaussian]\label{lem:gauss_1d_moments}
+\uses{def:pg_gaussian_vector}
+Let $\sigma \ge 0$ and $Z \sim \Normal(0,\sigma^2)$. Then $Z$ has finite moments of all
+orders and
+\[
+  \E Z = 0,\quad \E Z^2 = \sigma^2,\quad \E Z^4 = 3\sigma^4,\quad
+  \E\abs{Z} = \sigma\sqrt{2/\pi},\quad \E e^{\lambda Z} = e^{\lambda^2\sigma^2/2}\ (\lambda\in\R).
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+Mathlib: \texttt{memLp\_id\_gaussianReal} (all moments), \texttt{integral\_id\_gaussianReal},
+\texttt{variance\_id\_gaussianReal}, \texttt{mgf\_gaussianReal} (with mean $0$ and variance
+$\sigma^2$: $\E e^{\lambda Z} = \exp(0\cdot\lambda + \sigma^2\lambda^2/2)$). For the fourth
+moment and the absolute moment, reduce to $\sigma = 1$ by $Z \eqd \sigma\xi$,
+$\xi \sim \Normal(0,1)$ (\texttt{gaussianReal\_map\_const\_mul}; for $\sigma = 0$ both sides
+vanish), and compute with the density $\varphi(x) = e^{-x^2/2}/\sqrt{2\pi}$:
+$\int x^4\varphi = 3\int x^2\varphi = 3$ by integration by parts
+($x^3\cdot x\varphi(x) = -x^3\varphi'(x)$, \texttt{integral\_mul\_deriv\_eq\_deriv\_mul}), and
+$\int\abs{x}\varphi = 2\int_0^\infty x\varphi(x)\,dx = 2\varphi(0) = \sqrt{2/\pi}$ since
+$x\varphi(x) = -\varphi'(x)$. Alternatively, $\E Z^4$ is the fourth derivative at $0$ of the
+MGF $e^{\lambda^2\sigma^2/2}$ (Mathlib \texttt{iteratedDeriv\_mgf\_zero}).
+\end{proof}
+
+\begin{lemma}[Moments of the norm of a Gaussian vector]\label{lem:gauss_norm_moments}
+\uses{def:pg_gaussian_vector}
+Let $S \in \PSD$ ($d \times d$) and $Y \sim \Normal(0, S)$; equivalently $Y = S^{1/2}g$ with
+$g \sim \Normal(0,I_d)$. Then
+\begin{enumerate}
+  \item[(i)] $\E\norm{Y}^2 = \tr S$;
+  \item[(ii)] $\E\norm{Y}^4 = (\tr S)^2 + 2\tr(S^2) \le 3(\tr S)^2$;
+  \item[(iii)] $\E\norm{Y} \le \sqrt{\tr S}$;
+  \item[(iv)] $\E\norm{Y} \ge (\tr S)^{3/2}\big/\sqrt{(\tr S)^2 + 2\tr(S^2)} \ge \sqrt{\tr S}/\sqrt3$.
+\end{enumerate}
+In the special case $S = I_d$: $\E\norm{g}^2 = d$, $\E\norm{g}^4 = d^2 + 2d$,
+$\E\norm{g} \le \sqrt d$ and $\E\norm{g} \ge d/\sqrt{d+2} \ge \sqrt{d/3}$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector, lem:gauss_law_of_cov, lem:gauss_rotation, lem:gauss_pi, lem:gauss_1d_moments}
+All quantities depend only on the law of $Y$, so by Lemma~\ref{lem:gauss_law_of_cov}(iii) we
+may take $Y = S^{1/2}g$. Diagonalize $S = U\operatorname{diag}(s_1,\dots,s_d)U^\top$ with $U$
+orthogonal and $s_i \ge 0$ (spectral theorem for symmetric matrices, Mathlib
+\texttt{Matrix.IsHermitian.spectral\_theorem}; nonnegativity of the eigenvalues from
+$S \in \PSD$). Then $\norm{Y}^2 = g^\top S g = \sum_i s_i h_i^2$ with $h := U^\top g$, and
+$h \sim \Normal(0,I_d)$ by Lemma~\ref{lem:gauss_rotation}(i), so the $h_i$ are i.i.d.\
+$\Normal(0,1)$ (Lemma~\ref{lem:gauss_pi}(ii)). (i) $\E\sum_i s_ih_i^2 = \sum_i s_i = \tr S$
+(Lemma~\ref{lem:gauss_1d_moments}). (ii) Expanding the square and using independence,
+$\E h_i^4 = 3$ and $\E h_i^2 = 1$,
+\[
+  \E\Big(\sum_i s_ih_i^2\Big)^2 = \sum_i s_i^2\,\E h_i^4 + \sum_{i\ne j}s_is_j\,\E h_i^2\,\E h_j^2
+  = 3\sum_i s_i^2 + \Big(\big(\sum_i s_i\big)^2 - \sum_i s_i^2\Big) = (\tr S)^2 + 2\tr(S^2),
+\]
+using $\tr(S^2) = \sum_i s_i^2$. Since $s_i \ge 0$, $\sum_i s_i^2 \le (\sum_i s_i)^2$, whence
+the bound $3(\tr S)^2$. (iii) is Jensen (or Cauchy--Schwarz): $(\E\norm{Y})^2 \le \E\norm{Y}^2$.
+(iv) Hölder's inequality with exponents $3/2$ and $3$ applied to
+$\norm{Y}^2 = \norm{Y}^{2/3}\cdot\norm{Y}^{4/3}$ gives
+$\E\norm{Y}^2 \le (\E\norm{Y})^{2/3}(\E\norm{Y}^4)^{1/3}$, i.e.\
+$(\E\norm{Y})^{2/3} \ge \tr S\,/\,((\tr S)^2 + 2\tr(S^2))^{1/3}$; raise to the power $3/2$ and
+use (ii) for the last inequality. For $S = I_d$, $\tr S = d$, $\tr(S^2) = d$ and
+$d^{3/2}/\sqrt{d^2+2d} = d/\sqrt{d+2}$, and $d/\sqrt{d+2} \ge \sqrt{d/3}$ since
+$d \ge 1$ gives $d \ge (d+2)/3$.
+\end{proof}
+
+\begin{lemma}[Gaussian tail]\label{lem:gauss_tail}
+\uses{def:pg_gaussian_vector}
+Let $\mu \in \R$, $\sigma > 0$ and $Z \sim \Normal(\mu,\sigma^2)$. Then $Z - \mu$ has a
+sub-Gaussian moment generating function with constant $\sigma^2$
+(Mathlib \texttt{HasSubgaussianMGF (Z - μ) σ²}: $\E e^{\lambda(Z-\mu)} \le e^{\sigma^2\lambda^2/2}$
+for all $\lambda$, with equality), and for every $t \ge 0$,
+\[
+  \Prob(Z - \mu \ge t) \le e^{-t^2/(2\sigma^2)}, \qquad
+  \Prob(Z - \mu \le -t) \le e^{-t^2/(2\sigma^2)}, \qquad
+  \Prob(\abs{Z - \mu} \ge t) \le 2e^{-t^2/(2\sigma^2)} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+$Z - \mu \sim \Normal(0,\sigma^2)$ (\texttt{gaussianReal\_sub\_const}) and
+\texttt{mgf\_gaussianReal} gives $\E e^{\lambda(Z-\mu)} = e^{\sigma^2\lambda^2/2}$, with
+integrability from \texttt{integrable\_exp\_mul\_gaussianReal}; this is the structure
+\texttt{HasSubgaussianMGF}. The tails are the Chernoff bounds
+\texttt{HasSubgaussianMGF.measure\_ge\_le} (Mathlib) and
+\texttt{HasSubgaussianMGF.measure\_le\_le} (LML); the two-sided bound is a union bound.
+\end{proof}
+
+\begin{lemma}[Concentration of a Gaussian empirical mean]\label{lem:gauss_mean_concentration}
+\uses{def:pg_gaussian_vector, lem:gauss_tail}
+Let $n \ge 1$ and $\eta_1,\dots,\eta_n$ be i.i.d.\ $\Normal(0,1)$. Then
+$\bar\eta := \frac1n\sum_{i\le n}\eta_i \sim \Normal(0, 1/n)$ and for all $t \ge 0$,
+$\Prob(\abs{\bar\eta} \ge t) \le 2e^{-nt^2/2}$. Consequently, for $\eps > 0$ and
+$\delta \in (0,1)$, if $n \ge 8\log(2/\delta)/\eps^2$ then
+$\Prob(\abs{\bar\eta} \le \eps/2) \ge 1 - \delta$. The same holds for $\bar y - \mu$ when
+$y_i = \mu + \eta_i$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_tail, lem:gauss_pi, lem:gauss_linear_image}
+$\sum_i\eta_i \sim \Normal(0,n)$ (sums of independent real Gaussians, Mathlib
+\texttt{gaussianReal\_add\_gaussianReal\_of\_indepFun} by induction; or
+Lemmas~\ref{lem:gauss_pi} and~\ref{lem:gauss_linear_image} with $a = (1,\dots,1)$), and
+$\bar\eta \sim \Normal(0, 1/n)$ (\texttt{gaussianReal\_map\_const\_mul}). Lemma~\ref{lem:gauss_tail}
+with $\sigma^2 = 1/n$ gives $\Prob(\abs{\bar\eta}\ge t) \le 2e^{-t^2/(2/n)} = 2e^{-nt^2/2}$.
+With $t = \eps/2$: $2e^{-n\eps^2/8} \le 2e^{-\log(2/\delta)} = \delta$ when
+$n\eps^2/8 \ge \log(2/\delta)$.
+\end{proof}
+
+\section{Suprema of linear Gaussian processes}
+\label{sec:pre_gaussian_sup}
+
+\begin{lemma}[Suprema over a compact set reduce to a countable dense subset]
+\label{lem:sup_countable_dense}
+Let $\Xs \subset \R^d$ be nonempty and compact and $R := \max_{x\in\Xs}\norm{x}$.
+\begin{enumerate}
+  \item[(i)] There is a countable dense subset $D \subseteq \Xs$; fix an enumeration
+        $D = \{q_n : n \in \N\}$ (repetitions allowed).
+  \item[(ii)] For every $v \in \R^d$ the supremum $m(v) := \sup_{x\in\Xs}\ip{x}{v}$ is
+        attained (it is a maximum), and
+        $m(v) = \sup_{n\in\N}\ip{q_n}{v} = \lim_{n\to\infty}\max_{i\le n}\ip{q_i}{v}$,
+        the sequence $\max_{i\le n}\ip{q_i}{v}$ being nondecreasing in $n$.
+  \item[(iii)] $m : \R^d \to \R$ is convex, $R$-Lipschitz ($\abs{m(v) - m(v')} \le R\norm{v - v'}$),
+        hence continuous and Borel measurable, and $\abs{m(v)} \le R\norm{v}$.
+  \item[(iv)] For every random vector $G : \Omega \to \R^d$, $\sup_{x\in\Xs}\ip{x}{G} = m(G)$ is
+        a real random variable with $\abs{m(G)} \le R\norm{G}$; it is integrable as soon as
+        $\norm{G}$ is.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) $\Xs$ is a separable metric space (Mathlib \texttt{TopologicalSpace.exists\_countable\_dense}
+for the subtype, which is second countable as a subspace of $\R^d$). (ii) For fixed $v$ the
+map $x \mapsto \ip{x}{v}$ is continuous, so it attains its maximum on the compact $\Xs$
+(\texttt{IsCompact.exists\_isMaxOn}). Clearly $\sup_{n}\ip{q_n}{v} \le m(v)$. Conversely, if
+$x \in \Xs$ attains $m(v)$, density gives $q_{n_k} \to x$ and continuity gives
+$\ip{q_{n_k}}{v} \to \ip{x}{v} = m(v)$, so $\sup_n\ip{q_n}{v} \ge m(v)$. The partial maxima are
+nondecreasing and converge to the supremum of the sequence
+(\texttt{tendsto\_atTop\_ciSup} for monotone bounded sequences). (iii) $m$ is a supremum of
+linear functions, hence convex. For $v, v'$ and $x \in \Xs$ attaining $m(v)$,
+$m(v) - m(v') \le \ip{x}{v} - \ip{x}{v'} \le \norm{x}\norm{v-v'} \le R\norm{v-v'}$; symmetrize.
+$m(0) = 0$ gives $\abs{m(v)} \le R\norm{v}$. Measurability follows from continuity, or
+directly from (ii): a countable supremum of measurable functions is measurable
+(\texttt{Measurable.iSup}). (iv) is (ii)--(iii) composed with $G$.
+\end{proof}
+
+\textbf{Lean remark.} In Lean, $\sup_{x\in\Xs}\ip{x}{v}$ is best written as
+\texttt{⨆ x : Xs, ⟪(x : E), v⟫} (a \texttt{ciSup} over the compact subtype, bounded above),
+and item (ii) provides the equality with \texttt{⨆ n, ⟪q n, v⟫} for a sequence
+\texttt{q : ℕ → Xs} with dense range (\texttt{TopologicalSpace.exists\_dense\_seq}). All
+measure-theoretic statements about $\sup_{x\in\Xs}\ip{x}{G}$ in this blueprint are proved
+through this countable form, and Chapter~\ref{chap:pre_concentration} uses the partial maxima
+$\max_{i\le n}\ip{q_i}{G}$ as the finite approximations.
+
+\begin{lemma}[Expected maximum of $m$ sub-Gaussian variables]\label{lem:gauss_max_upper}
+\uses{lem:gauss_tail}
+Let $m \ge 1$, $\sigma \ge 0$ and $Z_1,\dots,Z_m$ be real random variables on a common
+probability space, each with a sub-Gaussian moment generating function with constant
+$\sigma^2$ (Mathlib \texttt{HasSubgaussianMGF (Z i) σ²}: $e^{\beta Z_i}$ is integrable and
+$\E e^{\beta Z_i}\le e^{\beta^2\sigma^2/2}$ for every $\beta\in\R$; no assumption on their
+joint law). Then $\max_{i\le m}Z_i$ is integrable and
+\[
+  \E\max_{i\le m}Z_i \le \sigma\sqrt{2\log m}.
+\]
+In particular this applies to centered Gaussian variables $Z_i \sim \Normal(0,\sigma_i^2)$
+with $\sigma_i^2 \le \sigma^2$ for every $i$, whatever their joint law
+(Lemma~\ref{lem:gauss_tail}): $\E\max_{i\le m}Z_i \le \sigma\sqrt{2\log m}$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_tail}
+Integrability: $\abs{Z_i}\le e^{Z_i} + e^{-Z_i}$ is integrable ($\beta = \pm1$), and
+$\abs{\max_iZ_i} \le \sum_i\abs{Z_i}$. Let $\beta > 0$. By Jensen's inequality for the convex
+function $\exp$ (Mathlib \texttt{ConvexOn.map\_integral\_le} with \texttt{convexOn\_exp}; the
+integrand $e^{\beta\max_iZ_i} \le \sum_ie^{\beta Z_i}$ is integrable by assumption),
+\[
+  \exp\Big(\beta\,\E\max_iZ_i\Big) \le \E\exp\Big(\beta\max_iZ_i\Big)
+  = \E\max_i e^{\beta Z_i} \le \sum_{i\le m}\E e^{\beta Z_i}
+  \le m\,e^{\beta^2\sigma^2/2},
+\]
+where $\max_ie^{\beta Z_i} = e^{\beta\max_iZ_i}$ because $\exp$ is increasing. Taking
+logarithms, $\E\max_iZ_i \le \frac{\log m}{\beta} + \frac{\beta\sigma^2}{2}$ for every
+$\beta>0$. If $m\ge2$ and $\sigma>0$, choose $\beta := \sqrt{2\log m}/\sigma$: both terms
+equal $\sigma\sqrt{2\log m}/2$. If $m = 1$, let $\beta\downarrow0$: $\E Z_1\le0 = \sigma\sqrt{2\log1}$.
+If $\sigma = 0$, let $\beta\to\infty$: $\E\max_iZ_i\le0$. The Gaussian case: by
+Lemma~\ref{lem:gauss_tail} (with $\mu = 0$), $Z_i\sim\Normal(0,\sigma_i^2)$ with $\sigma_i>0$
+has a sub-Gaussian MGF with constant $\sigma_i^2\le\sigma^2$, hence with constant $\sigma^2$
+(the bound $e^{\beta^2\sigma_i^2/2}\le e^{\beta^2\sigma^2/2}$ is monotone in the constant);
+if $\sigma_i = 0$ then $Z_i = 0$ a.s.\ and the constant-$\sigma^2$ bound is trivial.
+\end{proof}
+
+\begin{lemma}[Comparison by covariance domination]\label{lem:gauss_comparison}
+\uses{def:pg_gaussian_vector, lem:sup_countable_dense}
+Let $\Xs \subset \R^d$ be nonempty and compact, let $S_X, S_Y \in \PSD$ with
+$S_X \preceq S_Y$ (i.e.\ $S_Y - S_X \in \PSD$), and let $G_X \sim \Normal(0,S_X)$,
+$G_Y \sim \Normal(0,S_Y)$ (on arbitrary probability spaces). Then
+$\sup_{x\in\Xs}\ip{x}{G_X}$ and $\sup_{x\in\Xs}\ip{x}{G_Y}$ are integrable and
+\[
+  \E\sup_{x\in\Xs}\ip{x}{G_X} \le \E\sup_{x\in\Xs}\ip{x}{G_Y}.
+\]
+In particular (finite index set $\Xs = \{e_1,\dots,e_m\}$, the canonical basis of $\R^m$):
+if $Z \sim \Normal(0,\Sigma_Z)$ and $W \sim \Normal(0,\Sigma_W)$ in $\R^m$ with
+$\Sigma_Z \preceq \Sigma_W$, then $\E\max_{i\le m}Z_i \le \E\max_{i\le m}W_i$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sup_countable_dense, lem:gauss_norm_moments, lem:pg_indep_gaussian_pair, lem:gauss_law_of_cov}
+Write $m(v) := \sup_{x\in\Xs}\ip{x}{v}$, which is continuous with $\abs{m(v)} \le R\norm{v}$,
+$R := \max_{x\in\Xs}\norm{x}$ (Lemma~\ref{lem:sup_countable_dense}); integrability of $m(G_X)$
+and $m(G_Y)$ follows from $\E\norm{G} < \infty$ for Gaussian vectors
+(Lemma~\ref{lem:gauss_norm_moments}(iii)). Both expectations depend only on the laws, so we may
+work on the product space $(\R^d\times\R^d, \Normal(0,S_X)\otimes\Normal(0,S_Y-S_X))$ with
+coordinate projections $G_X$ and $G_Z$, which are independent with
+$G_Z \sim \Normal(0, S_Y - S_X)$ ($S_Y - S_X \in \PSD$ by assumption). By
+Lemma~\ref{lem:pg_indep_gaussian_pair}, $G_X + G_Z \sim \Normal(0, S_X + (S_Y - S_X)) =
+\Normal(0,S_Y)$, so $\E m(G_Y) = \E m(G_X + G_Z)$ (Lemma~\ref{lem:gauss_law_of_cov} is not
+even needed: this is equality of laws). By Fubini on the product measure
+(Mathlib \texttt{MeasureTheory.integral\_prod}; the integrand $(u,z)\mapsto m(u+z)$ is
+continuous and dominated by $R(\norm{u}+\norm{z})$, which is integrable on the product),
+\[
+  \E m(G_X + G_Z) = \int\Big(\int m(u+z)\,\Normal(0,S_Y-S_X)(dz)\Big)\Normal(0,S_X)(du).
+\]
+Fix $u$. For every $x \in \Xs$ and every $z$, $\ip{x}{u} + \ip{x}{z} \le m(u+z)$; integrating in
+$z$ and using $\int\ip{x}{z}\,\Normal(0,S_Y-S_X)(dz) = \ip{x}{0} = 0$ (centered), monotonicity
+of the integral gives $\ip{x}{u} \le \int m(u+z)\,\Normal(0,S_Y-S_X)(dz)$. Taking the supremum
+over $x\in\Xs$: $m(u) \le \int m(u+z)\,\Normal(0,S_Y-S_X)(dz)$. Integrating in $u$ yields
+$\E m(G_X) \le \E m(G_X+G_Z) = \E m(G_Y)$. The finite-index statement is the case
+$\Xs = \{e_1,\dots,e_m\}$, since $\ip{e_i}{G} = G_i$.
+\end{proof}
+
+\begin{remark}[Relation with Sudakov--Fernique]\label{rem:pg_comparison_vs_sf}
+The Sudakov--Fernique inequality (Chapter~\ref{chap:pre_sudakov}) only requires
+$\E(Z_i - Z_j)^2 \le \E(W_i - W_j)^2$ for all pairs, which is weaker than
+$\Sigma_Z \preceq \Sigma_W$. The Loewner-order version above is all that the monotonicity of
+the Gaussian width (Lemma~\ref{lem:width_mono}) needs, and its proof is elementary; this is
+one of the deviations from the paper listed in the introduction.
+\end{remark}

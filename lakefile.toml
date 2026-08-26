@@ -1,0 +1,40 @@
+name = "COLT83"
+defaultTargets = ["COLT83"]
+lintDriver = "batteries/runLinter"
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+
+[[require]]
+name = "LeanMachineLearning"
+git = "https://github.com/LeanMachineLearning/LML"
+rev = "main"
+
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls.git"
+
+[[require]]
+name = "LeanSpec"
+git = "https://github.com/LeanMachineLearning/exposition"
+rev = "main"
+subDir = "LeanSpec"
+
+[[lean_lib]]
+name = "COLT83"
+
+# Comparator (https://github.com/leanprover/comparator) challenge/solution modules for the
+# headline results listed in formalization.yaml; see comparator/README.md. One library with a
+# stub root: tools that import every library root (checkdecls, referee) must not load the
+# challenge modules, which redeclare project and LML names, so those are globs, not roots.
+[[lean_lib]]
+name = "Comparator"
+srcDir = "comparator"
+leanOptions = { weak.linter.mathlibStandardSet = false }
+globs = [
+  "Comparator",
+  "Solution",
+]

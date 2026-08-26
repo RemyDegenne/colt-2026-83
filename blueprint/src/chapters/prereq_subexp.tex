@@ -1,0 +1,536 @@
+\chapter{Sub-exponential random variables}
+\label{chap:pre_subexp}
+
+This chapter develops the Bernstein-type concentration used by the $\ell_2$-norm estimation
+of Chapter~\ref{chap:norm} and by the unit-ball identification algorithm
+(Lemma~\ref{lem:ball_identification}): a notion of sub-exponential random variable with two
+explicit parameters $(V, b)$ (Appendix~D.1 of the paper), its stability under scaling and
+independent sums, the corresponding tail bound with the explicit constant $c = 1/2$, and the
+sub-exponential parameters of the centered squares of Gaussian variables (the paper's
+Lemma~1 in Appendix~A, with its complete-the-square proof), of chi-square variables and
+Gaussian quadratic forms, and of Rademacher linear forms $\ip{\eps}{\theta}$. For the last
+one the paper invokes the Hanson--Wright inequality with unspecified constants; we replace it
+by a direct argument (a Gaussian trick for positive $\lambda$, a fourth-moment bound for
+negative $\lambda$) which gives explicit parameters $(16\norm\theta^4, 4\norm\theta^2)$. All
+constants are explicit and tracked. References: \cite[Section~2.7]{vershynin2018high},
+\cite[Section~2.4]{boucheron2013concentration}.
+
+\textbf{What Mathlib provides.} The sub-Gaussian structure
+\texttt{ProbabilityTheory.HasSubgaussianMGF X c μ} (\texttt{Mathlib/Probability/Moments/SubGaussian.lean})
+with \texttt{measure\_ge\_le}, \texttt{neg}, \texttt{add\_of\_indepFun},
+\texttt{sum\_of\_iIndepFun}, \texttt{of\_map}, \texttt{congr\_identDistrib}, Hoeffding's lemma
+\texttt{hasSubgaussianMGF\_of\_mem\_Icc\_of\_integral\_eq\_zero}, and LML's
+\texttt{measure\_le\_le}. Moment generating functions: \texttt{ProbabilityTheory.mgf},
+\texttt{iIndepFun.mgf\_sum}, \texttt{iIndepFun.integrable\_exp\_mul\_sum}
+(\texttt{Mathlib/Probability/Moments/Basic.lean}), \texttt{mgf\_gaussianReal}. The Gaussian
+integral \texttt{integral\_gaussian} ($\int e^{-bx^2}dx = \sqrt{\pi/b}$,
+\texttt{Mathlib/Analysis/SpecialFunctions/Gaussian/GaussianIntegral.lean}) and its complex
+shifted form \texttt{integral\_cexp\_neg\_mul\_sq\_add\_real\_mul\_I}
+(\texttt{FourierTransform.lean}); the real logarithm series bound
+\texttt{Real.abs\_log\_sub\_add\_sum\_range\_le} (\texttt{Mathlib/Analysis/SpecialFunctions/Log/Deriv.lean});
+\texttt{Real.add\_one\_le\_exp}; the spectral theorem
+\texttt{Matrix.IsHermitian.spectral\_theorem} (\texttt{Mathlib/Analysis/Matrix/Spectrum.lean}).
+
+\textbf{What is missing.} The sub-exponential structure itself and all its properties
+(Section~\ref{sec:pre_subexp_def}), the MGF of the square of a real Gaussian
+(Lemma~\ref{lem:gaussian_square_mgf}), and the sub-exponential bounds of
+Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}.
+
+\textbf{Lean remark.} The definition below mirrors \texttt{HasSubgaussianMGF}: a structure
+\texttt{HasSubexponentialMGF (X : Ω → ℝ) (V b : ℝ≥0) (μ : Measure Ω) : Prop} with fields
+\texttt{integrable\_exp\_mul : ∀ t : ℝ, b * |t| ≤ 1 → Integrable (fun ω ↦ exp (t * X ω)) μ} and
+\texttt{mgf\_le : ∀ t : ℝ, b * |t| ≤ 1 → mgf X μ t ≤ exp (V * t² / 2)}. The range of $t$ is
+written as $b\abs t\le1$ rather than $\abs t\le1/b$ so that \texttt{b = 0} imposes no
+restriction on $t$ (the hypothesis $0\cdot\abs t\le1$ is always true):
+\texttt{HasSubexponentialMGF X V 0 μ} is then equivalent to \texttt{HasSubgaussianMGF X V μ}
+(same two fields, quantified over all \texttt{t}), and Mathlib's sub-Gaussian API is the
+$b = 0$ case of the statements below (Lemma~\ref{lem:subexp_of_subgaussian}). A kernel
+version, as for \texttt{Kernel.HasSubgaussianMGF}, is not needed.
+
+\section{Definition and basic properties}
+\label{sec:pre_subexp_def}
+
+\begin{definition}[Sub-exponential moment generating function]\label{def:subexp}
+Let $X : \Omega \to \R$ be a random variable on $(\Omega,\Prob)$, $V \ge 0$ and $b \ge 0$. We say
+that $X$ \emph{has a sub-exponential MGF with parameters $(V,b)$}, written
+$\mathrm{HasSubexponentialMGF}(X, V, b)$, if for every $\lambda \in \R$ with
+$b\abs{\lambda} \le 1$ (i.e.\ $\abs\lambda\le1/b$ when $b>0$, and every $\lambda\in\R$ when
+$b = 0$), the variable $e^{\lambda X}$ is integrable and
+\[
+  \E e^{\lambda X} \le \exp\Big(\frac{\lambda^2V}{2}\Big).
+\]
+The case $b = 0$ is exactly Mathlib's \texttt{HasSubgaussianMGF X V}
+(Lemma~\ref{lem:subexp_of_subgaussian}). No centering is assumed; it is a consequence
+(Lemma~\ref{lem:ps_subexp_integral_zero}).
+\end{definition}
+
+\begin{lemma}[Sub-exponential variables are integrable and centered]\label{lem:ps_subexp_integral_zero}
+\uses{def:subexp}
+If $\mathrm{HasSubexponentialMGF}(X,V,b)$ then $X$ is integrable and $\E X = 0$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp}
+Fix $\lambda_0 > 0$ with $b\lambda_0 \le 1$ ($\lambda_0 := 1/b$ if $b > 0$, $\lambda_0 := 1$ if
+$b = 0$). Integrability: for $y \in \R$, $\abs{y} \le e^{\abs y} \le e^{y} + e^{-y}$, so
+$\abs{X} \le \lambda_0^{-1}(e^{\lambda_0X} + e^{-\lambda_0X})$, a sum of two integrable
+variables ($\lambda = \pm\lambda_0$).
+Centering: by $1 + y \le e^y$ (Mathlib \texttt{Real.add\_one\_le\_exp}), for
+$0 < \abs\lambda \le \lambda_0$, $1 + \lambda\E X \le \E e^{\lambda X} \le e^{\lambda^2V/2}$, i.e.\
+$\lambda\,\E X \le e^{\lambda^2V/2} - 1$. Using $e^{y} - 1 \le y e^{y}$ for $y \ge 0$, the
+right-hand side is at most $\frac{\lambda^2V}{2}e^{\lambda^2V/2}$. For $\lambda > 0$ this gives
+$\E X \le \frac{\lambda V}{2}e^{\lambda^2V/2} \to 0$ as $\lambda \downarrow 0$, so $\E X \le 0$;
+for $\lambda < 0$, dividing by $\lambda < 0$ reverses the inequality:
+$\E X \ge \frac{\lambda V}{2}e^{\lambda^2V/2} \to 0$ as $\lambda \uparrow 0$, so $\E X \ge 0$.
+\end{proof}
+
+\begin{lemma}[Monotonicity in the parameters]\label{lem:ps_subexp_mono}
+\uses{def:subexp}
+If $\mathrm{HasSubexponentialMGF}(X,V,b)$, $V \le V'$ and $0 \le b \le b'$, then
+$\mathrm{HasSubexponentialMGF}(X,V',b')$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp}
+$b'\abs\lambda \le 1$ implies $b\abs\lambda \le 1$, and $e^{\lambda^2V/2} \le e^{\lambda^2V'/2}$.
+\end{proof}
+
+\begin{lemma}[Sub-Gaussian is sub-exponential with $b = 0$]\label{lem:subexp_of_subgaussian}
+\uses{def:subexp, lem:ps_subexp_mono}
+$X$ has a sub-Gaussian MGF with constant $c \ge 0$ (Mathlib
+\texttt{HasSubgaussianMGF X c}: $e^{\lambda X}$ integrable and $\E e^{\lambda X} \le e^{c\lambda^2/2}$
+for all $\lambda\in\R$) if and only if $\mathrm{HasSubexponentialMGF}(X, c, 0)$. Consequently,
+if $X$ has a sub-Gaussian MGF with constant $c$, then $\mathrm{HasSubexponentialMGF}(X, c, b)$
+for every $b \ge 0$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp, lem:ps_subexp_mono}
+For $b = 0$ the condition $b\abs\lambda\le1$ holds for every $\lambda\in\R$, so the two
+requirements of Definition~\ref{def:subexp} are literally the two fields of
+\texttt{HasSubgaussianMGF}. The second claim is Lemma~\ref{lem:ps_subexp_mono} from $b = 0$ to
+$b' = b \ge 0$.
+\end{proof}
+
+\begin{lemma}[Scaling]\label{lem:subexp_const_mul}
+\uses{def:subexp}
+If $\mathrm{HasSubexponentialMGF}(X,V,b)$ and $a \in \R$, then
+$\mathrm{HasSubexponentialMGF}(aX,\ a^2V,\ \abs{a}\,b)$. In particular ($a = -1$),
+$\mathrm{HasSubexponentialMGF}(-X, V, b)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp}
+Let $(\abs ab)\abs\lambda \le 1$, i.e.\ $b\abs{\lambda a} \le 1$; then $e^{\lambda(aX)} = e^{(\lambda a)X}$
+is integrable and $\E e^{(\lambda a)X} \le e^{(\lambda a)^2V/2} = e^{\lambda^2(a^2V)/2}$
+(for $a = 0$ this reads $\E e^{0} = 1 \le 1$).
+\end{proof}
+
+\begin{lemma}[Bernstein-type tail bound]\label{lem:subexp_tail}
+\uses{def:subexp}
+Let $\mathrm{HasSubexponentialMGF}(X,V,b)$ with $b > 0$, and $t \ge 0$. Then
+\[
+  \Prob(X \ge t) \le
+  \begin{cases}
+    \exp\big(-\frac{t^2}{2V}\big) & \text{if } t \le V/b \ (\text{and } V > 0),\\[2pt]
+    \exp\big(-\frac{t}{2b}\big) & \text{if } t \ge V/b ,
+  \end{cases}
+\]
+and consequently, when $V > 0$,
+\[
+  \Prob(X \ge t) \le \exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big), \quad
+  \Prob(X \le -t) \le \exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big), \quad
+  \Prob(\abs X \ge t) \le 2\exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big).
+\]
+If $b = 0$ (the sub-Gaussian case) and $V > 0$, then $\Prob(X\ge t)\le\exp(-t^2/(2V))$ and
+$\Prob(X\le-t)\le\exp(-t^2/(2V))$ for every $t\ge0$ (Mathlib
+\texttt{HasSubgaussianMGF.measure\_ge\_le}, LML \texttt{measure\_le\_le}), which is the
+$\min$ form with the convention $t/(2b) = +\infty$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp, lem:subexp_const_mul}
+For $\lambda \ge 0$ with $b\lambda \le 1$ (i.e.\ $\lambda\in[0,1/b]$ for $b>0$, any $\lambda\ge0$
+for $b = 0$), Markov's inequality applied to the nonnegative integrable variable
+$e^{\lambda X}$ gives (Chernoff, Mathlib \texttt{measure\_ge\_le\_exp\_mul\_mgf})
+\[
+  \Prob(X \ge t) = \Prob(e^{\lambda X} \ge e^{\lambda t}) \le e^{-\lambda t}\,\E e^{\lambda X}
+  \le \exp\Big(-\lambda t + \frac{\lambda^2V}{2}\Big).
+\]
+\emph{Case $t \le V/b$, $V > 0$:} take $\lambda := t/V \in [0,1/b]$; the exponent is
+$-t^2/V + t^2/(2V) = -t^2/(2V)$. \emph{Case $t \ge V/b$:} take $\lambda := 1/b$; the exponent is
+$-t/b + V/(2b^2) \le -t/b + t/(2b) = -t/(2b)$ since $V/b \le t$. For the $\min$ form observe
+that $t \le V/b$ implies $t^2/(2V) \le t/(2b)$ and $t \ge V/b$ implies $t/(2b) \le t^2/(2V)$, so
+in each case the bound obtained equals $\exp(-\min(t^2/(2V), t/(2b)))$. The lower tail is the
+upper tail of $-X$, which has the same parameters (Lemma~\ref{lem:subexp_const_mul} with
+$a = -1$); the two-sided bound is a union bound. For $b = 0$ every $\lambda\ge0$ is allowed and
+$\lambda := t/V$ gives $\exp(-t^2/(2V))$ (this is Mathlib's proof of \texttt{measure\_ge\_le}).
+\end{proof}
+
+\begin{remark}[The constant $c$ of the paper]\label{rem:ps_tail_constant}
+The paper's Lemma~2 (Appendix~A) states this bound with an unspecified absolute constant $c$
+in the exponent; the computation above, which is the one given there, yields $c = 1/2$. This
+value is used in Chapter~\ref{chap:norm} to make all sample-complexity constants explicit.
+\end{remark}
+
+\begin{lemma}[Independent sums]\label{lem:subexp_sum}
+\uses{def:subexp}
+Let $X_1,\dots,X_K$ be independent with $\mathrm{HasSubexponentialMGF}(X_i,V_i,b)$ for every
+$i \le K$ (the same $b$). Then $\mathrm{HasSubexponentialMGF}\big(\sum_{i\le K}X_i,\ \sum_{i\le K}V_i,\ b\big)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:subexp}
+Let $b\abs\lambda \le 1$. Each $e^{\lambda X_i}$ is integrable and they are independent, so
+$e^{\lambda\sum_iX_i} = \prod_ie^{\lambda X_i}$ is integrable (Mathlib
+\texttt{iIndepFun.integrable\_exp\_mul\_sum}) and
+$\E e^{\lambda\sum_iX_i} = \prod_i\E e^{\lambda X_i}$ (\texttt{iIndepFun.mgf\_sum})
+$\le \prod_ie^{\lambda^2V_i/2} = e^{\lambda^2\sum_iV_i/2}$.
+\end{proof}
+
+\begin{corollary}[Tail of an average]\label{cor:subexp_average_tail}
+\uses{def:subexp}
+Let $K \ge 1$ and $X_1,\dots,X_K$ be independent with $\mathrm{HasSubexponentialMGF}(X_i,V_i,b)$,
+$b > 0$, and let $\bar V := \frac1K\sum_{i\le K}V_i > 0$. Then
+$\mathrm{HasSubexponentialMGF}\big(\frac1K\sum_{i\le K}X_i,\ \bar V/K,\ b/K\big)$ (this part
+also holds for $b = 0$) and, for every $t \ge 0$,
+\[
+  \Prob\Big(\Big|\frac1K\sum_{i\le K}X_i\Big| > t\Big)
+  \le \Prob\Big(\Big|\frac1K\sum_{i\le K}X_i\Big| \ge t\Big)
+  \le 2\exp\Big(-K\min\Big(\frac{t^2}{2\bar V}, \frac{t}{2b}\Big)\Big).
+\]
+\end{corollary}
+
+\begin{proof}
+\uses{lem:subexp_sum, lem:subexp_const_mul, lem:subexp_tail}
+Lemma~\ref{lem:subexp_sum} gives parameters $(\sum_iV_i, b) = (K\bar V, b)$ for the sum, and
+Lemma~\ref{lem:subexp_const_mul} with $a = 1/K$ gives $(K\bar V/K^2, b/K) = (\bar V/K, b/K)$ for
+the average. Lemma~\ref{lem:subexp_tail} (with $b/K > 0$ and $\bar V/K > 0$) then gives the
+two-sided bound
+$2\exp(-\min(t^2/(2\bar V/K), t/(2b/K))) = 2\exp(-K\min(t^2/(2\bar V), t/(2b)))$.
+(For $b = 0$ the same computation with the $b = 0$ clause of Lemma~\ref{lem:subexp_tail} gives
+$2\exp(-Kt^2/(2\bar V))$, Mathlib's \texttt{measure\_sum\_ge\_le\_of\_iIndepFun}.)
+\end{proof}
+
+\section{Squares of Gaussian variables}
+\label{sec:pre_subexp_gaussian}
+
+\begin{lemma}[MGF of the square of a real Gaussian]\label{lem:gaussian_square_mgf}
+\uses{def:pg_gaussian_vector}
+Let $\mu \in \R$, $\sigma \ge 0$, $X \sim \Normal(\mu,\sigma^2)$ and $\lambda \in \R$ with
+$2\sigma^2\lambda < 1$. Then $e^{\lambda X^2}$ is integrable and
+\[
+  \E e^{\lambda X^2} = (1 - 2\sigma^2\lambda)^{-1/2}\exp\Big(\frac{\mu^2\lambda}{1 - 2\sigma^2\lambda}\Big).
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:pg_gaussian_vector}
+If $\sigma = 0$ then $X = \mu$ a.s.\ and both sides equal $e^{\lambda\mu^2}$. Let $\sigma > 0$
+and $\nu := 2\sigma^2\lambda < 1$. With the density
+$\frac{1}{\sqrt{2\pi\sigma^2}}e^{-(x-\mu)^2/(2\sigma^2)}$ (Mathlib \texttt{gaussianReal},
+\texttt{gaussianPDFReal}, \texttt{integral\_gaussianReal\_eq\_integral\_smul}),
+\[
+  \E e^{\lambda X^2} = \frac{1}{\sqrt{2\pi\sigma^2}}\int_{\R}\exp\Big(\lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2}\Big)dx .
+\]
+Complete the square: for all $x$,
+\[
+  \lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2}
+  = -\frac{1}{2\sigma^2}\big[(1-\nu)x^2 - 2\mu x + \mu^2\big]
+  = -\frac{1-\nu}{2\sigma^2}\Big(x - \frac{\mu}{1-\nu}\Big)^2 + \frac{\mu^2\lambda}{1-\nu},
+\]
+as one checks by expanding: $(1-\nu)(x - \frac{\mu}{1-\nu})^2 = (1-\nu)x^2 - 2\mu x +
+\frac{\mu^2}{1-\nu}$, and $\mu^2 - \frac{\mu^2}{1-\nu} = -\frac{\mu^2\nu}{1-\nu}$ with
+$\frac{\nu}{2\sigma^2} = \lambda$. Hence, with $\beta := \frac{1-\nu}{2\sigma^2} > 0$ and the
+translation invariance of Lebesgue measure (\texttt{integral\_sub\_right\_eq\_self}),
+\[
+  \E e^{\lambda X^2} = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\int_{\R} e^{-\beta y^2}dy
+  = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\sqrt{\frac{\pi}{\beta}}
+  = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\sqrt{\frac{2\pi\sigma^2}{1-\nu}}
+  = (1-\nu)^{-1/2}e^{\mu^2\lambda/(1-\nu)},
+\]
+by Mathlib \texttt{integral\_gaussian}. Integrability of $e^{\lambda X^2}$ is the
+integrability of $y\mapsto e^{-\beta y^2}$ (\texttt{integrable\_exp\_neg\_mul\_sq}) read through
+the same identity (\texttt{integrable\_exp\_neg\_mul\_sq} and the change of variables).
+\end{proof}
+
+\begin{lemma}[Two elementary inequalities]\label{lem:log_ineq_nu}
+For every $\nu \in \R$ with $\abs{\nu} \le 1/2$:
+\begin{enumerate}
+  \item[(i)] $-\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2$;
+  \item[(ii)] $\Big|\frac{1}{1-\nu} - 1\Big| \le 2\abs{\nu}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) Mathlib's \texttt{Real.abs\_log\_sub\_add\_sum\_range\_le}, for $\abs x < 1$ and $n = 1$,
+reads $\abs{x + \log(1-x)} \le \abs{x}^2/(1 - \abs x)$. With $x = \nu$ and $\abs\nu \le 1/2$,
+$1 - \abs\nu \ge 1/2$, so $\abs{\nu + \log(1-\nu)} \le 2\nu^2$, hence
+$-\log(1-\nu) - \nu \le 2\nu^2$ and dividing by $2$ gives (i). (A calculus proof: the function
+$\varphi(\nu) := \nu^2 + \frac12\log(1-\nu) + \frac\nu2$ satisfies $\varphi(0) = 0$ and
+$\varphi'(\nu) = 2\nu - \frac{1}{2(1-\nu)} + \frac12 = \frac{\nu(3 - 4\nu)}{2(1-\nu)}$, which has
+the sign of $\nu$ on $[-1/2, 1/2]$ because $3 - 4\nu \ge 1 > 0$ and $1 - \nu \ge 1/2 > 0$ there;
+so $\varphi$ is nonincreasing on $[-1/2,0]$ and nondecreasing on $[0,1/2]$, and
+$\varphi \ge \varphi(0) = 0$. A power series proof: $-\log(1-\nu) - \nu = \sum_{k\ge2}\nu^k/k$
+and $\sum_{k\ge2}\abs\nu^k/k \le \frac12\sum_{k\ge2}\abs\nu^k = \frac{\nu^2}{2(1-\abs\nu)} \le \nu^2$.)
+(ii) $\frac{1}{1-\nu} - 1 = \frac{\nu}{1-\nu}$ and $\abs{1-\nu} \ge 1 - \abs\nu \ge \frac12$, so
+$\abs{\frac{\nu}{1-\nu}} \le 2\abs\nu$.
+\end{proof}
+
+\begin{lemma}[Centered square of a Gaussian is sub-exponential]\label{lem:gaussian_square_subexp}
+\uses{def:subexp, def:pg_gaussian_vector}
+Let $\mu\in\R$, $\sigma > 0$ and $X \sim \Normal(\mu,\sigma^2)$. Then $\E X^2 = \mu^2 + \sigma^2$
+and
+\[
+  \mathrm{HasSubexponentialMGF}\big(X^2 - (\mu^2 + \sigma^2),\ 8(\sigma^4 + \mu^2\sigma^2),\ 4\sigma^2\big),
+\]
+i.e.\ for all $\abs\lambda \le \frac{1}{4\sigma^2}$,
+$\log\E e^{\lambda(X^2 - \E X^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gaussian_square_mgf, lem:log_ineq_nu, lem:gauss_1d_moments}
+$\E X^2 = \Var X + (\E X)^2 = \sigma^2 + \mu^2$ (Lemma~\ref{lem:gauss_1d_moments} applied to
+$X - \mu$, or \texttt{variance\_id\_gaussianReal}, \texttt{integral\_id\_gaussianReal}). Let
+$\abs\lambda \le 1/(4\sigma^2)$ and $\nu := 2\sigma^2\lambda$, so that $\abs\nu \le 1/2$ and in
+particular $2\sigma^2\lambda < 1$: Lemma~\ref{lem:gaussian_square_mgf} applies, $e^{\lambda X^2}$
+is integrable (hence so is $e^{\lambda(X^2 - \E X^2)}$), and
+\[
+  \log\E e^{\lambda(X^2 - \E X^2)}
+  = -\frac12\log(1-\nu) + \frac{\mu^2\lambda}{1-\nu} - \lambda(\mu^2 + \sigma^2)
+  = \Big(-\frac12\log(1-\nu) - \frac\nu2\Big) + \mu^2\lambda\Big(\frac{1}{1-\nu} - 1\Big),
+\]
+using $\lambda\sigma^2 = \nu/2$. By Lemma~\ref{lem:log_ineq_nu}, the first bracket is at most
+$\nu^2 = 4\sigma^4\lambda^2$ and the second term is at most
+$\mu^2\abs\lambda\cdot2\abs\nu = 4\mu^2\sigma^2\lambda^2$. Hence
+$\log\E e^{\lambda(X^2-\E X^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2 = \frac{\lambda^2}{2}\cdot8(\sigma^4 + \mu^2\sigma^2)$,
+which is the claim with $V = 8(\sigma^4 + \mu^2\sigma^2)$ and $b = 4\sigma^2$.
+\end{proof}
+
+\begin{lemma}[Chi-square variables are sub-exponential]\label{lem:chi_square_subexp}
+\uses{def:subexp, def:pg_gaussian_vector}
+Let $g \sim \Normal(0, I_d)$. Then
+$\mathrm{HasSubexponentialMGF}\big(\norm{g}^2 - d,\ 8d,\ 4\big)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_pi, lem:gaussian_square_subexp, lem:subexp_sum}
+$\norm{g}^2 - d = \sum_{i<d}(g_i^2 - 1)$ with $g_0,\dots,g_{d-1}$ i.i.d.\ $\Normal(0,1)$
+(Lemma~\ref{lem:gauss_pi}). Each $g_i^2 - 1$ has parameters $(8, 4)$ by
+Lemma~\ref{lem:gaussian_square_subexp} with $\mu = 0$, $\sigma = 1$; the summands are
+independent (measurable functions of independent variables), so Lemma~\ref{lem:subexp_sum}
+gives $(8d, 4)$.
+\end{proof}
+
+\begin{lemma}[Chi-square tail]\label{lem:chi_square_tail}
+\uses{def:pg_gaussian_vector}
+Let $g \sim \Normal(0,I_d)$ with $d \ge 1$. For every $t \ge 0$,
+\[
+  \Prob\big(\norm{g}^2 - d \ge t\big) \le \exp\Big(-\min\Big(\frac{t^2}{16d}, \frac{t}{8}\Big)\Big),
+\]
+and for every $\delta \in (0,1)$,
+$\Prob\big(\norm{g}^2 \ge 2d + 12\log(1/\delta)\big) \le \delta$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:chi_square_subexp, lem:subexp_tail}
+The first bound is Lemma~\ref{lem:subexp_tail} with $(V,b) = (8d,4)$ from
+Lemma~\ref{lem:chi_square_subexp}: $t^2/(2V) = t^2/(16d)$ and $t/(2b) = t/8$. For the second,
+let $L := \log(1/\delta) > 0$ and $t := \max(4\sqrt{dL}, 8L)$. Then $t^2/(16d) \ge 16dL/(16d) = L$
+and $t/8 \ge L$, so $\Prob(\norm{g}^2 - d \ge t) \le e^{-L} = \delta$. Moreover, by AM--GM,
+$4\sqrt{dL} = 2\sqrt{d\cdot4L} \le d + 4L$, so $t \le \max(d + 4L, 8L) \le d + 8L \le d + 12L$.
+Hence $\{\norm{g}^2 \ge 2d + 12L\} = \{\norm{g}^2 - d \ge d + 12L\} \subseteq \{\norm{g}^2 - d \ge t\}$
+has probability at most $\delta$.
+\end{proof}
+
+\begin{lemma}[Gaussian quadratic forms are sub-exponential]\label{lem:gauss_quadratic_form_subexp}
+\uses{def:subexp, def:pg_gaussian_vector}
+Let $S \in \PSD$ ($d\times d$, $S \ne 0$) and $g \sim \Normal(0,I_d)$. Then
+$\E[g^\top Sg] = \tr S$ and
+\[
+  \mathrm{HasSubexponentialMGF}\big(g^\top Sg - \tr S,\ 8\tr(S^2),\ 4\norm{S}_{\mathrm{op}}\big),
+\]
+where $\norm{S}_{\mathrm{op}}$ is the largest eigenvalue of $S$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_rotation, lem:gauss_pi, lem:gaussian_square_subexp, lem:subexp_const_mul, lem:ps_subexp_mono, lem:subexp_sum, lem:gauss_norm_moments}
+Diagonalize $S = U\operatorname{diag}(s_1,\dots,s_d)U^\top$ with $U$ orthogonal and
+$s_i \ge 0$ (Mathlib \texttt{Matrix.IsHermitian.spectral\_theorem}), so that
+$\tr S = \sum_is_i$, $\tr(S^2) = \sum_is_i^2$ and $\norm{S}_{\mathrm{op}} = s_{\max} := \max_is_i > 0$.
+Let $h := U^\top g$; then $h \sim \Normal(0,I_d)$ (Lemma~\ref{lem:gauss_rotation}(i)), its
+coordinates are i.i.d.\ $\Normal(0,1)$ (Lemma~\ref{lem:gauss_pi}), and
+$g^\top Sg - \tr S = \sum_is_i(h_i^2 - 1)$. The expectation is
+Lemma~\ref{lem:gauss_norm_moments}(i). For each $i$ with $s_i > 0$,
+Lemma~\ref{lem:gaussian_square_subexp} gives $(8,4)$ for $h_i^2 - 1$ and
+Lemma~\ref{lem:subexp_const_mul} gives $(8s_i^2, 4s_i)$ for $s_i(h_i^2-1)$, hence
+$(8s_i^2, 4s_{\max})$ by Lemma~\ref{lem:ps_subexp_mono}; for $s_i = 0$ the summand is $0$,
+which has parameters $(0, 4s_{\max})$. The summands are independent, so
+Lemma~\ref{lem:subexp_sum} gives $(8\sum_is_i^2, 4s_{\max}) = (8\tr(S^2), 4\norm{S}_{\mathrm{op}})$.
+\end{proof}
+
+\section{Squares of Rademacher linear forms}
+\label{sec:pre_subexp_rademacher}
+
+\begin{definition}[Rademacher vector]\label{def:ps_rademacher}
+A \emph{Rademacher vector} in $\R^d$ is a random vector $\eps = (\eps_1,\dots,\eps_d)$ whose
+coordinates are independent with $\Prob(\eps_i = 1) = \Prob(\eps_i = -1) = 1/2$; its law is the
+product $\big(\frac12\delta_{1} + \frac12\delta_{-1}\big)^{\otimes d}$
+(Mathlib \texttt{Measure.pi} of \texttt{(dirac 1 + dirac (-1)) / 2}, or \texttt{PMF} versions).
+For $\theta \in \R^d$ we consider the linear form $Z := \ip{\eps}{\theta} = \sum_i\eps_i\theta_i$,
+which satisfies $\abs Z \le \sum_i\abs{\theta_i}$.
+\end{definition}
+
+\begin{lemma}[Rademacher linear forms are sub-Gaussian]\label{lem:rademacher_linear_subgaussian}
+\uses{def:ps_rademacher}
+Let $\eps$ be a Rademacher vector in $\R^d$ and $\theta \in \R^d$. Then $\ip{\eps}{\theta}$ has a
+sub-Gaussian MGF with constant $\norm{\theta}^2$ (Mathlib
+\texttt{HasSubgaussianMGF ⟪ε, θ⟫ ‖θ‖²}): $\E e^{\lambda\ip{\eps}{\theta}} \le e^{\norm\theta^2\lambda^2/2}$
+for all $\lambda\in\R$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:ps_rademacher}
+Each $\theta_i\eps_i$ takes values in $[-\abs{\theta_i}, \abs{\theta_i}]$ and has mean zero, so
+by Hoeffding's lemma (Mathlib \texttt{hasSubgaussianMGF\_of\_mem\_Icc\_of\_integral\_eq\_zero})
+it has a sub-Gaussian MGF with constant $((2\abs{\theta_i})/2)^2 = \theta_i^2$. The
+$\theta_i\eps_i$ are independent, so \texttt{HasSubgaussianMGF.sum\_of\_iIndepFun} gives the
+constant $\sum_i\theta_i^2 = \norm\theta^2$ for the sum. (Directly:
+$\E e^{\lambda\theta_i\eps_i} = \cosh(\lambda\theta_i) \le e^{\lambda^2\theta_i^2/2}$ by comparing
+the power series termwise, $(2k)! \ge 2^kk!$.)
+\end{proof}
+
+\begin{lemma}[Second and fourth moments of a Rademacher linear form]\label{lem:rademacher_fourth_moment}
+\uses{def:ps_rademacher}
+Let $\eps$ be a Rademacher vector in $\R^d$, $\theta\in\R^d$ and $Z := \ip{\eps}{\theta}$. Then
+\[
+  \E Z = 0, \qquad \E Z^2 = \norm{\theta}^2, \qquad
+  \E Z^4 = 3\norm{\theta}^4 - 2\sum_{i\le d}\theta_i^4 \le 3\norm{\theta}^4 .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:ps_rademacher}
+$Z$ is bounded so all moments exist. Induction on $d$ (or on the number of coordinates
+included): write $Z = Z' + \theta_d\eps_d$ with $Z' := \sum_{i<d}\theta_i\eps_i$ independent of
+$\eps_d$, $\E\eps_d = \E\eps_d^3 = 0$, $\E\eps_d^2 = \E\eps_d^4 = 1$. Then
+$\E Z = \E Z' + \theta_d\E\eps_d = 0$; $\E Z^2 = \E Z'^2 + 2\theta_d\E Z'\E\eps_d + \theta_d^2 =
+\E Z'^2 + \theta_d^2$; and, expanding $(Z' + \theta_d\eps_d)^4$ and using independence, the odd
+powers of $\eps_d$ vanish and
+$\E Z^4 = \E Z'^4 + 6\theta_d^2\E Z'^2 + \theta_d^4$. With the induction hypotheses
+$\E Z'^2 = r'^2 := \sum_{i<d}\theta_i^2$ and $\E Z'^4 = 3r'^4 - 2\sum_{i<d}\theta_i^4$,
+\[
+  \E Z^4 = 3r'^4 - 2\sum_{i<d}\theta_i^4 + 6\theta_d^2r'^2 + \theta_d^4
+  = 3(r'^2 + \theta_d^2)^2 - 2\Big(\sum_{i<d}\theta_i^4 + \theta_d^4\Big),
+\]
+since $3(r'^2+\theta_d^2)^2 = 3r'^4 + 6\theta_d^2r'^2 + 3\theta_d^4$ and $3\theta_d^4 - 2\theta_d^4 = \theta_d^4$.
+The base case $d = 0$ is $Z = 0$. The final inequality is $\sum_i\theta_i^4 \ge 0$.
+\end{proof}
+
+\begin{lemma}[MGF of the square of a sub-Gaussian variable, positive parameter]
+\label{lem:subgaussian_square_mgf_pos}
+\uses{def:pg_gaussian_vector}
+Let $Z$ be a real random variable with a sub-Gaussian MGF with constant $K^2$, $K \ge 0$
+(Mathlib \texttt{HasSubgaussianMGF Z K²}), and let $0 \le \lambda < \frac{1}{2K^2}$
+(any $\lambda \ge 0$ if $K = 0$). Then $e^{\lambda Z^2}$ is integrable and
+\[
+  \E e^{\lambda Z^2} \le (1 - 2K^2\lambda)^{-1/2}.
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gaussian_square_mgf, lem:gauss_1d_moments}
+Work on the product of the given probability space with $(\R, \Normal(0,1))$, on which $Z$
+and the second coordinate $g' \sim \Normal(0,1)$ are independent. \emph{Gaussian trick:} for
+every real $z$, by Lemma~\ref{lem:gauss_1d_moments} (the MGF of $g'$ at $s = \sqrt{2\lambda}\,z$),
+\[
+  e^{\lambda z^2} = e^{(\sqrt{2\lambda}\,z)^2/2} = \E_{g'}\exp\big(\sqrt{2\lambda}\,z\,g'\big).
+\]
+Hence, by Tonelli's theorem for the nonnegative measurable function
+$(\omega, v) \mapsto \exp(\sqrt{2\lambda}\,Z(\omega)\,v)$ on the product
+(\texttt{MeasureTheory.lintegral\_prod} / \texttt{lintegral\_lintegral\_swap}),
+\[
+  \E e^{\lambda Z^2} = \int\Big(\int\exp\big(\sqrt{2\lambda}\,Z(\omega)\,v\big)\,\Normal(0,1)(dv)\Big)\Prob(d\omega)
+  = \int\Big(\int\exp\big((\sqrt{2\lambda}\,v)\,Z(\omega)\big)\Prob(d\omega)\Big)\Normal(0,1)(dv).
+\]
+For fixed $v$, the inner integral is the MGF of $Z$ at $s := \sqrt{2\lambda}\,v$, which is at
+most $e^{K^2s^2/2} = e^{K^2\lambda v^2}$ by sub-Gaussianity. Therefore
+\[
+  \E e^{\lambda Z^2} \le \int e^{K^2\lambda v^2}\,\Normal(0,1)(dv) = (1 - 2K^2\lambda)^{-1/2}
+\]
+by Lemma~\ref{lem:gaussian_square_mgf} with $\mu = 0$, $\sigma = 1$ and the parameter
+$K^2\lambda < 1/2$. Since the right-hand side is finite, $e^{\lambda Z^2}$ is integrable: all
+integrals above are Lebesgue integrals in $[0,\infty]$ of nonnegative functions, and
+\texttt{Integrable} is the conjunction of \texttt{AEStronglyMeasurable} (clear) and
+\texttt{HasFiniteIntegral}, which for a nonnegative function $f$ is
+$\int^-\mathrm{ENNReal.ofReal}(f)\,d\Prob < \infty$ (Mathlib \texttt{hasFiniteIntegral\_iff\_ofReal}).
+\end{proof}
+
+\begin{lemma}[A quadratic upper bound for the exponential on the negative half-line]
+\label{lem:ps_exp_le_quadratic}
+For every $x \le 0$, $e^x \le 1 + x + \frac{x^2}{2}$.
+\end{lemma}
+
+\begin{proof}
+Let $\psi(x) := 1 + x + \frac{x^2}{2} - e^x$. Then $\psi(0) = 0$ and
+$\psi'(x) = 1 + x - e^x \le 0$ for every $x$ (Mathlib \texttt{Real.add\_one\_le\_exp}). Hence
+$\psi$ is nonincreasing on $\R$ (\texttt{antitone\_of\_deriv\_nonpos}), and for $x \le 0$,
+$\psi(x) \ge \psi(0) = 0$.
+\end{proof}
+
+\begin{lemma}[Centered square of a Rademacher linear form is sub-exponential]
+\label{lem:rademacher_square_subexp}
+\uses{def:subexp, def:ps_rademacher}
+Let $\eps$ be a Rademacher vector in $\R^d$, $\theta \in \R^d$ with $r := \norm{\theta} > 0$, and
+$Z := \ip{\eps}{\theta}$. Then $\E Z^2 = r^2$ and
+\[
+  \mathrm{HasSubexponentialMGF}\big(Z^2 - r^2,\ 16r^4,\ 4r^2\big).
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:rademacher_linear_subgaussian, lem:rademacher_fourth_moment, lem:subgaussian_square_mgf_pos, lem:log_ineq_nu, lem:ps_exp_le_quadratic}
+$\E Z^2 = r^2$ is Lemma~\ref{lem:rademacher_fourth_moment}. $Z$ is bounded, so
+$e^{\lambda(Z^2 - r^2)}$ is integrable for every $\lambda$. Let $\abs\lambda \le 1/(4r^2)$; we
+show $\E e^{\lambda(Z^2 - r^2)} \le e^{8r^4\lambda^2} = e^{\lambda^2\cdot16r^4/2}$.
+
+\emph{Case $0 \le \lambda \le 1/(4r^2)$.} By Lemma~\ref{lem:rademacher_linear_subgaussian},
+$Z$ is sub-Gaussian with constant $K^2 = r^2$, and $\nu := 2r^2\lambda \in [0, 1/2]$, so
+$\lambda < 1/(2K^2)$ and Lemma~\ref{lem:subgaussian_square_mgf_pos} gives
+$\E e^{\lambda Z^2} \le (1-\nu)^{-1/2}$. Hence, using $\lambda r^2 = \nu/2$ and
+Lemma~\ref{lem:log_ineq_nu}(i),
+\[
+  \log\E e^{\lambda(Z^2 - r^2)} \le -\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2 = 4r^4\lambda^2 \le 8r^4\lambda^2 .
+\]
+
+\emph{Case $-1/(4r^2) \le \lambda < 0$.} Pointwise $\lambda Z^2 \le 0$, so
+Lemma~\ref{lem:ps_exp_le_quadratic} gives $e^{\lambda Z^2} \le 1 + \lambda Z^2 + \frac{\lambda^2Z^4}{2}$.
+Taking expectations and using Lemma~\ref{lem:rademacher_fourth_moment}
+($\E Z^2 = r^2$, $\E Z^4 \le 3r^4$),
+\[
+  \E e^{\lambda Z^2} \le 1 + \lambda r^2 + \frac{3r^4\lambda^2}{2}
+  \le \exp\Big(\lambda r^2 + \frac{3r^4\lambda^2}{2}\Big),
+\]
+by $1 + y \le e^y$. Multiplying by $e^{-\lambda r^2}$:
+$\E e^{\lambda(Z^2 - r^2)} \le e^{3r^4\lambda^2/2} \le e^{8r^4\lambda^2}$.
+
+In both cases $\E e^{\lambda(Z^2-r^2)} \le \exp(\lambda^2\cdot16r^4/2)$, which is the claim with
+$V = 16r^4$ and $b = 4r^2$.
+\end{proof}
+
+\begin{remark}[Constants, and the case $r = 0$]\label{rem:ps_rademacher_constants}
+The proof shows the stronger parameters $(8r^4, 4r^2)$; the value $V = 16r^4$ is kept because
+it is the one used by Chapter~\ref{chap:norm} (Lemma~\ref{lem:term1_subexp}). The paper
+obtains parameters $(Cr^4, Cr^2)$ with an unspecified $C$ from the Hanson--Wright inequality
+(its Lemma \emph{lem:hanson-wright}, Appendix~A) and a tail-to-MGF conversion; the argument
+above is self-contained and explicit. If $r = 0$ then $Z = 0$ a.s.\ and $Z^2 - r^2 = 0$, which
+has parameters $(0, b)$ for every $b \ge 0$; the norm-estimation chapter treats this case
+separately.
+\end{remark}
+
+\textbf{Lean remark.} The Gaussian trick of Lemma~\ref{lem:subgaussian_square_mgf_pos} needs an
+auxiliary standard Gaussian independent of $Z$; the cleanest encoding is to state the lemma
+for the product measure \texttt{P.prod (gaussianReal 0 1)} and the variable
+\texttt{fun p ↦ Z p.1}, whose sub-Gaussianity transfers by \texttt{HasSubgaussianMGF.of\_map}
+along \texttt{Prod.fst} (a measure-preserving map). Lemma~\ref{lem:rademacher_square_subexp} is
+then a statement about \texttt{P} alone, since $\E e^{\lambda Z^2}$ is unchanged by the product.

@@ -1,0 +1,124 @@
+%\documentclass[anon,12pt]{colt2026} % Anonymized submission
+
+\documentclass[final,12pt]{colt2026} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[On the Power of Adaptivity for $\varepsilon$-Best Arm Identification in Linear Bandits]{On the Power  of Adaptivity for $\varepsilon$-Best Arm Identification in Linear Bandits}\usepackage{times}
+% Use \Name{Author Name} to specify the name.
+% If the surname contains spaces, enclose the surname
+% in braces, e.g. \Name{John {Smith Jones}} similarly
+% if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+% If the first letter in the forenames is a diacritic
+% enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+% Two authors with the same address
+% \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+%  \Name{Author Name2} \Email{xyz@sample.com}\\
+%  \addr Address}
+
+% Three or more authors with the same address:
+% \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+%  \Name{Author Name2} \Email{an2@sample.com}\\
+%  \Name{Author Name3} \Email{an3@sample.com}\\
+%  \addr Address}
+
+% Authors with different addresses:
+\coltauthor{%
+ \Name{Arnab Maiti} \Email{arnabm2@uw.edu}\\
+ \addr University of Washington
+ \AND
+ \Name{Yunbei Xu} \Email{yunbei@nus.edu.sg}\\
+ \addr National University of Singapore%
+ \AND
+ \Name{Kevin Jamieson} \Email{jamieson@cs.washington.edu}\\
+ \addr University of Washington
+}
+
+\usepackage{url}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsfonts,amsopn,bm,color,mathtools,booktabs,multirow,appendix,caption}
+\PassOptionsToPackage{ruled,vlined,linesnumbered}{algorithm2e}
+% \let\algorithmic\relax
+% \let\endalgorithmic\relax
+% \usepackage{algpseudocode}
+%\usepackage{algorithm}
+\usepackage{natbib}
+\usepackage{bbm}
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=11pt}
+
+\def\E{\mathbb{E}}
+\def\P{\mathbb{P}}
+\def\R{\mathbb{R}}
+\def\1{\bm{1}}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+
+\newcommand{\kevin}[1]{{\color{red}{Kevin: #1}}}
+\newcommand{\ip}[2]{\left\langle #1,\,#2 \right\rangle}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+\newtheorem{assumption}{Assumption}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+\newcommand{\gsim}{\raisebox{-0.13cm}{~\shortstack{$>$ \\[-0.07cm]
+      $\sim$}}~}
+\newcommand{\lsim}{\raisebox{-0.13cm}{~\shortstack{$<$ \\[-0.07cm]
+      $\sim$}}~}
+\allowdisplaybreaks
+\sloppy
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+%Our aim is to characterize the power and limits of adaptivity in this setting, and in particular to identify when adaptive sampling can achieve a polynomial improvement over non-adaptive fixed designs and when it cannot.
+
+We study the minimax sample complexity of $\varepsilon$-best arm identification in linear bandits, a classical pure-exploration problem. Given a compact action set $\mathcal{X}$ that spans $\mathbb{R}^d$ and an unknown reward vector $\theta\in\mathbb{R}^d$, the goal is to output an arm $\widehat{x}\in\mathcal{X}$ such that $\langle \widehat{x},\theta\rangle \ge \max_{x\in\mathcal{X}} \langle x,\theta\rangle - \varepsilon$ with probability at least $1-\delta$, using as few samples as possible. Our aim is to better understand the power and limitations of adaptivity in this setting.
+
+
+
+
+
+
+We begin with non-adaptive algorithms. We present a non-adaptive fixed-design method with sample complexity $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$, where $w(\mathcal{X})$ is a Gaussian width term dependent on $\mathcal{X}$, and we prove a matching lower bound $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$ for all non-adaptive fixed-design methods. Moreover, $w(\mathcal{X})\le \mathcal{O}(d)$ for general $\mathcal{X}$, which is tight for sets such as the unit $\ell_2$ ball, and $w(\mathcal{X})\le \mathcal{O}(\sqrt{d\log|\mathcal{X}|})$ when $\mathcal{X}$ is finite, which is tight for the canonical basis $\{e_1,\ldots,e_d\}$.
+
+
+
+We then turn to adaptive sampling. For any finite action set $\mathcal{X}$, we prove the existence of an adaptive algorithm with sample complexity $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{d\log(|\mathcal{X}|/d)}{\varepsilon^2}\right)$ via a generalization of Median Elimination, which is known to yield a $\log d$ improvement for the canonical basis. This raises a structural question: beyond the canonical basis, are there structured action sets for which adaptivity yields only logarithmic-factor improvements over the optimal non-adaptive rate? We answer in the affirmative for several natural action sets, namely the hypercube, the $\ell_2$ ball, $m$-sets, and multi-task multi-armed bandits.
+
+
+
+
+
+Finally, we show that logarithmic improvements are not the whole story. To our knowledge, we provide the first construction of an action set $\mathcal{X}$ for which adaptivity yields a \emph{polynomial-factor improvement} over every non-adaptive algorithm. A key ingredient behind this separation is an $\ell_2$-norm estimation subroutine: we design an adaptive algorithm that uses $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$ samples from the unit $\ell_2$ ball in $\mathbb{R}^d$ and outputs an estimate $\widehat r$ satisfying $|\widehat r-\|\theta\|_2|\le \varepsilon$ with probability at least $1-\delta$, where $\theta$ is the unknown reward vector.
+
+Taken together, these results illustrate when adaptivity can offer only modest savings and when it can enable genuine polynomial gains, sharpening our understanding of the role of adaptivity and geometry in pure exploration and experimental design.
+
+\end{abstract}
+
+
+
+\begin{keywords}%
+  linear bandits, $\varepsilon$-best arm identification, adaptive vs non-adaptive designs, minimax sample complexity, polynomial gap, action set geometry, experimental design and pure exploration %
+\end{keywords}
+
+\input{intro}
+\input{results}
+\input{conclusion}
+\input{ack}
+
+% Acknowledgments---Will not appear in anonymized version
+%\acks{We thank a bunch of people and funding agency.}
+
+\bibliography{refs}
+\newpage
+\tableofcontents
+\appendix
+
+\input{appendix}
+
+\end{document}

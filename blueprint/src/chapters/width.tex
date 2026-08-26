@@ -1,0 +1,638 @@
+\chapter{Properties of the Gaussian width}
+\label{chap:width}
+
+This chapter studies the Gaussian width term $\gw(\Xs)$ of Definition~\ref{def:width}
+(Section~2.3 of the paper and its Appendices on the Gaussian width properties and on the
+multi-task computations). It proves the three parts of Proposition~4 of the paper as
+separate statements (Propositions~\ref{prop:width_le_d}, \ref{prop:width_finite}
+and~\ref{prop:width_lower_sqrt_dlogd}), the bounds for the unit ball, the hypercubes and the
+$m$-sets, and Theorem~5 (Theorem~\ref{thm:width_separation}): a family of finite sets whose
+width is polynomially smaller than both generic upper bounds. It also introduces the
+\emph{regionalized} width (Definition~\ref{def:regionalized_width}) consumed by the adaptive
+algorithm of Chapter~\ref{chap:log_gains}, and the \emph{intrinsic} width
+$\gw_{\mathrm{int}}(\Xs)$ of a compact set that does not span $\R^d$
+(Definition~\ref{def:width_subspace}). The Gaussian width $\gw(\Xs)$ of
+Definition~\ref{def:width} is only defined for spanning action sets
+($\Span(\Xs) = \R^d$), and so is the $G$-optimal design $A_G$; every statement below that
+involves them carries the spanning hypothesis explicitly. The lemmas on the width for a
+matrix (Lemmas~\ref{lem:width_matrix_wd}, \ref{lem:width_homog}, \ref{lem:width_mono}
+and~\ref{lem:width_symm}) hold for an arbitrary nonempty compact index set and are used as
+such for the regions of a partition.
+
+The inputs are: the $G$-optimal design of the Kiefer--Wolfowitz theorem
+(Theorem~\ref{thm:kiefer_wolfowitz}, Chapter~\ref{chap:design}); the expectation of the
+maximum of Gaussians (Lemma~\ref{lem:gauss_max_upper}) and Gaussian norm moments
+(Lemma~\ref{lem:gauss_norm_moments}) of Chapter~\ref{chap:pre_gaussian}; for the secondary
+lower bound $\gw(\Xs) \ge \Omega(\sqrt{d \log d})$, the Sudakov--Fernique inequality of
+Chapter~\ref{chap:pre_sudakov}; and for the widths of structured sets, the lower bounds of
+Chapter~\ref{chap:log_gains} combined with the upper bound of Theorem~\ref{thm:upper}. All
+constants are explicit. Compared with the paper, the lower bounds for structured sets are
+stated as explicit inequalities (with admittedly large thresholds on $d$ inherited from the
+constants of the lower bounds), and the multi-task computation is organized around the
+Helmert matrices with every linear-algebra step isolated.
+
+\section{Upper bounds}
+\label{sec:width_upper}
+
+\begin{proposition}[The width is at most $d$]\label{prop:width_le_d}
+\uses{def:width, thm:kiefer_wolfowitz}
+Let $\Xs \subset \R^d$ be a spanning action set. Then $\gw(\Xs) \le d$. More precisely, the
+$G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since
+$\Xs$ is spanning) satisfies $\gwidth{\Xs}{A_G} \le d$.
+\end{proposition}
+
+\begin{proof}
+\uses{cor:g_optimal_norm_bound, lem:gauss_norm_moments, lem:width_matrix_wd}
+By Theorem~\ref{thm:kiefer_wolfowitz}, $A_G \in \designset(\Xs) \cap \PD$, so
+$\gw(\Xs) \le \gwidth{\Xs}{A_G}$ by definition of the infimum. For every $g \in \R^d$ and
+$x \in \Xs$, the Cauchy--Schwarz inequality and Corollary~\ref{cor:g_optimal_norm_bound}
+give $\ip{A_G^{-1/2}x}{g} \le \norm{A_G^{-1/2}x}\,\norm{g} \le \sqrt d\,\norm{g}$, hence
+$\sup_{x\in\Xs}\ip{A_G^{-1/2}x}{g} \le \sqrt d\,\norm{g}$. Taking expectations
+(Lemma~\ref{lem:width_matrix_wd} for integrability) and using
+$\E\norm{g} \le \sqrt{\E\norm{g}^2} = \sqrt d$ (Lemma~\ref{lem:gauss_norm_moments} with
+$S = I_d$) yields $\gwidth{\Xs}{A_G} \le \sqrt d \cdot \sqrt d = d$.
+\end{proof}
+
+\begin{proposition}[Width of a finite set]\label{prop:width_finite}
+\uses{def:width, thm:kiefer_wolfowitz}
+Let $\Xs$ be a finite spanning action set with $\abs{\Xs} = m$. Then
+$\gw(\Xs) \le \sqrt{2 d \log m}$; more precisely $\gwidth{\Xs}{A_G} \le \sqrt{2d\log m}$
+for the $G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz}.
+\end{proposition}
+
+\begin{proof}
+\uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:gauss_max_upper, lem:gauss_linear_image}
+Since $\Xs$ spans $\R^d$, $m \ge d \ge 1$. If $m = 1$ then $d = 1$, $\Xs = \{x\}$ and
+$\gwidth{\Xs}{A} = \E\ip{A^{-1/2}x}{g} = 0 = \sqrt{2d\log 1}$ for every $A \in \PD$.
+Assume $m \ge 2$ and let $u_x := A_G^{-1/2}x$ for $x \in \Xs$. The family
+$(Z_x)_{x\in\Xs}$, $Z_x := \ip{u_x}{g}$, is a centered Gaussian vector
+(Lemma~\ref{lem:gauss_linear_image}) with $\Var Z_x = \norm{u_x}^2 \le d$
+(Corollary~\ref{cor:g_optimal_norm_bound}). Lemma~\ref{lem:gauss_max_upper} with
+$\sigma^2 = d$ gives $\E\max_{x\in\Xs}Z_x \le \sqrt{d}\sqrt{2\log m}$, i.e.\
+$\gwidth{\Xs}{A_G} \le \sqrt{2d\log m}$, and $\gw(\Xs) \le \gwidth{\Xs}{A_G}$ as in
+Proposition~\ref{prop:width_le_d}.
+\end{proof}
+
+\begin{definition}[Regionalized width]\label{def:regionalized_width}
+\uses{def:width_matrix, lem:width_matrix_wd}
+Let $\Xs$ be an action set (spanning or not), $A \in \PD$ and let
+$\mathcal R = (R_1, \dots, R_K)$, $K \ge 1$, be a partition of
+$\Xs$ into nonempty compact subsets ($R_i \cap R_j = \emptyset$ for $i \ne j$ and
+$\bigcup_i R_i = \Xs$). The \emph{regionalized Gaussian width of $\Xs$ for $A$ and
+$\mathcal R$} is
+\[
+  \gw(A; \Xs, \mathcal R) := \max_{1 \le i \le K} \gwidth{R_i}{A}
+  = \max_{1 \le i \le K}
+  \E\Big[\max_{x \in R_i}\ip{x}{A^{-1/2}g}\Big], \qquad g \sim \Normal(0, I_d),
+\]
+where $\gwidth{R_i}{A}$ is the width for the matrix $A$ of Definition~\ref{def:width_matrix}
+with the nonempty compact index set $R_i$; it is well defined and nonnegative by
+Lemma~\ref{lem:width_matrix_wd} applied to the index set $R_i$. Since $R_i \subseteq \Xs$ for
+every $i$, the supremum over $R_i$ is at most the supremum over $\Xs$ pathwise, so
+$0 \le \gw(A;\Xs,\mathcal R) \le \gwidth{\Xs}{A}$, with equality when $K = 1$.
+\end{definition}
+
+\textbf{Lean remark.} A partition of a finite set is most conveniently encoded as a
+function $\mathrm{region} : \Xs \to \mathrm{Fin}\ K$ that is surjective; the pieces are its
+fibers $R_i = \mathrm{region}^{-1}(i)$ (as \texttt{Finset}s, \texttt{Finset.filter}), which
+are automatically nonempty, disjoint and cover $\Xs$. For a general compact $\Xs$ the
+pieces must be assumed closed (hence compact); only the finite case is used below. The inner
+expectation is exactly the width for a matrix of Definition~\ref{def:width_matrix} with the
+index set $R_i$, which that definition allows (any nonempty compact index set); hence
+Lemmas~\ref{lem:width_matrix_wd}, \ref{lem:width_homog} and~\ref{lem:width_mono} apply to
+$\gwidth{R_i}{A}$ verbatim, and Chapter~\ref{chap:log_gains} cites them directly for the
+regions.
+
+\begin{proposition}[Regionalized width of a finite set]\label{prop:width_partition}
+\uses{def:regionalized_width, thm:kiefer_wolfowitz}
+Let $\Xs$ be a finite spanning action set and $\mathcal R = (R_1,\dots,R_K)$ a partition of
+$\Xs$ with $\abs{R_i} \le p$ for all $i$, where $p \ge 1$. Then, for the $G$-optimal design
+matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since $\Xs$ is spanning),
+\[
+  \gw(A_G; \Xs, \mathcal R) \le \sqrt{2 d \log p}.
+\]
+\end{proposition}
+
+\begin{proof}
+\uses{cor:g_optimal_norm_bound, lem:gauss_max_upper, lem:gauss_linear_image}
+Fix $i$. If $\abs{R_i} = 1$, the expectation $\E\max_{x\in R_i}\ip{A_G^{-1/2}x}{g}$ is the
+expectation of a single centered Gaussian, i.e.\ $0 \le \sqrt{2d\log p}$. Otherwise
+$2 \le \abs{R_i} \le p$ and, exactly as in the proof of Proposition~\ref{prop:width_finite},
+the variables $Z_x = \ip{A_G^{-1/2}x}{g}$, $x \in R_i$, are centered Gaussians with variance
+at most $d$ (Corollary~\ref{cor:g_optimal_norm_bound}), so Lemma~\ref{lem:gauss_max_upper}
+gives $\E\max_{x\in R_i}Z_x \le \sqrt{2d\log\abs{R_i}} \le \sqrt{2d\log p}$. Take the
+maximum over $i$.
+\end{proof}
+
+\section{Lower bounds}
+\label{sec:width_lower}
+
+\begin{proposition}[Width of the unit ball]\label{prop:width_ball}
+\uses{def:width}
+The unit ball $\Xs = \ball_d$ is a spanning action set (it is compact and contains the
+standard basis $e_1,\dots,e_d$), so its Gaussian width $\gw(\ball_d)$ of
+Definition~\ref{def:width} is defined, and
+\[
+  \frac{d}{\sqrt 3} \le \gw(\ball_d) \le d .
+\]
+\end{proposition}
+
+\begin{proof}
+\uses{prop:width_le_d, lem:designset_basic, lem:gauss_norm_moments, lem:trace_inv_amhm, lem:gauss_linear_image, lem:width_matrix_wd}
+The upper bound is Proposition~\ref{prop:width_le_d} ($\ball_d$ being spanning). For the
+lower bound, fix
+$A \in \designset(\ball_d)\cap\PD$. By Lemma~\ref{lem:designset_basic},
+$\tr A \le \sup_{x\in\ball_d}\norm{x}^2 = 1$. For every $v \in \R^d$,
+$\sup_{x\in\ball_d}\ip{x}{v} = \norm{v}$ (Cauchy--Schwarz, with equality at
+$x = v/\norm{v}$ when $v \ne 0$), so
+$\gwidth{\ball_d}{A} = \E\norm{A^{-1/2}g}$. The vector $Y := A^{-1/2}g$ has law
+$\Normal(0, A^{-1})$ (Lemma~\ref{lem:gauss_linear_image}), and
+Lemma~\ref{lem:gauss_norm_moments} gives $\E\norm{Y} \ge \sqrt{\tr(A^{-1})}/\sqrt 3$.
+Finally $\tr(A^{-1}) \ge d^2/\tr(A) \ge d^2$ by Lemma~\ref{lem:trace_inv_amhm}. Hence
+$\gwidth{\ball_d}{A} \ge d/\sqrt3$ for every admissible $A$, and the infimum
+$\gw(\ball_d)$ is at least $d/\sqrt 3$.
+\end{proof}
+
+\begin{lemma}[Well-separated points in the whitened set]\label{lem:whitened_separated_points}
+\uses{def:design_matrix, lem:sqrt_props}
+Let $d \ge 2$, let $\Xs$ be an action set and $\lambda \in \simplex_{\Xs}$ with
+$\Sigma := A(\lambda) \succ 0$ (such a $\lambda$ exists if and only if $\Xs$ is spanning), and let
+$\mathcal T := \Sigma^{-1/2}\Xs = \{\Sigma^{-1/2}x : x \in \Xs\}$ and $m := \lfloor d/2 \rfloor$.
+There exist $t_1, \dots, t_m \in \mathcal T$ such that $\norm{t_i - t_j} \ge \sqrt{d/2}$
+for all $i \ne j$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sqrt_props}
+Write $u_x := \Sigma^{-1/2}x$ for $x \in \supp\lambda$. Then
+$\sum_{x}\lambda_x u_xu_x^\top = \Sigma^{-1/2}A(\lambda)\Sigma^{-1/2} = I_d$
+(Lemma~\ref{lem:sqrt_props}). We construct the points greedily. Pick $t_1 \in \mathcal T$
+arbitrarily. Assume $t_1,\dots,t_k$ have been chosen for some $1 \le k < m$, let
+$V_k := \Span\{t_1,\dots,t_k\}$ and let $Q_k$ be the orthogonal projection onto
+$V_k^\perp$. Then $Q_k$ is symmetric and idempotent, and
+$\tr Q_k = \dim V_k^\perp = d - \dim V_k \ge d - k$. Therefore
+\[
+  \sum_x \lambda_x \norm{Q_k u_x}^2 = \sum_x\lambda_x\, u_x^\top Q_k u_x
+  = \tr\Big(Q_k \sum_x\lambda_x u_xu_x^\top\Big) = \tr Q_k \ge d - k ,
+\]
+so (the $\lambda_x$ being a probability vector) some $x \in \supp\lambda$ has
+$\norm{Q_ku_x}^2 \ge d-k$; set $t_{k+1} := u_x \in \mathcal T$. For $i \le k$ we have
+$Q_kt_i = 0$ since $t_i \in V_k$, and orthogonal projections do not increase norms, so
+\[
+  \norm{t_{k+1} - t_i} \ge \norm{Q_k(t_{k+1}-t_i)} = \norm{Q_kt_{k+1}} \ge \sqrt{d-k}
+  \ge \sqrt{d - (m-1)} \ge \sqrt{d/2},
+\]
+where the last step uses $m - 1 \le d/2 - 1$. This constructs $t_1,\dots,t_m$ with the
+required pairwise separation.
+\end{proof}
+
+\begin{proposition}[Lower bound $\sqrt{d\log d}$; secondary]\label{prop:width_lower_sqrt_dlogd}
+\uses{def:width}
+Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 4$. Then
+\[
+  \gw(\Xs) \;\ge\; \frac18\sqrt{d\,\log\lfloor d/2\rfloor},
+\]
+and consequently, for $d \ge 6$,
+\[
+  \gw(\Xs) \;\ge\; \frac{1}{8\sqrt 2}\sqrt{d\log d} .
+\]
+\end{proposition}
+
+\begin{proof}
+\uses{lem:whitened_separated_points, thm:sudakov_fernique, lem:gauss_max_lower, lem:width_matrix_wd, lem:gauss_linear_image, lem:exists_posdef_design}
+The constant $\frac18$ is $c_{\max}/2$ with $c_{\max} = \frac14$ the constant of
+Lemma~\ref{lem:gauss_max_lower}, which holds for every $m \ge 2$ (no threshold); the
+condition $d \ge 4$ ensures $m := \lfloor d/2\rfloor \ge 2$.
+Fix $\lambda \in \simplex_{\Xs}$ with $\Sigma := A(\lambda) \succ 0$ (it exists since $\Xs$ is
+spanning, Lemma~\ref{lem:exists_posdef_design}); it suffices to lower bound
+$\gwidth{\Xs}{\Sigma} = \E\sup_{t\in\mathcal T}\ip{t}{g}$, $\mathcal T = \Sigma^{-1/2}\Xs$.
+Take $t_1,\dots,t_m \in \mathcal T$ from
+Lemma~\ref{lem:whitened_separated_points}. Set $Z_i := \ip{t_i}{g}$; $(Z_1,\dots,Z_m)$ is a
+centered Gaussian vector (Lemma~\ref{lem:gauss_linear_image}) with
+$\E(Z_i - Z_j)^2 = \norm{t_i-t_j}^2 \ge d/2$ for $i \ne j$. Let $\xi_1,\dots,\xi_m$ be
+i.i.d.\ standard Gaussians and $Y_i := \frac{\sqrt d}{2}\xi_i$, so that
+$\E(Y_i-Y_j)^2 = \frac{d}{4}\cdot 2 = d/2 \le \E(Z_i-Z_j)^2$ for $i\ne j$ (and $0 = 0$ for
+$i = j$). The Sudakov--Fernique inequality (Theorem~\ref{thm:sudakov_fernique}, applied to the
+pair $(Y, Z)$ whose increments are ordered as required) gives
+$\E\max_i Y_i \le \E\max_i Z_i$. Hence
+\[
+  \gwidth{\Xs}{\Sigma} \ge \E\max_{i\le m}Z_i \ge \E\max_{i\le m}Y_i
+  = \frac{\sqrt d}{2}\,\E\max_{i\le m}\xi_i \ge \frac{\sqrt d}{2}\cdot\frac14\sqrt{\log m}
+  = \frac18\sqrt{d\log m},
+\]
+by Lemma~\ref{lem:gauss_max_lower} (applicable as $m \ge 2$). Taking the infimum over
+$\lambda$ proves the first inequality. For the second, $\lfloor d/2\rfloor \ge \sqrt d$ for
+$d \ge 6$ (check $d = 6, 7$ directly: $3 \ge \sqrt 7$; for $d\ge 8$,
+$\lfloor d/2\rfloor \ge (d-1)/2 \ge \sqrt d$ because $(\sqrt d - 1)^2 \ge 2$), so
+$\log\lfloor d/2\rfloor \ge \frac12\log d$ and
+$\frac18\sqrt{d\log\lfloor d/2\rfloor} \ge \frac18\sqrt{\tfrac12 d\log d} = \frac{1}{8\sqrt2}\sqrt{d\log d}$.
+\end{proof}
+
+\begin{proposition}[Width lower bounds from sample complexity lower bounds]\label{prop:width_lower_from_pac}
+\uses{def:pac, def:width}
+Let $\Xs$ be a spanning action set, $\delta_0 \in (0,1)$ and $L \ge 0$. Assume that for every
+$\eps \in (0,1]$, every $(\eps,\delta_0)$-PAC identification algorithm on $\Xs$ with budget
+$T \ge 1$ satisfies $T \ge L/\eps^2$. Then
+\[
+  \gw(\Xs)^2 \;\ge\; \frac{L}{600} - d\log\frac{2}{\delta_0}.
+\]
+\end{proposition}
+
+\begin{proof}
+\uses{thm:upper, def:fixed_design_algorithm}
+Fix $\eps \in (0,1]$. By Theorem~\ref{thm:upper} (which requires $\Xs$ spanning), the
+fixed-design algorithm of
+Definition~\ref{def:fixed_design_algorithm} with parameters $(\eps, \delta_0)$ is
+$(\eps,\delta_0)$-PAC with budget
+$T(\eps) = \lceil 600(\gw(\Xs)^2 + d\log(2/\delta_0))/\eps^2\rceil
+< 600(\gw(\Xs)^2 + d\log(2/\delta_0))/\eps^2 + 1$, and $T(\eps) \ge 4d \ge 1$. The hypothesis gives
+$L/\eps^2 \le T(\eps)$, hence, multiplying by $\eps^2$,
+$L < 600(\gw(\Xs)^2 + d\log(2/\delta_0)) + \eps^2$. Letting $\eps \to 0$ gives
+$L \le 600(\gw(\Xs)^2 + d\log(2/\delta_0))$, which is the claim.
+\end{proof}
+
+\begin{remark}
+The outline of this chapter allowed an additional $-1$ on the right-hand side (coming from
+the ceiling in the budget at $\eps = 1$); letting $\eps \to 0$ removes it, as shown above.
+The hypothesis of Proposition~\ref{prop:width_lower_from_pac} is exactly what the lower
+bounds of Section~\ref{sec:log_gains_lower} provide: they show that if
+$1 \le T \le L/\eps^2$ then some instance fails with probability at least some $p_0 > \delta_0$,
+so an $(\eps,\delta_0)$-PAC algorithm with budget $T \ge 1$ must have $T > L/\eps^2$. The
+restriction to budgets $T \ge 1$ is harmless since the algorithm of Theorem~\ref{thm:upper}
+has budget at least $4d$.
+\end{remark}
+
+\begin{corollary}[Widths of hypercubes and $m$-sets]\label{cor:width_structured}
+\uses{def:width, def:msets}
+The three action sets below are spanning (see the end of the proof), so their Gaussian
+widths are defined.
+\begin{enumerate}
+  \item[(i)] For $\Xs = \{-1,1\}^d$: $\gw(\Xs)^2 \ge d^2/60000 - 3d$; in particular
+        $\gw(\Xs) \ge d/350$ for $d \ge 360000$.
+  \item[(ii)] For $\Xs = \{0,1\}^d$: $\gw(\Xs)^2 \ge d^2/240000 - 3d$; in particular
+        $\gw(\Xs) \ge d/700$ for $d \ge 1500000$.
+  \item[(iii)] For the $m$-sets $\Xs = \{x \in \{0,1\}^d : \sum_i x_i = m\}$
+        (Definition~\ref{def:msets}) with $n := d - m + 1 \ge 20m$:
+        $\gw(\Xs)^2 \ge mn/(1.5\cdot 10^6) - 3d$; in particular
+        $\gw(\Xs) \ge \sqrt{md}/1800$ for $m \ge 10^7$.
+\end{enumerate}
+Together with Propositions~\ref{prop:width_le_d} and~\ref{prop:width_finite}, this shows
+$\gw(\{-1,1\}^d) = \Theta(d)$, $\gw(\{0,1\}^d) = \Theta(d)$ and, for $m$-sets with
+$d - m + 1 \ge 20m$, $\sqrt{md} \lesssim \gw(\Xs) \lesssim \sqrt{md\log(ed/m)}$
+(using $\log\binom{d}{m} \le m\log(ed/m)$).
+\end{corollary}
+
+\begin{proof}
+\uses{prop:width_lower_from_pac, thm:lower_hypercube_pm, thm:lower_hypercube_01, thm:lower_msets}
+(i) Theorem~\ref{thm:lower_hypercube_pm}: for every $\eps > 0$, every identification
+algorithm on $\{-1,1\}^d$ with budget $1 \le T \le d^2/(100\eps^2)$ has an instance on which it
+fails with probability at least $1/6$. Take $\delta_0 := 1/7 < 1/6$: an
+$(\eps,\delta_0)$-PAC algorithm with budget $T \ge 1$ must have $T > d^2/(100\eps^2)$, so
+Proposition~\ref{prop:width_lower_from_pac} applies with $L = d^2/100$ and gives
+$\gw(\Xs)^2 \ge d^2/60000 - d\log 14 \ge d^2/60000 - 3d$ ($\log 14 < 2.64$). If
+$d \ge 360000$ then $3d \le d^2/60000 - d^2/122500$ (equivalent to
+$d \ge 3/(1/60000 - 1/122500) \approx 352800$), so $\gw(\Xs)^2 \ge d^2/122500$ and
+$\gw(\Xs) \ge d/350$.
+
+(ii) Theorem~\ref{thm:lower_hypercube_01} gives the failure probability $1/6$ for
+$T \le d^2/(400\eps^2)$; with $\delta_0 = 1/7$ and $L = d^2/400$,
+$\gw(\Xs)^2 \ge d^2/240000 - 3d$, and for $d \ge 1500000$ this is at least
+$d^2/490000$ (equivalent to $d \ge 3/(1/240000 - 1/490000) \approx 1411200$), so
+$\gw(\Xs) \ge d/700$.
+
+(iii) Theorem~\ref{thm:lower_msets} gives the failure probability $2/9$ for
+$T \le mn/(2500\eps^2)$; with $\delta_0 = 1/5 < 2/9$ and $L = mn/2500$,
+$\gw(\Xs)^2 \ge mn/(1.5\cdot10^6) - d\log 10 \ge mn/(1.5\cdot 10^6) - 3d$. Since
+$m \le n/20$ we have $d = n + m - 1 \le 21n/20$, i.e.\ $n \ge 20d/21$, so
+$mn/(1.5\cdot10^6) \ge md/(1.575\cdot10^6)$. For $m \ge 10^7$,
+$3d \le md/(1.575\cdot10^6) - md/(3.15\cdot 10^6)$ (equivalent to $m \ge 9.45\cdot10^6$),
+hence $\gw(\Xs)^2 \ge md/(3.15\cdot10^6)$ and $\gw(\Xs) \ge \sqrt{md}/1775 \ge \sqrt{md}/1800$.
+
+The spanning hypotheses (needed by Proposition~\ref{prop:width_lower_from_pac}, i.e.\ by
+Theorem~\ref{thm:upper}) hold: $\{-1,1\}^d$ and $\{0,1\}^d$ contain a basis, and the
+$m$-sets span $\R^d$ for $1 \le m \le d-1$ (Definition~\ref{def:msets}), which is implied by
+$n \ge 20m$.
+\end{proof}
+
+\begin{remark}
+The thresholds on $d$ and $m$ in Corollary~\ref{cor:width_structured} come from the additive
+term $d\log(2/\delta_0)$ in the budget of Theorem~\ref{thm:upper}, which must be dominated
+by $L/600$; they are not intrinsic. The unit ball is treated directly in
+Proposition~\ref{prop:width_ball}, which is much sharper than what
+Corollary~\ref{cor:lower_ball_adaptive} would give through
+Proposition~\ref{prop:width_lower_from_pac}.
+\end{remark}
+
+\section{Multi-task multi-armed bandits}
+\label{sec:width_multitask}
+
+The multi-task bandit action set below does not span $\R^d$, so the Gaussian width
+$\gw(\Xs)$ of Definition~\ref{def:width} is not defined for it. As in the paper, one
+measures it instead through an isometric identification of its span with a Euclidean space
+of the right dimension; to avoid overloading the notation $\gw(\Xs)$, this second notion is
+called the \emph{intrinsic width} and written $\gw_{\mathrm{int}}(\Xs)$.
+
+\begin{definition}[Intrinsic width of a set spanning a subspace]\label{def:width_subspace}
+\uses{def:width, lem:width_iso}
+Let $\Xs \subset \R^d$ be an action set (nonempty compact, not necessarily spanning) and let
+$V := \Span(\Xs)$ have dimension $r \ge 1$. Let
+$U \in \R^{d\times r}$ be any matrix with orthonormal columns ($U^\top U = I_r$) whose range
+is $V$. Then $\Xs_r := U^\top\Xs = \{U^\top x : x\in\Xs\} \subset \R^r$ is compact and spans
+$\R^r$ (the map $z \mapsto U^\top z$ restricted to $V$ is a linear isometry onto $\R^r$ with
+inverse $u \mapsto Uu$; in particular $x = UU^\top x$ for $x \in \Xs$), so it is a spanning
+action set in $\R^r$ to which Definition~\ref{def:width} applies, and we define the
+\emph{intrinsic width} of $\Xs$ as
+\[
+  \gw_{\mathrm{int}}(\Xs) := \gw(\Xs_r) = \gw(U^\top \Xs).
+\]
+This does not depend on the choice of $U$: if $U'$ is another such matrix then
+$M := U^\top U' \in \R^{r\times r}$ is orthogonal ($M^\top M = U'^\top UU^\top U' = U'^\top U' = I_r$
+since $UU^\top$ is the orthogonal projection onto $V$ and $U'$ has range $V$) and
+$U'^\top x = M^\top U^\top x$ for $x \in V$, so $U'^\top\Xs = M^\top(U^\top\Xs)$ and
+$\gw(U'^\top\Xs) = \gw(U^\top\Xs)$ by Lemma~\ref{lem:width_iso} (applied to the spanning set
+$U^\top\Xs \subset \R^r$ and the invertible matrix $M^\top$). When $V = \R^d$ (i.e.\ $\Xs$ is
+spanning) one has $\gw_{\mathrm{int}}(\Xs) = \gw(\Xs)$, again by Lemma~\ref{lem:width_iso},
+$U$ being an orthogonal $d\times d$ matrix.
+\end{definition}
+
+\textbf{Lean remark.} The subspace is \texttt{Submodule.span ℝ X}; an orthonormal basis of a
+finite-dimensional inner product subspace is provided by \texttt{stdOrthonormalBasis} or
+\texttt{OrthonormalBasis} of the subspace; the map $x \mapsto U^\top x$ is the coordinate map
+of this basis composed with the orthogonal projection \texttt{orthogonalProjection}, and
+$u \mapsto Uu$ is the basis' linear isometry. The identification of action sets in $\R^r$
+with \texttt{EuclideanSpace ℝ (Fin r)} then makes Definition~\ref{def:width} applicable.
+In Lean, $\gw_{\mathrm{int}}$ is a separate declaration from $\gw$ (the latter takes the
+spanning hypothesis as an argument), related by the identity
+$\gw_{\mathrm{int}}(\Xs) = \gw(\Xs)$ for spanning $\Xs$.
+
+\begin{definition}[Multi-task bandit action set]\label{def:multitask_set}
+\uses{def:arm_set, def:width_subspace}
+Let $m \ge 1$ and $d_1,\dots,d_m \ge 2$ be integers, $d := \sum_{j\le m} d_j$,
+$d_{1:j} := \sum_{s\le j}d_s$ (with $d_{1:0} = 0$), and let
+$B_j := \{d_{1:j-1}+1, \dots, d_{1:j}\} \subseteq [d]$ be the $j$-th \emph{block} of
+coordinates, $\abs{B_j} = d_j$. The \emph{multi-task action set} is
+\[
+  \Xs := \Big\{x \in \{0,1\}^d : \sum_{i\in B_j}x_i = 1 \text{ for every } j \le m\Big\}.
+\]
+Thus $\abs{\Xs} = \prod_j d_j$; an element of $\Xs$ is determined by the positions
+$(k_j)_{j\le m}$ of its ones, $k_j \in B_j$. For $m \ge 2$ the set $\Xs$ does not span $\R^d$
+(Lemma~\ref{lem:multitask_basis}); it is nevertheless an action set in the sense of
+Definition~\ref{def:arm_set}, and the relevant width is its intrinsic width
+$\gw_{\mathrm{int}}(\Xs)$ of Definition~\ref{def:width_subspace}.
+We write $\mathbf 1_n$ for the all-ones vector of $\R^n$ and $e_k$ for the $k$-th basis vector.
+\end{definition}
+
+\textbf{Lean remark.} The natural index type of the coordinates is the sigma type
+$\Sigma_{j : \mathrm{Fin}\ m}\ \mathrm{Fin}\ (d_j)$ (block index, position in the block), with
+$\Xs$ the image of $\prod_{j}\mathrm{Fin}\ (d_j)$ under
+$(k_j)_j \mapsto \sum_j e_{(j,k_j)}$; the block $B_j$ is then the set of indices with first
+component $j$. If one prefers $\mathrm{Fin}\ d$ as index type, use the block map
+$b : \mathrm{Fin}\ d \to \mathrm{Fin}\ m$ and $B_j = b^{-1}(j)$; the offsets $d_{1:j}$ are
+only needed to translate between the two encodings. All statements below only use the
+partition $(B_j)_j$ of the coordinates and the sizes $d_j$.
+
+\begin{definition}[Helmert matrices]\label{def:helmert}
+For $n \ge 2$, the \emph{Helmert matrix} $H_n \in \R^{n\times(n-1)}$ has entries, for
+$\ell \in [n]$ and $k \in [n-1]$,
+\[
+  (H_n)_{\ell,k} :=
+  \begin{cases}
+    \dfrac{1}{\sqrt{k(k+1)}} & \text{if } \ell \le k,\\[8pt]
+    -\dfrac{k}{\sqrt{k(k+1)}} & \text{if } \ell = k+1,\\[8pt]
+    0 & \text{if } \ell \ge k+2 .
+  \end{cases}
+\]
+Its $k$-th column is $h_k := (1,\dots,1,-k,0,\dots,0)^\top/\sqrt{k(k+1)}$ with $k$ ones.
+\end{definition}
+
+\begin{lemma}[Properties of Helmert matrices]\label{lem:helmert_props}
+\uses{def:helmert}
+For $n\ge 2$: $H_n^\top H_n = I_{n-1}$, $H_n^\top\mathbf 1_n = 0$, and
+$H_nH_n^\top = I_n - \frac1n\mathbf 1_n\mathbf 1_n^\top$. Equivalently, the columns of $H_n$
+together with $\mathbf 1_n/\sqrt n$ form an orthonormal basis of $\R^n$, and $H_nH_n^\top$ is
+the orthogonal projection onto $\mathbf 1_n^\perp = \{v : \sum_\ell v_\ell = 0\}$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:helmert}
+$\norm{h_k}^2 = (k + k^2)/(k(k+1)) = 1$ and $\ip{h_k}{\mathbf 1_n} = (k - k)/\sqrt{k(k+1)} = 0$.
+For $k < k'$, the entries of $h_{k'}$ on the first $k+1$ coordinates are all equal to
+$1/\sqrt{k'(k'+1)}$ (because $k+1 \le k'$), and $h_k$ vanishes beyond coordinate $k+1$, so
+$\ip{h_k}{h_{k'}} = \ip{h_k}{\mathbf 1_n}/\sqrt{k'(k'+1)} = 0$. Hence $H_n^\top H_n = I_{n-1}$,
+$H_n^\top\mathbf 1_n = 0$, and $\{h_1,\dots,h_{n-1},\mathbf 1_n/\sqrt n\}$ is an orthonormal
+family of $n$ vectors in $\R^n$, i.e.\ an orthonormal basis. The resolution of the identity
+for an orthonormal basis, $\sum_k h_kh_k^\top + \frac1n\mathbf 1_n\mathbf 1_n^\top = I_n$,
+is the last identity.
+\end{proof}
+
+\begin{lemma}[An orthonormal basis of the span of the multi-task set]\label{lem:multitask_basis}
+\uses{def:multitask_set, def:helmert}
+In the setting of Definition~\ref{def:multitask_set}, define $\mu \in \R^d$ by
+$\mu_i := 1/d_j$ for $i \in B_j$, $\kappa := \norm{\mu}^2 = \sum_{j\le m}1/d_j$,
+$u_0 := \mu/\sqrt\kappa$, and for $j \le m$ the matrix $Q_j \in \R^{d\times(d_j-1)}$ whose
+rows indexed by $B_j$ form $H_{d_j}$ (row $d_{1:j-1}+\ell$ of $Q_j$ is row $\ell$ of
+$H_{d_j}$) and whose other rows are zero. Let
+\[
+  U := [\,u_0\ \ Q_1\ \cdots\ Q_m\,] \in \R^{d\times r}, \qquad r := 1 + \sum_{j\le m}(d_j - 1) = d - m + 1 .
+\]
+Then $U^\top U = I_r$, $\mathrm{range}(U) = \Span(\Xs)$, and $\dim\Span(\Xs) = d - m + 1$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:helmert_props, def:multitask_set}
+\emph{Orthonormality.} $\norm{u_0} = 1$. The columns of $Q_j$ and $Q_\ell$ have disjoint
+supports for $j \ne \ell$, so $Q_j^\top Q_\ell = 0$, and $Q_j^\top Q_j = H_{d_j}^\top H_{d_j} = I_{d_j-1}$
+(Lemma~\ref{lem:helmert_props}). Since $u_0$ is constant on $B_j$,
+$u_0^\top Q_j = \frac{1}{d_j\sqrt\kappa}\mathbf 1_{d_j}^\top H_{d_j} = 0$. Hence $U^\top U = I_r$.
+
+\emph{Range.} Let $R_j := \{v \in \R^d : \supp v \subseteq B_j,\ \sum_{i\in B_j}v_i = 0\}$,
+a subspace of dimension $d_j - 1$. The columns of $Q_j$ lie in $R_j$
+(Lemma~\ref{lem:helmert_props}: $H_{d_j}^\top\mathbf 1 = 0$) and are $d_j - 1$ orthonormal
+vectors, so $\mathrm{range}(Q_j) = R_j$, and
+$\mathrm{range}(U) = \R u_0 \oplus R_1\oplus\dots\oplus R_m$ (a direct sum, the summands being
+pairwise orthogonal). Now $\mu \in \Span\Xs$: $\mu = \frac{1}{\abs{\Xs}}\sum_{x\in\Xs}x$,
+since for $i \in B_j$ exactly $\abs{\Xs}/d_j$ elements of $\Xs$ have $x_i = 1$. For
+$i, i' \in B_j$, $e_i - e_{i'}$ is the difference of two elements of $\Xs$ that agree
+outside $B_j$, hence lies in $\Span\Xs$; these differences span $R_j$. Therefore
+$\mathrm{range}(U) \subseteq \Span\Xs$. Conversely, for $x \in \Xs$ and every $j$,
+$\sum_{i\in B_j}(x - \mu)_i = 1 - 1 = 0$, so $x - \mu \in R_1\oplus\dots\oplus R_m$ (split
+$x - \mu$ according to the blocks) and $x \in \mathrm{range}(U)$. Hence
+$\mathrm{range}(U) = \Span\Xs$ and its dimension is the number $r$ of (orthonormal) columns
+of $U$.
+\end{proof}
+
+\begin{lemma}[Covariance of the uniform design in the intrinsic coordinates]\label{lem:multitask_design_cov}
+\uses{def:multitask_set, lem:multitask_basis, def:design_matrix}
+Let $\lambda_u$ be the uniform design on $\Xs$ ($\lambda_x = 1/\abs\Xs$ for every
+$x \in \Xs$) and $\Sigma := A(\lambda_u) = \frac{1}{\abs\Xs}\sum_{x\in\Xs}xx^\top \in \R^{d\times d}$.
+Then, for $i \in B_j$ and $k \in B_\ell$,
+\[
+  \Sigma_{ik} = \frac{1}{d_j}\indic\{i = k\} \ \text{ if } j = \ell, \qquad
+  \Sigma_{ik} = \frac{1}{d_jd_\ell} \ \text{ if } j \ne \ell ,
+\]
+and, with $U$, $\kappa$ as in Lemma~\ref{lem:multitask_basis},
+\[
+  \Sigma_r := U^\top\Sigma U = \operatorname{diag}\Big(\kappa,\ \tfrac{1}{d_1}I_{d_1-1},\ \dots,\ \tfrac{1}{d_m}I_{d_m-1}\Big)  \text{ (positive definite, } r\times r) .
+\]
+Moreover $\Sigma_r$ is the design matrix of the uniform design on $U^\top\Xs$:
+$\Sigma_r = \frac{1}{\abs\Xs}\sum_{x\in\Xs}(U^\top x)(U^\top x)^\top \in \designset(U^\top\Xs)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:helmert_props, lem:multitask_basis}
+$\Sigma_{ik}$ is the fraction of $x \in \Xs$ with $x_i = x_k = 1$. Within a block, two
+distinct coordinates are never both $1$, and $x_i = 1$ for a fraction $1/d_j$ of the
+elements; across blocks $j \ne \ell$, the positions of the ones in different blocks are
+chosen independently and uniformly (the set $\Xs$ is in bijection with $\prod_j B_j$), so the
+fraction is $1/(d_jd_\ell)$. For $v \in R_j$ (support in $B_j$, coordinates summing to $0$):
+for $i \in B_j$, $(\Sigma v)_i = \frac{1}{d_j}v_i$, and for $i \in B_\ell$ with
+$\ell\ne j$, $(\Sigma v)_i = \frac{1}{d_jd_\ell}\sum_{k\in B_j}v_k = 0$; thus
+$\Sigma v = v/d_j$. For $\mu$: for $i \in B_j$,
+$(\Sigma\mu)_i = \frac{1}{d_j}\cdot\frac{1}{d_j} + \sum_{\ell\ne j}\sum_{k\in B_\ell}\frac{1}{d_jd_\ell}\cdot\frac1{d_\ell}
+= \frac{1}{d_j}\sum_{\ell\le m}\frac{1}{d_\ell} = \kappa\mu_i$, so $\Sigma\mu = \kappa\mu$ and
+$\Sigma u_0 = \kappa u_0$. Consequently $u_0^\top\Sigma u_0 = \kappa$,
+$u_0^\top\Sigma Q_j = \kappa u_0^\top Q_j = 0$, $Q_j^\top\Sigma Q_\ell = \frac{1}{d_\ell}Q_j^\top Q_\ell
+= \frac{1}{d_\ell}\indic\{j=\ell\}I_{d_j-1}$ (Lemma~\ref{lem:multitask_basis}), which is the
+block-diagonal form of $U^\top\Sigma U$; it is positive definite since its diagonal entries
+are positive. The last claim is the identity $U^\top(\sum_x\lambda_x xx^\top)U =
+\sum_x\lambda_x(U^\top x)(U^\top x)^\top$.
+\end{proof}
+
+\begin{lemma}[Reduction of the multi-task width to block maxima]\label{lem:multitask_width_reduction}
+\uses{def:width_subspace, def:multitask_set, lem:multitask_basis, lem:multitask_design_cov}
+In the setting of Definition~\ref{def:multitask_set}, let $g^{(j)} \sim \Normal(0, I_{d_j-1})$,
+$j \le m$. Then the intrinsic width of Definition~\ref{def:width_subspace} satisfies
+\[
+  \gw_{\mathrm{int}}(\Xs) \;\le\; \sum_{j\le m}\sqrt{d_j}\ \E\Big[\max_{k \le d_j}\big(H_{d_j}g^{(j)}\big)_k\Big].
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:width, lem:width_matrix_wd, lem:sqrt_props, lem:multitask_design_cov, lem:multitask_basis, lem:gauss_pi}
+By Definition~\ref{def:width_subspace} with the matrix $U$ of Lemma~\ref{lem:multitask_basis},
+$\gw_{\mathrm{int}}(\Xs) = \gw(U^\top\Xs)$, where $U^\top\Xs$ is a spanning action set in
+$\R^r$, $r = d - m + 1$, so that Definition~\ref{def:width} applies to it; and by
+Lemma~\ref{lem:multitask_design_cov},
+$\Sigma_r \in \designset(U^\top\Xs)\cap\{\text{positive definite } r\times r \text{ matrices}\}$, so
+\[
+  \gw_{\mathrm{int}}(\Xs) \le \gwidth{U^\top\Xs}{\Sigma_r} = \E\Big[\max_{x\in\Xs}\ip{U^\top x}{\Sigma_r^{-1/2}g_r}\Big],
+  \qquad g_r \sim \Normal(0, I_r).
+\]
+The matrix $\Sigma_r$ is diagonal with positive entries, so
+$\Sigma_r^{-1/2} = \operatorname{diag}(\kappa^{-1/2}, \sqrt{d_1}I_{d_1-1},\dots,\sqrt{d_m}I_{d_m-1})$
+(this diagonal matrix is positive definite and its square is $\Sigma_r^{-1}$; by uniqueness
+of the positive square root, Lemma~\ref{lem:sqrt_props}, it is $\Sigma_r^{-1/2}$). Write
+$g_r = (g_0, g^{(1)},\dots,g^{(m)})$ with $g_0 \sim \Normal(0,1)$ and
+$g^{(j)}\sim\Normal(0,I_{d_j-1})$ independent (Lemma~\ref{lem:gauss_pi}). For $x \in \Xs$
+with ones at positions $k_j \in B_j$, $U^\top x = (\ip{u_0}{x}, Q_1^\top x,\dots,Q_m^\top x)$
+with $\ip{u_0}{x} = \ip{\mu}{x}/\sqrt\kappa = \kappa/\sqrt\kappa = \sqrt\kappa$ and
+$Q_j^\top x = H_{d_j}^\top e_{k_j}$ ($e_{k_j} \in \R^{d_j}$ with the block-local index).
+Hence
+\[
+  \ip{U^\top x}{\Sigma_r^{-1/2}g_r} = \kappa^{-1/2}\sqrt\kappa\, g_0
+  + \sum_{j\le m}\sqrt{d_j}\ip{H_{d_j}^\top e_{k_j}}{g^{(j)}}
+  = g_0 + \sum_{j\le m}\sqrt{d_j}\,\big(H_{d_j}g^{(j)}\big)_{k_j}.
+\]
+As $x$ ranges over $\Xs$, $(k_j)_j$ ranges over all of $\prod_j B_j$ independently across
+blocks, so the maximum over $x$ is
+$g_0 + \sum_j\sqrt{d_j}\max_{k\le d_j}(H_{d_j}g^{(j)})_k$. Taking expectations and using
+$\E g_0 = 0$ gives the claim (each maximum is integrable by Lemma~\ref{lem:width_matrix_wd}).
+\end{proof}
+
+\begin{lemma}[Maximum of centered Gaussians]\label{lem:centered_gaussian_max}
+\uses{def:helmert, lem:helmert_props}
+Let $n \ge 2$, $Z \sim \Normal(0, I_n)$, $\bar Z := \frac1n\sum_{k\le n}Z_k$ and
+$g \sim \Normal(0, I_{n-1})$. Then
+\[
+  \E\Big[\max_{k\le n}(H_ng)_k\Big] = \E\Big[\max_{k\le n}(Z_k - \bar Z)\Big]
+  = \E\Big[\max_{k\le n}Z_k\Big] \le \sqrt{2\log n}.
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_linear_image, lem:gauss_law_of_cov, lem:gauss_max_upper, lem:helmert_props}
+By Lemma~\ref{lem:gauss_linear_image}, $H_ng \sim \Normal(0, H_nH_n^\top) = \Normal(0, P)$
+with $P := I_n - \frac1n\mathbf 1_n\mathbf 1_n^\top$ (Lemma~\ref{lem:helmert_props}), and
+$Z - \bar Z\mathbf 1_n = PZ \sim \Normal(0, PP^\top) = \Normal(0,P)$ since $P$ is a symmetric
+projection. Two centered Gaussian vectors with the same covariance have the same law
+(Lemma~\ref{lem:gauss_law_of_cov}), so $\E\max_k(H_ng)_k = \E\max_k(Z_k - \bar Z)$. Next,
+$\max_k(Z_k - \bar Z) = \max_kZ_k - \bar Z$ and $\E\bar Z = 0$. Finally
+$\E\max_kZ_k \le \sqrt{2\log n}$ by Lemma~\ref{lem:gauss_max_upper} with $\sigma^2 = 1$.
+\end{proof}
+
+\begin{proposition}[Width of the multi-task set]\label{prop:width_multitask}
+\uses{def:multitask_set, def:width_subspace}
+In the setting of Definition~\ref{def:multitask_set}, the intrinsic width satisfies
+\[
+  \gw_{\mathrm{int}}(\Xs) \le \sum_{j\le m}\sqrt{2 d_j\log d_j}.
+\]
+Equivalently, for the matrix $U$ of Lemma~\ref{lem:multitask_basis}, the spanning action set
+$U^\top\Xs \subset \R^{d-m+1}$ has Gaussian width $\gw(U^\top\Xs) \le \sum_{j\le m}\sqrt{2d_j\log d_j}$.
+\end{proposition}
+
+\begin{proof}
+\uses{lem:multitask_width_reduction, lem:centered_gaussian_max}
+Combine Lemma~\ref{lem:multitask_width_reduction} with Lemma~\ref{lem:centered_gaussian_max}
+applied to each block ($n = d_j \ge 2$):
+$\sqrt{d_j}\,\E\max_k(H_{d_j}g^{(j)})_k \le \sqrt{d_j}\sqrt{2\log d_j}$.
+\end{proof}
+
+\begin{theorem}[A finite set with a small width; Theorem~5 of the paper]\label{thm:width_separation}
+\uses{def:multitask_set, def:width_subspace, prop:width_le_d, prop:width_finite}
+Let $m \ge 2$ and consider the multi-task action set $\Xs$ with $m-1$ blocks of size
+$d_j = 2$ ($j < m$) and one block of size $d_m = m^2$, so that $d = m^2 + 2m - 2$ and
+$\abs{\Xs} = 2^{m-1}m^2$. Write $r := \dim\Span(\Xs)$ and let $U \in \R^{d\times r}$ be as in
+Definition~\ref{def:width_subspace}, so that $U^\top\Xs \subset \R^r$ is a finite spanning
+action set with $\abs{U^\top\Xs} = \abs\Xs$ and $\gw(U^\top\Xs) = \gw_{\mathrm{int}}(\Xs)$. Then:
+\begin{enumerate}
+  \item[(i)] $r = \dim\Span(\Xs) = m^2 + m - 1$, and $d/2 \le r \le d$;
+  \item[(ii)] $\gw_{\mathrm{int}}(\Xs) \le 2(m-1)\sqrt{\log 2} + 2m\sqrt{\log m} \le 3\sqrt{d\log d}$;
+  \item[(iii)] $\sqrt{d\log\abs{\Xs}} \ge 0.49\, d^{3/4}$, and also
+        $\sqrt{r\log\abs\Xs} \ge 0.34\,d^{3/4}$ for the intrinsic dimension $r$.
+\end{enumerate}
+In particular the generic upper bounds $\gw(U^\top\Xs) \le r$
+(Proposition~\ref{prop:width_le_d}) and $\gw(U^\top\Xs) \le \sqrt{2r\log\abs\Xs}$
+(Proposition~\ref{prop:width_finite}), both applicable to the spanning set
+$U^\top\Xs \subset \R^r$, are of order at least $d^{3/4}$, while the intrinsic width
+$\gw_{\mathrm{int}}(\Xs) = \gw(U^\top\Xs)$ is $O(\sqrt{d\log d})$.
+\end{theorem}
+
+\begin{proof}
+\uses{prop:width_multitask, lem:multitask_basis, prop:width_le_d, prop:width_finite}
+(i) Lemma~\ref{lem:multitask_basis}: $\dim\Span\Xs = d - m + 1 = m^2 + m - 1$. It is at most
+$d$, and $d - m + 1 \ge d/2$ is equivalent to $d \ge 2m - 2$, which holds.
+
+(ii) Proposition~\ref{prop:width_multitask}:
+$\gw_{\mathrm{int}}(\Xs) \le (m-1)\sqrt{2\cdot 2\log 2} + \sqrt{2m^2\log(m^2)} = 2(m-1)\sqrt{\log2} + 2m\sqrt{\log m}$.
+Since $m^2 \le d \le 2m^2$ (the second inequality is $2m - 2 \le m^2$), we have
+$m \le \sqrt d$ and $\log m \le \frac12\log d$; also $\log 2 \le \frac12\log d$ because
+$d \ge 6 \ge 4$. Hence
+$\gw_{\mathrm{int}}(\Xs) \le 2m(\sqrt{\log 2} + \sqrt{\log m}) \le 2\sqrt d\cdot 2\sqrt{\tfrac12\log d}
+= 2\sqrt2\sqrt{d\log d} \le 3\sqrt{d\log d}$.
+
+(iii) $\log\abs\Xs = (m-1)\log 2 + 2\log m \ge (m-1)\log2 \ge \frac{m}{2}\log 2$ for
+$m\ge2$, and $m \ge \sqrt{d/2}$ from $d \le 2m^2$; so
+$\log\abs\Xs \ge \frac{\log 2}{2\sqrt2}\sqrt d \ge 0.245\sqrt d$ and
+$\sqrt{d\log\abs\Xs} \ge \sqrt{0.245}\,d^{3/4} \ge 0.49\,d^{3/4}$. With $r \ge d/2$,
+$\sqrt{r\log\abs\Xs} \ge \sqrt{0.1225}\,d^{3/4} \ge 0.34\,d^{3/4}$.
+
+The ``in particular'' clause: $U^\top\Xs$ is a finite spanning action set in $\R^r$ with
+$\abs{U^\top\Xs} = \abs\Xs$ (the map $x \mapsto U^\top x$ is injective on $\Span\Xs$), so
+Propositions~\ref{prop:width_le_d} and~\ref{prop:width_finite} apply to it and give
+$\gw(U^\top\Xs) \le r$ and $\gw(U^\top\Xs) \le \sqrt{2r\log\abs\Xs}$; the right-hand sides are
+at least $d/2$ and $0.34\sqrt2\,d^{3/4}$ respectively by (i) and (iii), whereas
+$\gw(U^\top\Xs) = \gw_{\mathrm{int}}(\Xs) \le 3\sqrt{d\log d}$ by (ii).
+\end{proof}
+
+\begin{remark}
+The paper states Theorem~5 as: there is a finite $\Xs$ with $\dim\Span\Xs = \Theta(d)$,
+$\gw(\Xs) \le O(\sqrt{d\log d})$ (the width being understood as the intrinsic width
+$\gw_{\mathrm{int}}(\Xs)$, since $\Xs$ is not spanning) and
+$\sqrt{d\log\abs\Xs} \ge \Omega(d^{3/4})$; the
+explicit form above is what will be formalized. The intuition is that the width of the
+multi-task set behaves like $\sum_j\sqrt{d_j\log d_j}$, whereas the cardinality bound only
+sees $\log\abs\Xs = \sum_j\log d_j$ and the dimension bound only sees $\sum_j d_j$; blocks of
+size $2$ are cheap for the width but expensive for the cardinality bound. Section~\ref{sec:log_gains_lower}
+shows a matching lower bound of order $(\sum_j\sqrt{d_j})^2/\eps^2$ on the sample complexity
+of adaptive algorithms for this set.
+\end{remark}

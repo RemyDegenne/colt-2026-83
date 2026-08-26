@@ -1,0 +1,507 @@
+\chapter{Information-theoretic tools and the divergence decomposition}
+\label{chap:pre_info}
+
+This chapter collects the information-theoretic facts used by the lower bounds of
+Chapters~\ref{chap:lower_adaptive} and~\ref{chap:log_gains}: the Kullback--Leibler divergence
+of two Gaussians, the Pinsker and Bretagnolle--Huber inequalities, convexity of the divergence
+in its second argument, and, most importantly, the \emph{divergence decomposition} for
+algorithm-environment sequences (the ``chain rule'' of the paper, Appendix~A): the divergence
+between the laws of the histories produced by one algorithm against two stationary
+environments is the expected sum of the one-step divergences along the trajectory. The
+decomposition is stated for the LML framework, for arbitrary reward kernels, and the linear
+Gaussian case of the paper is a corollary.
+
+\textbf{What Mathlib/LML provides.} Mathlib defines the Kullback--Leibler divergence
+\texttt{InformationTheory.klDiv μ ν} as an \texttt{ℝ≥0∞}-valued \texttt{irreducible\_def}
+(\texttt{Mathlib/InformationTheory/KullbackLeibler/Basic.lean}): it equals
+$\int \mathrm{llr}(\mu,\nu)\,d\mu + \nu(\Omega) - \mu(\Omega)$ when $\mu \ll \nu$ and the
+log-likelihood ratio $\mathrm{llr}(\mu,\nu) = \log \frac{d\mu}{d\nu}$ is $\mu$-integrable, and
+$\infty$ otherwise (\texttt{klDiv\_of\_ac\_of\_integrable}, \texttt{klDiv\_of\_not\_ac},
+\texttt{klDiv\_of\_not\_integrable}). It is also the $f$-divergence
+$\int \mathrm{klFun}(\frac{d\mu}{d\nu})\,d\nu$ with $\mathrm{klFun}(x) = x\log x + 1 - x$
+(\texttt{klDiv\_eq\_lintegral\_klFun\_of\_ac}). The chain rule is available in the form
+\texttt{klDiv\_compProd\_eq\_add}:
+$\KL(\mu \otimes \kappa \,\|\, \nu \otimes \eta) = \KL(\mu\|\nu) + \KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta)$,
+together with \texttt{klDiv\_compProd\_left} ($\KL(\mu\otimes\kappa\,\|\,\nu\otimes\kappa) = \KL(\mu\|\nu)$),
+and the data-processing inequalities \texttt{klDiv\_map\_le}, \texttt{klDiv\_trim\_le},
+\texttt{klDiv\_comp\_right\_le}. The lower bound \texttt{mul\_log\_le\_klDiv} and the converse
+Gibbs inequality \texttt{klDiv\_eq\_zero\_iff} are also there. Radon--Nikodym derivatives of
+composition-products are in \texttt{Mathlib/Probability/Kernel/Composition/RadonNikodym.lean}
+(\texttt{rnDeriv\_measure\_compProd}) and kernel derivatives \texttt{Kernel.rnDeriv} are
+measurable (\texttt{Mathlib/Probability/Kernel/RadonNikodym.lean}, under the hypothesis
+\texttt{MeasurableSpace.CountableOrCountablyGenerated}, which is implied by a countably
+generated target space); the same file proves that $\{x : \kappa_x \ll \eta_x\}$ is
+measurable (\texttt{Kernel.measurableSet\_absolutelyContinuous}, via
+\texttt{Kernel.singularPart\_eq\_zero\_iff\_absolutelyContinuous}). Real Gaussians are
+\texttt{ProbabilityTheory.gaussianReal μ v} with density \texttt{gaussianPDFReal}
+(\texttt{Mathlib/Probability/Distributions/Gaussian/Real.lean}), with
+\texttt{gaussianReal\_absolutelyContinuous}, \texttt{rnDeriv\_gaussianReal},
+\texttt{integral\_id\_gaussianReal}. LML provides the trajectory measure
+\texttt{Learning.trajMeasure alg env}, the step decomposition of histories
+(\texttt{history\_succ}, \texttt{hasCondDistrib\_step}, \texttt{hasCondDistrib\_action}),
+stationary environments \texttt{stationaryEnv} (feedback kernel
+\texttt{feedback\_stationaryEnv}: $(h,a) \mapsto \nu(a)$), and uniqueness of the law of the
+history (\texttt{eq\_trajMeasure\_map\_frestrictLe\_of\_isAlgEnvSeqUntil}).
+
+\textbf{What is missing.} Mathlib has neither the divergence of two Gaussians, nor Pinsker's
+inequality, nor the Bretagnolle--Huber inequality, nor convexity of $\KL$ in its second
+argument, nor the ``integrated'' form of the chain rule
+$\KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta) = \int \KL(\kappa_x\|\eta_x)\,\mu(dx)$ (the Mathlib file
+explicitly avoids it because $x \mapsto \KL(\kappa_x\|\eta_x)$ need not be measurable in
+general; it is measurable when the target space is countably generated, which is all we need).
+The divergence decomposition for algorithm-environment sequences is new to LML.
+
+\section{Basic inequalities}
+\label{sec:pre_info_basic}
+
+\begin{lemma}[Invariance under measurable equivalences]\label{lem:pi_kl_measurable_equiv}
+Let $\mu,\nu$ be measures on $\Omega$ and $e : \Omega \to \Omega'$ a measurable equivalence.
+Then $\KL(e_*\mu \,\|\, e_*\nu) = \KL(\mu\|\nu)$.
+\end{lemma}
+
+\begin{proof}
+Two applications of the data-processing inequality (Mathlib \texttt{klDiv\_map\_le}): with
+$e$ we get $\le$, and with $e^{-1}$ applied to $e_*\mu, e_*\nu$ we get $\ge$, since
+$(e^{-1})_*e_*\mu = \mu$ (\texttt{MeasurableEquiv.map\_symm\_map}).
+\end{proof}
+
+\begin{lemma}[Divergence of two Gaussians with the same variance]\label{lem:kl_gaussian}
+\uses{lem:gauss_1d_moments}
+Let $m_1, m_2 \in \R$ and $v > 0$. Then $\Normal(m_1, v) \ll \Normal(m_2,v)$, the log-likelihood
+ratio is $\mathrm{llr}(y) = \frac{(m_1 - m_2)}{v}\big(y - \frac{m_1+m_2}{2}\big)$ for Lebesgue-a.e.\
+$y$, it is integrable, and
+\[
+  \KL\big(\Normal(m_1,v)\,\big\|\,\Normal(m_2,v)\big) = \frac{(m_1-m_2)^2}{2v} < \infty .
+\]
+In particular $\KL(\Normal(m_1,1)\|\Normal(m_2,1)) = (m_1-m_2)^2/2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:gauss_1d_moments}
+Both measures are $\mathrm{Leb}$ with the densities
+$p_i(y) = (2\pi v)^{-1/2}\exp(-(y-m_i)^2/(2v))$ (Mathlib \texttt{gaussianReal\_of\_var\_ne\_zero}),
+which are positive everywhere, so each is absolutely continuous with respect to the other and
+$\frac{d\Normal(m_1,v)}{d\Normal(m_2,v)} = p_1/p_2$ a.e.\ (Mathlib
+\texttt{Measure.rnDeriv\_withDensity} and the chain rule \texttt{Measure.rnDeriv\_mul\_rnDeriv}
+for $\mathrm{Leb} \to \Normal(m_2,v) \to \Normal(m_1,v)$, or directly the uniqueness of the
+Radon--Nikodym derivative, \texttt{Measure.eq\_rnDeriv}). Taking logarithms,
+\[
+  \log\frac{p_1(y)}{p_2(y)} = \frac{(y-m_2)^2 - (y-m_1)^2}{2v}
+  = \frac{(m_1-m_2)\,(2y - m_1 - m_2)}{2v} ,
+\]
+an affine function of $y$, hence integrable under $\Normal(m_1,v)$ (Gaussians have a first
+moment, Lemma~\ref{lem:gauss_1d_moments}; Mathlib \texttt{integral\_id\_gaussianReal}). Its
+integral under $\Normal(m_1,v)$ is obtained by replacing $y$ by its mean $m_1$:
+$\frac{(m_1-m_2)(2m_1 - m_1 - m_2)}{2v} = \frac{(m_1-m_2)^2}{2v}$. Conclude with Mathlib
+\texttt{klDiv\_of\_ac\_of\_integrable} (both measures are probability measures so the correction
+term $\nu(\Omega)-\mu(\Omega)$ vanishes).
+\end{proof}
+
+\begin{lemma}[Divergence of two Bernoulli measures]\label{lem:pi_kl_bernoulli}
+For $p \in [0,1]$ write $\mathrm{B}(p) := p\,\delta_1 + (1-p)\,\delta_0$ for the Bernoulli
+measure on $\{0,1\}$. Let $p \in [0,1]$ and $q \in (0,1)$. Then
+\[
+  \KL(\mathrm{B}(p)\,\|\,\mathrm{B}(q)) = p\log\frac{p}{q} + (1-p)\log\frac{1-p}{1-q}
+  =: \mathrm{kl}(p,q),
+\]
+with the convention $0 \log 0 = 0$. If $q \in \{0,1\}$ and $p \ne q$ then
+$\KL(\mathrm{B}(p)\|\mathrm{B}(q)) = \infty$.
+\end{lemma}
+
+\begin{proof}
+For $q \in (0,1)$, $\mathrm{B}(q)$ charges both points so $\mathrm{B}(p) \ll \mathrm{B}(q)$, with
+Radon--Nikodym derivative $p/q$ at $1$ and $(1-p)/(1-q)$ at $0$; every function on a finite set is
+integrable. By Mathlib \texttt{klDiv\_eq\_lintegral\_klFun\_of\_ac}, the divergence is
+$q\,\mathrm{klFun}(p/q) + (1-q)\,\mathrm{klFun}((1-p)/(1-q))$ with
+$\mathrm{klFun}(x) = x\log x + 1 - x$, which expands to
+$p\log(p/q) + (1-p)\log((1-p)/(1-q)) + (q - p) + ((1-q) - (1-p)) = \mathrm{kl}(p,q)$; the
+convention $0\log 0 = 0$ is exactly $\mathrm{klFun}(0) = 1$ (Mathlib \texttt{klFun\_zero}). If
+$q = 0$ and $p > 0$ then $\mathrm{B}(p)(\{1\}) > 0 = \mathrm{B}(0)(\{1\})$ so $\mathrm{B}(p)
+\not\ll \mathrm{B}(q)$ and the divergence is $\infty$ (\texttt{klDiv\_of\_not\_ac}); the case
+$q = 1$ is symmetric.
+\end{proof}
+
+\begin{lemma}[Pinsker's inequality for Bernoulli measures]\label{lem:kl_bernoulli_pinsker}
+\uses{lem:pi_kl_bernoulli}
+For $p \in [0,1]$ and $q \in (0,1)$, $\mathrm{kl}(p,q) \ge 2(p-q)^2$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pi_kl_bernoulli}
+Fix $p \in (0,1)$ first and let $g(q) := \mathrm{kl}(p,q) - 2(p-q)^2$ on $(0,1)$. Then
+$g(p) = 0$ and
+\[
+  g'(q) = -\frac{p}{q} + \frac{1-p}{1-q} + 4(p-q) = \frac{q-p}{q(1-q)} - 4(q-p)
+  = (q-p)\Big(\frac{1}{q(1-q)} - 4\Big).
+\]
+Since $q(1-q) \le 1/4$, the last factor is nonnegative, so $g' \le 0$ on $(0,p]$ and $g' \ge 0$
+on $[p,1)$: $g$ is nonincreasing then nondecreasing (Mathlib
+\texttt{antitoneOn\_of\_deriv\_nonpos}, \texttt{monotoneOn\_of\_deriv\_nonneg}) and its minimum
+is $g(p) = 0$. For $p = 1$ the claim is $-\log q \ge 2(1-q)^2$: the function
+$h(q) := -\log q - 2(1-q)^2$ satisfies $h(1) = 0$ and $h'(q) = -1/q + 4(1-q) = -(2q-1)^2/q \le 0$,
+so $h \ge 0$ on $(0,1]$. The case $p = 0$ is the case $p = 1$ with $q$ replaced by $1-q$.
+\end{proof}
+
+\begin{lemma}[Pinsker's inequality]\label{lem:pinsker}
+\uses{lem:pi_kl_bernoulli, lem:kl_bernoulli_pinsker}
+Let $\mu, \nu$ be probability measures on a measurable space and $A$ a measurable set. Then
+\[
+  2\,\big(\mu(A) - \nu(A)\big)^2 \le \KL(\mu\|\nu)
+\]
+(as elements of $[0,\infty]$). In particular, if $\KL(\mu\|\nu) < \infty$ then
+$\abs{\mu(A) - \nu(A)} \le \sqrt{\KL(\mu\|\nu)/2}$, and if $\KL(\mu\|\nu) = \infty$ the
+statement is empty.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pi_kl_bernoulli, lem:kl_bernoulli_pinsker}
+Let $g := \indic_A : \Omega \to \{0,1\}$, measurable. Then $g_*\mu = \mathrm{B}(p)$ and
+$g_*\nu = \mathrm{B}(q)$ with $p := \mu(A)$, $q := \nu(A)$, and the data-processing inequality
+(Mathlib \texttt{klDiv\_map\_le}) gives $\KL(\mathrm{B}(p)\|\mathrm{B}(q)) \le \KL(\mu\|\nu)$.
+If $p = q$ there is nothing to prove. If $q \in \{0,1\}$ and $p \ne q$, then
+$\KL(\mathrm{B}(p)\|\mathrm{B}(q)) = \infty$ by Lemma~\ref{lem:pi_kl_bernoulli}, so
+$\KL(\mu\|\nu) = \infty$ and the inequality holds trivially. Otherwise $q \in (0,1)$ and
+Lemmas~\ref{lem:pi_kl_bernoulli} and~\ref{lem:kl_bernoulli_pinsker} give
+$2(p-q)^2 \le \mathrm{kl}(p,q) = \KL(\mathrm{B}(p)\|\mathrm{B}(q)) \le \KL(\mu\|\nu)$.
+\end{proof}
+
+\begin{lemma}[Bretagnolle--Huber inequality]\label{lem:bretagnolle_huber}
+Let $\mu, \nu$ be probability measures on a measurable space and $A$ a measurable set. Then
+\[
+  \mu(A) + \nu(A^c) \ge \tfrac12 \exp\big(-\KL(\mu\|\nu)\big),
+\]
+where the right-hand side is $0$ if $\KL(\mu\|\nu) = \infty$.
+\end{lemma}
+
+\begin{proof}
+If $\KL(\mu\|\nu) = \infty$ there is nothing to prove; assume $\mu \ll \nu$ and that
+$\mathrm{llr}(\mu,\nu)$ is $\mu$-integrable, so that $\KL(\mu\|\nu) = \int \mathrm{llr}\,d\mu$
+(Mathlib \texttt{klDiv\_of\_ac\_of\_integrable}). Let $\lambda := \mu + \nu$ and
+$p := d\mu/d\lambda$, $q := d\nu/d\lambda$, which exist (Mathlib
+\texttt{Measure.rnDeriv}, \texttt{withDensity\_rnDeriv\_eq} since $\mu,\nu \ll \lambda$) and
+satisfy $p + q = 1$ $\lambda$-a.e.\ (\texttt{Measure.rnDeriv\_add}, \texttt{rnDeriv\_self}), in
+particular $p, q \le 1$. The proof has three steps.
+\begin{enumerate}
+  \item[(i)] $\mu(A) + \nu(A^c) = \int_A p\,d\lambda + \int_{A^c} q\,d\lambda \ge \int \min(p,q)\,d\lambda$.
+  \item[(ii)] By the Cauchy--Schwarz inequality in $L^2(\lambda)$ applied to
+        $\sqrt{\min(p,q)}$ and $\sqrt{\max(p,q)}$, whose product is $\sqrt{pq}$,
+        \[
+          \Big(\int\sqrt{pq}\,d\lambda\Big)^2 \le \int\min(p,q)\,d\lambda\cdot\int\max(p,q)\,d\lambda
+          \le 2\int \min(p,q)\,d\lambda ,
+        \]
+        since $\max(p,q) \le p + q$ and $\int (p+q)\,d\lambda = \mu(\Omega) + \nu(\Omega) = 2$.
+  \item[(iii)] Since $\mu \ll \nu$, we have $p = 0$ $\lambda$-a.e.\ on $\{q = 0\}$, and
+        $\frac{d\mu}{d\nu} = p/q$ $\mu$-a.e.\ (Mathlib \texttt{Measure.rnDeriv\_mul\_rnDeriv}:
+        $\frac{d\mu}{d\nu}\cdot\frac{d\nu}{d\lambda} = \frac{d\mu}{d\lambda}$ $\lambda$-a.e.). Hence
+        \[
+          \int \sqrt{pq}\,d\lambda = \int_{\{p>0\}} \sqrt{q/p}\;p\,d\lambda
+          = \int \sqrt{q/p}\,d\mu = \int \exp\big(-\tfrac12\,\mathrm{llr}(\mu,\nu)\big)\,d\mu
+          \ge \exp\Big(-\tfrac12\int \mathrm{llr}(\mu,\nu)\,d\mu\Big)
+          = e^{-\KL(\mu\|\nu)/2},
+        \]
+        by Jensen's inequality for the convex function $\exp$ and the probability measure
+        $\mu$ (Mathlib \texttt{ConvexOn.map\_integral\_le}, with $\mathrm{llr}$ integrable).
+\end{enumerate}
+Combining, $\mu(A) + \nu(A^c) \ge \int\min(p,q)\,d\lambda \ge \tfrac12 (\int\sqrt{pq}\,d\lambda)^2
+\ge \tfrac12 e^{-\KL(\mu\|\nu)}$. This is Theorem~14.2 of~\cite{lattimore2020bandit}; see also
+\cite{tsybakov2009introduction}.
+\end{proof}
+
+\begin{lemma}[Convexity of the divergence in its second argument]\label{lem:kl_mixture_convex}
+Let $\mu$ be a probability measure, $\nu_1,\dots,\nu_J$ probability measures on the same space,
+$c_1,\dots,c_J \ge 0$ with $\sum_j c_j = 1$, and $\nu := \sum_j c_j\nu_j$. Then
+\[
+  \KL(\mu\|\nu) \le \sum_{j=1}^J c_j\,\KL(\mu\|\nu_j) \quad\text{in } [0,\infty].
+\]
+\end{lemma}
+
+\begin{proof}
+If some $j$ with $c_j > 0$ has $\KL(\mu\|\nu_j) = \infty$ the right-hand side is $\infty$.
+Otherwise, for every $j$ with $c_j > 0$ we have $\mu \ll \nu_j$ and $\mathrm{llr}(\mu,\nu_j)$ is
+$\mu$-integrable; drop the indices with $c_j = 0$. Then $\mu \ll \nu$ (a $\nu$-null set is
+$\nu_j$-null for all $j$). Let $g_j := d\nu_j/d\mu$ and $g := d\nu/d\mu$ (Radon--Nikodym
+derivatives with respect to $\mu$; they exist for $\sigma$-finite measures without absolute
+continuity, as the density of the absolutely continuous part). By linearity of the Lebesgue
+decomposition, $g = \sum_j c_j g_j$ $\mu$-a.e.\ (Mathlib \texttt{Measure.rnDeriv\_add},
+\texttt{Measure.rnDeriv\_smul\_left}). Since $\mu \ll \nu_j$, Mathlib
+\texttt{Measure.inv\_rnDeriv} gives $g_j = (d\mu/d\nu_j)^{-1}$ $\mu$-a.e., and
+$d\mu/d\nu_j$ is finite $\mu$-a.e.\ (\texttt{Measure.rnDeriv\_lt\_top}) and positive $\mu$-a.e.\
+(\texttt{Measure.rnDeriv\_pos}), so $0 < g_j < \infty$ $\mu$-a.e.\ and
+$\mathrm{llr}(\mu,\nu_j) = -\log g_j$ $\mu$-a.e.; likewise $\mathrm{llr}(\mu,\nu) = -\log g$.
+By concavity of $\log$ on $(0,\infty)$ (Mathlib \texttt{strictConcaveOn\_log\_Ioi},
+\texttt{ConcaveOn.le\_map\_sum}),
+\[
+  \mathrm{llr}(\mu,\nu) = -\log\Big(\sum_j c_j g_j\Big) \le \sum_j c_j(-\log g_j)
+  = \sum_j c_j\,\mathrm{llr}(\mu,\nu_j) \qquad \mu\text{-a.e.}
+\]
+Integrability of $\mathrm{llr}(\mu,\nu)$: its positive part is dominated by the integrable
+$\sum_j c_j\,\mathrm{llr}(\mu,\nu_j)^+$, and its negative part is always integrable for
+probability measures, because $\log^-(d\mu/d\nu) = \log^+(g) \le g$ and
+$\int g\,d\mu \le \nu(\Omega) = 1$ (Mathlib \texttt{Measure.lintegral\_rnDeriv\_le}).
+Integrating the inequality gives the claim, using
+\texttt{klDiv\_of\_ac\_of\_integrable} on both sides (all measures are probability measures).
+\end{proof}
+
+\textbf{Lean remark.} In Mathlib, $\KL$ takes values in \texttt{ℝ≥0∞}; the statements above
+are therefore stated in $[0,\infty]$ with \texttt{ENNReal.ofReal} on the real side (e.g.\
+\texttt{ENNReal.ofReal (2 * (μ.real A - ν.real A)\^{}2) ≤ klDiv μ ν}), and their real versions are
+obtained through \texttt{klDiv\_ne\_top\_iff} and \texttt{ENNReal.toReal}. The mixture in
+Lemma~\ref{lem:kl_mixture_convex} is the measure \texttt{∑ j, (c j : ℝ≥0) • ν j}.
+
+\section{The integrated chain rule}
+\label{sec:pre_info_chain}
+
+\begin{lemma}[Chain rule with an integrated conditional divergence]\label{lem:kl_compProd_kernel}
+Let $\mu$ be a finite measure on $\mathcal{H}$ and $\kappa,\eta$ be Markov kernels from
+$\mathcal{H}$ to a countably generated measurable space $\mathcal{Y}$. Then
+$x \mapsto \KL(\kappa_x\|\eta_x)$ is measurable and
+\[
+  \KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta) = \int^{-} \KL(\kappa_x\|\eta_x)\,\mu(dx) ,
+\]
+where $\int^-$ denotes the Lebesgue integral of a $[0,\infty]$-valued function. Consequently,
+for any finite measure $\nu$ on $\mathcal{H}$,
+$\KL(\mu\otimes\kappa\,\|\,\nu\otimes\eta) = \KL(\mu\|\nu) + \int^-\KL(\kappa_x\|\eta_x)\,\mu(dx)$.
+\end{lemma}
+
+\begin{proof}
+Mathlib \texttt{Measure.absolutelyContinuous\_compProd\_right\_iff} gives
+$\mu\otimes\kappa \ll \mu\otimes\eta$ iff $\kappa_x \ll \eta_x$ for $\mu$-a.e.\ $x$.
+
+\emph{Measurability.} Mathlib's kernel Radon--Nikodym theory
+(\texttt{Mathlib/Probability/Kernel/RadonNikodym.lean}) is developed under the hypothesis
+\texttt{MeasurableSpace.CountableOrCountablyGenerated 𝓗 𝓨}, which is implied by
+\texttt{CountablyGenerated 𝓨} (an instance). Under it, the kernel Radon--Nikodym
+derivative $\frac{d\kappa}{d\eta} : \mathcal{H}\times\mathcal{Y}\to[0,\infty]$ is jointly
+measurable (\texttt{Kernel.rnDeriv}, \texttt{Kernel.measurable\_rnDeriv}) and
+$\frac{d\kappa}{d\eta}(x,\cdot) = \frac{d\kappa_x}{d\eta_x}$ $\eta_x$-a.e.\ for every $x$
+(\texttt{Kernel.rnDeriv\_eq\_rnDeriv\_measure}). The set $\{x : \kappa_x \ll \eta_x\}$ is
+measurable: this is exactly Mathlib \texttt{Kernel.measurableSet\_absolutelyContinuous} (for
+finite kernels), whose proof rewrites the condition as
+$\kappa.\mathrm{singularPart}(\eta)(x) = 0$ by
+\texttt{Kernel.singularPart\_eq\_zero\_iff\_absolutelyContinuous} and uses the measurability
+of $x \mapsto \kappa.\mathrm{singularPart}(\eta)(x)(\mathcal{Y})$. On this set,
+$\KL(\kappa_x\|\eta_x) = \int^-\mathrm{klFun}\big(\tfrac{d\kappa}{d\eta}(x,y)\big)\,\eta_x(dy)$
+(\texttt{klDiv\_eq\_lintegral\_klFun\_of\_ac}), which is measurable in $x$ by
+\texttt{Measurable.lintegral\_kernel\_prod\_right}; off this set it is the constant $\infty$.
+
+\emph{Equality.} If $\mu\otimes\kappa \not\ll \mu\otimes\eta$, then $\kappa_x\not\ll\eta_x$ on a
+set of positive $\mu$-measure, where $\KL(\kappa_x\|\eta_x) = \infty$: both sides are $\infty$.
+Otherwise, by \texttt{klDiv\_eq\_lintegral\_klFun\_of\_ac} and the chain rule for derivatives
+of composition-products (\texttt{rnDeriv\_measure\_compProd}, again under
+\texttt{CountableOrCountablyGenerated}:
+$\frac{d(\mu\otimes\kappa)}{d(\mu\otimes\eta)}(x,y) = \frac{d\kappa}{d\eta}(x,y)$ for
+$(\mu\otimes\eta)$-a.e.\ $(x,y)$),
+\[
+  \KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta)
+  = \int^- \mathrm{klFun}\Big(\frac{d\kappa}{d\eta}(x,y)\Big)\,(\mu\otimes\eta)(d(x,y))
+  = \int^-\!\!\int^- \mathrm{klFun}\Big(\frac{d\kappa}{d\eta}(x,y)\Big)\,\eta_x(dy)\,\mu(dx)
+\]
+by Tonelli for composition-products (\texttt{Measure.lintegral\_compProd}), and the inner
+integral is $\KL(\kappa_x\|\eta_x)$ for $\mu$-a.e.\ $x$ (those with $\kappa_x\ll\eta_x$). The
+last claim is Mathlib \texttt{klDiv\_compProd\_eq\_add} followed by the equality just proved.
+\end{proof}
+
+\begin{lemma}[One step of an algorithm-environment pair]\label{lem:pi_kl_step}
+\uses{lem:kl_compProd_kernel}
+Let $P$ be a probability measure on a measurable space $\mathcal{H}$ (``histories''), $\pi$ a
+Markov kernel from $\mathcal{H}$ to a countably generated space $\mathcal{A}$ (``policy''),
+and $\kappa,\kappa'$ Markov kernels from $\mathcal{A}$ to a countably generated space
+$\mathcal{Y}$ (``reward kernels'').
+Write $\tilde\kappa$ for the kernel $(h,a)\mapsto\kappa(a)$ from $\mathcal{H}\times\mathcal{A}$
+to $\mathcal{Y}$ (LML/Mathlib \texttt{Kernel.prodMkLeft}), and similarly $\tilde\kappa'$. Then
+\[
+  \KL\big(P\otimes(\pi\otimes\tilde\kappa)\,\big\|\,P\otimes(\pi\otimes\tilde\kappa')\big)
+  = \int^- \KL(\kappa(a)\|\kappa'(a))\,(\pi\circ P)(da)
+  = \int^-\!\!\int^- \KL(\kappa(a)\|\kappa'(a))\,\pi(h,da)\,P(dh),
+\]
+where $\pi\circ P := \int \pi(h,\cdot)\,P(dh)$ is the law of the next action.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:kl_compProd_kernel}
+Apply Lemma~\ref{lem:kl_compProd_kernel} to $P$ and the kernels $\pi\otimes\tilde\kappa$,
+$\pi\otimes\tilde\kappa'$, Markov kernels from $\mathcal{H}$ to the countably generated space
+$\mathcal{A}\times\mathcal{Y}$ (Mathlib \texttt{MeasurableSpace.CountablyGenerated} is stable
+under products). For each $h$, the measure
+$(\pi\otimes\tilde\kappa)(h)$ is the composition-product $\pi(h)\otimes\kappa$ of the measure
+$\pi(h)$ on $\mathcal{A}$ with the kernel $\kappa$ (Mathlib
+\texttt{Kernel.compProd\_apply} and \texttt{Kernel.prodMkLeft\_apply}). By
+\texttt{klDiv\_compProd\_eq\_add}, \texttt{klDiv\_self} and Lemma~\ref{lem:kl_compProd_kernel}
+again,
+\[
+  \KL\big(\pi(h)\otimes\kappa\,\big\|\,\pi(h)\otimes\kappa'\big)
+  = \KL(\pi(h)\|\pi(h)) + \int^-\KL(\kappa(a)\|\kappa'(a))\,\pi(h,da)
+  = \int^-\KL(\kappa(a)\|\kappa'(a))\,\pi(h,da).
+\]
+Integrating in $h$ and using $\int^-\!\int^- f(a)\,\pi(h,da)\,P(dh) = \int^- f\,d(\pi\circ P)$
+(Mathlib \texttt{Measure.lintegral\_bind} / \texttt{Kernel.lintegral\_comp}) gives the claim.
+\end{proof}
+
+\section{The divergence decomposition}
+\label{sec:pre_info_decomposition}
+
+\begin{definition}[A pair of stationary environments and the laws of histories]\label{def:env_pair}
+Let $\mathcal{A}$ (actions) and $\mathcal{Y}$ (observations) be countably generated measurable
+spaces (for instance Borel subsets of $\R^d$, $\R$, or finite types; in particular
+$\mathcal{A}$ may be any action set $\Xs$ in the sense of Definition~\ref{def:arm_set}, i.e.\
+a nonempty compact subset of $\R^d$, spanning or not). Let $\kappa, \kappa'$ be Markov kernels from $\mathcal{A}$ to
+$\mathcal{Y}$ and let $\nu := \mathrm{stationaryEnv}(\kappa)$, $\nu' := \mathrm{stationaryEnv}(\kappa')$
+be the corresponding stationary environments (LML \texttt{Learning.stationaryEnv}: the
+observation at every round has law $\kappa(x_t)$ given the past and the action $x_t$). Let
+$\mathrm{alg}$ be an LML algorithm with actions in $\mathcal{A}$ and observations in $\mathcal{Y}$,
+with policy kernels $\pi_n$ (from histories $(x_t,y_t)_{t\le n}$ to $\mathcal{A}$) and initial
+law $p_0$. For $n \ge 0$ let
+\[
+  \Prob^{(n)} := \mathrm{law}\big((x_t,y_t)_{t \le n}\big)
+  = (\mathrm{trajMeasure}(\mathrm{alg},\nu))_*\mathrm{hist}_n,
+  \qquad
+  \Prob'^{(n)} := (\mathrm{trajMeasure}(\mathrm{alg},\nu'))_*\mathrm{hist}_n ,
+\]
+the laws of the history up to time $n$ (a history of \emph{length} $T = n+1$) under the two
+environments. We write $\E^{(n)}$ for the expectation under $\Prob^{(n)}$ and, for $T \ge 1$,
+$\Prob^T := \Prob^{(T-1)}$ for the law of a history of length $T$. By LML
+\texttt{eq\_trajMeasure\_map\_frestrictLe\_of\_isAlgEnvSeqUntil}, $\Prob^{(n)}$ is the law of
+$(x_t,y_t)_{t\le n}$ for \emph{any} algorithm-environment sequence of $(\mathrm{alg},\nu)$ on any
+probability space.
+\end{definition}
+
+\begin{theorem}[Divergence decomposition]\label{thm:divergence_decomposition}
+\uses{def:env_pair}
+In the setting of Definition~\ref{def:env_pair}, for every $n \ge 0$,
+\[
+  \KL\big(\Prob^{(n)}\,\big\|\,\Prob'^{(n)}\big)
+  = \sum_{t=0}^{n} \int^- \KL\big(\kappa(x_t)\,\big\|\,\kappa'(x_t)\big)\,d\Prob^{(n)}
+  \qquad\text{in } [0,\infty],
+\]
+where $x_t$ denotes the $t$-th action of the history. Equivalently, for a history of length
+$T \ge 1$, $\KL(\Prob^T\|\Prob'^T) = \sum_{t<T}\E^{(T-1)}[\KL(\kappa(x_t)\|\kappa'(x_t))]$.
+If moreover $\KL(\kappa(a)\|\kappa'(a)) \le C < \infty$ for all $a \in \mathcal{A}$, then
+$\KL(\Prob^T\|\Prob'^T) \le TC < \infty$ and the identity holds in $\R$ with ordinary
+expectations.
+\end{theorem}
+
+\begin{proof}
+\uses{lem:pi_kl_measurable_equiv, lem:kl_compProd_kernel, lem:pi_kl_step}
+Write $\mathcal{H}_n := (\{0,\dots,n\} \to \mathcal{A}\times\mathcal{Y})$ for the space of
+histories up to time $n$. By definition of the stationary environment, the feedback kernel at
+every time is $\tilde\kappa : (h,a)\mapsto\kappa(a)$ (LML \texttt{feedback\_stationaryEnv},
+\texttt{ν0\_stationaryEnv}). We prove the identity by induction on $n$.
+
+\emph{Base case $n = 0$.} The pair $(x_0,y_0)$ has law $p_0\otimes\kappa$ under $\nu$ and
+$p_0\otimes\kappa'$ under $\nu'$ (LML \texttt{hasLaw\_step\_zero}), and $\mathrm{hist}_0$ is the
+image of $(x_0,y_0)$ by the measurable equivalence $\mathcal{A}\times\mathcal{Y}\simeq\mathcal{H}_0$.
+By Lemma~\ref{lem:pi_kl_measurable_equiv}, Mathlib \texttt{klDiv\_compProd\_eq\_add},
+\texttt{klDiv\_self} and Lemma~\ref{lem:kl_compProd_kernel},
+\[
+  \KL(\Prob^{(0)}\|\Prob'^{(0)}) = \KL(p_0\otimes\kappa\,\|\,p_0\otimes\kappa')
+  = 0 + \int^-\KL(\kappa(a)\|\kappa'(a))\,p_0(da)
+  = \int^-\KL(\kappa(x_0)\|\kappa'(x_0))\,d\Prob^{(0)},
+\]
+the last step because $x_0 \sim p_0$ under $\Prob^{(0)}$ (\texttt{hasLaw\_action\_zero}) and
+the integrand only depends on $x_0$ (change of variables for the Lebesgue integral,
+\texttt{lintegral\_map}).
+
+\emph{Induction step.} Assume the identity for $n$. By LML \texttt{history\_succ} and
+\texttt{hasCondDistrib\_step}, $\mathrm{hist}_{n+1} = e^{-1}(\mathrm{hist}_n, (x_{n+1},y_{n+1}))$
+for the measurable equivalence $e : \mathcal{H}_{n+1}\simeq\mathcal{H}_n\times(\mathcal{A}\times\mathcal{Y})$
+(\texttt{MeasurableEquiv.IicSuccProd}), and the law of $(\mathrm{hist}_n,(x_{n+1},y_{n+1}))$ is
+the composition-product $\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)$ (the step kernel
+\texttt{stepKernel alg env n = alg.policy n ⊗ₖ env.feedback n}); similarly with primes, with
+the \emph{same} policy kernel $\pi_n$. Hence, by Lemma~\ref{lem:pi_kl_measurable_equiv},
+\texttt{klDiv\_compProd\_eq\_add} and Lemma~\ref{lem:pi_kl_step},
+\begin{align*}
+  \KL(\Prob^{(n+1)}\|\Prob'^{(n+1)})
+  &= \KL\big(\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)\,\big\|\,\Prob'^{(n)}\otimes(\pi_n\otimes\tilde\kappa')\big)\\
+  &= \KL(\Prob^{(n)}\|\Prob'^{(n)})
+     + \KL\big(\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)\,\big\|\,\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa')\big)\\
+  &= \sum_{t=0}^{n}\int^-\KL(\kappa(x_t)\|\kappa'(x_t))\,d\Prob^{(n)}
+     + \int^-\KL(\kappa(a)\|\kappa'(a))\,(\pi_n\circ\Prob^{(n)})(da).
+\end{align*}
+Finally $\pi_n\circ\Prob^{(n)}$ is the law of $x_{n+1}$ under $\Prob^{(n+1)}$ (LML
+\texttt{hasCondDistrib\_action}: the conditional law of $x_{n+1}$ given $\mathrm{hist}_n$ is
+$\pi_n(\mathrm{hist}_n)$), and $\Prob^{(n)}$ is the image of $\Prob^{(n+1)}$ under the restriction
+$\mathcal{H}_{n+1}\to\mathcal{H}_n$ (consistency of the laws of histories,
+\texttt{hist\_eq\_frestrictLe}), so every term is an integral under $\Prob^{(n+1)}$ of a function
+of the history, and the sum runs over $t \le n+1$.
+
+\emph{Finite case.} If the one-step divergences are bounded by $C$, the right-hand side is at
+most $(n+1)C$, so all quantities are finite and \texttt{ENNReal.toReal} turns the identity into
+a real identity, the integrals becoming Bochner integrals of bounded measurable functions
+(\texttt{integral\_eq\_lintegral\_of\_nonneg\_ae}).
+\end{proof}
+
+\textbf{Lean remark.} The statement is about \texttt{klDiv} of two pushforwards of
+\texttt{Learning.trajMeasure} by \texttt{IT.hist n} (or, equivalently, of
+\texttt{P.map (history A Y n)} for any \texttt{IsAlgEnvSeqUntil}), with the sum in
+\texttt{ℝ≥0∞} of \texttt{∫⁻ h, klDiv (κ (h t).1) (κ' (h t).1) ∂P}. The hypotheses
+\texttt{MeasurableSpace.CountablyGenerated 𝓐} and \texttt{CountablyGenerated 𝓨} are needed for
+the measurability of the integrands (Lemma~\ref{lem:kl_compProd_kernel}); they hold for
+$\mathcal{A} = \Xs$, $\mathcal{A} = \mathrm{Fin}\,K$ and $\mathcal{Y} = \R$. Only the environment
+changes: the policy kernels are shared, which is what makes \texttt{klDiv\_compProd\_left}
+(inside Lemma~\ref{lem:pi_kl_step}) applicable. This is the environment analogue of LML's
+\texttt{Algorithm.density}, and of Lemma~\ref{lem:env_likelihood_ratio} below, which give the
+Radon--Nikodym derivative rather than its expected logarithm.
+
+\begin{lemma}[Appending the recommendation does not change the divergence]
+\label{lem:kl_data_processing_recommendation}
+\uses{def:env_pair, def:bai_alg, lem:pinsker, lem:bretagnolle_huber}
+In the setting of Definition~\ref{def:env_pair}, let $T \ge 1$ and let $\rho$ be a Markov
+kernel from histories of length $T$ to a measurable space $\mathcal{X}$ (a recommendation rule).
+Then
+\[
+  \KL\big(\Prob^T\otimes\rho\,\big\|\,\Prob'^T\otimes\rho\big) = \KL(\Prob^T\|\Prob'^T),
+\]
+and for every measurable set $E$ of pairs (history, recommendation),
+\[
+  (\Prob^T\otimes\rho)(E) - (\Prob'^T\otimes\rho)(E) \le \sqrt{\KL(\Prob^T\|\Prob'^T)/2},
+  \qquad
+  (\Prob^T\otimes\rho)(E) + (\Prob'^T\otimes\rho)(E^c) \ge \tfrac12\exp\big(-\KL(\Prob^T\|\Prob'^T)\big).
+\]
+When the environments are those of Definition~\ref{def:env} on an arbitrary action set
+$\Xs$ (nonempty compact, not assumed spanning) and $(\mathrm{alg},\rho)$ is an
+identification algorithm (Definition~\ref{def:bai_alg}), $\Prob^T\otimes\rho$ is the law
+$\Prob_\theta$ of $(\hist_T,\rec)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:pinsker, lem:bretagnolle_huber}
+The equality is Mathlib \texttt{klDiv\_compProd\_left} (same kernel on both sides). The two
+inequalities are Lemma~\ref{lem:pinsker} and Lemma~\ref{lem:bretagnolle_huber} applied to the
+probability measures $\Prob^T\otimes\rho$, $\Prob'^T\otimes\rho$ (trivial if the divergence is
+infinite). The last sentence is the definition of $\Prob_\theta$ in
+Definition~\ref{def:bai_alg} together with the uniqueness of the law of the history.
+\end{proof}
+
+\begin{corollary}[Divergence decomposition for linear Gaussian environments]
+\label{cor:divergence_decomposition_gaussian}
+\uses{def:env, def:env_pair, thm:divergence_decomposition, lem:kl_gaussian}
+Let $\Xs$ be an action set (Definition~\ref{def:arm_set}: nonempty compact, \emph{not}
+assumed spanning; Part~\ref{part:main} applies this corollary to non-spanning sets) and
+$\theta,\theta'\in\R^d$. For every
+algorithm with actions in $\Xs$ and every $T \ge 1$, writing $\Prob_\theta^T$ for the law of the
+history of length $T$ under $\nu_\theta$ (Definition~\ref{def:env}; this is $\Prob^T$ of
+Definition~\ref{def:env_pair} with $\mathcal{A} = \Xs$, $\mathcal{Y} = \R$ and
+$\kappa(x) = \Normal(\ip{x}{\theta},1)$),
+\[
+  \KL\big(\Prob_\theta^T\,\big\|\,\Prob_{\theta'}^T\big)
+  = \frac12\sum_{t<T}\E_\theta\big[\ip{x_t}{\theta-\theta'}^2\big]
+  \le \frac{T}{2}\Big(\sup_{x\in\Xs}\norm{x}\Big)^2\norm{\theta-\theta'}^2 < \infty .
+\]
+\end{corollary}
+
+\begin{proof}
+\uses{thm:divergence_decomposition, lem:kl_gaussian}
+The subtype $\Xs$ of $\R^d$ is countably generated, so Definition~\ref{def:env_pair}
+applies with $\mathcal{A} = \Xs$ (compactness and spanning play no role there). The reward
+kernels are $\kappa(x) = \Normal(\ip{x}{\theta},1)$ and
+$\kappa'(x) = \Normal(\ip{x}{\theta'},1)$, so by Lemma~\ref{lem:kl_gaussian}
+$\KL(\kappa(x)\|\kappa'(x)) = \tfrac12\ip{x}{\theta-\theta'}^2 \le \tfrac12 R^2\norm{\theta-\theta'}^2$
+with $R := \sup_{x\in\Xs}\norm{x} < \infty$ (compactness). Apply
+Theorem~\ref{thm:divergence_decomposition} in its finite form.
+\end{proof}
+
+\textbf{Lean remark.} The action type is the subtype $\Xs$ of \texttt{EuclideanSpace ℝ (Fin d)}
+and the kernel is \texttt{fun x ↦ gaussianReal ⟪x, θ⟫ 1}, measurable by
+\texttt{measurable\_gaussianReal} composed with the continuous inner product. The expectation
+$\E_\theta[\ip{x_t}{\theta-\theta'}^2]$ is an integral of a bounded measurable function of the
+history, so no integrability side condition arises.

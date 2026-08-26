@@ -1,0 +1,575 @@
+%I am looking into the sample complexity of non-adaptive algorithms for finding eps-good vector from a set X in R^d. I first present an non-adaptive algorithm. Then I present a matching lower bound. As the bound contains a leading term involving gaussian, I study the properties of gaussian-width.  Then I look at examples of sets X for which the non-adaptive bound is near-optimality even when one uses adaptive algorithms. Then I construct a set X for the adaptive algorithm is way better than non-adaptive algorithm in terms of sample complexity. And for that I need to find an algorithm for the l2-norm estimation. Can you appropriately phrase the headings of the section and subsections below
+
+
+\section{Results on the Power of Adaptivity}\label{sec:non-adaptive}
+In this section, we analyze the power of adaptivity for $\varepsilon$-best arm identification in linear bandits. In Section \ref{sec:upper}, we present a non-adaptive fixed design algorithm with sample complexity $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$, where $w(\mathcal{X})$ is a Gaussian width term depending on $\mathcal{X}$. We then prove a matching minimax lower bound of $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$ for non-adaptive fixed-design algorithms in Section \ref{sec:lower}. In Section \ref{sec:properties-gaussian}, we study the Gaussian width term $w(\mathcal{X})$ and characterize it for the structured sets of interest: the hypercube, the unit $\ell_2$-ball, $m$-sets, and multi-task multi-armed bandits. For each of these sets, we show in Section \ref{sec:log-adaptive} that adaptivity improves upon the minimax sample complexity of our non-adaptive algorithm by at most logarithmic factors only. Finally, in Section \ref{sec:poly-adaptive}, we construct a set $\mathcal{X}$ for which an adaptive algorithm yields a polynomial-factor improvement over all non-adaptive algorithms.
+
+\subsection{Non-Adaptive Fixed Design Algorithm}\label{sec:upper}
+%\textcolor{red}{Some easy calculations are missing. I am thinking of deferring them to appendix.}
+% \textcolor{red}{Polish. Also double check the details of the main body in general.}
+
+In this section, we present a non-adaptive  fixed design algorithm that uses
+$\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$
+samples and returns an $\varepsilon$-best arm with probability at least $1-\delta$.
+Our analysis relies on several standard technical results, which are stated in
+Appendix~\ref{appendix:technical-lemmas}.
+
+
+% In this section, we present a non-adaptive fixed design algorithm that takes $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$ samples and returns an $\varepsilon$-best arm with probability at least $1-\delta$. In this section, we will make use of various standard results which are stated in Appendix \ref{appendix:technical-lemmas}.
+
+Let $\lambda_1$ be a distribution over $\mathcal{X}$ that minimizes the quantity
+$\mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}\!\left[\max_{x\in\mathcal{X}}\langle x, A(\lambda;\mathcal{X})^{-1/2}\eta\rangle\right]$.
+Similarly, let $\lambda_2$ be a distribution over $\mathcal{X}$ that minimizes
+$\max_{x\in\mathcal{X}} \|x\|^2_{A(\lambda;\mathcal{X})^{-1}}$.
+Assume that both $\lambda_1$ and $\lambda_2$ have finite support (such minimizers always exist due to Carath\'eodory's theorem ).
+Finally, define $\lambda_0$ to be the mixture distribution that samples from $\lambda_1$ with probability $1/2$ and from $\lambda_2$ with probability $1/2$.
+
+
+% Let $\lambda_1$ be a distribution over $\mathcal{X}$ that minimizes the expression $\mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}[\max_{x\in\mathcal{X}}\langle x, A(\lambda ;\mathcal{X})^{-1/2}\eta\rangle]$. Similarly let $\lambda_2$ be a distribution over $\mathcal{X}$ that minimizes the expression $\max_{x\in\mathcal{X}}\|x\|^2_{A(\lambda;\mathcal{X})^{-1}}$. Assume that $\lambda_1$ and $\lambda_2$ are finite supported (such minimizers always exist). Let $\lambda_0$ be a distribution over $\mathcal{X}$ such that we sample from $\lambda_1$ with probability $1/2$ and we sample from $\lambda_2$ with probability $1/2$. 
+
+
+Since $\tfrac{1}{2}A(\lambda_2;\mathcal{X}) \preceq A(\lambda_0;\mathcal{X})$, it follows that for every $x\in\mathcal{X}$,
+$x^\top A(\lambda_0;\mathcal{X})^{-1}x \le 2\,x^\top A(\lambda_2;\mathcal{X})^{-1}x$.
+Because $\lambda_2$ is $G$-optimal, we obtain $\|x\|^2_{A(\lambda_0;\mathcal{X})^{-1}} \le 2d$ for all $x\in\mathcal{X}$.
+
+Similarly, since $\tfrac{1}{2}A(\lambda_1;\mathcal{X}) \preceq A(\lambda_0;\mathcal{X})$, the Sudakov--Fernique inequality yields
+\[
+\mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}\!\left[\max_{x\in\mathcal{X}}\langle x, A(\lambda_0;\mathcal{X})^{-1/2}\eta\rangle\right]
+\le \sqrt{2}\,
+\mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}\!\left[\max_{x\in\mathcal{X}}\langle x, A(\lambda_1;\mathcal{X})^{-1/2}\eta\rangle\right]
+= \sqrt{2}\, w(\mathcal{X}).
+\]
+
+
+
+
+Now consider a fixed design $x_1,x_2,\ldots,x_T\in\mathcal{X}$ such that $\tau(A_T)\le 2\,\tau(A(\lambda_0;\mathcal{X}))$, where
+$$A_T := \frac{1}{T}\sum_{i=1}^T x_i x_i^\top \text{ and }
+\tau(A) := \mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}\!\left[\max_{x\in\mathcal{X}} x^\top A^{-1/2}\eta\right]^2 + 2\max_{x\in\mathcal{X}}\|x\|_{A^{-1}}^2 \log(2/\delta).$$
+Such a fixed design exists for any $T\ge 180d$ \citep{katz2020empirical,allen2021near}.
+By the bounds established above, it follows that $\tau(A_T)\le 4\,w(\mathcal{X})^2 + 8d\log(2/\delta)$.
+
+
+% $\frac{1}{2}\Sigma_0\preceq A_n:=\frac{1}{n}\sum_{t=1}^n x_tx_t^\top \preceq\frac{3}{2}\Sigma_0$. We now prove that such a fixed design always exists if $n\geq \Omega(d\log d)$.
+
+%  Consider $n$ i.i.d samples $x_1,x_2,\ldots,x_n$ where $x_t\sim\lambda_0$. Let $\Sigma_0:=A(\lambda_0;\mathcal{X})$. Let $B_t:=\Sigma_0^{-1/2}x_tx_t^\top \Sigma_0^{-1/2}$. Observe that $\mathbb{E}[B_t]=\Sigma_0^{-1/2}\mathbb{E}[x_tx_t^\top] \Sigma_0^{-1/2}=I_d$ and $x_t^\top \Sigma_0^{-1}x_t\leq 2d$. Observe that $B_t$ is a rank one PSD matrix with a maximum eigen value of $x_t^\top \Sigma_0^{-1}x_t$. Let $\lambda_{\min}$ and $\lambda_{\max}$ denote the minimum and maximum eigen value of $\frac{1}{n}\sum_{t=1}^nB_t$ respectively. Now we have the following due to Matrix Chernoff:
+% \begin{equation*}
+%     \mathbb{P}\left[\lambda_{\min}\geq \frac{1}{2}\text{ and }\lambda_{\max}\leq \frac{3}{2}\right]\geq 1-2d\exp\left(-\frac{n}{24d}\right)
+% \end{equation*}
+% Hence, if $n\geq \Omega(d\log d)$, then we have $\frac{1}{2}I_d\preceq\frac{1}{n}\sum_{t=1}^nB_t\preceq \frac{3}{2}I_d$ with a constant probability which implies that there exists a fixed design $x_1,x_2,\ldots,x_n\in\mathcal{X}$ such that $\frac{1}{2}\Sigma_0\preceq A_n \preceq\frac{3}{2}\Sigma_0$.
+
+Let $y_t=\langle x_t,\theta\rangle+\eta_t$ denote the noisy rewards under the fixed design, where $\eta_t\sim\mathcal{N}(0,1)$ are i.i.d.
+Define the least-squares estimator
+$\widehat{\theta}=\bigl(\sum_{t=1}^T x_t x_t^\top\bigr)^{-1}\sum_{t=1}^T x_t y_t$.
+Note that $\widehat{\theta}$ is distributionally equivalent to $\theta+\bigl(\sum_{t=1}^T x_t x_t^\top\bigr)^{-1/2}\eta$, where $\eta\sim\mathcal{N}(0,I_d)$.
+Consequently, applying the Borell--TIS inequality to the Gaussian process $V_x = x^\top(\widehat{\theta}-\theta)$, we obtain the following with probability at least $1-\delta$:
+\begin{equation*}
+\Big|\max_{x\in\mathcal{X}}\langle x,\widehat{\theta}-\theta\rangle\Big|
+\le \frac{1}{\sqrt{T}}\cdot \mathbb{E}_{\eta\sim\mathcal{N}(0,I_d)}\!\left[\max_{x\in\mathcal{X}} x^\top A_T^{-1/2}\eta\right]
++ \frac{1}{\sqrt{T}}\cdot \sqrt{2\max_{x\in\mathcal{X}}\|x\|_{A_T^{-1}}^2\log(2/\delta)}
+\le \sqrt{\frac{2\,\tau(A_T)}{T}}.
+\end{equation*}
+
+
+We select $\widehat{x}\in\arg\max_{x\in\mathcal{X}}\langle x,\widehat{\theta}\rangle$ and output it as our candidate $\varepsilon$-best arm.
+If we set $T=360\bigl(\tfrac{d}{\varepsilon^2}\log(2/\delta)+\tfrac{w(\mathcal{X})^2}{\varepsilon^2}\bigr)$, then with probability at least $1-\delta$ we have
+$\bigl|\max_{x\in\mathcal{X}}\langle x,\widehat{\theta}-\theta\rangle\bigr|\le \varepsilon/2$.
+It follows that, with probability at least $1-\delta$,
+$\langle \widehat{x},\theta\rangle \ge \max_{x\in\mathcal{X}}\langle x,\theta\rangle - \varepsilon$.
+
+
+Hence, we have the following theorem.
+\begin{theorem}\label{thm:adaptive-upper-bound-algo}
+There exists a non-adaptive fixed-design algorithm that first selects a deterministic sequence of arms $x_1,x_2,\ldots,x_T\in\mathcal{X}$ with $T=360\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$, then observes the corresponding noisy rewards $y_t=\langle x_t,\theta\rangle+\eta_t$, where $\eta_t\sim\mathcal{N}(0,1)$ are i.i.d., and outputs an arm $\widehat{x}\in\mathcal{X}$ such that, with probability at least $1-\delta$, $\max_{x\in\mathcal{X}} \langle x-\widehat{x},\theta\rangle \le \varepsilon$.
+\end{theorem}
+
+
+
+ 
+%\textcolor{red}{Need to add the lemma on $A\eta$ is distributionally equivalent $\mathcal{N}(0, AA^\top)$.}
+\subsection{Lower Bound for Non-Adaptive Fixed Design Algorithms}\label{sec:lower}
+In this section, we prove a lower bound of $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$ on the sample complexity of any non-adaptive algorithm that commits to a fixed design $x_1,x_2,\ldots,x_T\in\mathcal{X}$, then observes the corresponding noisy rewards $y_1,y_2,\ldots,y_T$, and finally outputs an arm $\widehat{x}\in\mathcal{X}$ that is $\varepsilon$-best with probability at least $1-\delta$.
+
+We begin by stating the following theorem, which follows from a hypothesis-testing reduction and standard KL-divergence arguments. We refer the reader to Appendix \ref{appendix:adaptive-lower-bound} for the complete proof.
+\begin{theorem}\label{thm:adaptive-lower-bound}
+Any algorithm (possibly adaptive) that outputs $\widehat x\in\mathcal{X}$ satisfying $\P\!\left(\max_{x\in\mc{X}}\langle x-\widehat{x},\theta\rangle\le \varepsilon\right)\ge 1-\delta$ for all $\theta\in\mathbb{R}^d$ must, for some worst-case $\theta$, use $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$ samples.
+\end{theorem}
+We next present our proof idea for establishing a lower bound of $\Omega\left(\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$. Towards that we look at a simple regret minimization problem. Consider a deterministic sequence
+$(x_t)_{t=1}^T$ with $x_t\in \mathcal{X}$. Recall that we observe
+\[
+y_t \;=\; \ip{x_t}{\theta}+\eta_t,\qquad \eta_t\stackrel{\text{i.i.d.}}{\sim}\mathcal N(0,1),\quad t=1,\dots,T.
+\]
+Define the matrix
+\[
+A \;:=\; \sum_{t=1}^T x_t x_t^\top \;=\; X^\top X,
+\]
+where $X\in\R^{T\times d}$ has rows $x_t^\top$. Assume that $A$ is invertible (the other case is considered in Appendix \ref{appendix:singular-case-lower-bound}).
+An algorithm $\mathcal{A}$ observes the full sequence $\mathcal{D}=\{(x_t,y_t)\}_{t=1}^T$ and outputs $\hat x_{\mathcal{A}}\in \mathcal{X}$.
+The \emph{simple regret} is
+\[
+r(\hat x_{\mathcal{A}},\theta) \;:=\; \max_{x\in \mathcal{X}}\ip{x-\hat x_{\mathcal{A}}}{\theta}.
+\]
+
+Fix a prior $\theta \sim \mathcal N(0,\tau^2 A^{-1})$ independent of the noise
+$\eta=(\eta_1,\dots,\eta_T)\sim\mathcal N(0,I_T)$ and (if the algorithm is randomized)
+an internal random seed $U$, also independent of $(\theta,\eta)$.
+Let $y=X\theta+\eta$, $\mathcal D=\{(x_t,y_t)\}_{t=1}^T$, and let the (possibly randomized)
+non-interactive rule output $\hat x_{\mathcal{A}}=\hat x_{\mathcal{A}}(\mathcal D,U)\in\mathcal X$. We study the minimax expected regret
+\[
+\mathfrak R(A;\mathcal{X}) \;:=\; \inf_{\mathcal A}\E\big[r(\hat x_{\mathcal{A}},\theta)\big],
+\]
+where the infimum is over all (possibly randomized) non-interactive procedures $\mathcal A$ using $\mathcal{D}$. Throughout this proof, $\mathbb E[\cdot]$ denotes expectation over all randomness in $(\theta,\eta)$ and in the algorithm (if randomized), unless stated otherwise.
+
+We define the gaussian width term $w(\mathcal{X};A):=\E_{g\sim\mathcal N(0,I_d)}\!\left[\sup_{x\in \mathcal{X}}\ip{x}{A^{-1/2}g}\right]$. 
+If we establish that $\mathfrak{R}(A;\mathcal{X}) \ge c_0\, w(\mathcal{X};A)$ for some absolute constant $c_0$, then combining this with the inequality $w(\mathcal{X};A)\ge w(\mathcal{X})/\sqrt{T}$ and the straightforward calculations in Appendix~\ref{appendix:gaussian-lower-bound} yields the following theorem.
+\begin{theorem}\label{thm:adaptive-lower-bound}
+Consider any non-adaptive fixed-design algorithm that first selects a deterministic sequence of arms $x_1,x_2,\ldots,x_T\in\mathcal{X}$, then observes the corresponding noisy rewards $y_t=\langle x_t,\theta\rangle+\eta_t$, where $\eta_t\sim\mathcal{N}(0,1)$ are i.i.d., and outputs an arm $\widehat{x}\in\mathcal{X}$ such that $\max_{x\in\mathcal{X}} \langle x-\widehat{x},\theta\rangle \le \varepsilon$ with probability at least $1-\delta$.
+Then $T \ge \Omega\!\left(\frac{w(\mathcal{X})^2}{\varepsilon^2}\right)$.
+\end{theorem}
+
+% For the rest of this section, we focus on lower bounding $\mathfrak R(A;\mathcal{X})$. For any (possibly randomized) non-interactive rule $\hat x_{\mathcal{A}}(\mathcal D,U)\in \mathcal{X}$, we have
+% \begin{align}
+% \mathbb{E}\!\left[r(\hat x_{\mathcal{A}},\theta)\right]
+% &= \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \mathbb{E}\!\left[\langle \hat x_{\mathcal{A}}(\mathcal D,U),\theta\rangle\right]
+% \label{eq:lbM-1}
+% \\
+% &= \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \mathbb{E}\!\left[\mathbb{E}\!\left[\langle \hat x_{\mathcal{A}}(\mathcal D,U),\theta\rangle\mid \mathcal D,U\right]\right]
+% \label{eq:lbM-2}
+% \\
+% &= \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \mathbb{E}\!\left[\Big\langle \hat x_{\mathcal{A}}(\mathcal D,U),\,\mathbb{E}\!\left[\theta\mid \mathcal D\right]\Big\rangle\right]
+% \label{eq:lbM-3}
+% \\
+% &= \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \frac{\tau^2}{1+\tau^2}\;
+% \mathbb{E}\!\left[\Big\langle \hat x_{\mathcal{A}}(\mathcal D,U),\, A^{-1}X^\top y \Big\rangle\right]
+% \label{eq:lbM-4}
+% \\
+% &= \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \frac{\tau^2}{1+\tau^2}\;
+% \mathbb{E}\!\left[\Big\langle \hat x_{\mathcal{A}}(\mathcal D,U),\, \theta + A^{-1}X^\top\eta \Big\rangle\right]
+% \label{eq:lbM-6}
+% \\
+% &\ge \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \frac{\tau^2}{1+\tau^2}\;
+% \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\Big\langle x,\, \theta + A^{-1}X^\top\eta \Big\rangle\right]
+% \label{eq:lbM-7}
+% \\
+% &\ge \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;-\; \frac{\tau^2}{1+\tau^2}\;
+% \Bigg(
+% \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x,\theta\rangle\right]
+% \;+\;
+% \mathbb{E}\!\left[\max_{x\in\mathcal{X}}\langle x, A^{-1}X^\top\eta\rangle\right]
+% \Bigg)
+% \label{eq:lbM-9}
+% \\
+% &= \tau\cdot\mathbb{E}_{\xi\sim\mathcal N(0,I_d)}\!\left[
+% \max_{x\in\mathcal{X}}\big\langle x, A^{-1/2}\xi\big\rangle
+% \right]
+% \;-\; \frac{\tau^2}{1+\tau^2}\;
+% \Bigg(
+% (\tau+1)\cdot\mathbb{E}_{\xi\sim\mathcal N(0,I_d)}\!\left[
+% \max_{x\in\mathcal{X}}\big\langle x, A^{-1/2}\xi\big\rangle
+% \right]
+% \Bigg)
+% \label{eq:lbM-10}
+% \\
+% &= \frac{\tau(1-\tau)}{1+\tau^2}\;
+% \mathbb{E}_{\xi\sim\mathcal N(0,I_d)}\!\left[
+% \max_{x\in\mathcal{X}}\big\langle x, A^{-1/2}\xi\big\rangle
+% \right].
+% \label{eq:lbM-11}
+% \end{align}
+
+
+% \noindent\textbf{Explanation of each step.}
+% \begin{itemize}
+% \item \eqref{eq:lbM-1} follows from the definition of simple regret.
+% \item \eqref{eq:lbM-2} follows from the tower rule with conditioning
+% on $(\mathcal D,U)$.
+% \item \eqref{eq:lbM-3} follows from $\hat x_{\mathcal{A}}(\mathcal D,U)$ being measurable w.r.t.\ $(\mathcal D,U)$ and $U\perp \theta$.
+% \item \eqref{eq:lbM-4} follows from the Gaussian posterior mean for gaussian
+% prior $\theta\sim\mathcal N(0,\tau^2A^{-1})$ and likelihood $y\mid\theta\sim\mathcal N(X\theta,I)$: $\mathbb E[\theta\mid \mathcal D]=\frac{\tau^2}{1+\tau^2}\,A^{-1}X^\top y.$
+% \item \eqref{eq:lbM-6} follows from $y=X\theta+\eta$ and $A=X^\top X$.
+% \item \eqref{eq:lbM-7} follows from the pointwise bound: for any vector $v$,
+% $\langle \hat x_{\mathcal{A}}(\mathcal D,U),v\rangle\le \max_{x\in\mathcal X}\langle x,v\rangle$.
+% \item \eqref{eq:lbM-10} follows from the following.
+% Since $\theta\sim\mathcal N(0,\tau^2A^{-1})$, we can write
+% $\theta\stackrel{d}{=}\tau A^{-1/2}\xi$ with $\xi\sim\mathcal N(0,I_d)$, hence $\mathbb E\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+% =\tau\,\mathbb E_{\xi\sim\mathcal{N}(0,I_d)}\left[\max_{x\in\mathcal X}\langle x,A^{-1/2}\xi\rangle\right].$ Also $A^{-1}X^\top\eta\sim\mathcal  N(0,A^{-1})\stackrel{d}{=}A^{-1/2}\xi$ with $\xi\sim\mathcal N(0,I_d)$, hence $\mathbb E\left[\max_{x\in\mathcal X}\langle x,A^{-1}X^\top\eta\rangle\right]
+% =\mathbb E_{\xi\sim\mathcal{N}(0,I_d)}\left[\max_{x\in\mathcal X}\langle x,A^{-1/2}\xi\rangle\right].$
+
+% \end{itemize}
+
+% \noindent\textbf{Final choice of $\tau$.}
+% The function $\frac{\tau(1-\tau)}{1+\tau^2}$ is maximized at $\tau=\sqrt{2}-1$, yielding a leading constant
+% $(\sqrt{2}-1)/2\approx 0.207$ in \eqref{eq:lbM-11}. 
+
+For the remainder of this section, we lower bound $\mathfrak R(A;\mathcal X)$.
+Fix any (possibly randomized) non-interactive rule $\hat x_{\mathcal A}(\mathcal D,U)\in\mathcal X$.
+By the definition of simple regret,
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]
+=
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+-
+\mathbb{E}\!\left[\langle \hat x_{\mathcal A}(\mathcal D,U),\theta\rangle\right].
+\]
+Applying the tower rule and conditioning on $(\mathcal D,U)$, we have
+\[
+\mathbb{E}\!\left[\langle \hat x_{\mathcal A}(\mathcal D,U),\theta\rangle\right]
+=
+\mathbb{E}\!\left[
+\mathbb{E}\!\left[\langle \hat x_{\mathcal A}(\mathcal D,U),\theta\rangle \mid \mathcal D,U\right]
+\right].
+\]
+Since $\hat x_{\mathcal A}(\mathcal D,U)$ is measurable with respect to $(\mathcal D,U)$ and $U$ is independent of $\theta$, we can pull it outside the inner expectation, which gives
+\[
+\mathbb{E}\!\left[\langle \hat x_{\mathcal A}(\mathcal D,U),\theta\rangle\right]=
+\mathbb{E}\!\left[
+\big\langle \hat x_{\mathcal A}(\mathcal D,U),\, \mathbb{E}[\theta\mid \mathcal D]\big\rangle
+\right].
+\]
+Under the Gaussian prior $\theta\sim\mathcal N(0,\tau^2A^{-1})$ and likelihood $y\mid\theta\sim\mathcal N(X\theta,I_T)$, the posterior mean is
+$\mathbb{E}[\theta\mid\mathcal D]=\frac{\tau^2}{1+\tau^2}A^{-1}X^\top y$.
+Substituting this expression yields
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]
+=
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+-
+\frac{\tau^2}{1+\tau^2}\,
+\mathbb{E}\!\left[
+\big\langle \hat x_{\mathcal A}(\mathcal D,U),\, A^{-1}X^\top y\big\rangle
+\right].
+\]
+Using $y=X\theta+\eta$ and $A=X^\top X$, we obtain
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]=
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+-
+\frac{\tau^2}{1+\tau^2}\,
+\mathbb{E}\!\left[
+\big\langle \hat x_{\mathcal A}(\mathcal D,U),\, \theta + A^{-1}X^\top\eta\big\rangle
+\right].
+\]
+Next, for any vector $v$, we have
+$\langle \hat x_{\mathcal A}(\mathcal D,U),v\rangle
+\le \max_{x\in\mathcal X}\langle x,v\rangle$.
+Applying this bound gives
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]\ge
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+-
+\frac{\tau^2}{1+\tau^2}\,
+\mathbb{E}\!\left[
+\max_{x\in\mathcal X}\langle x,\theta + A^{-1}X^\top\eta\rangle
+\right].
+\]
+As $\max_{x\in\mathcal{X}}\langle x,\theta + A^{-1}X^\top\eta\rangle
+\le
+\max_{x\in\mathcal{X}}\langle x,\theta\rangle
++
+\max_{x\in\mathcal{X}}\langle x,A^{-1}X^\top\eta\rangle,$ we get
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]\ge
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
+-
+\frac{\tau^2}{1+\tau^2}
+\left(
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]
++
+\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,A^{-1}X^\top\eta\rangle\right]
+\right).
+\]
+Since $\theta\sim\mathcal N(0,\tau^2A^{-1})$, we have $\theta\stackrel{d}{=}\tau A^{-1/2}\xi$ for $\xi\sim\mathcal N(0,I_d)$, and thus $\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,\theta\rangle\right]=\tau\,\mathbb{E}_{\xi\sim\mathcal N(0,I_d)}\!\left[\max_{x\in\mathcal X}\langle x,A^{-1/2}\xi\rangle\right]$.
+Similarly, since $\eta\sim\mathcal N(0,I_T)$ and $A=X^\top X$, we have $A^{-1}X^\top\eta\stackrel{d}{=}\mathcal N(0,A^{-1})$, and hence $A^{-1}X^\top\eta\stackrel{d}{=}A^{-1/2}\xi$ for $\xi\sim\mathcal N(0,I_d)$.
+Therefore, $\mathbb{E}\!\left[\max_{x\in\mathcal X}\langle x,A^{-1}X^\top\eta\rangle\right]=\mathbb{E}_{\xi\sim\mathcal N(0,I_d)}\!\left[\max_{x\in\mathcal X}\langle x,A^{-1/2}\xi\rangle\right]$.
+Substituting these two identities yields
+\[
+\mathbb{E}[r(\hat x_{\mathcal A},\theta)]
+\ge
+\frac{\tau(1-\tau)}{1+\tau^2}\;
+\mathbb{E}_{\xi\sim\mathcal N(0,I_d)}
+\!\left[\max_{x\in\mathcal X}\langle x,A^{-1/2}\xi\rangle\right].
+\]
+Finally, the function $\frac{\tau(1-\tau)}{1+\tau^2}$ is maximized at $\tau=\sqrt{2}-1$, which yields a universal constant of approximately $0.207$.
+
+
+
+\subsection{Properties of Gaussian Width}\label{sec:properties-gaussian}
+In this section, we study basic properties of the term $w(\mathcal{X})$. First, we present the following proposition.
+
+\begin{proposition}\label{prop:gaussian-width-basic-bounds}
+For any $\mathcal{X}\subset \mathbb{R}^d$, we have $w(\mathcal{X}) \ge \Omega(\sqrt{d\log d})$ and $w(\mathcal{X}) \le O(d)$.
+Moreover, if $\mathcal{X}$ is finite, then $w(\mathcal{X}) \le O(\sqrt{d\log|\mathcal{X}|})$.
+\end{proposition}
+
+These bounds are tight for suitable choices of $\mathcal{X}$.
+For instance, in the classical multi-armed bandit setting, $w(\mathcal{X})=\Theta(\sqrt{d\log d})$ (as discussed in the introduction).
+In contrast, for structured sets such as the hypercubes $\{-1,+1\}^d$ and $\{0,1\}^d$, as well as the unit $\ell_2$ ball in $\mathbb{R}^d$, one can verify that $w(\mathcal{X})=\Theta(d)$.
+A more nuanced example is the class of $m$-sets, defined by $\mathcal{X}:=\{x\in\{0,1\}^d:\|x\|_1=m\}$, for which one can show $w(\mathcal{X})\ge \Omega(\sqrt{md})$; this matches the finite-set upper bound of $O(\sqrt{d \log |\mathcal{X}|})$ up to logarithmic factors.
+We provide formal proofs of these claims and Proposition \ref{prop:gaussian-width-basic-bounds} in Appendix~\ref{appendix:gaussian-width-properties}.
+
+
+
+These observations raise a natural question: does there exist a set $\mathcal{X}\subset \mathbb{R}^d$ of dimension $\Theta(d)$ for which $w(\mathcal{X})$ is polynomially smaller than what the upper bounds in Proposition~\ref{prop:gaussian-width-basic-bounds} might suggest?
+We answer this question in the affirmative.
+To this end, we introduce the multi-task multi-armed bandit problem, a well-known generalization of the classical multi-armed bandit setting that has been studied in prior work \citep{cesa2012combinatorial,cohen2017tight,maiti2025efficient,fan2025universal}.
+
+
+Informally, in the multi-task multi-armed bandit (MAB) problem, we are given $m$ bandit problems, where the $i$-th problem contains $d_i \ge 2$ arms.
+In each round, the learner selects one arm from every problem simultaneously and observes as feedback the sum of the corresponding rewards plus Gaussian noise.
+
+
+We now formalize the multi-task MAB problem.
+Let $d=\sum_{i=1}^m d_i$, and define $d_{1:i}=\sum_{j=1}^i d_j$ with the convention $d_{1:0}=0$.
+The arm set $\mathcal{X}$ is defined as follows:
+\begin{equation*}
+    \mathcal X=\left\{x\in \{0,1\}^d: \forall j\in [m] \sum_{i=d_{1:j-1}+1}^{d_{1:j}} x_i=1\right\}.
+\end{equation*}
+
+For this set $\mathcal{X}$, we show that its dimension is $d-m+1=\Theta(d)$ and that its Gaussian width satisfies
+$w(\mathcal{X}) \le O\!\left(\sum_{i=1}^m \sqrt{d_i\log d_i}\right)$; the proof appears in Appendix~\ref{appendix:gaussian-width-multi-task-MAB}.
+Now suppose that $d_i=2$ for all $i\in[m-1]$ and $d_m=m^2$.
+Then $\dim(\mathcal{X})=\Theta(m^2)$ and $\min\{d,\sqrt{d\log|\mathcal{X}|}\}=\Theta(m^{3/2})$.
+On the other hand, the Gaussian width can be upper bounded as:
+\[
+w(\mathcal{X})\le O\!\left(\sum_{i=1}^m\sqrt{d_i\log d_i}\right)
+= O\!\left(m+\sqrt{m^2\log m}\right)
+= O\!\left(m\sqrt{\log m}\right),
+\]
+which is polynomially smaller than $\Theta(m^{3/2})$. We summarize the above discussion in the following theorem.
+\begin{theorem}\label{thm:gaussian-width-separation}
+There exists a finite set $\mathcal{X}\subset\mathbb{R}^d$ such that $\dim(\mathcal{X})=\Theta(d)$ and $w(\mathcal{X})\le O(\sqrt{d\log d})$, while $\sqrt{d\log|\mathcal{X}|}\ge \Omega(d^{3/4})$.
+\end{theorem}
+This example shows that $w(\mathcal{X})$ can be genuinely non-trivial, and in particular need not scale as $\Theta(d)$ nor as $\Theta(\sqrt{d\log|\mathcal{X}|})$ even when $\mathcal{X}$ is finite.
+
+
+
+\subsection{Structured Sets $\mathcal{X}$ for Which Adaptivity Yields Only Logarithmic-Factor Improvements}\label{sec:log-adaptive}
+For classical multi-armed bandits, Median Elimination, an adaptive algorithm, improves upon the non-adaptive approach described in the introduction by a factor of $\log d$. In the same spirit, we can make our algorithm from Section~\ref{sec:upper} adaptive as follows. We partition the arm set into $d$ regions and attempt to identify a candidate good arm from each region. We then run Median Elimination on these $d$ candidate arms to obtain an $\varepsilon$-best arm. The analysis of this adaptive approach can be localized to the region containing the best arm, and the Borell--TIS inequality is applied only over that region. This can lead to a $\log d$ improvement in certain regimes. In particular, for a finite set $\mathcal{X}\subset\mathbb{R}^d$, our adaptive algorithm satisfies the following guarantee.
+\begin{theorem}\label{thm:median-eliminination-adaptive}
+There exists an $(\varepsilon,\delta)$-PAC adaptive algorithm for $\varepsilon$-best arm identification with sample complexity
+$O\!\left(\frac{d\log\!\bigl((|\mathcal{X}|/d)_+/\delta\bigr)}{\varepsilon^2}\right)$
+for any finite set $\mathcal{X}\subset \mathbb{R}^d$.
+\end{theorem}
+Consequently, for those finite sets $\mathcal{X}\subset\mathbb{R}^d$ for which a lower bound of $\Omega\!\left(\frac{d\log(|\mathcal{X}|/\delta)}{\varepsilon^2}\right)$ is known to hold for $(\varepsilon,\delta)$-PAC non-adaptive algorithms, our adaptive approach improves the sample complexity to $O\!\left(\frac{d\log\!\bigl((|\mathcal{X}|/d)_+/\delta\bigr)}{\varepsilon^2}\right)$.
+We refer the reader to Appendix~\ref{appendix:adaptive-version} for formal details. This raises a natural question of whether there are structured settings beyond multi-armed bandits in which adaptivity yields at most logarithmic improvements, or even no improvement at all. We answer this question in the affirmative for the structured sets studied in the previous section, namely the unit $\ell_2$-ball, the $\{-1,+1\}^d$ and $\{0,1\}^d$ hypercubes, $m$-sets, and multi-task MAB.
+
+
+%In the previous section, we computed the gaussian width of various structured sets in $\mathbb{R}^d$. We now raises a curious question, whether adaptivity can yield only at most logarithmic improvements over our non-adaptive upper bound for these well know structured sets. We answer this question in the affirmative.
+
+\begin{table}[t]
+\centering
+\caption{Sample complexity bounds for different structured action sets for which the adaptivity only yields logarithmic improvement.}
+\begin{tabular}{lcc}
+\toprule
+Set 
+& Non-adaptive upper bound 
+& Adaptive lower bound \\
+\midrule
+unit $\ell_2$ ball, $\{-1,1\}^d$, $\{0,1\}^d$
+& $O\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{d^2}{\varepsilon^2}\right)$
+& $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{d^2}{\varepsilon^2}\right)$ \\
+
+$m$-sets $\quad(m\leq d/21)$
+& $O\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{md \log(d/m)}{\varepsilon^2}\right)$
+& $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{md}{\varepsilon^2}\right)$ \\
+
+Multi-task MAB
+& $O\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{\bigl(\sum_{j=1}^m \sqrt{d_j \log d_j}\bigr)^2}{\varepsilon^2}\right)$
+& $\Omega\!\left(\frac{d\log(1/\delta)}{\varepsilon^2} + \frac{\bigl(\sum_{j=1}^m \sqrt{d_j}\bigr)^2}{\varepsilon^2}\right)$ \\
+\bottomrule
+\label{table:1}
+\end{tabular}
+\end{table}
+
+
+For these structured sets, the optimal minimax sample complexity takes the form $\mathbf{H}_1\log(1/\delta)+\mathbf{H}_2$. Combining the results of Sections~\ref{sec:upper} and~\ref{sec:lower}, we conclude that $\mathbf{H}_1=\Theta\!\left(\frac{d}{\varepsilon^2}\right)$. The more interesting term is $\mathbf{H}_2$, which can dominate when $\delta$ is an absolute constant. We now establish lower bounds on $\mathbf{H}_2$ for the various structured sets; these bounds are also summarized in Table~\ref{table:1}.
+ %A standard approach to establishing such a lower bound is to construct a distribution over hard instances and then establish a lower bound on the simple regret $\mathbb{E}[\langle \hat x-x_*,\theta\rangle]$ where $\hat x$ is arm recommended by the algorithm and $x_*$ is the optimal arm. If the lower bound is $\sqrt{\frac{f(\mathcal{X})}{T}}$ where $T$ is the number of samples taken by the algorithm, then we can easily establish that $\mathbf{H_2}\geq \Omega(\frac{f(\mathcal{X})}{\varepsilon^2})$. \textcolor{red}{Expand this part a bit.}
+
+For the unit $\ell_2$ ball, the simple-regret lower bound of \cite{chen2024assouad}, which is based on a Gaussian-prior construction, together with the straightforward calculations in Appendix~\ref{appendix-ball-lower-bound}, implies that $\mathbf{H}_2 \ge \Omega\!\left(\frac{d^2}{\varepsilon^2}\right)$.
+
+For the finite sets $\{-1,+1\}^d$ hypercube, $\{0,1\}^d$ hypercube, $m$-sets, and multi-task MAB, we prove lower bounds via a different approach, based on constructing a finite family of hard instances rather than using a continuous prior. To illustrate this approach, we provide high-level intuition for the hard-instance construction in the multi-task MAB setting. We defer the formal proofs of the lower bounds to Appendix~\ref{appendix-structured-sets-lower-bound}.
+
+
+
+\textbf{Intuition}: It is well known that in the $K$-armed bandit problem, if the total number of samples satisfies $T \le \frac{cK}{\varepsilon^2}$ for a sufficiently small universal constant $c$, then no algorithm can identify an $\varepsilon$-best arm with constant success probability. A standard hard family consists of spiked instances indexed by $i_\star\in[K]$, where the unique optimal arm has mean $\mu_{i_\star}=10\varepsilon$ and all other arms have mean $0$, together with an alternative instance in which all arms have mean $0$. Under the uniform distribution over these hard instances, a KL-divergence based argument implies that when $T \le \frac{cK}{\varepsilon^2}$, any deterministic algorithm outputs $\widehat{i}$ with $\mathbb{E}[\mu_{\widehat{i}}]\le 7\varepsilon$, and Markov's inequality yields constant-probability failure; Yao's minimax principle extends the conclusion to randomized algorithms.
+
+For the multi-task setting with $m$ MAB problems, where problem $j$ has $d_j$ arms, we take the cartesian-product hard family obtained by choosing one arm $i_j$ per problem $j$ and setting its mean to $10\varepsilon_j$ while all other arms have mean $0$, yielding $\prod_{j=1}^m d_j$ spiked instances, with the corresponding alternative instances formed by zeroing out a single problem $j$ while keeping the others fixed. Conditioning on the spiked choices in problems $k\neq j$, the $j$-th problem reduces to the standard $d_j$-armed problem, so if $T \le \frac{c\,d_j}{\varepsilon_j^2}$ then $\mathbb{E}[\mu_{\widehat{i}_j}] \le 7\varepsilon_j$. Summing over $j$ gives $\mathbb{E}\!\left[\sum_{j\in[m]}\mu_{\widehat{i}_j}\right]\le 7\sum_{j\in[m]}\varepsilon_j$, while choosing the spiked arm from each problem leads to a total value $10\sum_{j\in[m]}\varepsilon_j$, and Markov's inequality again yields constant-probability failure to achieve additive error $\sum_{j\in[m]}\varepsilon_j$, with extension to randomized algorithms by Yao's minimax principle.
+
+
+
+
+
+Now set $\varepsilon_j:=\frac{\varepsilon\sqrt{d_j}}{\sum_{s\in[m]}\sqrt{d_s}}$. Then
+$\frac{d_j}{\varepsilon_j^2}=\frac{\left(\sum_{s\in[m]}\sqrt{d_s}\right)^2}{\varepsilon^2}$ for all $j\in[m]$,
+and
+$\sum_{j\in[m]}\varepsilon_j=\varepsilon\cdot\frac{\sum_{j\in[m]}\sqrt{d_j}}{\sum_{s\in[m]}\sqrt{d_s}}=\varepsilon$.
+Hence, if an algorithm takes at most $T\le \frac{c\left(\sum_{s\in[m]}\sqrt{d_s}\right)^2}{\varepsilon^2}$ samples for a sufficiently small constant $c$, then it fails to identify an $\varepsilon$-best arm with high constant probability.
+
+%\textcolor{red}{Will expand this section a bit by adding more details regarding the lower bound along the lines of the techniques listed out in the contribution section. Also add details about the adaptive version of our algorithm so that we can smoothly transition to the next section.}
+\subsection{A Structured Set $\mathcal{X}$ for Which Adaptivity Yields a Polynomial-Factor Improvement}\label{sec:poly-adaptive}
+In the previous section, we showed that for several well-known structured sets, adaptivity can yield only logarithmic-factor improvements. This raises an important question: can adaptivity lead to polynomial-factor improvements? We answer this question in the affirmative by constructing an action set $\mathcal{X}$ for which adaptivity yields a polynomial-factor improvement.
+
+Consider positive integers $k,d$ with $d\leq k\leq d^2$. For each $i\in[k]$, define
+\[
+\mathcal{X}_i:=\left\{x\in\mathbb{R}^{kd}:\ \mathrm{supp}(x)\subseteq \{(i-1)d+1,\ldots,id\},\ \|x\|_2\le 1\right\},
+\]
+and let $\mathcal{X}:=\bigcup_{i=1}^k \mathcal{X}_i$. We first claim that, for the set $\mathcal{X}$, any non-adaptive algorithm has minimax sample complexity at least $\Omega\!\left(\frac{kd\log(1/\delta)}{\varepsilon^2}+\frac{kd^2}{\varepsilon^2}\right)$ for the $\varepsilon$-best arm identification problem. The term $\Omega\!\left(\frac{kd\log(1/\delta)}{\varepsilon^2}\right)$ follows directly from Theorem~\ref{thm:adaptive-lower-bound} together with the fact that $\mathrm{span}(\mathcal{X})$ has dimension $kd$. The $\Omega\!\left(\frac{kd^2}{\varepsilon^2}\right)$ term arises from the block structure of $\mathcal{X}$. Each set $\mathcal{X}_i$ is a unit $\ell_2$-ball in a $d$-dimensional coordinate subspace, and a non-adaptive algorithm does not know in advance which block contains the optimal arm. As a result, the sampling budget must be spread across all $k$ blocks, requiring on the order of $\Omega\!\left(\frac{d^2}{\varepsilon^2}\right)$ samples per block to ensure that, regardless of which $\mathcal{X}_i$ contains the best arm, the algorithm can identify an $\varepsilon$-best arm within that block upon termination. We prove this claim formally in Appendix~\ref{appendix-poly-sep-lower-bound}.
+
+We now discuss how an adaptive approach can improve upon the above non-adaptive lower bound. A natural strategy is to first identify an index $i$ such that the best arm in $\mathcal{X}_i$ is $\varepsilon/2$-close to the best arm in $\mathcal{X}$, and then find an $\varepsilon/2$-best arm within $\mathcal{X}_i$. To identify such an index $i$, we can proceed as follows: for each $j\in[k]$, estimate the quantity $\max_{x\in\mathcal{X}_j}\langle x,\theta\rangle$ to within additive error $\varepsilon/4$, and output the index with the largest estimated value. After selecting this ``good'' set $\mathcal{X}_i$, we allocate additional samples to $\mathcal{X}_i$ in order to identify an $\varepsilon/2$-best arm in that set.
+
+
+Let $\theta^{(i)} := (\theta_{(i-1)d+1},\theta_{(i-1)d+2},\ldots,\theta_{id})^\top$. Then $\max_{x\in\mathcal{X}_i}\langle x,\theta\rangle=\|\theta^{(i)}\|_2$. This motivates us to consider the following $\ell_2$-norm estimation problem: given an arm set $\mathbb{B}_d:=\{x\in\mathbb{R}^d:\|x\|_2\leq 1\}$, estimate the $\ell_2$-norm of the reward vector using as few samples as possible while observing the corresponding noisy rewards.
+
+Assume that we can solve this $\ell_2$-norm estimation problem with an algorithm whose minimax sample complexity is $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$. Then, using $\mathcal{O}\!\left(\frac{kd\log(k/\delta)}{\varepsilon^2}\right)$ samples and a union bound, we can find an index $i\in[k]$ such that, with probability at least $1-\delta/2$, $\max_{x\in\mathcal{X}_i}\langle x,\theta\rangle \ge \max_{x\in\mathcal{X}}\langle x,\theta\rangle-\varepsilon/2$. Next, using our non-adaptive algorithm, we can find an $\varepsilon/2$-best arm in $\mathcal{X}_i$ with probability at least $1-\delta/2$ using an additional $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}+\frac{d^2}{\varepsilon^2}\right)$ samples. Since $k\ge d$, this yields an $\varepsilon$-best arm in $\mathcal{X}$ with probability at least $1-\delta$ using at most $\mathcal{O}\!\left(\frac{kd\log(1/\delta)}{\varepsilon^2}+\frac{kd\log k}{\varepsilon^2}\right)$ samples, yielding a polynomial improvement over all non-adaptive algorithms. We summarize the above discussion in the following theorem.
+\begin{theorem}\label{thm:adaptivity-gap-kd}
+Fix positive integers $k$ and $d$ satisfying $d\le k\le d^2$.
+There exists a set $\mathcal{X}\subset \mathbb{R}^{kd}$ such that any non-adaptive $(\varepsilon,\delta)$-PAC algorithm for $\varepsilon$-best arm identification requires
+$\Omega\!\left(\frac{kd\log(1/\delta)}{\varepsilon^2}+\frac{kd^2}{\varepsilon^2}\right)$
+samples, while there exists an adaptive $(\varepsilon,\delta)$-PAC algorithm with sample complexity
+$O\!\left(\frac{kd\log(1/\delta)}{\varepsilon^2}+\frac{kd\log k}{\varepsilon^2}\right)$,
+yielding a polynomial improvement over all non-adaptive approaches.
+\end{theorem}
+The only remaining task is to design an algorithm that solves the $\ell_2$-norm estimation problem using at most $\mathcal{O}\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$ samples, which we do in the next section.
+
+\section{An Algorithm for $\ell_2$-Norm Estimation}\label{sec:norm-estimation}
+%\textcolor{red}{I am trying to find a way to present high level details of $\ell_2$ norm estimation so that a reviewer will be convinced of the details. For now I will attempt to reduce the technical details of the main case where have an estimate and we want to come with an $\varepsilon$ additive error. This part has all the main ideas that can be used in other places as well.}
+
+In this section, we address the $\ell_2$-norm estimation problem, {a key ingredient underlying the polynomial gap between adaptive and non-adaptive algorithms in Theorem~\ref{thm:adaptivity-gap-kd}}. Recall that we are given the arm set $\mathbb{B}_d:=\{x\in\mathbb{R}^d:\|x\|_2\le 1\}$ and wish to estimate the $\ell_2$-norm of an unknown reward vector $\theta\in\mathbb{R}^d$ using as few samples $x_t\in\mathbb{B}_d$ as possible, while observing noisy rewards $y_t=\langle x_t,\theta\rangle+\eta_t$, where $\eta_t\sim\mathcal{N}(0,1)$. We solve this problem in three steps. First, we test whether $\lambda_0\varepsilon \le \|\theta\|_2 \le \lambda_1\sqrt{d}$ for some positive constants $\lambda_0$ and $\lambda_1$. If so, we obtain a constant-factor (within $2$) multiplicative estimate of $\|\theta\|_2$. Finally, we use this coarse estimate to refine our estimate of $\|\theta\|_2$ to within an additive error of $\varepsilon$. The final step is the most technically involved part of the analysis, and we outline its high-level ideas here. We formalize the guarantee of the $\ell_2$-norm estimation procedure in the following theorem, and defer the complete description of the procedure and its analysis to Appendix~\ref{appendix-l2-norm-estimation}.
+
+\begin{theorem}\label{thm:l2-norm-estimation}
+Let $\theta\in\mathbb{R}^d$ be an unknown reward vector. At each round, a learner selects an action $x_t\in\mathbb{B}_d$ and observes $y_t=\langle x_t,\theta\rangle+\eta_t$, where $\eta_t\sim\mathcal{N}(0,1)$ are i.i.d.
+There exists an adaptive algorithm that uses $O\!\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$ such observations and returns an estimate $\widehat{r}$ such that $|\widehat{r}-r|\le \varepsilon$ with probability at least $1-\delta$, where $r:=\|\theta\|_2$.
+\end{theorem}
+
+
+
+
+Begin by defining $r:=||\theta||_2$ and assuming that we are given a value $\varepsilon< r_0< 2\sqrt{d}$ such that $\frac{r}{2}< r_0\leq 2r$. We now describe an algorithm that takes $\mathcal{O}\left(\frac{d\log(1/\delta)}{\varepsilon^2}\right)$ samples from $\mathbb{B}_d$ and  outputs an estimate $\hat r$ such that with probability $1-\delta/2$, we have $|\hat r-r|\leq \varepsilon$.
+
+% if $r\geq \varepsilon$ and $r_0=\varepsilon$ otherwise
+
+\begin{algorithm2e}[H]\label{alg:ball-additive}
+\caption{$\varepsilon$-additive error $\ell_2$-norm estimation algorithm}
+\LinesNumbered
+\KwIn{$\delta \in (0,1), \varepsilon >0, 
+s=\frac{c_0d}{r_0^2},\; K=c_1r_0^2\cdot \varepsilon^{-2}\log(4/\delta)$ where $c_0,c_1$ are large absolute constants.}
+
+\For{$k=1,\ldots,K$}{
+Draw a Rademacher unit vector
+$x^{(k)} = \frac{(\varepsilon_1, \dots, \varepsilon_d)}{\sqrt{d}}
+\quad \text{where } \varepsilon_i \overset{iid}{\sim} \{ \pm 1 \}$.
+
+Take $s$ samples along this direction and observe:
+$
+y_{k,\ell} = \mu_k + \eta_{k,\ell},  \text{ where } \mu_k=\langle x^{(k)},\theta\rangle, \;
+\eta_{k,\ell} \overset{iid}{\sim} \mathcal{N}(0,1), \; \ell = 1, \dots, s
+$.
+
+Let $\bar{y}_k := \frac{1}{s} \sum_{\ell=1}^{s} y_{k,\ell}  \text{ and define }
+Z_k := d \left( \bar{y}_k^2 - \frac{1}{s} \right)
+$.
+}
+
+Define $\bar{Z} := \frac{1}{K} \sum_{k=1}^{K} Z_k$ and
+output $\hat{r} :=
+\begin{cases}
+0 & \text{if } \bar{Z} <0 \\
+\sqrt{\bar{Z}} & \text{otherwise}
+\end{cases}$
+%\KwRet{$\hat{r}$}
+\end{algorithm2e}
+
+
+% In this section we work with sub-exponential random variables. A mean zero $U$ is sub-exponential with parameters $(V, b)$ if
+% \[
+% \mathbb{E}[e^{\lambda U}] \leq \exp\left( \frac{\lambda^2 V}{2} \right) \quad \text{for } |\lambda| \leq \frac{1}{b}
+% \]
+% If $X \sim \mathcal{N}(\mu, \sigma^2)$ and $Y := X^2 - \mathbb{E}[X^2]$,  
+% then $Y$ is a sub-exponential with parameters $(V,b)=(8\left( \sigma^4 + \mu^2 \sigma^2 \right),4\sigma^2)$.
+
+
+
+% If $U_1, \ldots, U_K$ are independent mean-zero, sub-exponential random variables with parameters $(V_1, b),\ldots,(V_K,b)$ respectively, then we get the following using the Chernoff bound:
+% \[
+%  \Pr\left( \left| \frac{1}{K} \sum_{s=1}^{K} U_s \right| > t \right) 
+% \leq 2 \exp\left( -cK \min\left\{ \frac{t^2}{\bar{V}}, \frac{t}{b} \right\} \right)
+% \]
+% where $\bar{V} = \frac{1}{K} \sum_{k=1}^{K} V_k$ and $c>0$ is some absolute constant.
+
+
+\noindent
+We now begin with some high-level analysis. Recall $x^{(k)} = \frac{(\varepsilon_1, \ldots, \varepsilon_d)}{\sqrt{d}}$ where $\varepsilon_i\overset{iid}{\sim} \{ \pm 1 \}$ and $ \mu_k = \langle x^{(k)}, \theta \rangle$. Then we have the following:
+\[
+\mathbb{E}[\mu^2_k] = \theta^\top \mathbb{E}\left[  x^{(k)} (x^{(k)})^\top\right] \theta 
+= \theta^\top \left( \frac{1}{d} I_d \right) \theta = \frac{r^2}{d}
+.\]
+
+\noindent
+Now conditioning on $x^{(k)}$ (hence $\mu_k$), we have
+\[
+\bar{y}_k \sim \mathcal{N}\left(\mu_k, \frac{1}{s}\right)
+\Rightarrow \mathbb{E}[\bar{y}_k^2 \mid \mu_k] = \mu_k^2 + \frac{1}{s}\Rightarrow \mathbb{E}[Z_k \mid \mu_k] = d \mu_k^2.
+\]
+
+
+
+\noindent
+We will now aim to bound
+\[
+\bar{Z} - r^2 
+= \underbrace{\left( \frac{1}{K} \sum_{k=1}^{K} d\mu_k^2 - r^2 \right)}_{\text{Term 1}}
++ \underbrace{\left( \frac{1}{K} \sum_{k=1}^{K} \left( Z_k - d\mu_k^2 \right) \right)}_{\text{Term 2}}.
+\]
+
+\noindent
+\textbf{Bounding Term 1:}
+Let $X_k := d \mu_k^2 - r^2$.  
+With the help of Hanson–Wright inequality, we can show that $X_k$ is sub-exponential and show the following for some absolute constant $c$:
+\begin{equation}\label{main-eq:bounding-term-1}
+    \Pr\left( \left| \frac{1}{K} \sum_{k=1}^{K} X_k \right| > t \right) 
+\leq 2 \exp\left( -c\cdot K \min\left( \frac{t^2}{r^4}, \frac{t}{r^2} \right) \right).
+\end{equation}
+
+\noindent
+Choosing $t = \frac{r \varepsilon}{4}$, and $K = c_1 r_0^2 \varepsilon^{-2} \log \frac{4}{\delta}$ for some large constant $c_1$,  
+we get:
+\[
+\left| \frac{1}{K} \sum_{k=1}^{K} d\mu_k^2 - r^2 \right| 
+\leq \frac{r \varepsilon}{4} \quad \text{with probability } \geq 1 - \frac{\delta}{4}.
+\]
+
+
+\noindent
+\textbf{Bounding Term 2:}  Let $W_k := Z_k - d\mu_k^2 = d\left( \bar{y}_k^2 - \frac{1}{s} - \mu_k^2 \right)$. Conditioning on $\mu_k$, we have:
+\[
+\sqrt{d} \cdot \bar{y}_k \mid \mu_k \sim \mathcal{N}(\sqrt{d}\cdot\mu_k, \sigma^2), \quad \text{with } \sigma^2 = \frac{d}{s}.
+\]
+Hence $W_k \mid \mu_k$ is sub-exponential and therefore conditioning on $\mu_{1:K} := \mu_1, \ldots, \mu_K$, we get:
+\[
+\Pr\left( \left| \frac{1}{K} \sum_{k=1}^{K} W_k \right| > t \,\middle|\, \mu_{1:K} \right) 
+\leq 2 \exp\left( -cK \min\left( \frac{t^2}{\bar{V}}, \frac{t}{b} \right) \right).
+\]
+where $
+\bar{V} := 8 \left( \frac{d^2}{s^2} + \frac{d^2}{s} \cdot \frac{1}{K} \sum_{k=1}^{K} \mu_k^2 \right)
+$ and $b=4d/s$. Using Eq. \eqref{main-eq:bounding-term-1}, we have $
+\bar{V} \leq \tau := 8 \left( \frac{d^2}{s^2} + \frac{3dr^2}{2s} \right)$ with probability at least $1 - \frac{\delta}{8}$. Hence, substituting the values of $\tau$ and $b$, choosing $t=\frac{r\varepsilon}{4}$ and $K=c_1 r_0^2 \varepsilon^{-2}\log\!\frac{4}{\delta}$ for a sufficiently large constant $c_1$, and using $r/2<r_0\le 2r$, we obtain:
+\begin{align*}
+    \Pr\left( \left| \frac{1}{K} \sum_{k=1}^{K} W_k \right| > t \right)\leq \frac{\delta}{8} + \Pr\left( \left| \frac{1}{K} \sum_{k=1}^{K} W_k \right| > t \,\middle|\, \bar{V} \leq \tau \right)\leq \frac{\delta}{8}+ 2 \exp\left( -cK \min\left( \frac{t^2}{\tau}, \frac{t}{b} \right) \right)\leq \frac{\delta}{4}.
+\end{align*}
+\noindent
+\textbf{Final guarantee:} Combining the above results, we have, with probability at least $1 - \frac{\delta}{2}$, $\left| \bar{Z} - r^2 \right| \leq \frac{r \varepsilon}{2}$. Let us now assume that $\left| \bar{Z} - r^2 \right| \leq \frac{r \varepsilon}{2}$. As $\bar{Z}\geq 0$ we have $\hat{r}=\sqrt{\bar{Z}}$, which implies the following:
+    \[
+    |\hat{r} - r| = \left| \sqrt{\bar{Z}} - r \right| 
+    = \left| \bar{Z} - r^2 \right| \bigg/ \left( \sqrt{\bar{Z}} + r \right)
+    \leq \frac{\frac{r \varepsilon}{2}}{r}
+    = \frac{\varepsilon}{2} < \varepsilon.
+    \]
+
+

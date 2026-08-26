@@ -1,0 +1,370 @@
+\chapter{The non-adaptive fixed-design algorithm}
+\label{chap:upper}
+
+This chapter proves Theorem~1 of the paper (Section~2.1 and Appendix~B.1 there): a
+non-adaptive fixed-design algorithm with budget
+$T = \lceil 600(\gw(\Xs)^2 + d\log(2/\delta))/\eps^2\rceil$ is $(\eps,\delta)$-PAC on every
+spanning action set $\Xs$ (Theorem~\ref{thm:upper}); the spanning hypothesis is what makes the
+width $\gw(\Xs)$ and the $G$-optimal design exist. The design is obtained by rounding
+(Theorem~\ref{thm:rounding}) the mixture of a width-minimizing design
+(Lemma~\ref{lem:width_attained}) and a $G$-optimal design (Theorem~\ref{thm:kiefer_wolfowitz});
+the estimator is least squares; the recommendation is an (approximate) maximizer of the
+estimated value. The probabilistic input is the law of the least-squares error
+(Chapter~\ref{chap:pre_gaussian}) and the Borell--TIS inequality for linear Gaussian processes in
+the form of Corollary~\ref{cor:sup_bound_symmetric} (Chapter~\ref{chap:pre_concentration}).
+Compared with the paper: the constant $360$ becomes $600$ because of the concentration
+constant $\cG = \pi^2/4$ of Theorem~\ref{thm:borell_tis} and because the recommendation is only
+an $\eps/4$-approximate maximizer (a measurable exact argmax selector on a compact set is not
+available without extra work; Lemma~\ref{lem:approx_argmax_selector}); the rounding step uses
+Theorem~\ref{thm:rounding} instead of the cited rounding procedure. The chapter ends with a
+direct treatment of the unit ball (Lemma~\ref{lem:ball_identification}), which needs none of
+the width machinery and is used in Chapter~\ref{chap:separation}.
+
+\section{The mixed design and its rounding}
+\label{sec:upper_design}
+
+\begin{definition}[Mixed design]\label{def:mixed_design}
+\uses{def:arm_set, def:design_matrix, lem:width_attained, thm:kiefer_wolfowitz}
+Let $\Xs$ be spanning. Let $\lambda_1 \in \simplex_{\Xs}$ with $A_1 := A(\lambda_1) \in \PD$ and
+$\gwidth{\Xs}{A_1} = \gw(\Xs)$ (Lemma~\ref{lem:width_attained}), and let $\lambda_G \in \simplex_{\Xs}$
+with $A_G := A(\lambda_G) \in \PD$ and $g_{\Xs}(A_G) = d$ (Theorem~\ref{thm:kiefer_wolfowitz}). The
+\emph{mixed design distribution} is
+\[
+  \lambda_0 := \tfrac12\lambda_1 + \tfrac12\lambda_G \in \simplex_{\Xs},
+  \qquad
+  A_0 := A(\lambda_0) = \tfrac12A_1 + \tfrac12A_G \in \PD ,
+\]
+where $\lambda_0$ is supported on $\supp\lambda_1\cup\supp\lambda_G$ (finite) with weights
+$\lambda_{0,x} = \frac12\lambda_{1,x} + \frac12\lambda_{G,x}$ (a weight being $0$ outside the
+corresponding support).
+\end{definition}
+
+\begin{lemma}[Bounds for the mixed design]\label{lem:mixed_design_bounds}
+\uses{def:mixed_design, def:width_matrix, def:g_value}
+In the setting of Definition~\ref{def:mixed_design} ($\Xs$ spanning), for every $x \in \Xs$,
+$\norm{x}_{A_0^{-1}}^2 \le 2d$, and $\gwidth{\Xs}{A_0} \le \sqrt2\,\gw(\Xs)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:loewner_scalar, cor:g_optimal_norm_bound, lem:width_mono, lem:width_homog, lem:loewner_quadratic}
+Since $\frac12A_1 \in \PSD$, $\frac12A_G \preceq A_0$ (Lemma~\ref{lem:loewner_quadratic}), and
+Lemma~\ref{lem:loewner_scalar} with $c = 1/2$ gives $\norm{x}_{A_0^{-1}}^2 \le 2\norm{x}_{A_G^{-1}}^2
+\le 2d$ for $x \in \Xs$, by Corollary~\ref{cor:g_optimal_norm_bound}. Similarly
+$\frac12A_1 \preceq A_0$ with $\frac12A_1, A_0 \in \PD$, so by monotonicity of the width
+(Lemma~\ref{lem:width_mono}) and homogeneity (Lemma~\ref{lem:width_homog} with $c = 1/2$,
+$c^{-1/2} = \sqrt2$),
+$\gwidth{\Xs}{A_0} \le \gwidth{\Xs}{\tfrac12A_1} = \sqrt2\,\gwidth{\Xs}{A_1} = \sqrt2\,\gw(\Xs)$.
+\end{proof}
+
+\section{Least squares and the difference process}
+\label{sec:upper_ls}
+
+\begin{definition}[Least-squares estimator]\label{def:least_squares}
+\uses{def:fixed_design}
+For a fixed design $x_0,\dots,x_{T-1}$ with $\Sigma_T = X^\top X \in \PD$ and observations
+$y \in \R^T$, the \emph{least-squares estimator} is
+\[
+  \hat\theta := \Sigma_T^{-1}X^\top y = \Sigma_T^{-1}\sum_{t<T}y_tx_t \in \R^d ,
+\]
+a linear (hence measurable) function of $y$.
+\end{definition}
+
+\begin{lemma}[Law of the least-squares error]\label{lem:least_squares_law}
+\uses{def:least_squares, lem:fixed_design_law}
+Under the fixed design run against $\nu_\theta$,
+$\hat\theta - \theta = \Sigma_T^{-1}X^\top\eta \sim \Normal(0,\Sigma_T^{-1})$, where
+$\eta \sim \Normal(0,I_T)$ is the noise vector. In particular
+$\hat\theta - \theta \eqd \Sigma_T^{-1/2}g$ with $g \sim \Normal(0,I_d)$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:fixed_design_law, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:sqrt_props}
+By Lemma~\ref{lem:fixed_design_law}, $y = X\theta + \eta$ with $\eta \sim \Normal(0,I_T)$. Then
+$\hat\theta = \Sigma_T^{-1}X^\top X\theta + \Sigma_T^{-1}X^\top\eta = \theta + \Sigma_T^{-1}X^\top\eta$.
+Lemma~\ref{lem:gauss_linear_image} with the matrix $M := \Sigma_T^{-1}X^\top \in \R^{d\times T}$
+gives $M\eta \sim \Normal(0, MM^\top)$ with $MM^\top = \Sigma_T^{-1}X^\top X\Sigma_T^{-1} =
+\Sigma_T^{-1}$ (using that $\Sigma_T^{-1}$ is symmetric). The last claim is
+Lemma~\ref{lem:gauss_law_of_cov} together with $(\Sigma_T^{-1/2})^2 = \Sigma_T^{-1}$
+(Lemma~\ref{lem:sqrt_props}(ii)).
+\end{proof}
+
+\begin{lemma}[Measurable approximate argmax selector]\label{lem:approx_argmax_selector}
+\uses{def:arm_set, lem:sup_countable_dense}
+Let $\Xs \subset \R^d$ be compact and nonempty and let $\gamma > 0$. There is a Borel measurable
+map $s_\gamma : \R^d \to \Xs$ such that for every $v \in \R^d$,
+\[
+  \ip{s_\gamma(v)}{v} \ \ge\ \max_{x\in\Xs}\ip{x}{v} - \gamma .
+\]
+If $\Xs$ is finite, there is a measurable $s_0 : \R^d \to \Xs$ with $\ip{s_0(v)}{v} =
+\max_{x\in\Xs}\ip{x}{v}$ for all $v$ (an exact argmax selector).
+\end{lemma}
+
+\begin{proof}
+\uses{lem:sup_countable_dense}
+Let $M(v) := \max_{x\in\Xs}\ip{x}{v}$; it is continuous in $v$ (Lipschitz with constant
+$R := \sup_{x\in\Xs}\norm{x}$, Lemma~\ref{lem:sup_countable_dense}). Let $(q_n)_{n\in\N}$ be a
+sequence that is dense in $\Xs$ ($\Xs$ is a separable metric space). For each $n$ the set
+$U_n := \{v \in \R^d : \ip{q_n}{v} > M(v) - \gamma\}$ is open, as a strict inequality between
+continuous functions. The $U_n$ cover $\R^d$: given $v$, let $x^\star \in \Xs$ attain $M(v)$ and
+pick $n$ with $\norm{q_n - x^\star} < \gamma/(1 + \norm{v})$; then
+$\ip{q_n}{v} \ge \ip{x^\star}{v} - \norm{q_n - x^\star}\norm{v} > M(v) - \gamma$. Define
+$n(v) := \min\{n : v \in U_n\}$ and $s_\gamma(v) := q_{n(v)}$. Then $s_\gamma(v) \in \Xs$ and
+$\ip{s_\gamma(v)}{v} > M(v) - \gamma$ by construction. Measurability: $s_\gamma$ takes countably
+many values and $\{v : s_\gamma(v) = q_n\} \supseteq \{v : n(v) = n\} = U_n \setminus \bigcup_{k<n}U_k$;
+more precisely $s_\gamma^{-1}(\{q\}) = \bigcup_{n : q_n = q}\{n(\cdot) = n\}$ is a countable union of
+Borel sets, so every preimage of a subset of the countable range is Borel.
+
+For finite $\Xs = \{q_1,\dots,q_m\}$ the same construction with $\gamma = 0$ works: the sets
+$F_n := \{v : \ip{q_n}{v} = M(v)\}$ are closed (hence Borel), cover $\R^d$ since the maximum is
+attained, and $s_0(v) := q_{\min\{n : v \in F_n\}}$ is measurable for the same reason.
+\end{proof}
+
+\textbf{Lean remark.} $n(v)$ is \texttt{Nat.find} applied to the covering property; the
+measurability of a map with countable range whose fibers are measurable is
+\texttt{measurable\_to\_countable'} (\texttt{Mathlib/MeasureTheory/MeasurableSpace/Constructions.lean}),
+and \texttt{TopologicalSpace.exists\_countable\_dense} gives the dense sequence (turn the
+countable dense set into a sequence with \texttt{Set.Countable.exists\_eq\_range} after
+handling emptiness). The codomain is the subtype $\Xs$ with the Borel $\sigma$-algebra of the
+subspace topology, as in Definition~\ref{def:arm_set}. The recommendation kernel of
+Definition~\ref{def:fixed_design_algorithm} is then \texttt{Kernel.deterministic} of the
+measurable map $y \mapsto s_\gamma(\hat\theta(y))$. The paper uses an exact argmax; we use
+$\gamma = \eps/4$ and absorb the loss in the constant (Theorem~\ref{thm:upper}).
+
+\begin{lemma}[Regret is controlled by the difference process]\label{lem:regret_le_difference_process}
+\uses{def:regret}
+Let $\theta, \hat\theta \in \R^d$, $\gamma \ge 0$, and $\rec \in \Xs$ with
+$\ip{\rec}{\hat\theta} \ge \max_{x\in\Xs}\ip{x}{\hat\theta} - \gamma$. Then
+\[
+  r(\rec,\theta) \le D + \gamma,
+  \qquad
+  D := \max_{x,x'\in\Xs}\ip{x - x'}{\hat\theta - \theta} .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{def:regret}
+Let $x^\star \in \argmax_{x\in\Xs}\ip{x}{\theta}$. Then
+\[
+  r(\rec,\theta) = \ip{x^\star}{\theta} - \ip{\rec}{\theta}
+  = \ip{x^\star - \rec}{\theta - \hat\theta} + \big(\ip{x^\star}{\hat\theta} - \ip{\rec}{\hat\theta}\big) .
+\]
+The second bracket is at most $\max_x\ip{x}{\hat\theta} - \ip{\rec}{\hat\theta} \le \gamma$, and the
+first term equals $\ip{\rec - x^\star}{\hat\theta - \theta} \le D$ (take $x = \rec$, $x' = x^\star$).
+\end{proof}
+
+\begin{lemma}[Concentration of the difference process]\label{lem:difference_process_concentration}
+\uses{def:width_matrix, lem:width_symm, cor:sup_bound_symmetric}
+Let $\Sigma \in \PD$, $\Delta \sim \Normal(0,\Sigma^{-1})$, $D := \max_{x,x'\in\Xs}\ip{x-x'}{\Delta}$
+and $\sigma^2 := \max_{x\in\Xs}\norm{x}_{\Sigma^{-1}}^2$. Then $\E D = 2\,\gwidth{\Xs}{\Sigma}$, and
+for every $\delta \in (0,1)$,
+\[
+  \Prob\Big( D \le 2\,\gwidth{\Xs}{\Sigma} + 2\sigma\sqrt{2\cG\log(1/\delta)} \Big) \ge 1 - \delta .
+\]
+\end{lemma}
+
+\begin{proof}
+\uses{lem:width_symm, lem:width_matrix_wd, cor:sup_bound_symmetric, cor:sup_bound_whp, lem:sqrt_props}
+The expectation: $D = \max_x\ip{x}{\Delta} + \max_{x'}\ip{x'}{-\Delta}$ and both maxima have
+expectation $\gwidth{\Xs}{\Sigma}$ by Lemma~\ref{lem:width_symm} (the width only depends on the
+law $\Normal(0,\Sigma^{-1})$ of $\Delta$, Lemma~\ref{lem:width_matrix_wd}). The deviation bound is
+Corollary~\ref{cor:sup_bound_symmetric} applied to the centered Gaussian vector $G = \Delta$ with
+covariance $S = \Sigma^{-1}$ and index set $\Xs$: there $\sigma^2 = \sup_{x\in\Xs}x^\top Sx =
+\max_x\norm{x}_{\Sigma^{-1}}^2$, and the statement is exactly
+$\Prob(D \le \E D + 2\sigma\sqrt{2\cG\log(1/\delta)}) \ge 1-\delta$. (Equivalently, apply
+Corollary~\ref{cor:sup_bound_whp} to the compact index set $\Xs - \Xs = \{x - x' : x,x'\in\Xs\}$,
+whose variance proxy is $\max_{x,x'}\norm{x-x'}_{\Sigma^{-1}}^2 \le (2\sigma)^2$ by the triangle
+inequality for the norm $\norm{\cdot}_{\Sigma^{-1}} = \norm{\Sigma^{-1/2}\cdot}$,
+Lemma~\ref{lem:sqrt_props}(iv).)
+\end{proof}
+
+\section{The algorithm and its guarantee}
+\label{sec:upper_theorem}
+
+\begin{definition}[The fixed-design identification algorithm]\label{def:fixed_design_algorithm}
+\uses{def:arm_set, def:fixed_design, def:mixed_design, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:width}
+Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$, and set
+\[
+  T := \Big\lceil \frac{600\,\big(\gw(\Xs)^2 + d\log(2/\delta)\big)}{\eps^2} \Big\rceil .
+\]
+Then $T \ge 4d$, as required by Theorem~\ref{thm:rounding}: indeed $\log(2/\delta) > \log 2 > 0.69$
+and $\eps \le 1$, so $T \ge 600\cdot0.69\,d/\eps^2 \ge 414\,d \ge 4d$.
+The \emph{fixed-design identification algorithm} $\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$
+is the fixed-design algorithm (Definition~\ref{def:fixed_design}) with
+\begin{enumerate}
+  \item[(i)] design $x_0,\dots,x_{T-1} \in \supp\lambda_0$ given by Theorem~\ref{thm:rounding}
+        applied to the mixed design distribution $\lambda_0$ of Definition~\ref{def:mixed_design}
+        with budget $T$; its design matrix $\Sigma_T$ is positive definite
+        (Corollary~\ref{cor:fixed_design_from_distribution});
+  \item[(ii)] estimator $\hat\theta = \Sigma_T^{-1}X^\top y$ (Definition~\ref{def:least_squares});
+  \item[(iii)] recommendation $\rec := s_{\eps/4}(\hat\theta)$, with $s_{\eps/4}$ the measurable
+        $\eps/4$-approximate argmax selector of Lemma~\ref{lem:approx_argmax_selector}; the
+        recommendation kernel is the Dirac kernel at the measurable map $y \mapsto
+        s_{\eps/4}(\Sigma_T^{-1}X^\top y)$.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}[The range of $\eps$ and the constant]\label{rem:upper_eps_range}
+The definition is restricted to $\eps \in (0,1]$ (the regime of the paper), which matches
+Theorem~\ref{thm:upper} and makes the requirement $T \ge 4d$ of Theorem~\ref{thm:rounding}
+automatic. For $\eps > 1$ one can define the algorithm in the same way with
+$T := \max\big(\lceil 600(\gw(\Xs)^2 + d\log(2/\delta))/\eps^2\rceil, 4d\big)$; the proof of
+Theorem~\ref{thm:upper} goes through unchanged, since it only uses $T \ge 4d$ and
+$T \ge 600(\gw(\Xs)^2 + d\log(2/\delta))/\eps^2$. If $\Xs$ is finite, the exact selector $s_0$
+can be used in (iii); then $D \le \eps$ suffices in the proof below, and since that proof gives
+$D^2 \le 320\,(\gw(\Xs)^2 + d\log(2/\delta))/T$ on the good event, the constant $600$ can be
+reduced to $320$. The paper's constant is $360$.
+\end{remark}
+
+\begin{theorem}[Fixed-design upper bound (Theorem~1 of the paper)]\label{thm:upper}
+\uses{def:arm_set, def:fixed_design_algorithm, def:pac, def:width}
+Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$. The algorithm
+$\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$
+of Definition~\ref{def:fixed_design_algorithm} is $(\eps,\delta)$-PAC on $\Xs$, with budget
+\[
+  T = \Big\lceil \frac{600\,(\gw(\Xs)^2 + d\log(2/\delta))}{\eps^2} \Big\rceil
+  \le \frac{600\,(\gw(\Xs)^2 + d\log(2/\delta))}{\eps^2} + 1 .
+\]
+\end{theorem}
+
+\begin{proof}
+\uses{cor:fixed_design_from_distribution, lem:mixed_design_bounds, lem:least_squares_law, lem:difference_process_concentration, lem:regret_le_difference_process, lem:approx_argmax_selector, def:pac}
+Fix $\theta \in \R^d$ and write $L := \log(1/\delta) > 0$, $\gw := \gw(\Xs)$.
+
+\emph{Design quantities.} By Corollary~\ref{cor:fixed_design_from_distribution} (applied to
+$\lambda_0$, $A_0 = A(\lambda_0)$) and Lemma~\ref{lem:mixed_design_bounds}, for every $x \in \Xs$,
+\[
+  \norm{x}_{\Sigma_T^{-1}}^2 \le \frac4T\norm{x}_{A_0^{-1}}^2 \le \frac{8d}{T},
+  \qquad
+  \gwidth{\Xs}{\Sigma_T} \le \frac{2}{\sqrt T}\gwidth{\Xs}{A_0} \le \frac{2\sqrt2\,\gw}{\sqrt T} .
+\]
+Hence $\sigma_T^2 := \max_{x\in\Xs}\norm{x}_{\Sigma_T^{-1}}^2 \le 8d/T$.
+
+\emph{Concentration.} By Lemma~\ref{lem:least_squares_law}, $\Delta := \hat\theta - \theta \sim
+\Normal(0,\Sigma_T^{-1})$ under $\Prob_\theta$. Let $D := \max_{x,x'\in\Xs}\ip{x-x'}{\Delta}$, a
+measurable function of $y$. Lemma~\ref{lem:difference_process_concentration} gives an event
+$E$ with $\Prob_\theta(E) \ge 1-\delta$ on which
+\[
+  D \le 2\,\gwidth{\Xs}{\Sigma_T} + 2\sigma_T\sqrt{2\cG L}
+  \le \frac{4\sqrt2\,\gw}{\sqrt T} + 2\sqrt{\frac{8d}{T}}\sqrt{2\cG L}
+  = \frac{4\sqrt2\,\gw + 8\sqrt{\cG dL}}{\sqrt T} .
+\]
+
+\emph{Arithmetic.} Using $(a+b)^2 \le 2a^2 + 2b^2$, $(4\sqrt2)^2 = 32$, $8^2 = 64$,
+\[
+  \big(4\sqrt2\,\gw + 8\sqrt{\cG dL}\big)^2 \le 64\,\gw^2 + 128\,\cG\,dL
+  \le 64\,\gw^2 + 320\,dL \le 320\,\big(\gw^2 + d\log(2/\delta)\big),
+\]
+where $128\cG = 32\pi^2 < 32\cdot 9.87 < 320$ and $L = \log(1/\delta) \le \log(2/\delta)$.
+Since $T \ge 600(\gw^2 + d\log(2/\delta))/\eps^2$, on $E$,
+\[
+  D^2 \le \frac{320\,(\gw^2 + d\log(2/\delta))}{T} \le \frac{320}{600}\,\eps^2 = \frac{8}{15}\eps^2
+  \le \frac{9}{16}\eps^2 ,
+\]
+because $8/15 = 0.5\overline{3} \le 0.5625 = 9/16$; hence $D \le 3\eps/4$ on $E$.
+
+\emph{Regret.} The recommendation satisfies $\ip{\rec}{\hat\theta} \ge \max_x\ip{x}{\hat\theta} - \eps/4$
+(Lemma~\ref{lem:approx_argmax_selector}), so by Lemma~\ref{lem:regret_le_difference_process}
+with $\gamma = \eps/4$, on $E$: $r(\rec,\theta) \le D + \eps/4 \le 3\eps/4 + \eps/4 = \eps$.
+Thus $\Prob_\theta(r(\rec,\theta) \le \eps) \ge \Prob_\theta(E) \ge 1 - \delta$, for every $\theta$,
+which is Definition~\ref{def:pac}. The bound $\lceil u\rceil \le u + 1$ gives the budget bound.
+\end{proof}
+
+\textbf{Lean remark.} The theorem is an existence statement whose witness is built from
+non-constructive choices: $\lambda_1$ (Lemma~\ref{lem:width_attained}), $\lambda_G$
+(Theorem~\ref{thm:kiefer_wolfowitz}), the rounded design (Theorem~\ref{thm:rounding}) and the
+selector (Lemma~\ref{lem:approx_argmax_selector}); each is obtained by \texttt{Classical.choose}
+and Definition~\ref{def:fixed_design_algorithm} packages them into a
+\texttt{Learning.detAlgorithm} with a history-independent policy plus a deterministic
+recommendation kernel. The good event $E$ is defined in terms of $y$ only, so the PAC
+probability is computed under the law $\Normal(X\theta,I_T)$ of $y$
+(Lemma~\ref{lem:fixed_design_law}) and the law of $\Delta = \Sigma_T^{-1}X^\top(y - X\theta)$; no
+conditioning is needed. The constant $\cG = \pi^2/4$ enters only through the numerical
+inequality $32\pi^2 < 320$, i.e.\ $\pi^2 < 10$; the crude bound \texttt{Real.pi\_lt\_four}
+is not enough ($16 \not< 10$), but \texttt{Real.pi\_lt\_d2} ($\pi < 3.15$) gives
+$\pi^2 < 9.93 < 10$.
+
+\begin{remark}[Asymptotic form]\label{rem:upper_asymptotic}
+In the asymptotic form of the paper's Theorem~1: for every spanning action set $\Xs$, every
+$\eps \in (0,1]$ and every $\delta \in (0,1/2]$ there is a non-adaptive $(\eps,\delta)$-PAC
+algorithm with budget $O\big((d\log(1/\delta) + \gw(\Xs)^2)/\eps^2\big)$, since
+$\log(2/\delta) \le 2\log(1/\delta)$ for $\delta \le 1/2$. This asymptotic form is not meant to
+be formalized; Theorem~\ref{thm:upper} is the explicit statement.
+\end{remark}
+
+\begin{remark}[Comparison with the paper]
+The paper's algorithm and analysis (Section~2.1) are the same, with three differences: (a) the
+paper's rounding lemma (Appendix~B.1, cited from \cite{katz2020empirical,allen2021near})
+requires $T \ge 180d$ and yields $\tau(A_T) \le 2\tau(A(\lambda_0))$, whereas
+Theorem~\ref{thm:rounding} yields the Loewner bound $\Sigma_T \succeq (T/4)A_0$ for $T \ge 4d$,
+which implies the same kind of control with the factor $4$ instead of $2$; (b) the paper uses
+the Borell--TIS inequality with constant $1$ in the exponent, we have $\cG = \pi^2/4$; (c) the
+paper's recommendation is an exact maximizer. Items (a)--(c) explain the change of constant from
+$360$ to $600$. The dependence on $\eps$, $\delta$, $d$ and $\gw(\Xs)$ is unchanged.
+\end{remark}
+
+\section{The unit ball: a direct algorithm}
+\label{sec:upper_ball}
+
+\begin{lemma}[Identification on the unit ball by a basis design]\label{lem:ball_identification}
+\uses{def:pac, def:fixed_design, def:least_squares}
+Let $\Xs = \ball_d$, $\eps > 0$, $\delta \in (0,1)$, and
+\[
+  n := \Big\lceil \frac{8d + 48\log(1/\delta)}{\eps^2}\Big\rceil, \qquad T := d\,n .
+\]
+Consider the fixed design that plays each standard basis vector $e_1,\dots,e_d$ exactly $n$
+times ($x_t := e_{1 + \lfloor t/n\rfloor}$ for $t < T$), the estimator $\hat\theta \in \R^d$ whose
+$i$-th coordinate is the empirical mean of the $n$ observations made at $e_i$ (this is the
+least-squares estimator, since $\Sigma_T = nI_d$), and the recommendation
+$\rec := \hat\theta/\norm{\hat\theta}$ if $\hat\theta \ne 0$ and $\rec := e_1$ otherwise. This
+fixed-design algorithm with budget $T$ is $(\eps,\delta)$-PAC on $\ball_d$, and
+$T \le (8d^2 + 48d\log(1/\delta))/\eps^2 + d$.
+\end{lemma}
+
+\begin{proof}
+\uses{lem:least_squares_law, lem:fixed_design_law, lem:noise_representation, lem:gauss_pi, lem:gauss_law_of_cov, lem:chi_square_tail, def:regret}
+\emph{Law of the error.} $\Sigma_T = \sum_{t<T}x_tx_t^\top = n\sum_ie_ie_i^\top = nI_d \in \PD$ and
+$\Sigma_T^{-1}X^\top y$ has $i$-th coordinate $\frac1n\sum_{t : x_t = e_i}y_t$, so $\hat\theta$ is
+the least-squares estimator and Lemma~\ref{lem:least_squares_law} gives
+$\Delta := \hat\theta - \theta \sim \Normal(0, I_d/n)$; by Lemma~\ref{lem:gauss_law_of_cov},
+$\Delta \eqd g/\sqrt n$ with $g \sim \Normal(0,I_d)$, so $\norm{\Delta}^2 \eqd \norm{g}^2/n$.
+(Directly: by Lemmas~\ref{lem:fixed_design_law} and~\ref{lem:noise_representation},
+$\hat\theta_i = \theta_i + \frac1n\sum_{t : x_t = e_i}\eta_t$ with the $\eta_t$ i.i.d.\ standard
+Gaussian, and the $d$ block averages are independent $\Normal(0,1/n)$ variables,
+Lemma~\ref{lem:gauss_pi}.)
+
+\emph{Good event.} By Lemma~\ref{lem:chi_square_tail},
+$\Prob(\norm{g}^2 \ge 2d + 12\log(1/\delta)) \le \delta$. Let $E := \{\norm{\Delta}^2 <
+(2d + 12\log(1/\delta))/n\}$, so $\Prob_\theta(E) \ge 1 - \delta$. On $E$, by the choice of $n$,
+\[
+  \norm{\Delta}^2 < \frac{2d + 12\log(1/\delta)}{n}
+  \le \frac{(2d + 12\log(1/\delta))\,\eps^2}{8d + 48\log(1/\delta)} = \frac{\eps^2}{4},
+\]
+so $\norm{\Delta} \le \eps/2$.
+
+\emph{Regret on the good event.} On $\ball_d$, $\max_{x\in\ball_d}\ip{x}{\theta} = \norm{\theta}$
+(Cauchy--Schwarz, attained at $\theta/\norm\theta$ or at any point if $\theta = 0$), so
+$r(\rec,\theta) = \norm{\theta} - \ip{\rec}{\theta}$. If $\hat\theta \ne 0$:
+\[
+  \ip{\rec}{\theta} = \ip{\rec}{\hat\theta} - \ip{\rec}{\Delta} = \norm{\hat\theta} - \ip{\rec}{\Delta}
+  \ge \norm{\hat\theta} - \norm{\Delta} \ge \norm{\theta} - 2\norm{\Delta},
+\]
+using $\norm{\rec} = 1$ and $\norm{\hat\theta} \ge \norm{\theta} - \norm{\Delta}$; hence
+$r(\rec,\theta) \le 2\norm{\Delta} \le \eps$. If $\hat\theta = 0$: $\norm{\theta} = \norm{\Delta}
+\le \eps/2$ and $r(\rec,\theta) = \norm\theta - \ip{e_1}{\theta} \le 2\norm{\theta} \le \eps$.
+In both cases $r(\rec,\theta) \le \eps$ on $E$, so
+$\Prob_\theta(r(\rec,\theta) \le \eps) \ge 1-\delta$ for every $\theta$.
+
+\emph{Budget.} $T = dn \le d\big((8d + 48\log(1/\delta))/\eps^2 + 1\big)$.
+\end{proof}
+
+\begin{remark}
+Lemma~\ref{lem:ball_identification} is a special case of Theorem~\ref{thm:upper} ($\ball_d$ is
+spanning, so the theorem applies; the lemma itself uses no spanning hypothesis): since
+$\gw(\ball_d) \le d$ (Proposition~\ref{prop:width_le_d}), Theorem~\ref{thm:upper} gives a budget of
+order $(d^2 + d\log(1/\delta))/\eps^2$ on the ball, the same order as here. The direct argument is
+recorded because it needs neither the width nor the rounding machinery, only the
+$\chi^2$ tail bound, and because Chapter~\ref{chap:separation} composes it with the norm
+estimation algorithm on each block of the separation instance. The map $y \mapsto \rec$ is
+measurable as it is continuous on $\{\hat\theta \ne 0\}$ and constant on the closed set
+$\{\hat\theta = 0\}$ (\texttt{Measurable.piecewise}).
+\end{remark}
