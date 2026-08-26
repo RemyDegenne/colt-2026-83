@@ -64,7 +64,7 @@ variable [MeasurableSpace.CountablyGenerated 𝓐] [MeasurableSpace.CountablyGen
 with reward kernels `κ` and `κ'`, the Kullback–Leibler divergence between the laws of the
 histories up to time `n` is the expected sum, along the first trajectory, of the divergences of
 the reward kernels at the played actions. -/
-theorem IsAlgEnvSeq.klDiv_map_history (h : IsAlgEnvSeq X Y alg (stationaryEnv κ) P)
+lemma IsAlgEnvSeq.klDiv_map_history (h : IsAlgEnvSeq X Y alg (stationaryEnv κ) P)
     (h' : IsAlgEnvSeq X' Y' alg (stationaryEnv κ') P') (n : ℕ) :
     klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) =
       ∑ t ∈ range (n + 1), ∫⁻ ω, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P := by
@@ -115,7 +115,7 @@ lemma inner_sq_le {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (x : 𝒳) (v :
 
 /-- **Divergence decomposition for linear Gaussian environments**, under a pointwise bound
 `⟪x, θ - θ'⟫ ^ 2 ≤ C` on `𝒳`. -/
-theorem klDiv_map_history_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+lemma klDiv_map_history_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
     (h' : IsAlgEnvSeq X' Y' alg (linearGaussianEnv 𝒳 θ') P') {C : ℝ}
     (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C) (n : ℕ) :
     klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) =
@@ -134,7 +134,7 @@ theorem klDiv_map_history_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv �
   linarith [hC _ (X t ω).2]
 
 /-- **Divergence decomposition for linear Gaussian environments.** -/
-theorem klDiv_map_history (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+lemma klDiv_map_history (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
     (h' : IsAlgEnvSeq X' Y' alg (linearGaussianEnv 𝒳 θ') P') {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R)
     (n : ℕ) :
     klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) =
@@ -143,7 +143,7 @@ theorem klDiv_map_history (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P
 
 /-- The divergence between the laws of histories of length `n + 1` under two linear Gaussian
 environments is at most `(n + 1) C / 2` when `⟪x, θ - θ'⟫ ^ 2 ≤ C` on `𝒳`. -/
-theorem klDiv_map_history_le_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+lemma klDiv_map_history_le_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
     (h' : IsAlgEnvSeq X' Y' alg (linearGaussianEnv 𝒳 θ') P') {C : ℝ}
     (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C) (n : ℕ) :
     klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) ≤
@@ -164,7 +164,7 @@ theorem klDiv_map_history_le_of_sq_le (h : IsAlgEnvSeq X Y alg (linearGaussianEn
 /-- The divergence between the laws of histories of length `n + 1` under two linear Gaussian
 environments is at most `(n + 1) R ^ 2 ‖θ - θ'‖ ^ 2 / 2` when `𝒳` lies in the ball of
 radius `R`. -/
-theorem klDiv_map_history_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+lemma klDiv_map_history_le (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
     (h' : IsAlgEnvSeq X' Y' alg (linearGaussianEnv 𝒳 θ') P') {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R)
     (n : ℕ) :
     klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) ≤

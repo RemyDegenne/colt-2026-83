@@ -43,6 +43,7 @@ $\R^T$ to $\Xs$. In Sections~\ref{sec:lower_nonadaptive_bayes}
 and~\ref{sec:lower_nonadaptive_regret} we assume $T \ge 1$ and $\Sigma_T \succ 0$.
 
 \begin{definition}[Gaussian prior on the reward vector]\label{def:bayes_prior}
+\lean{COLT83.bayesParam, COLT83.bayesObs, COLT83.bayesHist, COLT83.bayesKernel, COLT83.bayesJoint, COLT83.map_bayesParam_stdGaussian, COLT83.map_bayesHist_stdGaussian}\leanok
 \uses{def:fixed_design, lem:fixed_design_law}
 Let $\tau > 0$. In the \emph{Bayesian model with parameter $\tau$}, the reward vector
 $\theta$ is a random vector with law $\pi := \Normal(0, \tau^2\Sigma_T^{-1})$, the noise
@@ -62,6 +63,18 @@ is the setting of Lemma~\ref{lem:pac_expected_regret}. We write $\E$ for
 the expectation under this joint law.
 \end{definition}
 
+\textbf{Lean remark.} In Lean the Bayesian model is built directly on a standard Gaussian pair
+$(g,\eta)$ of $\R^d\times\R^T$ (\texttt{stdGaussian}$\times$\texttt{stdGaussian}): the reward
+vector is $\theta = \tau\Sigma_T^{-1/2}g$ (\texttt{bayesParam}, whose law is
+$\Normal(0,\tau^2\Sigma_T^{-1})$ by \texttt{map\_bayesParam\_stdGaussian}), the observations are
+$y_t = \ip{x_t}{\theta} + \eta_t$ (\texttt{bayesObs}), the history is
+$((x_t,y_t))_{t<T}$ (\texttt{bayesHist}) and the recommendation is drawn from the output rule of
+the algorithm applied to that history (\texttt{bayesKernel}); the joint law of $((g,\eta),\rec)$
+is \texttt{bayesJoint}. Conditionally on $g$, the law of the history is the fixed-design law of
+Lemma~\ref{lem:fixed_design_law} with reward vector $\theta$
+(\texttt{map\_bayesHist\_stdGaussian}), which is how the PAC property enters
+(\texttt{measureReal\_lt\_simpleRegret\_bayes\_le}).
+
 \textbf{Lean remark.} A randomized recommendation rule $\rec = f(y, U)$ using an internal
 seed $U \sim \mu$ independent of $(\theta, \eta)$, as in the paper, is the same thing as the
 Markov kernel $\rho(y) := f(y,\cdot)_\#\mu$; only the kernel form is used. The Bayesian model
@@ -73,6 +86,7 @@ Lemma~\ref{lem:posterior_decomposition} needs. The law of $\theta$ is Mathlib's
 \texttt{multivariateGaussian} with mean $0$ and covariance $\tau^2\Sigma_T^{-1}$ by Lemma~\ref{lem:gauss_law_of_cov}.
 
 \begin{lemma}[Orthogonal decomposition of the reward vector]\label{lem:posterior_decomposition}
+\lean{COLT83.bayesW₁, COLT83.bayesW₂, COLT83.bayesY₁, COLT83.bayesParam_sub_smul_leastSquares, COLT83.bayesW₁_comp_adjoint_bayesY₁_add, COLT83.indepFun_bayesW_bayesY}\leanok
 \uses{def:bayes_prior}
 In the Bayesian model with parameter $\tau$, let
 \[
@@ -85,6 +99,7 @@ independent, and $W$ is integrable with $\E W = 0$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_pi, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:gauss_joint_linear, lem:gauss_uncorrelated_indep, lem:gauss_norm_moments}
 Since $\Sigma_T^{-1}X^\top X = I_d$,
 \[
@@ -124,6 +139,7 @@ $\mathrm{Cov}(W,y) = \tau^2\Sigma_T^{-1}X^\top - c(1+\tau^2)\Sigma_T^{-1}X^\top 
 \end{proof}
 
 \begin{lemma}[Bayes identity for the value of the recommendation]\label{lem:bayes_regret_identity}
+\lean{COLT83.integral_inner_bayesParamClm_bayesJoint, COLT83.integral_inner_bayesW_bayesJoint}\leanok
 \uses{def:bayes_prior, lem:posterior_decomposition}
 In the Bayesian model with parameter $\tau$ and with $c = \tau^2/(1+\tau^2)$, the random
 variables $\ip{\rec}{\theta}$ and $\ip{\rec}{\Sigma_T^{-1}X^\top y}$ are integrable and
@@ -133,6 +149,7 @@ variables $\ip{\rec}{\theta}$ and $\ip{\rec}{\Sigma_T^{-1}X^\top y}$ are integra
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:posterior_decomposition, lem:indep_integral_zero, lem:gauss_norm_moments}
 Let $R := \sup_{x\in\Xs}\norm{x} < \infty$ ($\Xs$ is compact). Integrability:
 $\abs{\ip{\rec}{\theta}} \le R\norm{\theta}$ and
@@ -163,6 +180,7 @@ this chapter.
 \label{sec:lower_nonadaptive_regret}
 
 \begin{lemma}[Bayesian lower bound on the expected simple regret]\label{lem:bayes_regret_lower}
+\lean{COLT83.le_integral_simpleRegret_bayesJoint, COLT83.integral_inner_bayesLSclm_le, COLT83.integral_supportFn_bayesParam, COLT83.integral_supportFn_toEuclideanLin_lsMatrix}\leanok
 \uses{def:bayes_prior, def:regret, def:width_matrix}
 In the Bayesian model with parameter $\tau > 0$, for every recommendation kernel $\rho$,
 $r(\rec,\theta)$ is integrable and
@@ -172,6 +190,7 @@ $r(\rec,\theta)$ is integrable and
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:bayes_regret_identity, lem:width_matrix_wd, lem:gauss_linear_image, lem:gauss_law_of_cov}
 Write $w_T := \gwidth{\Xs}{\Sigma_T}$ and $c := \tau^2/(1+\tau^2)$.
 \begin{enumerate}
@@ -210,6 +229,7 @@ Write $w_T := \gwidth{\Xs}{\Sigma_T}$ and $c := \tau^2/(1+\tau^2)$.
 \end{proof}
 
 \begin{lemma}[Optimized constant]\label{lem:bayes_regret_lower_opt}
+\lean{COLT83.bayesC_identity}\leanok
 \uses{lem:bayes_regret_lower}
 With $\tau := \sqrt2 - 1$, for every recommendation kernel $\rho$,
 \[
@@ -219,6 +239,7 @@ With $\tau := \sqrt2 - 1$, for every recommendation kernel $\rho$,
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:bayes_regret_lower}
 For $\tau = \sqrt2 - 1$: $\tau^2 = 3 - 2\sqrt2$, so $1 + \tau^2 = 4 - 2\sqrt2 = 2(2-\sqrt2)$,
 and $1 - \tau = 2 - \sqrt2$. Hence
@@ -226,6 +247,9 @@ $\frac{\tau(1-\tau)}{1+\tau^2} = \frac{(\sqrt2-1)(2-\sqrt2)}{2(2-\sqrt2)} = \fra
 Finally $1.414^2 = 1.999396 \le 2$ gives $\sqrt2 \ge 1.414$ and
 $(\sqrt2-1)/2 \ge 0.207$. Apply Lemma~\ref{lem:bayes_regret_lower} (the width is
 nonnegative by Lemma~\ref{lem:width_matrix_wd}).
+(In Lean only the algebraic identity $\tau - c(\tau+1) = (\sqrt2-1)/2$ is isolated,
+\texttt{bayesC\_identity}; the numerical bound $0.207$ is used inline in the proof of
+Theorem~\ref{thm:lower_nonadaptive}.)
 \end{proof}
 
 \begin{remark}[Choice of $\tau$]\label{rem:lower_nonadaptive_tau}
@@ -238,6 +262,7 @@ this is the maximizer, as stated in the paper. Only the value at $\sqrt2 - 1$ is
 \label{sec:lower_nonadaptive_singular}
 
 \begin{lemma}[Singular designs fail]\label{lem:singular_design_fails}
+\lean{COLT83.exists_singular_instances, COLT83.exists_ne_zero_inner_eq_zero_of_not_posDef, COLT83.diffSup_pos_of_inner_eq_zero, COLT83.simpleRegret_smul_add_simpleRegret_neg_smul}\leanok
 \uses{def:arm_set, def:fixed_design, lem:fixed_design_law, def:regret}
 Let $\Xs$ be spanning and let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design of length $T \ge 0$
 (Definition~\ref{def:fixed_design}) whose design matrix $\Sigma_T = \sum_{t<T}x_tx_t^\top$ is
@@ -256,6 +281,7 @@ algorithm is not $(\eps,\delta)$-PAC for any $\delta < 1/2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:fixed_design_law, def:arm_set}
 \emph{Step 1: a direction invisible to the design but not to $\Xs$.} We claim there is
 $v \in \R^d$ such that $\ip{x_t}{v} = 0$ for all $t < T$ and $x \mapsto \ip{x}{v}$ is not
@@ -317,6 +343,7 @@ $(\eps,\delta)$-PAC on $\Xs$, then
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:singular_design_fails, def:bayes_prior, def:fixed_design, lem:fixed_design_law, lem:pac_expected_regret, lem:width_symm, lem:width_matrix_wd, lem:gauss_linear_image, lem:bayes_regret_lower_opt, lem:width_empirical}
 \emph{Step 1: $\Sigma_T$ is positive definite.} Otherwise Lemma~\ref{lem:singular_design_fails}
 (with $T \ge 1$ and $\Xs$ spanning) gives $\theta$ with $\Prob_\theta(r(\rec,\theta) > \eps) \ge 1/2 > \delta$,

@@ -8,6 +8,7 @@ module
 public import COLT83.LeanMachineLearning.LinearBandit
 public import COLT83.MXJ2026.Multitask
 public import COLT83.MXJ2026.WidthUpper
+public import COLT83.MXJ2026.WidthLower
 public import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
@@ -65,7 +66,13 @@ theorem gw_le_sqrt_log_ncard (𝒳 : Set (EuclideanSpace ℝ ι)) (hfin : 𝒳.F
 theorem sqrt_log_le_gw (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
     (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 4 ≤ Fintype.card ι) :
     √(Fintype.card ι * log (Fintype.card ι / 2 : ℕ)) / 8 ≤ gw 𝒳 := by
-  sorry
+  have : Nonempty ι := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨R, hR⟩ : ∃ R, ∀ x ∈ 𝒳, ‖x‖ ≤ R := by
+    obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
+    exact ⟨r, fun x hx ↦ mem_closedBall_zero_iff.1 (hr hx)⟩
+  refine le_gw (exists_posDef_mem_designSet hspan) fun A hA hA' ↦ ?_
+  obtain ⟨w, hw, rfl, -⟩ := exists_isDesign_of_mem_designSet hA
+  exact sqrt_log_le_gwMat hw hA' hne hR hd
 
 /-- Block sizes of the multi-task set of Theorem 5: `m - 1` blocks of size `2` and one block of
 size `m ^ 2`. -/

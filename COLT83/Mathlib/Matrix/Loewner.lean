@@ -41,7 +41,7 @@ section det
 variable {R n : Type*} [CommRing R] [Fintype n] [DecidableEq n]
 
 /-- The **matrix determinant lemma** for a rank-one update `A + u vᵀ`. -/
-theorem det_add_vecMulVec {A : Matrix n n R} (hA : IsUnit A.det) (u v : n → R) :
+lemma det_add_vecMulVec {A : Matrix n n R} (hA : IsUnit A.det) (u v : n → R) :
     (A + vecMulVec u v).det = A.det * (1 + v ⬝ᵥ A⁻¹ *ᵥ u) := by
   have h : A + vecMulVec u v = A * (1 + vecMulVec (A⁻¹ *ᵥ u) v) := by
     rw [Matrix.mul_add, Matrix.mul_one, mul_vecMulVec, mulVec_mulVec, mul_nonsing_inv A hA,
@@ -50,7 +50,7 @@ theorem det_add_vecMulVec {A : Matrix n n R} (hA : IsUnit A.det) (u v : n → R)
 
 /-- The **Sherman–Morrison formula**: the inverse of a rank-one update `A + u vᵀ` of an
 invertible matrix `A` with `1 + vᵀ A⁻¹ u ≠ 0`. -/
-theorem inv_add_vecMulVec {K : Type*} [Field K] {A : Matrix n n K} (hA : IsUnit A.det)
+lemma inv_add_vecMulVec {K : Type*} [Field K] {A : Matrix n n K} (hA : IsUnit A.det)
     (u v : n → K) (h : 1 + v ⬝ᵥ A⁻¹ *ᵥ u ≠ 0) :
     (A + vecMulVec u v)⁻¹ =
       A⁻¹ - (1 + v ⬝ᵥ A⁻¹ *ᵥ u)⁻¹ • vecMulVec (A⁻¹ *ᵥ u) (v ᵥ* A⁻¹) := by
@@ -69,7 +69,7 @@ theorem inv_add_vecMulVec {K : Type*} [Field K] {A : Matrix n n K} (hA : IsUnit 
 
 /-- The trace form of the Sherman–Morrison formula for a symmetric update `A + u uᵀ` of an
 invertible symmetric matrix `A`. -/
-theorem trace_inv_add_vecMulVec_self {K : Type*} [Field K] {A : Matrix n n K} (hA : IsUnit A.det)
+lemma trace_inv_add_vecMulVec_self {K : Type*} [Field K] {A : Matrix n n K} (hA : IsUnit A.det)
     (hAt : Aᵀ = A) (u : n → K) (h : 1 + u ⬝ᵥ A⁻¹ *ᵥ u ≠ 0) :
     (A + vecMulVec u u)⁻¹.trace = A⁻¹.trace - (u ⬝ᵥ (A⁻¹ * A⁻¹) *ᵥ u) / (1 + u ⬝ᵥ A⁻¹ *ᵥ u) := by
   have key : (A⁻¹ *ᵥ u) ⬝ᵥ (u ᵥ* A⁻¹) = u ⬝ᵥ (A⁻¹ * A⁻¹) *ᵥ u := by
@@ -219,5 +219,16 @@ lemma inner_toEuclideanCLM_sqrt_sqrt_inv (hA : A.PosDef) (u v : EuclideanSpace �
     dotProduct_comm]
 
 end euclidean
+
+section convex
+
+variable {n : Type*}
+
+/-- The cone of positive semidefinite matrices is convex. -/
+lemma convex_posSemidef : Convex ℝ {A : Matrix n n ℝ | A.PosSemidef} := by
+  intro A hA B hB a b ha hb _
+  exact (hA.smul ha).add (hB.smul hb)
+
+end convex
 
 end Matrix

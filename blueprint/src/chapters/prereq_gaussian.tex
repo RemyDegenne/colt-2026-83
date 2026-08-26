@@ -246,7 +246,19 @@ a $\Normal(0,I_{2d})$ vector is Lemma~\ref{lem:gauss_pi}(ii) applied blockwise, 
 Lemma~\ref{lem:gauss_uncorrelated_indep}.
 \end{proof}
 
+\textbf{Lean remark.} In the Lean development the pair of Gaussian vectors of
+Lemmas~\ref{lem:gauss_joint_linear} and~\ref{lem:gauss_uncorrelated_indep} is always of the
+form $(A_1g + A_2\eta,\ B_1g + B_2\eta)$ for a standard Gaussian pair $(g,\eta)$ of
+$\R^{d}\times\R^{T}$ (\texttt{isGaussian\_prod\_stdGaussian}: the product of two standard
+Gaussian measures is a Gaussian measure on the product space) and continuous linear maps
+$A_i, B_i$; the cross-covariance is then
+$\operatorname{Cov}(\ip{a}{A_1g+A_2\eta}, \ip{b}{B_1g+B_2\eta}) = \ip{a}{(A_1B_1^* + A_2B_2^*)b}$
+(\texttt{covariance\_inner\_add\_prod\_stdGaussian}), and the independence criterion becomes
+$A_1B_1^* + A_2B_2^* = 0$
+(\texttt{indepFun\_add\_prod\_stdGaussian\_of\_comp\_adjoint\_eq\_zero}).
+
 \begin{lemma}[Joint law of two linear images]\label{lem:gauss_joint_linear}
+\lean{ProbabilityTheory.isGaussian_prod_stdGaussian, ProbabilityTheory.covariance_inner_add_prod_stdGaussian, ProbabilityTheory.stdGaussian_map_blocks}\leanok
 \uses{def:pg_gaussian_vector}
 Let $V \sim \Normal(\mu,S)$ in $\R^n$ and $L_1 \in \R^{m_1\times n}$, $L_2 \in \R^{m_2\times n}$.
 Then $(L_1 V, L_2 V)$ is a Gaussian vector in $\R^{m_1}\times\R^{m_2}$ with
@@ -259,6 +271,7 @@ $\operatorname{Cov}(L_1V, L_2V) := \E[(L_1V - L_1\mu)(L_2V - L_2\mu)^\top] = L_1
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pg_gaussian_vector, lem:gauss_linear_image}
 $(L_1V, L_2V) = LV$ with $L := \binom{L_1}{L_2} \in \R^{(m_1+m_2)\times n}$;
 Lemma~\ref{lem:gauss_linear_image} gives $LV \sim \Normal(L\mu, LSL^\top)$ and
@@ -266,6 +279,7 @@ $LSL^\top$ is the displayed block matrix. The cross covariance is its off-diagon
 \end{proof}
 
 \begin{lemma}[Uncorrelated jointly Gaussian vectors are independent]\label{lem:gauss_uncorrelated_indep}
+\lean{ProbabilityTheory.indepFun_add_prod_stdGaussian_of_comp_adjoint_eq_zero}\leanok
 \uses{def:pg_gaussian_vector}
 Let $(V_1, V_2)$ be a Gaussian vector in $\R^{m_1}\times\R^{m_2}$ (i.e.\ the pair is jointly
 Gaussian) such that $\operatorname{Cov}(V_1, V_2) = 0$, i.e.\
@@ -274,6 +288,7 @@ $V_2$ are independent.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pg_gaussian_vector}
 Mathlib: \texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval} (coordinates) or
 \texttt{HasGaussianLaw.indepFun\_of\_covariance\_inner} (all $\operatorname{Cov}(\ip{s}{V_1},
@@ -282,6 +297,7 @@ Mathlib: \texttt{HasGaussianLaw.indepFun\_of\_covariance\_eval} (coordinates) or
 
 \begin{lemma}[Expectation of an inner product with an independent centered vector]
 \label{lem:indep_integral_zero}
+\lean{ProbabilityTheory.IndepFun.integral_inner_comp_eq_zero, ProbabilityTheory.integrable_inner_comp}\leanok
 Let $W : \Omega \to \R^d$ be integrable with $\E W = 0$, let $V : \Omega \to \mathcal V$ be a
 random variable with values in a measurable space, independent of $W$, and let
 $f : \mathcal V \to \R^d$ be bounded and measurable. Then $\ip{f(V)}{W}$ is integrable and
@@ -289,6 +305,9 @@ $\E\ip{f(V)}{W} = 0$.
 \end{lemma}
 
 \begin{proof}
+\leanok
+(The Lean proof is basis-free: the law of $(V, W)$ is the product of the marginals, so by
+Fubini $\E\ip{f(V)}{W} = \int\ip{f(v)}{\E W}\,\Prob_V(dv) = 0$.)
 $\ip{f(V)}{W} = \sum_{i<d} f_i(V)\,W_i$. For each $i$, $f_i(V)$ is bounded and measurable and
 $W_i$ is integrable, so their product is integrable; $f_i(V)$ and $W_i$ are independent
 (compositions of independent variables with measurable maps, Mathlib \texttt{IndepFun.comp}),

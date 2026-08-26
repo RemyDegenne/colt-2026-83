@@ -12,6 +12,7 @@ public import Mathlib.Probability.Kernel.Composition.MeasureComp
 public import Mathlib.Probability.Kernel.Composition.RadonNikodym
 public import Mathlib.Probability.Kernel.MeasurableLIntegral
 public import Mathlib.Probability.Kernel.RadonNikodym
+public import COLT83.Mathlib.Probability.CondDistrib
 
 /-!
 # The Kullback–Leibler divergence of composition-products, in integrated form
@@ -109,7 +110,7 @@ lemma klDiv_compProd_right_eq_lintegral (μ : Measure α) [IsFiniteMeasure μ] (
 
 /-- **Chain rule** for the Kullback–Leibler divergence, in integrated form:
 `klDiv (μ ⊗ₘ κ) (ν ⊗ₘ η) = klDiv μ ν + ∫⁻ a, klDiv (κ a) (η a) ∂μ`. -/
-theorem klDiv_compProd_eq_add_lintegral (μ ν : Measure α) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+lemma klDiv_compProd_eq_add_lintegral (μ ν : Measure α) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (κ η : Kernel α β) [IsMarkovKernel κ] [IsMarkovKernel η] :
     klDiv (μ ⊗ₘ κ) (ν ⊗ₘ η) = klDiv μ ν + ∫⁻ a, klDiv (κ a) (η a) ∂μ := by
   rw [klDiv_compProd_eq_add, klDiv_compProd_right_eq_lintegral]
@@ -143,15 +144,6 @@ end kernel
 section step
 
 variable [MeasurableSpace.CountableOrCountablyGenerated β γ]
-
-omit [MeasurableSpace.CountableOrCountablyGenerated β γ] in
-/-- `(π ⊗ₖ prodMkLeft α κ) a = π a ⊗ₘ κ`. -/
-lemma _root_.ProbabilityTheory.Kernel.compProd_prodMkLeft_apply (π : Kernel α β) [IsSFiniteKernel π]
-    (κ : Kernel β γ) [IsSFiniteKernel κ] (a : α) :
-    (π ⊗ₖ Kernel.prodMkLeft α κ) a = π a ⊗ₘ κ := by
-  ext s hs
-  rw [Kernel.compProd_apply hs, Measure.compProd_apply hs]
-  simp [Kernel.prodMkLeft_apply]
 
 /-- The divergence of one step of a policy/reward decomposition: the policy `π` is shared and the
 reward kernels `κ`, `η` (which ignore the history) differ, so the divergence is the expected

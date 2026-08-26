@@ -48,31 +48,6 @@ lemma transpose_designRows_mulVec (x : Fin T → EuclideanSpace ℝ ι) (y : Fin
   simp [Matrix.mulVec, dotProduct, designRows, WithLp.ofLp_sum, WithLp.ofLp_smul,
     Finset.sum_apply, mul_comm]
 
-omit [Fintype ι] [DecidableEq ι] in
-lemma transpose_sum_outerSelf (x : Fin T → EuclideanSpace ℝ ι) :
-    (∑ t, outerSelf (x t))ᵀ = ∑ t, outerSelf (x t) := by
-  simp [Matrix.transpose_sum, outerSelf_eq_vecMulVec, Matrix.transpose_vecMulVec]
-
-/-- The action of `x xᵀ` on `θ` is `⟪x, θ⟫ • x`. -/
-lemma toEuclideanCLM_outerSelf_apply (x θ : EuclideanSpace ℝ ι) :
-    Matrix.toEuclideanCLM (𝕜 := ℝ) (outerSelf x) θ = ⟪x, θ⟫ • x := by
-  apply WithLp.ofLp_injective
-  ext i
-  simp [Matrix.ofLp_toEuclideanCLM, outerSelf_eq_vecMulVec, Matrix.vecMulVec_mulVec,
-    EuclideanSpace.inner_eq_star_dotProduct, dotProduct, mul_comm]
-
-lemma toEuclideanCLM_sum_outerSelf_apply (x : Fin T → EuclideanSpace ℝ ι)
-    (θ : EuclideanSpace ℝ ι) :
-    Matrix.toEuclideanCLM (𝕜 := ℝ) (∑ t, outerSelf (x t)) θ = ∑ t, ⟪x t, θ⟫ • x t := by
-  simp [map_sum, toEuclideanCLM_outerSelf_apply]
-
-lemma toEuclideanCLM_inv_apply_toEuclideanCLM {S : Matrix ι ι ℝ} (hS : S.PosDef)
-    (θ : EuclideanSpace ℝ ι) :
-    Matrix.toEuclideanCLM (𝕜 := ℝ) S⁻¹ (Matrix.toEuclideanCLM (𝕜 := ℝ) S θ) = θ := by
-  rw [← mul_apply_eq_comp, ← map_mul,
-    Matrix.nonsing_inv_mul _ ((Matrix.isUnit_iff_isUnit_det _).1 hS.isUnit), map_one,
-    one_apply_eq_self]
-
 /-- The least-squares estimator `Σ⁻¹ ∑ t, y t • x t` of the fixed design `x` with observations
 `y` (blueprint `def:least_squares`). -/
 noncomputable def leastSquares (x : Fin T → EuclideanSpace ℝ ι) (y : Fin T → ℝ) :
@@ -83,11 +58,6 @@ noncomputable def leastSquares (x : Fin T → EuclideanSpace ℝ ι) (y : Fin T 
 noncomputable def lsMatrix (x : Fin T → EuclideanSpace ℝ ι) : Matrix ι (Fin T) ℝ :=
   (∑ t, outerSelf (x t))⁻¹ * (designRows x)ᵀ
 
-omit [Fintype ι] [DecidableEq ι] in
-lemma ofLp_toEuclideanLin {κ : Type*} [Fintype κ] [DecidableEq κ] (M : Matrix ι κ ℝ)
-    (v : EuclideanSpace ℝ κ) :
-    WithLp.ofLp (Matrix.toEuclideanLin M v) = M *ᵥ WithLp.ofLp v := rfl
-
 lemma leastSquares_eq_toEuclideanLin (x : Fin T → EuclideanSpace ℝ ι) (y : Fin T → ℝ) :
     leastSquares x y = Matrix.toEuclideanLin (lsMatrix x) (WithLp.toLp 2 y) := by
   apply WithLp.ofLp_injective
@@ -96,13 +66,13 @@ lemma leastSquares_eq_toEuclideanLin (x : Fin T → EuclideanSpace ℝ ι) (y : 
 
 /-- If the observations are `y t = ⟪x t, θ⟫ + η t`, the least-squares estimate is
 `θ + Σ⁻¹ Xᵀ η`. -/
-theorem leastSquares_inner_add (x : Fin T → EuclideanSpace ℝ ι)
+lemma leastSquares_inner_add (x : Fin T → EuclideanSpace ℝ ι)
     (hS : (∑ t, outerSelf (x t)).PosDef) (θ : EuclideanSpace ℝ ι) (η : Fin T → ℝ) :
     leastSquares x (fun t ↦ ⟪x t, θ⟫ + η t) =
       θ + Matrix.toEuclideanLin (lsMatrix x) (WithLp.toLp 2 η) := by
   rw [← leastSquares_eq_toEuclideanLin, leastSquares, leastSquares]
   simp_rw [add_smul, Finset.sum_add_distrib, map_add, ← toEuclideanCLM_sum_outerSelf_apply,
-    toEuclideanCLM_inv_apply_toEuclideanCLM hS]
+    Matrix.toEuclideanCLM_inv_apply_toEuclideanCLM hS]
 
 /-- `(Σ⁻¹ Xᵀ) (Σ⁻¹ Xᵀ)ᵀ = Σ⁻¹`. -/
 lemma lsMatrix_mul_transpose (x : Fin T → EuclideanSpace ℝ ι)
@@ -117,18 +87,11 @@ lemma lsMatrix_mul_transpose (x : Fin T → EuclideanSpace ℝ ι)
     _ = (∑ t, outerSelf (x t))⁻¹ := by
         rw [transpose_designRows_mul_designRows, Matrix.nonsing_inv_mul _ hdet, Matrix.one_mul]
 
-/-- Translating a centered multivariate Gaussian by `μ` gives `N(μ, S)`. -/
-lemma multivariateGaussian_zero_map_const_add (μ : EuclideanSpace ℝ ι) (S : Matrix ι ι ℝ) :
-    (multivariateGaussian 0 S).map (fun v ↦ μ + v) = multivariateGaussian μ S := by
-  rw [multivariateGaussian, multivariateGaussian, Measure.map_map (measurable_const_add μ)
-    (by fun_prop)]
-  simp [Function.comp_def]
-
 /-- **Law of the least-squares estimator** (blueprint `lem:least_squares_law`): under the
 fixed-design run of `x` in the linear Gaussian environment with reward vector `θ`, if the design
 matrix `Σ = ∑ t < T, x t x tᵀ` is positive definite then the least-squares estimator of the first
 `T` observations has the law `N(θ, Σ⁻¹)`. -/
-theorem hasLaw_leastSquares_of_fixedDesign {𝒳 : Set (EuclideanSpace ℝ ι)}
+lemma hasLaw_leastSquares_of_fixedDesign {𝒳 : Set (EuclideanSpace ℝ ι)}
     {θ : EuclideanSpace ℝ ι} {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω}
     [IsProbabilityMeasure P] {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {x : ℕ → 𝒳}
     (h : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ)

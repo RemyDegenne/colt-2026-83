@@ -60,18 +60,18 @@ lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec (n : ℕ) :
 
 /-- **The noise of a linear Gaussian run is i.i.d. `N(0, 1)`**, for any algorithm: the noise
 vector of the rounds `0, …, n - 1` has the product law. -/
-theorem _root_.Learning.IsAlgEnvSeq.hasLaw_noise_finVec (n : ℕ) :
+lemma _root_.Learning.IsAlgEnvSeq.hasLaw_noise_finVec (n : ℕ) :
     HasLaw (fun ω (i : Fin n) ↦ noise θ X Y i ω) (Measure.pi fun _ ↦ gaussianReal 0 1) P :=
   hasLaw_pi_of_hasCondDistrib_const (h.hasLaw_noise 0) h.hasCondDistrib_noise_finVec n
 
 /-- The noises of the rounds `0, …, n - 1` are independent. -/
-theorem _root_.Learning.IsAlgEnvSeq.iIndepFun_noise (n : ℕ) :
+lemma _root_.Learning.IsAlgEnvSeq.iIndepFun_noise (n : ℕ) :
     iIndepFun (fun i : Fin n ↦ noise θ X Y i) P :=
   iIndepFun_of_hasCondDistrib_const (h.hasLaw_noise 0) h.hasCondDistrib_noise_finVec n
 
 /-- The noise vector of the rounds `0, …, n - 1`, as a vector of `EuclideanSpace ℝ (Fin n)`, is
 standard Gaussian. -/
-theorem _root_.Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec (n : ℕ) :
+lemma _root_.Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec (n : ℕ) :
     HasLaw (fun ω ↦ WithLp.toLp 2 (fun i : Fin n ↦ noise θ X Y i ω))
       (stdGaussian (EuclideanSpace ℝ (Fin n))) P := by
   rw [← map_pi_eq_stdGaussian]
@@ -105,7 +105,7 @@ lemma _root_.Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign :
 /-- **Law of the observations under a fixed design** (blueprint `lem:fixed_design_law`): the
 observation vector of the rounds `0, …, n - 1` is `(⟪x t, θ⟫)_t` plus an `N(0, 1)^n` noise
 vector. -/
-theorem _root_.Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign (n : ℕ) :
+lemma _root_.Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign (n : ℕ) :
     HasLaw (fun ω (i : Fin n) ↦ Y i ω)
       ((Measure.pi fun _ : Fin n ↦ gaussianReal 0 1).map
         (fun η (i : Fin n) ↦ ⟪(x i : E), θ⟫ + η i)) P := by

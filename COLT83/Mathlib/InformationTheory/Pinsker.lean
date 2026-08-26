@@ -271,7 +271,7 @@ theorem pinsker_measureReal [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
 
 /-- **Pinsker's inequality** for a single event, real form:
 `|μ A - ν A| ≤ √(KL(μ ‖ ν) / 2)`. -/
-theorem abs_sub_le_sqrt_klDiv [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+lemma abs_sub_le_sqrt_klDiv [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (hA : MeasurableSet A) (h : klDiv μ ν ≠ ∞) :
     |μ.real A - ν.real A| ≤ √((klDiv μ ν).toReal / 2) := by
   have := pinsker_measureReal (μ := μ) (ν := ν) hA

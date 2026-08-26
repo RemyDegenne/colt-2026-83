@@ -205,7 +205,7 @@ variable {E 𝓞 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [Meas
 /-- For two runs of a fixed-budget algorithm with budget `T` in the linear Gaussian environments
 with reward vectors `θ` and `θ'`, with `⟪x, θ - θ'⟫ ^ 2 ≤ C` on the action set, the divergence
 between the laws of the outputs is at most `T C / 2`. -/
-theorem IsRun.klDiv_map_out_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
+lemma IsRun.klDiv_map_out_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤ ENNReal.ofReal (T * (C / 2)) := by
@@ -222,7 +222,7 @@ theorem IsRun.klDiv_map_out_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ
 /-- For two runs of a fixed-budget algorithm with budget `T` in the linear Gaussian environments
 with reward vectors `θ` and `θ'` on an action set contained in the ball of radius `R`, the
 divergence between the laws of the outputs is at most `T R ^ 2 ‖θ - θ'‖ ^ 2 / 2`. -/
-theorem IsRun.klDiv_map_out_le (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (hA : A.IsFixedBudget T)
+lemma IsRun.klDiv_map_out_le (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (hA : A.IsFixedBudget T)
     (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤ ENNReal.ofReal (T * (R ^ 2 * ‖θ - θ'‖ ^ 2 / 2)) :=
@@ -231,7 +231,7 @@ theorem IsRun.klDiv_map_out_le (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (hA : A.IsFi
 /-- **Bretagnolle–Huber for the outputs of a fixed-budget algorithm**: in the setting of
 `IsRun.klDiv_map_out_le_of_sq_le`, for every measurable set `B` of outputs,
 `P (out ∈ B) + P' (out' ∉ B) ≥ (1/2) exp (-T C / 2)`. -/
-theorem IsRun.exp_neg_le_measureReal_add_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
+lemma IsRun.exp_neg_le_measureReal_add_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
     (1 / 2) * Real.exp (-(T * (C / 2))) ≤ P.real (out ⁻¹' B) + P'.real (out' ⁻¹' Bᶜ) := by

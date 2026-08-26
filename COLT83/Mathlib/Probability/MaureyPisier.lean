@@ -12,6 +12,7 @@ public import Mathlib.Analysis.Convex.Integral
 public import Mathlib.MeasureTheory.Integral.Prod
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Probability.Moments.SubGaussian
+public import COLT83.Mathlib.Analysis.Calculus.QuarterCircle
 
 /-!
 # Gaussian concentration for smooth Lipschitz functions (Maurey–Pisier)
@@ -49,104 +50,11 @@ section gradient
 
 variable {f : E → ℝ} {L : ℝ≥0}
 
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- A differentiable function with `‖∇f‖ ≤ L` is `L`-Lipschitz. -/
-lemma lipschitzWith_of_norm_gradient_le (hf : Differentiable ℝ f)
-    (hL : ∀ x, ‖gradient f x‖ ≤ L) : LipschitzWith L f := by
-  refine lipschitzWith_of_nnnorm_fderiv_le hf fun x ↦ ?_
-  rw [← toDual_gradient, LinearIsometryEquiv.nnnorm_map]
-  exact_mod_cast hL x
-
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- A differentiable function with `‖∇f‖ ≤ L` has linear growth. -/
-lemma abs_le_of_norm_gradient_le (hf : Differentiable ℝ f) (hL : ∀ x, ‖gradient f x‖ ≤ L)
-    (x : E) : |f x| ≤ |f 0| + L * ‖x‖ := by
-  have h := (lipschitzWith_of_norm_gradient_le hf hL).dist_le_mul x 0
-  rw [Real.dist_eq, dist_zero_right] at h
-  calc |f x| = |f x - f 0 + f 0| := by ring_nf
-    _ ≤ |f x - f 0| + |f 0| := abs_add_le _ _
-    _ ≤ L * ‖x‖ + |f 0| := by linarith
-    _ = |f 0| + L * ‖x‖ := by ring
-
-omit [MeasurableSpace E] [BorelSpace E] in
-lemma abs_inner_gradient_le (hL : ∀ x, ‖gradient f x‖ ≤ L) (x v : E) :
-    |⟪gradient f x, v⟫| ≤ L * ‖v‖ :=
-  (abs_real_inner_le_norm _ _).trans (mul_le_mul_of_nonneg_right (hL x) (norm_nonneg _))
-
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- The gradient of a `C¹` function is continuous. -/
-lemma ContDiff.continuous_gradient (hf : ContDiff ℝ 1 f) : Continuous (gradient f) := by
-  have h : gradient f = (toDual ℝ E).symm ∘ fderiv ℝ f := by
-    funext x
-    rw [Function.comp_apply, ← toDual_gradient, LinearIsometryEquiv.symm_apply_apply]
-  rw [h]
-  exact (toDual ℝ E).symm.continuous.comp (hf.continuous_fderiv one_ne_zero)
-
-/-- A `C¹` function with bounded gradient is integrable under a Gaussian measure, with all its
-exponential moments. -/
-lemma IsGaussian.integrable_exp_of_norm_gradient_le {μ : Measure E} [IsGaussian μ]
-    (hf : ContDiff ℝ 1 f) (hL : ∀ x, ‖gradient f x‖ ≤ L) (t : ℝ) :
-    Integrable (fun x ↦ exp (t * f x)) μ :=
-  IsGaussian.integrable_exp_of_abs_le_add_mul_norm hf.continuous.aestronglyMeasurable
-    (abs_le_of_norm_gradient_le (hf.differentiable one_ne_zero) hL) t
-
-lemma IsGaussian.integrable_of_norm_gradient_le {μ : Measure E} [IsGaussian μ]
-    (hf : ContDiff ℝ 1 f) (hL : ∀ x, ‖gradient f x‖ ≤ L) : Integrable f μ :=
-  IsGaussian.integrable_of_abs_le_add_mul_norm hf.continuous.aestronglyMeasurable
-    (abs_le_of_norm_gradient_le (hf.differentiable one_ne_zero) hL)
-
 end gradient
 
 section interpolation
 
 variable {f : E → ℝ}
-
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- The derivative of `θ ↦ f (sin θ • u + cos θ • v)`. -/
-lemma hasDerivAt_comp_quarterCircle (hf : Differentiable ℝ f) (u v : E) (θ : ℝ) :
-    HasDerivAt (fun θ ↦ f (sin θ • u + cos θ • v))
-      ⟪gradient f (sin θ • u + cos θ • v), cos θ • u - sin θ • v⟫ θ := by
-  have hγ : HasDerivAt (fun θ ↦ sin θ • u + cos θ • v) (cos θ • u + (-sin θ) • v) θ :=
-    ((hasDerivAt_sin θ).smul_const u).add ((hasDerivAt_cos θ).smul_const v)
-  have h := (hasGradientAt_iff_hasFDerivAt.1 (hf _).hasGradientAt).comp_hasDerivAt θ hγ
-  exact h.congr_deriv (by rw [toDual_apply_apply, sub_eq_add_neg, neg_smul])
-
-omit [MeasurableSpace E] [BorelSpace E] in
-/-- **Interpolation along a quarter circle**:
-`f u - f v = ∫₀^{π/2} ⟪∇f (sin θ • u + cos θ • v), cos θ • u - sin θ • v⟫ dθ`. -/
-lemma sub_eq_integral_quarterCircle (hf : ContDiff ℝ 1 f) (u v : E) :
-    f u - f v =
-      ∫ θ in (0 : ℝ)..(π / 2), ⟪gradient f (sin θ • u + cos θ • v), cos θ • u - sin θ • v⟫ := by
-  have hcont : Continuous fun θ : ℝ ↦
-      ⟪gradient f (sin θ • u + cos θ • v), cos θ • u - sin θ • v⟫ :=
-    (hf.continuous_gradient.comp (by fun_prop)).inner (by fun_prop)
-  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt
-    (fun θ _ ↦ hasDerivAt_comp_quarterCircle (hf.differentiable one_ne_zero) u v θ)
-    (hcont.intervalIntegrable _ _)]
-  simp
-
-/-- **Jensen's inequality for the uniform measure on `[0, π/2]`**: for a continuous `h`,
-`exp (s ∫₀^{π/2} h) ≤ (2/π) ∫₀^{π/2} exp (π s / 2 · h θ) dθ`. -/
-lemma exp_mul_integral_le_integral_exp {h : ℝ → ℝ} (hc : Continuous h) (s : ℝ) :
-    exp (s * ∫ θ in (0 : ℝ)..(π / 2), h θ) ≤
-      2 / π * ∫ θ in (0 : ℝ)..(π / 2), exp (π * s / 2 * h θ) := by
-  have hπ : 0 < π / 2 := by positivity
-  set ν : Measure ℝ := volume.restrict (Ioc 0 (π / 2)) with hν
-  have hν_univ : ν.real univ = π / 2 := by
-    rw [hν, measureReal_restrict_apply_univ, measureReal_def, Real.volume_Ioc, sub_zero,
-      ENNReal.toReal_ofReal hπ.le]
-  have : NeZero ν := ⟨fun h0 ↦ by simp [h0] at hν_univ; linarith⟩
-  have hint : ∀ g : ℝ → ℝ, Continuous g → Integrable g ν := fun g hg ↦
-    hg.integrableOn_Icc.mono_set Ioc_subset_Icc_self
-  have hJ := ConvexOn.map_average_le (μ := ν) (f := fun θ ↦ π * s / 2 * h θ) convexOn_exp
-    continuous_exp.continuousOn isClosed_univ (Filter.Eventually.of_forall fun _ ↦ mem_univ _)
-    (hint _ (by fun_prop)) (hint _ (by fun_prop))
-  rw [average_eq, average_eq, hν_univ, smul_eq_mul, smul_eq_mul, integral_const_mul] at hJ
-  rw [intervalIntegral.integral_of_le hπ.le, intervalIntegral.integral_of_le hπ.le]
-  have h1 : (π / 2)⁻¹ * (π * s / 2 * ∫ θ, h θ ∂ν) = s * ∫ θ, h θ ∂ν := by
-    field_simp
-  rw [h1, inv_div] at hJ
-  exact hJ
 
 end interpolation
 

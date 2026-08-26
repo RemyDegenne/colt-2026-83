@@ -7,6 +7,7 @@ module
 
 public import COLT83.LeanMachineLearning.FixedBudget
 public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
+public import COLT83.Mathlib.Probability.CondDistrib
 
 /-!
 # Transport and existence of runs of identification algorithms
@@ -38,18 +39,6 @@ section transport
 
 variable {𝓧 𝓩 : Type*} {m𝓧 : MeasurableSpace 𝓧} {m𝓩 : MeasurableSpace 𝓩}
 
-omit [IsProbabilityMeasure P] [IsProbabilityMeasure P'] in
-/-- A conditional distribution is transported along a map `g` carrying `P` to `P'`. -/
-lemma _root_.ProbabilityTheory.HasCondDistrib.comp_hasLaw {X : Ω' → 𝓧} {Z : Ω' → 𝓩}
-    {κ : Kernel 𝓧 𝓩} (h : HasCondDistrib Z X κ P') (hg : HasLaw g P' P) :
-    HasCondDistrib (Z ∘ g) (X ∘ g) κ P := by
-  have h' : HasLaw ((fun ω ↦ (X ω, Z ω)) ∘ g) (P'.map X ⊗ₘ κ) P := HasLaw.comp h hg
-  have hX : P'.map X = P.map (X ∘ g) := by
-    rw [← hg.map_eq, AEMeasurable.map_map_of_aemeasurable (hg.map_eq ▸ h.aemeasurable_fst)
-      hg.aemeasurable]
-  rw [hX] at h'
-  exact h'
-
 variable {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨} {X : ℕ → Ω' → 𝓐} {Y : ℕ → Ω' → 𝓨}
 
 /-- An algorithm-environment sequence is transported along a measurable map `g` carrying `P`
@@ -78,28 +67,6 @@ section existence
 
 variable {α β γ : Type*} {mα : MeasurableSpace α} {mβ : MeasurableSpace β}
   {mγ : MeasurableSpace γ}
-
-/-- Under `μ ⊗ₘ η.comap f`, the second coordinate has conditional law `η` given `f` of the
-first coordinate, when `η` is a probability measure at every point of the range of `f`. -/
-lemma _root_.ProbabilityTheory.hasCondDistrib_snd_compProd_comap (μ : Measure α) [SFinite μ]
-    (η : Kernel β γ) [IsSFiniteKernel η] {f : α → β} (hf : Measurable f)
-    (hη : ∀ a, IsProbabilityMeasure (η (f a))) :
-    HasCondDistrib Prod.snd (fun p : α × γ ↦ f p.1) η (μ ⊗ₘ η.comap f hf) := by
-  have hκ : IsMarkovKernel (η.comap f hf) := ⟨fun a ↦ by rw [Kernel.comap_apply]; exact hη a⟩
-  have hfst : (μ ⊗ₘ η.comap f hf).map (fun p : α × γ ↦ f p.1) = μ.map f := by
-    calc (μ ⊗ₘ η.comap f hf).map (fun p : α × γ ↦ f p.1)
-        = ((μ ⊗ₘ η.comap f hf).map Prod.fst).map f := (Measure.map_map hf measurable_fst).symm
-      _ = μ.map f := by
-        rw [show (μ ⊗ₘ η.comap f hf).map Prod.fst = (μ ⊗ₘ η.comap f hf).fst from rfl,
-          Measure.fst_compProd]
-  refine ⟨by fun_prop, ?_⟩
-  rw [hfst]
-  ext s hs
-  rw [Measure.map_apply (by fun_prop) hs, Measure.compProd_apply (hs.preimage (by fun_prop)),
-    Measure.compProd_apply hs, lintegral_map (Kernel.measurable_kernel_prodMk_left hs) hf]
-  refine lintegral_congr fun a ↦ ?_
-  rw [Kernel.comap_apply]
-  rfl
 
 end existence
 
@@ -135,7 +102,7 @@ variable {A T}
 /-- A fixed-budget identification algorithm has a run in every environment: the canonical run on
 `fixedBudgetRunMeasure` (the instance `IsMarkovKernel (A.output T)` is
 `IsFixedBudget.isMarkovKernel_output`). -/
-theorem IsFixedBudget.isRun_fixedBudgetRunMeasure (hA : A.IsFixedBudget T)
+lemma IsFixedBudget.isRun_fixedBudgetRunMeasure (hA : A.IsFixedBudget T)
     [IsMarkovKernel (A.output T)] :
     A.IsRun env (fun n ω ↦ IT.action n ω.1) (fun n ω ↦ IT.feedback n ω.1) Prod.snd
       (A.fixedBudgetRunMeasure env T) := by

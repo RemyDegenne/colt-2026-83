@@ -9,6 +9,7 @@ public import COLT83.Mathlib.Analysis.Calculus.LocalExtr
 public import COLT83.Mathlib.Matrix.Loewner
 public import COLT83.MXJ2026.DesignSet
 public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+public import COLT83.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
 
 /-!
 # Design distributions and the Kiefer–Wolfowitz theorem
@@ -114,23 +115,6 @@ lemma IsDesign.mapDomain (hw : IsDesign 𝒳 w) (f : EuclideanSpace ℝ ι → E
 
 variable [Fintype ι]
 
-/-- `xᵀ M x = tr (M x xᵀ)`. -/
-lemma dotProduct_mulVec_eq_trace_mul_outerSelf (M : Matrix ι ι ℝ) (x : EuclideanSpace ℝ ι) :
-    WithLp.ofLp x ⬝ᵥ M *ᵥ WithLp.ofLp x = (M * outerSelf x).trace := by
-  rw [outerSelf, Matrix.mul_vecMulVec, Matrix.trace_vecMulVec, dotProduct_comm]
-
-lemma continuous_dotProduct_mulVec (M : Matrix ι ι ℝ) :
-    Continuous fun x : EuclideanSpace ℝ ι ↦ WithLp.ofLp x ⬝ᵥ M *ᵥ WithLp.ofLp x :=
-  (PiLp.continuous_ofLp _ _).dotProduct
-    (continuous_const.matrix_mulVec (PiLp.continuous_ofLp _ _))
-
-lemma bddAbove_range_dotProduct_mulVec (h𝒳 : IsCompact 𝒳) (M : Matrix ι ι ℝ) :
-    BddAbove (Set.range fun x : 𝒳 ↦
-      WithLp.ofLp (x : EuclideanSpace ℝ ι) ⬝ᵥ M *ᵥ WithLp.ofLp (x : EuclideanSpace ℝ ι)) := by
-  refine (h𝒳.image (continuous_dotProduct_mulVec M)).bddAbove.mono ?_
-  rintro _ ⟨x, rfl⟩
-  exact ⟨x, x.2, rfl⟩
-
 /-- Carathéodory's theorem for design matrices: every design matrix in `designSet 𝒳` is the
 design matrix of a design distribution on `𝒳` supported on at most `card ι ^ 2 + 1` points. -/
 lemma exists_isDesign_of_mem_designSet (hA : A ∈ designSet 𝒳) :
@@ -208,7 +192,7 @@ noncomputable def gValue (𝒳 : Set (EuclideanSpace ℝ ι)) (A : Matrix ι ι 
 
 lemma dotProduct_inv_mulVec_le_gValue (h𝒳 : IsCompact 𝒳) (hx : x ∈ 𝒳) :
     WithLp.ofLp x ⬝ᵥ A⁻¹ *ᵥ WithLp.ofLp x ≤ gValue 𝒳 A :=
-  le_ciSup (bddAbove_range_dotProduct_mulVec h𝒳 A⁻¹) ⟨x, hx⟩
+  le_ciSup (Matrix.bddAbove_range_dotProduct_mulVec h𝒳 A⁻¹) ⟨x, hx⟩
 
 lemma gValue_le (hne : 𝒳.Nonempty) {c : ℝ}
     (h : ∀ x ∈ 𝒳, WithLp.ofLp x ⬝ᵥ A⁻¹ *ᵥ WithLp.ofLp x ≤ c) : gValue 𝒳 A ≤ c := by
@@ -262,25 +246,6 @@ lemma posDef_of_isMaxOn_det [Nonempty ι] (hspan : Submodule.span ℝ 𝒳 = ⊤
   obtain ⟨A', hA', hA'pd⟩ := exists_posDef_mem_designSet hspan
   have : 0 < A.det := hA'pd.det_pos.trans_le (hmax hA')
   exact (posSemidef_of_mem_designSet hA).posDef_iff_det_ne_zero.mpr this.ne'
-
-/-- The determinant of the mixture `(1 - t) A + t x xᵀ` of an invertible matrix `A` with a
-rank-one matrix, by the matrix determinant lemma. -/
-lemma det_smul_add_smul_outerSelf (hA : IsUnit A.det) {t : ℝ} (ht : t ≠ 1)
-    (x : EuclideanSpace ℝ ι) :
-    ((1 - t) • A + t • outerSelf x).det =
-      (1 - t) ^ Fintype.card ι * A.det *
-        (1 + t / (1 - t) * (WithLp.ofLp x ⬝ᵥ A⁻¹ *ᵥ WithLp.ofLp x)) := by
-  have hs : 1 - t ≠ 0 := sub_ne_zero.2 (Ne.symm ht)
-  have hsA : IsUnit ((1 - t) • A).det := by
-    rw [Matrix.det_smul]
-    exact (isUnit_iff_ne_zero.2 (pow_ne_zero _ hs)).mul hA
-  have h_inv : ((1 - t) • A)⁻¹ = (1 - t)⁻¹ • A⁻¹ := by
-    refine Matrix.inv_eq_left_inv ?_
-    rw [smul_mul_smul_comm, Matrix.nonsing_inv_mul A hA, inv_mul_cancel₀ hs, one_smul]
-  rw [outerSelf, ← Matrix.smul_vecMulVec, Matrix.det_add_vecMulVec hsA, Matrix.det_smul, h_inv,
-    Matrix.smul_mulVec, Matrix.mulVec_smul, dotProduct_smul, dotProduct_smul, smul_eq_mul,
-    smul_eq_mul, div_eq_mul_inv]
-  ring
 
 end dOptimal
 
@@ -402,7 +367,7 @@ lemma isUnit_normalizeMat (hA : A.PosDef) : IsUnit (normalizeMat A) := by
 /-- The normalized action set of a `G`-optimal design spans the space. -/
 lemma IsGOptimalDesign.span_image_normalizeMat_eq_top (hspan : Submodule.span ℝ 𝒳 = ⊤) :
     Submodule.span ℝ (Matrix.toEuclideanCLM (𝕜 := ℝ) (normalizeMat (designMatrix w)) '' 𝒳) = ⊤ :=
-  span_image_toEuclideanCLM_eq_top (isUnit_normalizeMat hw.posDef) hspan
+  Matrix.span_image_toEuclideanCLM_eq_top (isUnit_normalizeMat hw.posDef) hspan
 
 /-- The normalized arms `(card ι)^{-1/2} √(A⁻¹) x`, `x ∈ 𝒳`, of a `G`-optimal design have norm
 at most `1`. -/

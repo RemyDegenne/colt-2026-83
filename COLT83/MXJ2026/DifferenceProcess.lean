@@ -36,7 +36,7 @@ lemma simpleRegret_eq_supportFn_sub (θ x : E) :
 (blueprint `lem:regret_le_difference_process`): if `x ∈ 𝒳` is a `γ`-approximate maximizer of
 `⟪·, θ'⟫` on the bounded set `𝒳`, then
 `r(x, θ) ≤ sup_{y ∈ 𝒳} ⟪y, θ - θ'⟫ + sup_{y ∈ 𝒳} ⟪y, θ' - θ⟫ + γ`. -/
-theorem simpleRegret_le_supportFn_add_supportFn (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R)
+lemma simpleRegret_le_supportFn_add_supportFn (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R)
     {θ θ' x : E} (hx : x ∈ 𝒳) {γ : ℝ} (hrec : supportFn 𝒳 θ' - γ ≤ ⟪x, θ'⟫) :
     simpleRegret 𝒳 θ x ≤ supportFn 𝒳 (θ - θ') + supportFn 𝒳 (θ' - θ) + γ := by
   have h1 : supportFn 𝒳 θ ≤ supportFn 𝒳 (θ - θ') + supportFn 𝒳 θ' := by
@@ -92,7 +92,7 @@ lemma integral_diffSup_multivariateGaussian (hne : 𝒳.Nonempty) (hR : ∀ x �
 /-- **Concentration of the difference process** (blueprint `lem:difference_process_concentration`):
 for `Δ ~ N(0, Σ⁻¹)` with `xᵀ Σ⁻¹ x ≤ σ²` on the compact set `𝒳`, `D(Δ)` exceeds
 `2 gwMat 𝒳 Σ + 2 σ √(2 c_G log(1/δ))` with probability at most `δ`. -/
-theorem measureReal_diffSup_gt_le (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty) {A : Matrix ι ι ℝ}
+lemma measureReal_diffSup_gt_le (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty) {A : Matrix ι ι ℝ}
     (hA : A.PosDef) {σ : ℝ≥0} (hσ0 : 0 < σ)
     (hσ : ∀ x ∈ 𝒳, WithLp.ofLp x ⬝ᵥ A⁻¹ *ᵥ WithLp.ofLp x ≤ σ ^ 2) {δ : ℝ} (hδ : δ ∈ Set.Ioo 0 1) :
     (multivariateGaussian 0 A⁻¹).real

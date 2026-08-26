@@ -7,6 +7,7 @@ module
 
 public import COLT83.MXJ2026.DesignSet
 public import Mathlib.Analysis.Matrix.Order
+public import COLT83.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 
 /-!
 # The intrinsic width through a Gaussian vector supported on the span
@@ -76,24 +77,6 @@ lemma intrinsicGw_eq_gw_image (𝒳 : Set (EuclideanSpace ℝ ι)) :
       Submodule.coe_inner]
 
 omit [DecidableEq ι] in
-/-- Expansion of `x ∈ span ℝ 𝒳` in the standard orthonormal basis of the span. -/
-lemma sum_inner_stdOrthonormalBasis_smul {x : EuclideanSpace ℝ ι} (hx : x ∈ Submodule.span ℝ 𝒳) :
-    ∑ k, ⟪((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)) k : EuclideanSpace ℝ ι), x⟫ •
-      ((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)) k : EuclideanSpace ℝ ι) = x := by
-  have h := congrArg Subtype.val ((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)).sum_repr' ⟨x, hx⟩)
-  simpa only [Submodule.coe_sum, Submodule.coe_smul, Submodule.coe_inner] using h
-
-omit [DecidableEq ι] in
-/-- Parseval-type identity: for `x ∈ span ℝ 𝒳` and any `y`, `∑ k, ⟪B k, x⟫ ⟪B k, y⟫ = ⟪x, y⟫`. -/
-lemma sum_inner_stdOrthonormalBasis_mul_inner {x : EuclideanSpace ℝ ι}
-    (hx : x ∈ Submodule.span ℝ 𝒳) (y : EuclideanSpace ℝ ι) :
-    ∑ k, ⟪((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)) k : EuclideanSpace ℝ ι), x⟫ *
-      ⟪((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)) k : EuclideanSpace ℝ ι), y⟫ = ⟪x, y⟫ := by
-  conv_rhs => rw [← sum_inner_stdOrthonormalBasis_smul hx]
-  rw [sum_inner]
-  simp_rw [real_inner_smul_left]
-
-omit [DecidableEq ι] in
 lemma transpose_mul_spanBasisMatrix (𝒳 : Set (EuclideanSpace ℝ ι)) :
     (spanBasisMatrix 𝒳)ᵀ * spanBasisMatrix 𝒳 = 1 := by
   ext k l
@@ -110,20 +93,13 @@ lemma spanBasisMatrix_mulVec_transpose_mulVec {v : EuclideanSpace ℝ ι}
     spanBasisMatrix 𝒳 *ᵥ ((spanBasisMatrix 𝒳)ᵀ *ᵥ WithLp.ofLp v) = WithLp.ofLp v := by
   ext i
   have h := congrArg (fun z : EuclideanSpace ℝ ι ↦ z.ofLp i)
-    (sum_inner_stdOrthonormalBasis_smul hv)
+    ((stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)).sum_inner_coe_smul_coe hv)
   simp only [WithLp.ofLp_sum, WithLp.ofLp_smul, Finset.sum_apply, Pi.smul_apply,
     smul_eq_mul] at h
   rw [← h]
   change ∑ k, spanBasisMatrix 𝒳 i k * ((spanBasisMatrix 𝒳)ᵀ *ᵥ WithLp.ofLp v) k = _
   simp_rw [transpose_spanBasisMatrix_mulVec_apply]
   exact Finset.sum_congr rfl fun k _ ↦ mul_comm _ _
-
-/-- `(N x)(N x)ᵀ = N (x xᵀ) Nᵀ` for a rectangular matrix `N`. -/
-lemma outerSelf_toEuclideanLin {κ : Type*} (N : Matrix κ ι ℝ)
-    (x : EuclideanSpace ℝ ι) :
-    outerSelf (Matrix.toEuclideanLin N x) = N * outerSelf x * Nᵀ := by
-  rw [outerSelf, outerSelf, Matrix.mul_vecMulVec, Matrix.vecMulVec_mul, Matrix.vecMul_transpose]
-  rfl
 
 /-- **Intrinsic width through a Gaussian vector on the span.** Let `Σ ∈ designSet 𝒳` and let
 `S` be a positive semidefinite matrix whose range is contained in `V = span ℝ 𝒳` and such that
@@ -189,7 +165,8 @@ lemma intrinsicGw_le_gaussianWidth (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, �
     refine Set.image_congr fun x hx ↦ ?_
     rw [EuclideanSpace.inner_eq_star_dotProduct (L x) (L y), star_trivial]
     simp only [dotProduct, hL, hM, toEuclideanLin_transpose_spanBasisMatrix_apply]
-    rw [← sum_inner_stdOrthonormalBasis_mul_inner (Submodule.subset_span hx) y]
+    rw [← (stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)).sum_inner_coe_mul_inner_coe
+      (Submodule.subset_span hx) y]
     exact Finset.sum_congr rfl fun k _ ↦ mul_comm _ _
   -- conclusion
   rw [intrinsicGw_eq_gw_image]

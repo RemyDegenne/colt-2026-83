@@ -79,17 +79,11 @@ lemma output_fixedDesignIdentAlg :
     simp [Kernel.deterministic_apply]
   · exact absurd rfl h
 
-/-- `N(μ, S)` shifted by `-μ` is `N(0, S)`. -/
-lemma multivariateGaussian_map_sub_const (μ : EuclideanSpace ℝ ι) (S : Matrix ι ι ℝ) :
-    (multivariateGaussian μ S).map (fun v ↦ v - μ) = multivariateGaussian 0 S := by
-  rw [← multivariateGaussian_zero_map_const_add μ S, Measure.map_map (by fun_prop) (by fun_prop)]
-  simp [Function.comp_def]
-
 /-- **Fixed-design upper bound** (blueprint `thm:upper`, general form): the fixed-design
 algorithm with design `x`, design matrix `Σ = ∑ t < T, x t x tᵀ ≻ 0`, `xᵀ Σ⁻¹ x ≤ σ²` on `𝒳`, an
 `ε/4`-approximate argmax selector `s`, and `2 gwMat 𝒳 Σ + 2 σ √(2 c_G log(1/δ)) ≤ 3 ε / 4`, is
 `(ε, δ)`-PAC on `𝒳`. -/
-theorem isPAC_fixedDesignIdentAlg (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
+lemma isPAC_fixedDesignIdentAlg (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
     (hS : (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)).PosDef) {σ : ℝ≥0} (hσ0 : 0 < σ)
     (hσ : ∀ y ∈ 𝒳, WithLp.ofLp y ⬝ᵥ (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι))⁻¹ *ᵥ
       WithLp.ofLp y ≤ σ ^ 2)

@@ -201,6 +201,7 @@ is the universe of the canonical run; runs are transported along measurable maps
 space by \texttt{IsRun.comp\_hasLaw}.
 
 \begin{lemma}[Expected regret of a PAC algorithm under a prior]\label{lem:pac_expected_regret}
+\lean{ProbabilityTheory.integral_le_add_mul_integral_of_measureReal_le, ProbabilityTheory.integral_compProd_prod_eq_integral_compProd_comap, ProbabilityTheory.integral_fst_fst_compProd_prod}\leanok
 \uses{def:pac}
 Let $\mathsf{Alg}$ be $(\eps,\delta)$-PAC with budget $T$ and let $\pi$ be a probability
 measure on $\R^d$ such that $\int Z(\theta)\,\pi(d\theta) < \infty$. Let $\kappa$ be a Markov
@@ -213,6 +214,7 @@ $\theta$''), and let $(\theta, \hist_T, \rec) \sim \pi \otimes \kappa$. Then
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:regret}
 Pathwise, $r \le \eps + Z(\theta)\indic\{r > \eps\}$. Taking expectations under
 $\pi \otimes \kappa$ (Fubini for the composition-product, Mathlib
@@ -220,7 +222,14 @@ $\pi \otimes \kappa$ (Fubini for the composition-product, Mathlib
 $\E[Z(\theta)\indic\{r>\eps\}] = \int Z(\theta)\,\kappa(\theta)(r > \eps)\,\pi(d\theta)
 = \int Z(\theta)\,\Prob_\theta(r > \eps)\,\pi(d\theta) \le \delta \int Z\,d\pi$.
 
-\textbf{Lean remark.} The kernel $\kappa$ is a hypothesis, not a construction: measurability of
+\textbf{Lean remark.} In Lean the lemma is stated for a prior $\pi$ on a parameter space
+$\Theta$, an auxiliary ``noise'' probability space $B$ and a Markov kernel
+$\kappa : \Theta\times B \to O$, i.e.\ for the joint law $(\pi\otimes\nu)\otimes\kappa$ of
+$((\theta, b), o)$; the PAC hypothesis is that for every $\theta$ the failure probability under
+$\nu\otimes\kappa(\theta,\cdot)$ is at most $\delta$, and it also requires $\eps \ge 0$ (the
+statement is false for $\eps < 0$). In the application $\Theta$ carries the standard Gaussian
+$g$ generating $\theta$, $B$ the noise $\eta$, and $\kappa$ is the recommendation kernel applied
+to the history. The kernel $\kappa$ is a hypothesis, not a construction: measurability of
 $\theta \mapsto \Prob_\theta$ for LML trajectory measures is not available off the shelf. Both
 uses of the lemma supply $\kappa$ explicitly: for a fixed design
 $\kappa(\theta) = \Normal(X\theta, I_T) \otimes \rho$ (Lemma~\ref{lem:fixed_design_law}), and

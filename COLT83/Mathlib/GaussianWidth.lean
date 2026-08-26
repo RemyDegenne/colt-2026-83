@@ -41,7 +41,7 @@ the usual Gaussian width (or mean width) of `K`.
 
 open MeasureTheory Set
 
-open scoped RealInnerProductSpace Pointwise
+open scoped RealInnerProductSpace Pointwise NNReal
 
 section SupportFn
 
@@ -182,6 +182,21 @@ lemma exists_supportFn_eq_inner (hK : IsCompact K) (hne : K.Nonempty) (ξ : E) :
   obtain ⟨R, hR⟩ := hK.isBounded.exists_norm_le
   exact ⟨x, hx, le_antisymm (supportFn_le hne fun y hy ↦ hmax hy) (inner_le_supportFn hR hx ξ)⟩
 
+section finite
+
+variable {ι : Type*} [Finite ι] [Nonempty ι] {y : ι → E} {σ : ℝ≥0}
+
+lemma abs_ciSup_inner_le (hσ : ∀ i, ‖y i‖ ≤ σ) (v : E) :
+    |⨆ i, ⟪y i, v⟫| ≤ σ * ‖v‖ := by
+  have hb : ∀ i, |⟪y i, v⟫| ≤ σ * ‖v‖ := fun i ↦
+    (abs_real_inner_le_norm _ _).trans (mul_le_mul_of_nonneg_right (hσ i) (norm_nonneg _))
+  refine abs_le.2 ⟨?_, ciSup_le fun i ↦ (le_abs_self _).trans (hb i)⟩
+  obtain ⟨i⟩ := ‹Nonempty ι›
+  exact (neg_le.2 ((neg_le_abs _).trans (hb i))).trans
+    (le_ciSup (Finite.bddAbove_range fun i ↦ ⟪y i, v⟫) i)
+
+end finite
+
 end SupportFn
 
 namespace ProbabilityTheory
@@ -190,6 +205,14 @@ section GaussianWidth
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {mE : MeasurableSpace E}
   [OpensMeasurableSpace E] {μ ν : Measure E} {K K' : Set E} {R : ℝ}
+
+lemma measurable_ciSup_inner {ι : Type*} [Finite ι] (y : ι → E) :
+    Measurable fun v : E ↦ ⨆ i, ⟪y i, v⟫ :=
+  Measurable.iSup fun _ ↦ (continuous_const.inner continuous_id).measurable
+
+lemma measurable_ciSup_apply {κ : Type*} [Finite κ] :
+    Measurable fun x : EuclideanSpace ℝ κ ↦ ⨆ k, x k :=
+  Measurable.iSup fun k ↦ (PiLp.proj (𝕜 := ℝ) 2 (fun _ : κ ↦ ℝ) k).continuous.measurable
 
 /-- Gaussian width of the set `K` with respect to the measure `μ`:
 `∫ ξ, sup_{x ∈ K} ⟪x, ξ⟫ ∂μ`. -/

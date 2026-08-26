@@ -88,7 +88,7 @@ variable [DecidableEq ι]
 
 /-- **Bounds for the mixed design, `G`-optimality part** (blueprint `lem:mixed_design_bounds`):
 if `w₂` is `G`-optimal, `xᵀ A₀⁻¹ x ≤ 2 d` on `𝒳` for the mixed design matrix `A₀`. -/
-theorem IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le (hw₂ : IsGOptimalDesign 𝒳 w₂)
+lemma IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le (hw₂ : IsGOptimalDesign 𝒳 w₂)
     (h₁ : (designMatrix w₁).PosSemidef) {x : EuclideanSpace ℝ ι} (hx : x ∈ 𝒳) :
     WithLp.ofLp x ⬝ᵥ (designMatrix (mixDesign w₁ w₂))⁻¹ *ᵥ WithLp.ofLp x ≤ 2 * Fintype.card ι := by
   have h := hw₂.posDef.dotProduct_inv_mulVec_le_of_smul_le (by norm_num : (0 : ℝ) < 1 / 2)
@@ -99,7 +99,7 @@ theorem IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le (hw₂ : IsGOp
 
 /-- **Bounds for the mixed design, width part** (blueprint `lem:mixed_design_bounds`):
 `gwMat 𝒳 A₀ ≤ √2 gwMat 𝒳 A(w₁)` for the mixed design matrix `A₀`. -/
-theorem gwMat_designMatrix_mixDesign_le (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
+lemma gwMat_designMatrix_mixDesign_le (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
     (h₁ : (designMatrix w₁).PosDef) (h₂ : (designMatrix w₂).PosSemidef) :
     gwMat 𝒳 (designMatrix (mixDesign w₁ w₂)) ≤ √2 * gwMat 𝒳 (designMatrix w₁) := by
   obtain ⟨R, hR⟩ : ∃ R, ∀ x ∈ 𝒳, ‖x‖ ≤ R := by

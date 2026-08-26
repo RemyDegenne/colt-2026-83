@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+public import COLT83.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
 
 /-!
 # Transformations of multivariate Gaussian measures
@@ -49,19 +50,6 @@ lemma charFun_map_clm (μ : Measure E) (L : E →L[ℝ] F) (t : F) :
   simp_rw [ContinuousLinearMap.adjoint_inner_right]
 
 end charFun
-
-section matrix
-
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-/-- The adjoint of the continuous linear map associated to a real matrix `M` is the map
-associated to `Mᵀ`. -/
-lemma adjoint_toEuclideanCLM (M : Matrix ι ι ℝ) :
-    ContinuousLinearMap.adjoint (toEuclideanCLM (𝕜 := ℝ) M) = toEuclideanCLM (𝕜 := ℝ) Mᵀ := by
-  rw [← ContinuousLinearMap.star_eq_adjoint, ← map_star, star_eq_conjTranspose,
-    conjTranspose_eq_transpose_of_trivial]
-
-end matrix
 
 section multivariateGaussian
 
@@ -170,6 +158,25 @@ lemma multivariateGaussian_zero_map_neg (hS : S.PosSemidef) :
   simpa using multivariateGaussian_map_neg (μ := 0) hS
 
 end multivariateGaussian
+
+section translation
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- Translating a centered multivariate Gaussian by `μ` gives `N(μ, S)`. -/
+lemma multivariateGaussian_zero_map_const_add (μ : EuclideanSpace ℝ ι) (S : Matrix ι ι ℝ) :
+    (multivariateGaussian 0 S).map (fun v ↦ μ + v) = multivariateGaussian μ S := by
+  rw [multivariateGaussian, multivariateGaussian, Measure.map_map (measurable_const_add μ)
+    (by fun_prop)]
+  simp [Function.comp_def]
+
+/-- `N(μ, S)` shifted by `-μ` is `N(0, S)`. -/
+lemma multivariateGaussian_map_sub_const (μ : EuclideanSpace ℝ ι) (S : Matrix ι ι ℝ) :
+    (multivariateGaussian μ S).map (fun v ↦ v - μ) = multivariateGaussian 0 S := by
+  rw [← multivariateGaussian_zero_map_const_add μ S, Measure.map_map (by fun_prop) (by fun_prop)]
+  simp [Function.comp_def]
+
+end translation
 
 section Moments
 

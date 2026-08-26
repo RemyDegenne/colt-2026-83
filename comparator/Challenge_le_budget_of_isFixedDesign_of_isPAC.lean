@@ -11,9 +11,56 @@ import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Mathlib.Analysis.Convex.Hull
+import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.Convex.Hull
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import Mathlib.Probability.Independence.Basic
+import Mathlib.MeasureTheory.Function.L2Space
+import Mathlib.Probability.Kernel.Composition.IntegralCompProd
+import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Basic
+import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Independence
+import Mathlib.Probability.Moments.CovarianceBilin
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Analysis.Matrix.PosDef
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
+import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.Comp
+import Mathlib.InformationTheory.KullbackLeibler.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.MeasureTheory.Integral.MeanInequalities
+import Mathlib.InformationTheory.KullbackLeibler.ChainRule
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
+import Mathlib.Probability.Kernel.Composition.RadonNikodym
+import Mathlib.Probability.Kernel.MeasurableLIntegral
+import Mathlib.Probability.Kernel.RadonNikodym
 import Mathlib.Analysis.InnerProductSpace.PiL2
 
 /-! # Standalone extraction for `COLT83.le_budget_of_isFixedDesign_of_isPAC`
@@ -308,7 +355,7 @@ end
 -- ═══ Mathlib.GaussianWidth ═══
 section
 open MeasureTheory Set
-open scoped RealInnerProductSpace Pointwise
+open scoped RealInnerProductSpace Pointwise NNReal
 section SupportFn
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
@@ -329,16 +376,28 @@ end GaussianWidth
 end ProbabilityTheory
 end
 
+-- ═══ MXJ2026.OuterSelf ═══
+section
+open Matrix
+open scoped RealInnerProductSpace
+namespace COLT83
+variable {ι : Type*}
+
+/-- The design matrix `x xᵀ` of a point `x`. -/
+def outerSelf (x : EuclideanSpace ℝ ι) : Matrix ι ι ℝ :=
+  Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x)
+
+variable [Fintype ι]
+variable [DecidableEq ι]
+end COLT83
+end
+
 -- ═══ MXJ2026.Width ═══
 section
 open MeasureTheory ProbabilityTheory Real
 open scoped RealInnerProductSpace MatrixOrder Pointwise Matrix
 namespace COLT83
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-/-- The design matrix `x xᵀ` of a point `x`. -/
-def outerSelf (x : EuclideanSpace ℝ ι) : Matrix ι ι ℝ :=
-  Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x)
 
 /-- The set of design matrices of `𝒳`: the convex hull of `{x xᵀ : x ∈ 𝒳}`, that is the set of
 matrices `∑ λ_x x xᵀ` for `λ` a finitely supported probability distribution on `𝒳`. -/

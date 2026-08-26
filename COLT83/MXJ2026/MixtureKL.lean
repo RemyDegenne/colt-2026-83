@@ -137,12 +137,12 @@ noncomputable def mixtureHistLaw (w : EuclideanSpace ℝ ι →₀ ℝ) (ε : �
 
 lemma IsDesign.isProbabilityMeasure_mixtureHistLaw (hw : IsDesign 𝒳 w) (ε : ℝ) :
     IsProbabilityMeasure (mixtureHistLaw alg N w ε) :=
-  isProbabilityMeasure_finsetSum_smul hw.sum_designWeight
+  MeasureTheory.isProbabilityMeasure_finsetSum_smul hw.sum_designWeight
 
 /-- **Divergence to the mixture** (blueprint `lem:mixture_kl`): for every algorithm and horizon
 `N`, the divergence from the law of the history under `θ = 0` to the mixture of the laws under
 the alternatives is at most `(N + 1) · 9 ε² / (2 d)`. -/
-theorem IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
+lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
     (hw : IsGOptimalDesign 𝒳 w)
     {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) :
     klDiv (histLaw alg N 0) (mixtureHistLaw alg N w ε) ≤
@@ -208,7 +208,7 @@ theorem IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
 Bretagnolle–Huber form): for every algorithm, horizon `N` and measurable set `E` of histories,
 if `P₀(E) ≤ α` and `P_{θ⁽ˣ⁾}(Eᶜ) ≤ β` for every support point `x`, then
 `½ exp (-(N + 1) 9 ε² / (2 d)) ≤ α + β`. -/
-theorem IsGOptimalDesign.exp_neg_le_of_mixture [Nonempty ι] (hw : IsGOptimalDesign 𝒳 w) {R : ℝ}
+lemma IsGOptimalDesign.exp_neg_le_of_mixture [Nonempty ι] (hw : IsGOptimalDesign 𝒳 w) {R : ℝ}
     (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) {E : Set (Iic N → 𝒳 × ℝ)} (hE : MeasurableSet E)
     {α β : ℝ} (hβ0 : 0 ≤ β) (hα : (histLaw alg N 0).real E ≤ α)
     (hβ : ∀ x ∈ w.support, (histLaw alg N (mixtureParam w ε x)).real Eᶜ ≤ β) :

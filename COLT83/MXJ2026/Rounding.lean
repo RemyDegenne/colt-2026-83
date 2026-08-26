@@ -47,18 +47,6 @@ namespace COLT83
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {B : Matrix ι ι ℝ} {l : ℝ} {u : ι → ℝ}
 
-omit [Fintype ι] [DecidableEq ι] in
-lemma outerSelf_eq_vecMulVec (x : EuclideanSpace ℝ ι) :
-    outerSelf x = Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x) := rfl
-
-omit [Fintype ι] [DecidableEq ι] in
-lemma posSemidef_sum_outerSelf [Finite ι] {κ : Type*} (s : Finset κ)
-    (x : κ → EuclideanSpace ℝ ι) :
-    (∑ t ∈ s, outerSelf (x t)).PosSemidef := by
-  have := Fintype.ofFinite ι
-  exact Finset.sum_induction _ _ (fun _ _ ha hb ↦ ha.add hb) Matrix.PosSemidef.zero
-    fun t _ ↦ outerSelf_posSemidef (x t)
-
 section barrier
 
 /-- The lower barrier potential `Φ_l(B) = tr (B - l I)⁻¹` of a symmetric matrix `B` at a level `l`
@@ -197,7 +185,7 @@ omit [DecidableEq ι] in
 /-- **Rounding a design distribution to a fixed design of any size `T ≥ 4 d`.** If `w` is a design
 distribution on `𝒳` with positive definite design matrix `A`, then for every `T ≥ 4 d` there are
 `T` points `x t` of the support of `w` (with repetitions) with `∑ₜ x t (x t)ᵀ ⪰ (T / 4) A`. -/
-theorem exists_rounding [Nonempty ι] (hw : IsDesign 𝒳 w) (hA : (designMatrix w).PosDef) {T : ℕ}
+lemma exists_rounding [Nonempty ι] (hw : IsDesign 𝒳 w) (hA : (designMatrix w).PosDef) {T : ℕ}
     (hT : 4 * Fintype.card ι ≤ T) :
     ∃ x : Fin T → EuclideanSpace ℝ ι, (∀ t, x t ∈ w.support) ∧
       ((T : ℝ) / 4) • designMatrix w ≤ ∑ t, outerSelf (x t) := by

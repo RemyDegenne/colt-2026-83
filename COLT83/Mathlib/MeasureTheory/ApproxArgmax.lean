@@ -51,7 +51,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [Measurabl
 /-- **Measurable approximate argmax.** For a compact set `K` and `γ > 0`, there is a measurable
 map `s : E → K` such that `s v` is a `γ`-approximate maximizer of `x ↦ ⟪x, v⟫` on `K` for every
 `v`. -/
-theorem exists_measurable_approx_argmax (hK : IsCompact K) (hne : K.Nonempty) {γ : ℝ}
+lemma exists_measurable_approx_argmax (hK : IsCompact K) (hne : K.Nonempty) {γ : ℝ}
     (hγ : 0 < γ) :
     ∃ s : E → K, Measurable s ∧ ∀ v : E, supportFn K v - γ ≤ ⟪(s v : E), v⟫ := by
   obtain ⟨R, hR⟩ := hK.isBounded.exists_norm_le
@@ -87,7 +87,7 @@ theorem exists_measurable_approx_argmax (hK : IsCompact K) (hne : K.Nonempty) {�
 omit [SecondCountableTopology E] in
 /-- **Measurable argmax on a finite set.** For a finite nonempty set `K`, there is a measurable
 map `s : E → K` such that `s v` maximizes `x ↦ ⟪x, v⟫` on `K` for every `v`. -/
-theorem exists_measurable_argmax_of_finite (hK : K.Finite) (hne : K.Nonempty) :
+lemma exists_measurable_argmax_of_finite (hK : K.Finite) (hne : K.Nonempty) :
     ∃ s : E → K, Measurable s ∧ ∀ v : E, ⟪(s v : E), v⟫ = supportFn K v := by
   obtain ⟨R, hR⟩ := hK.isCompact.isBounded.exists_norm_le
   have : Nonempty K := hne.to_subtype

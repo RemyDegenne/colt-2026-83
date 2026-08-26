@@ -37,7 +37,7 @@ variable {ι : Type*} [Fintype ι]
 /-- **Baseline lower bound** (blueprint `lem:baseline_lower`): an `(ε, δ)`-PAC fixed-budget
 identification algorithm on a spanning compact action set in dimension `d ≥ 2`, with
 `δ < 1/4`, has budget `T ≥ (2 - √2) / (32 ε²) log (1 / (4 δ))`. -/
-theorem baseline_le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳)
+lemma baseline_le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳)
     (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 2 ≤ Fintype.card ι) {ε δ : ℝ} (hε : 0 < ε)
     (hδ : δ ∈ Set.Ioo 0 (1 / 4)) {T : ℕ} (A : IdentAlg 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T)
     (hpac : IsPAC 𝒳 A ε δ) :

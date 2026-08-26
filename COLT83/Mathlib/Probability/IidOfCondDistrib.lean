@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.HasCondDistrib
 public import Mathlib.Probability.Independence.Basic
 public import Mathlib.MeasureTheory.Constructions.Pi
+public import COLT83.Mathlib.Probability.CondDistrib
 
 /-!
 # Sequences with a constant conditional law are i.i.d.
@@ -31,19 +32,6 @@ namespace ProbabilityTheory
 variable {Ω β 𝓧 𝓩 : Type*} {mΩ : MeasurableSpace Ω} {mβ : MeasurableSpace β}
   {m𝓧 : MeasurableSpace 𝓧} {m𝓩 : MeasurableSpace 𝓩} {P : Measure Ω} {ν : Measure β} {Y : Ω → β}
 
-lemma Kernel.const_comap_eq (ν : Measure β) {f : 𝓧 → 𝓩} (hf : Measurable f) :
-    (Kernel.const 𝓩 ν).comap f hf = Kernel.const 𝓧 ν := by
-  ext a s _
-  simp [Kernel.comap_apply]
-
-/-- A constant conditional law given `Z` is a constant conditional law given any measurable
-function of `Z`. -/
-lemma HasCondDistrib.const_comp_right [SFinite P] [SFinite ν] {Z : Ω → 𝓩}
-    (h : HasCondDistrib Y Z (Kernel.const 𝓩 ν) P)
-    {f : 𝓩 → 𝓧} (hf : Measurable f) : HasCondDistrib Y (f ∘ Z) (Kernel.const 𝓧 ν) P := by
-  refine HasCondDistrib.comp_right (hf := hf) ?_
-  rwa [Kernel.const_comap_eq]
-
 variable [IsProbabilityMeasure P] [IsProbabilityMeasure ν] {W : ℕ → Ω → β}
 
 /-- The law of `W i` when the conditional law of `W (n + 1)` given `(W 0, …, W n)` is the
@@ -58,7 +46,7 @@ lemma hasLaw_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
 omit [IsProbabilityMeasure P] in
 /-- The law of `(W 0, …, W n)` when the conditional law of `W (n + 1)` given `(W 0, …, W n)` is
 the constant `ν`: the product law `ν^(n + 1)`. -/
-theorem hasLaw_pi_succ_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
+lemma hasLaw_pi_succ_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
     (h : ∀ n, HasCondDistrib (W (n + 1)) (fun ω (i : Fin (n + 1)) ↦ W i ω) (Kernel.const _ ν) P)
     (n : ℕ) : HasLaw (fun ω (i : Fin (n + 1)) ↦ W i ω) (Measure.pi fun _ ↦ ν) P := by
   induction n with
@@ -93,7 +81,7 @@ theorem hasLaw_pi_succ_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
 /-- **A sequence with a constant conditional law is i.i.d.**: if `W 0` has law `ν` and the
 conditional law of `W (n + 1)` given `(W 0, …, W n)` is the constant `ν` for every `n`, then
 `(W 0, …, W (n - 1))` has the product law `ν^n`. -/
-theorem hasLaw_pi_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
+lemma hasLaw_pi_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
     (h : ∀ n, HasCondDistrib (W (n + 1)) (fun ω (i : Fin (n + 1)) ↦ W i ω) (Kernel.const _ ν) P)
     (n : ℕ) : HasLaw (fun ω (i : Fin n) ↦ W i ω) (Measure.pi fun _ ↦ ν) P := by
   cases n with
@@ -108,7 +96,7 @@ theorem hasLaw_pi_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
 
 /-- **A sequence with a constant conditional law is i.i.d.**: independence of
 `W 0, …, W (n - 1)`. -/
-theorem iIndepFun_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
+lemma iIndepFun_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
     (h : ∀ n, HasCondDistrib (W (n + 1)) (fun ω (i : Fin (n + 1)) ↦ W i ω) (Kernel.const _ ν) P)
     (n : ℕ) : iIndepFun (fun i : Fin n ↦ W i) P :=
   (iIndepFun_iff_hasLaw_pi_pi (X := fun i : Fin n ↦ W i)

@@ -38,7 +38,7 @@ lemma transpose_normalizeMat (A : Matrix ι ι ℝ) : (normalizeMat A)ᵀ = norm
 lemma inner_toEuclideanCLM_normalizeMat (A : Matrix ι ι ℝ) (x u : EuclideanSpace ℝ ι) :
     ⟪x, Matrix.toEuclideanCLM (𝕜 := ℝ) (normalizeMat A) u⟫ =
       ⟪Matrix.toEuclideanCLM (𝕜 := ℝ) (normalizeMat A) x, u⟫ := by
-  rw [← ContinuousLinearMap.adjoint_inner_left, ProbabilityTheory.adjoint_toEuclideanCLM,
+  rw [← ContinuousLinearMap.adjoint_inner_left, Matrix.adjoint_toEuclideanCLM,
     transpose_normalizeMat]
 
 omit [Fintype ι] [DecidableEq ι] in
@@ -48,13 +48,6 @@ lemma designMatrix_mapDomain (f : EuclideanSpace ℝ ι → EuclideanSpace ℝ �
     designMatrix (Finsupp.mapDomain f w) = ∑ x ∈ w.support, w x • outerSelf (f x) := by
   rw [designMatrix, Finsupp.linearCombination_mapDomain, Finsupp.linearCombination_apply]
   rfl
-
-omit [DecidableEq ι] in
-/-- `uᵀ (y yᵀ) u = ⟪u, y⟫ ^ 2`. -/
-lemma dotProduct_outerSelf_mulVec (u y : EuclideanSpace ℝ ι) :
-    WithLp.ofLp u ⬝ᵥ outerSelf y *ᵥ WithLp.ofLp u = ⟪u, y⟫ ^ 2 := by
-  rw [outerSelf, Matrix.vecMulVec_mulVec, dotProduct_smul, op_smul_eq_mul, sq,
-    EuclideanSpace.inner_eq_star_dotProduct, star_trivial, dotProduct_comm (WithLp.ofLp u)]
 
 variable [Nonempty ι] (hw : IsGOptimalDesign 𝒳 w)
 include hw

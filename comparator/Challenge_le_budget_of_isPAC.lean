@@ -11,21 +11,24 @@ import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 import Mathlib.Analysis.Convex.Jensen
+import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
+import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
 import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Topology.Instances.Matrix
 import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.Convex.StdSimplex
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-import Mathlib.Topology.Instances.Matrix
+import Mathlib.Topology.Algebra.Module.FiniteDimension
 import Mathlib.Analysis.Convex.Hull
-import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
+import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Mathlib.Analysis.Matrix.Order
-import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
-import Mathlib.Analysis.CStarAlgebra.Matrix
-import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.InformationTheory.KullbackLeibler.ChainRule
 import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
@@ -34,8 +37,13 @@ import Mathlib.Probability.Kernel.Composition.MeasureComp
 import Mathlib.Probability.Kernel.Composition.RadonNikodym
 import Mathlib.Probability.Kernel.MeasurableLIntegral
 import Mathlib.Probability.Kernel.RadonNikodym
+import Mathlib.Probability.Kernel.Composition.Comp
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
 
 /-! # Standalone extraction for `COLT83.le_budget_of_isPAC`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.

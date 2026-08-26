@@ -164,6 +164,7 @@ $\gw(\ball_d)$ is at least $d/\sqrt 3$.
 \end{proof}
 
 \begin{lemma}[Well-separated points in the whitened set]\label{lem:whitened_separated_points}
+\lean{exists_pos_weight_sq_dist_ge_of_isotropic, exists_separated_of_isotropic, COLT83.sum_mul_inner_sqrt_inv_sq}\leanok
 \uses{def:design_matrix, lem:sqrt_props}
 Let $d \ge 2$, let $\Xs$ be an action set and $\lambda \in \simplex_{\Xs}$ with
 $\Sigma := A(\lambda) \succ 0$ (such a $\lambda$ exists if and only if $\Xs$ is spanning), and let
@@ -173,6 +174,7 @@ for all $i \ne j$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:sqrt_props}
 Write $u_x := \Sigma^{-1/2}x$ for $x \in \supp\lambda$. Then
 $\sum_{x}\lambda_x u_xu_x^\top = \Sigma^{-1/2}A(\lambda)\Sigma^{-1/2} = I_d$
@@ -196,6 +198,17 @@ where the last step uses $m - 1 \le d/2 - 1$. This constructs $t_1,\dots,t_m$ wi
 required pairwise separation.
 \end{proof}
 
+\textbf{Lean remark.} The lemma is formalized in library generality
+(\texttt{COLT83/Mathlib/Analysis/InnerProductSpace/IsotropicSeparated.lean}): for a weighted
+family $(w_i, u_i)$ of a $d$-dimensional inner product space in \emph{isotropic position},
+$\sum_i w_i\ip{u_i}{v}^2 = \norm v^2$ for all $v$ ($w_i \ge 0$, $\sum_i w_i = 1$), and every
+$m$, there are $m$ points $u_{i_1},\dots,u_{i_m}$ with positive weights and
+$\norm{u_{i_k} - u_{i_l}}^2 \ge d + 1 - m$ for $k \ne l$ (\texttt{exists\_separated\_of\_isotropic};
+no hypothesis on $m$ or $d$). The greedy step uses an orthonormal basis $(f_j)$ of
+$V_k^\perp$ and Bessel's inequality $\norm{u - t_i}^2 \ge \sum_j\ip{u - t_i}{f_j}^2 = \sum_j\ip{u}{f_j}^2$
+instead of the projection $Q_k$. The isotropy of the whitened design,
+$\sum_x\lambda_x\ip{\Sigma^{-1/2}x}{v}^2 = \norm v^2$, is \texttt{sum\_mul\_inner\_sqrt\_inv\_sq}.
+
 \begin{proposition}[Lower bound $\sqrt{d\log d}$; secondary]\label{prop:width_lower_sqrt_dlogd}
 \lean{COLT83.sqrt_log_le_gw}\leanok
 \uses{def:width}
@@ -205,26 +218,16 @@ Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 4$. Then
 \]
 \end{proposition}
 
-\begin{corollary}[Lower bound $\sqrt{d\log d}$]\label{cor:width_lower_sqrt_dlogd}
-\uses{prop:width_lower_sqrt_dlogd}
-Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 6$. Then
-$\gw(\Xs) \ge \frac{1}{8\sqrt 2}\sqrt{d\log d}$.
-\end{corollary}
 \begin{proof}
-\uses{prop:width_lower_sqrt_dlogd}
-For $d \ge 6$, $\lfloor d/2\rfloor \ge (d-1)/2 \ge \sqrt d$ (as $(d-1)^2 \ge 4d$ for $d \ge 6$), so
-$\log\lfloor d/2\rfloor \ge \frac12\log d$ and Proposition~\ref{prop:width_lower_sqrt_dlogd} gives
-the claim.
-\end{proof}
-
-\begin{proof}
+\leanok
 \uses{lem:whitened_separated_points, thm:sudakov_fernique, lem:gauss_max_lower, lem:width_matrix_wd, lem:gauss_linear_image, lem:exists_posdef_design}
 The constant $\frac18$ is $c_{\max}/2$ with $c_{\max} = \frac14$ the constant of
 Lemma~\ref{lem:gauss_max_lower}, which holds for every $m \ge 2$ (no threshold); the
 condition $d \ge 4$ ensures $m := \lfloor d/2\rfloor \ge 2$.
 Fix $\lambda \in \simplex_{\Xs}$ with $\Sigma := A(\lambda) \succ 0$ (it exists since $\Xs$ is
 spanning, Lemma~\ref{lem:exists_posdef_design}); it suffices to lower bound
-$\gwidth{\Xs}{\Sigma} = \E\sup_{t\in\mathcal T}\ip{t}{g}$, $\mathcal T = \Sigma^{-1/2}\Xs$.
+$\gwidth{\Xs}{\Sigma} = \E\sup_{t\in\mathcal T}\ip{t}{g}$, $\mathcal T = \Sigma^{-1/2}\Xs$
+(Lean: \texttt{COLT83.sqrt\_log\_le\_gwMat}, for every design $\lambda$ with $A(\lambda)\succ0$).
 Take $t_1,\dots,t_m \in \mathcal T$ from
 Lemma~\ref{lem:whitened_separated_points}. Set $Z_i := \ip{t_i}{g}$; $(Z_1,\dots,Z_m)$ is a
 centered Gaussian vector (Lemma~\ref{lem:gauss_linear_image}) with
@@ -246,6 +249,19 @@ $\lfloor d/2\rfloor \ge (d-1)/2 \ge \sqrt d$ because $(\sqrt d - 1)^2 \ge 2$), s
 $\log\lfloor d/2\rfloor \ge \frac12\log d$ and
 $\frac18\sqrt{d\log\lfloor d/2\rfloor} \ge \frac18\sqrt{\tfrac12 d\log d} = \frac{1}{8\sqrt2}\sqrt{d\log d}$.
 \end{proof}
+
+\begin{corollary}[Lower bound $\sqrt{d\log d}$]\label{cor:width_lower_sqrt_dlogd}
+\uses{prop:width_lower_sqrt_dlogd}
+Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 6$. Then
+$\gw(\Xs) \ge \frac{1}{8\sqrt 2}\sqrt{d\log d}$.
+\end{corollary}
+\begin{proof}
+\uses{prop:width_lower_sqrt_dlogd}
+For $d \ge 6$, $\lfloor d/2\rfloor \ge (d-1)/2 \ge \sqrt d$ (as $(d-1)^2 \ge 4d$ for $d \ge 6$), so
+$\log\lfloor d/2\rfloor \ge \frac12\log d$ and Proposition~\ref{prop:width_lower_sqrt_dlogd} gives
+the claim.
+\end{proof}
+
 
 \begin{proposition}[Width lower bounds from sample complexity lower bounds]\label{prop:width_lower_from_pac}
 \uses{def:pac, def:width}
@@ -599,7 +615,7 @@ $\E g_0 = 0$ gives the claim (each maximum is integrable by Lemma~\ref{lem:width
 \end{proof}
 
 \begin{lemma}[Maximum of centered Gaussians]\label{lem:centered_gaussian_max}
-\lean{COLT83.integral_iSup_mtL_le, COLT83.ciSup_const_add_const_mul}\leanok
+\lean{COLT83.integral_iSup_mtL_le, ciSup_const_add_const_mul}\leanok
 \uses{def:helmert, lem:helmert_props}
 Let $n \ge 2$, $Z \sim \Normal(0, I_n)$, $\bar Z := \frac1n\sum_{k\le n}Z_k$ and
 $g \sim \Normal(0, I_{n-1})$. Then

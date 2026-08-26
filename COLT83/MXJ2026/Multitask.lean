@@ -8,6 +8,7 @@ module
 public import COLT83.MXJ2026.IntrinsicWidth
 public import COLT83.MXJ2026.StructuredSets
 public import COLT83.Mathlib.Probability.SubgaussianMax
+public import COLT83.Mathlib.Data.Fintype.PiSplitAt
 
 /-!
 # The multi-task action set: structure, span and intrinsic width
@@ -101,7 +102,7 @@ lemma oneHot_injective : Function.Injective (oneHot d) := by
   have := congrArg (fun x : EuclideanSpace ℝ (Σ j, Fin (d j)) ↦ x ⟨j, κ j⟩) h
   simp only [oneHot_apply_mk, ite_true] at this
   by_contra hne
-  rw [if_neg hne] at this
+  rw [ite_eq_right hne] at this
   exact one_ne_zero this
 
 lemma ncard_multitaskSet : (multitaskSet d).ncard = ∏ j, d j := by
@@ -175,9 +176,9 @@ lemma blockSum_single (j' : Fin m) (l : Fin (d j')) (a : ℝ) (j : Fin m) :
   by_cases hj : j = j'
   · subst hj
     simp
-  · rw [if_neg hj]
+  · rw [ite_eq_right hj]
     refine Finset.sum_eq_zero fun l' _ ↦ ?_
-    rw [if_neg]
+    rw [ite_eq_right]
     exact fun h ↦ hj (Sigma.mk.inj_iff.1 h).1
 
 /-- The block-sum linear functional. -/
@@ -196,7 +197,7 @@ lemma oneHot_apply_eq_sum (κ : ∀ j, Fin (d j)) (i : Σ j, Fin (d j)) :
   rw [oneHot_apply_mk, Finset.sum_eq_single j']
   · simp
   · intro j _ hj
-    rw [if_neg]
+    rw [ite_eq_right]
     exact fun h ↦ hj (Sigma.mk.inj_iff.1 h).1.symm
   · simp
 
@@ -302,7 +303,7 @@ lemma finrank_span_multitaskSet_add (hd : ∀ j, 0 < d j) (hm : 0 < m) :
       ext j
       simp only [L, LinearMap.pi_apply, LinearMap.sub_apply, blockSumLin_apply, blockSum_sum,
         blockSum_smul, blockSum_single, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq,
-        Finset.mem_univ, if_true]
+        Finset.mem_univ, ite_true]
       rw [hc, sub_zero]
   have h1 := LinearMap.finrank_range_add_finrank_ker L
   have h2 := LinearMap.finrank_range_add_finrank_ker (LinearMap.proj j₀ : (Fin m → ℝ) →ₗ[ℝ] ℝ)
@@ -316,36 +317,6 @@ lemma finrank_span_multitaskSet_add (hd : ∀ j, 0 < d j) (hm : 0 < m) :
 end span
 
 section counting
-
-/-- Splitting a sum over `∀ j, Fin (d j)` according to the `l`-th coordinate. -/
-lemma sum_pi_split (l : Fin m) (F : (∀ j, Fin (d j)) → ℝ) :
-    ∑ κ, F κ = ∑ a : Fin (d l), ∑ r : ∀ j : {j // j ≠ l}, Fin (d j),
-      F ((Equiv.piSplitAt l fun j ↦ Fin (d j)).symm (a, r)) := by
-  rw [← Equiv.sum_comp (Equiv.piSplitAt l fun j ↦ Fin (d j)).symm, Fintype.sum_prod_type]
-
-lemma piSplitAt_symm_apply_self (l : Fin m) (a : Fin (d l))
-    (r : ∀ j : {j // j ≠ l}, Fin (d j)) :
-    (Equiv.piSplitAt l fun j ↦ Fin (d j)).symm (a, r) l = a := by
-  simp
-
-lemma piSplitAt_symm_apply_of_ne (l : Fin m) (a : Fin (d l))
-    (r : ∀ j : {j // j ≠ l}, Fin (d j)) {j : Fin m} (hj : j ≠ l) :
-    (Equiv.piSplitAt l fun j ↦ Fin (d j)).symm (a, r) j = r ⟨j, hj⟩ := by
-  simp [hj]
-
-lemma card_pi_eq_mul (l : Fin m) :
-    Fintype.card (∀ j, Fin (d j)) = d l * Fintype.card (∀ j : {j // j ≠ l}, Fin (d j)) := by
-  rw [Fintype.card_congr (Equiv.piSplitAt l fun j ↦ Fin (d j)), Fintype.card_prod,
-    Fintype.card_fin]
-
-/-- `∑ κ, [κ l = k] = |∀ j ≠ l, Fin (d j)|`. -/
-lemma sum_ite_apply_eq (l : Fin m) (k : Fin (d l)) :
-    (∑ κ : ∀ j, Fin (d j), if k = κ l then (1 : ℝ) else 0) =
-      Fintype.card (∀ j : {j // j ≠ l}, Fin (d j)) := by
-  rw [sum_pi_split l]
-  simp only [piSplitAt_symm_apply_self, Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
-    mul_ite, mul_one, mul_zero]
-  simp
 
 end counting
 
@@ -495,14 +466,14 @@ lemma blockCenter_blockCenter (hd : ∀ j, 0 < d j) (l l' : Fin m)
   rw [blockCenter_apply, blockSum_blockCenter hd]
   by_cases hl : l = l'
   · subst hl
-    rw [if_pos (rfl : l = l)]
+    rw [ite_eq_left (rfl : l = l)]
     split_ifs with hi
     · simp
-    · rw [blockCenter_apply, if_neg hi]
-  · rw [if_neg hl]
+    · rw [blockCenter_apply, ite_eq_right hi]
+  · rw [ite_eq_right hl]
     split_ifs with hi
     · have hi' : i.1 ≠ l' := by rw [hi]; exact hl
-      rw [blockCenter_apply, if_neg hi']
+      rw [blockCenter_apply, ite_eq_right hi']
       simp
     · simp
 
@@ -551,7 +522,8 @@ lemma toEuclideanLin_unifDesignMatrix_muVec (hd : ∀ j, 0 < d j) :
   obtain ⟨j, k⟩ := i
   rw [toEuclideanLin_unifDesignMatrix_apply]
   simp only [inner_oneHot_muVec, oneHot_apply_mk, PiLp.smul_apply, muVec_apply, smul_eq_mul,
-    ← Finset.mul_sum, sum_ite_apply_eq, card_pi_eq_mul j]
+    ← Finset.mul_sum, Fintype.sum_ite_apply_eq, Fintype.card_pi_eq_mul_card_pi_subtype j,
+    Fintype.card_fin]
   have := hd j
   have : ∀ j', Nonempty (Fin (d j')) := fun j' ↦ ⟨⟨0, hd j'⟩⟩
   have hr : (Fintype.card (∀ j' : {j' // j' ≠ j}, Fin (d j')) : ℝ) ≠ 0 := by
@@ -569,19 +541,20 @@ lemma toEuclideanLin_unifDesignMatrix_blockCenter (hd : ∀ j, 0 < d j) (l : Fin
   obtain ⟨j, k⟩ := i
   rw [toEuclideanLin_unifDesignMatrix_apply]
   simp only [inner_oneHot_blockCenter, oneHot_apply_mk, PiLp.smul_apply, smul_eq_mul]
-  rw [sum_pi_split l]
+  rw [Fintype.sum_pi_piSplitAt l]
   by_cases hj : j = l
   · subst hj
-    simp only [piSplitAt_symm_apply_self, mul_ite, mul_one, mul_zero, Finset.sum_const,
-      Finset.card_univ, nsmul_eq_mul, Finset.sum_ite_eq, Finset.mem_univ, if_true]
-    rw [card_pi_eq_mul j]
+    simp only [Equiv.piSplitAt_symm_apply_self, mul_ite, mul_one, mul_zero, Finset.sum_const,
+      Finset.card_univ, nsmul_eq_mul, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+    rw [Fintype.card_pi_eq_mul_card_pi_subtype j, Fintype.card_fin]
     have := hd j
     have : ∀ j', Nonempty (Fin (d j')) := fun j' ↦ ⟨⟨0, hd j'⟩⟩
     have hr : (Fintype.card (∀ j' : {j' // j' ≠ j}, Fin (d j')) : ℝ) ≠ 0 := by
       exact_mod_cast Fintype.card_ne_zero
     push_cast
     field_simp
-  · simp only [piSplitAt_symm_apply_of_ne l _ _ hj, blockCenter_apply_mk_of_ne l v hj, mul_zero]
+  · simp only [Equiv.piSplitAt_symm_apply_of_ne l _ _ hj, blockCenter_apply_mk_of_ne l v hj,
+      mul_zero]
     rw [Finset.sum_comm]
     simp only [← Finset.sum_mul]
     have : ∑ a : Fin (d l), blockCenter l v ⟨l, a⟩ = 0 := blockSum_blockCenter hd l v l
@@ -688,13 +661,6 @@ noncomputable def mtLmat : Matrix (Σ j, Fin (d j)) (Σ j, Fin (d j)) ℝ :=
 lemma toEuclideanLin_mtLmat : Matrix.toEuclideanLin (mtLmat d) = mtL d :=
   LinearEquiv.apply_symm_apply _ _
 
-lemma toEuclideanLin_mul_apply {ι : Type*} [Fintype ι] [DecidableEq ι] (A B : Matrix ι ι ℝ)
-    (v : EuclideanSpace ℝ ι) :
-    Matrix.toEuclideanLin (A * B) v = Matrix.toEuclideanLin A (Matrix.toEuclideanLin B v) := by
-  apply WithLp.ofLp_injective
-  change (A * B) *ᵥ WithLp.ofLp v = A *ᵥ (B *ᵥ WithLp.ofLp v)
-  rw [Matrix.mulVec_mulVec]
-
 lemma transpose_mtLmat : (mtLmat d)ᵀ = mtLmat d := by
   have h := Matrix.toEuclideanLin_conjTranspose_eq_adjoint (mtLmat d)
   rw [Matrix.conjTranspose_eq_transpose_of_trivial] at h
@@ -761,17 +727,6 @@ lemma mtL_apply_mk (hd : ∀ j, 0 < d j) (g : EuclideanSpace ℝ (Σ j, Fin (d j
     rw [blockCenter_apply_mk_of_ne l g (Ne.symm hl), mul_zero]
   · simp
 
-/-- `⨆ i, (b + c * f i) = b + c * ⨆ i, f i` for `c ≥ 0` over a finite nonempty index set. -/
-lemma ciSup_const_add_const_mul {ι : Type*} [Finite ι] [Nonempty ι] (b : ℝ) {c : ℝ} (hc : 0 ≤ c)
-    (f : ι → ℝ) :
-    ⨆ i, (b + c * f i) = b + c * ⨆ i, f i := by
-  obtain ⟨i₀, hi₀⟩ := Finite.exists_max f
-  have hsup : ⨆ i, f i = f i₀ :=
-    le_antisymm (ciSup_le hi₀) (le_ciSup (Finite.bddAbove_range f) i₀)
-  rw [hsup]
-  refine le_antisymm (ciSup_le fun i ↦ by gcongr; exact hi₀ i) ?_
-  exact le_ciSup (Finite.bddAbove_range fun i ↦ b + c * f i) i₀
-
 /-- The expected block maximum of `L g` is at most `√(2 d_j log d_j)`. -/
 lemma integral_iSup_mtL_le (hd : ∀ j, 0 < d j) (j : Fin m) :
     ∫ g, ⨆ k, mtL d g ⟨j, k⟩ ∂stdGaussian (EuclideanSpace ℝ (Σ j, Fin (d j))) ≤
@@ -812,7 +767,7 @@ lemma integral_iSup_mtL_le (hd : ∀ j, 0 < d j) (j : Fin m) :
 
 /-- **Width of the multi-task set** (Proposition `prop:width_multitask`): the intrinsic width of
 the multi-task set with block sizes `d_j ≥ 1` is at most `∑ j, √(2 d_j log d_j)`. -/
-theorem intrinsicGw_multitaskSet_le (hd : ∀ j, 0 < d j) :
+lemma intrinsicGw_multitaskSet_le (hd : ∀ j, 0 < d j) :
     intrinsicGw (multitaskSet d) ≤ ∑ j, √(2 * d j * log (d j)) := by
   rcases Nat.eq_zero_or_pos m with hm | hm
   · subst hm

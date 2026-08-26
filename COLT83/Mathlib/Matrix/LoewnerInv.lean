@@ -39,7 +39,7 @@ lemma PosDef.inv_le_one_of_one_le {C : Matrix n n 𝕜} (hC : C.PosDef) (h : 1 �
   exact fun x hx ↦ inv_le_one_of_one_le₀ (h_spec x hx)
 
 /-- Matrix inversion is antitone on positive definite matrices for the Loewner order. -/
-theorem PosDef.inv_le_inv {A B : Matrix n n 𝕜} (hA : A.PosDef) (hAB : A ≤ B) : B⁻¹ ≤ A⁻¹ := by
+lemma PosDef.inv_le_inv {A B : Matrix n n 𝕜} (hA : A.PosDef) (hAB : A ≤ B) : B⁻¹ ≤ A⁻¹ := by
   -- `S` is the positive square root of `A⁻¹`
   set S := CFC.sqrt A⁻¹ with hS_def
   have hS_nonneg : 0 ≤ S := CFC.sqrt_nonneg _

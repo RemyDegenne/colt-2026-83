@@ -42,24 +42,10 @@ section finite
 
 variable {ι : Type*} [Finite ι] [Nonempty ι] {y : ι → E} {σ : ℝ≥0}
 
-omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
-lemma abs_ciSup_inner_le (hσ : ∀ i, ‖y i‖ ≤ σ) (v : E) :
-    |⨆ i, ⟪y i, v⟫| ≤ σ * ‖v‖ := by
-  have hb : ∀ i, |⟪y i, v⟫| ≤ σ * ‖v‖ := fun i ↦
-    (abs_real_inner_le_norm _ _).trans (mul_le_mul_of_nonneg_right (hσ i) (norm_nonneg _))
-  refine abs_le.2 ⟨?_, ciSup_le fun i ↦ (le_abs_self _).trans (hb i)⟩
-  obtain ⟨i⟩ := ‹Nonempty ι›
-  exact (neg_le.2 ((neg_le_abs _).trans (hb i))).trans
-    (le_ciSup (Finite.bddAbove_range fun i ↦ ⟪y i, v⟫) i)
-
-omit [FiniteDimensional ℝ E] [Nonempty ι] in
-lemma measurable_ciSup_inner (y : ι → E) : Measurable fun v : E ↦ ⨆ i, ⟪y i, v⟫ :=
-  Measurable.iSup fun _ ↦ (continuous_const.inner continuous_id).measurable
-
 /-- **Concentration of a finite maximum of Gaussian linear forms**: for vectors `y i` with
 `‖y i‖ ≤ σ`, the maximum `M v = max_i ⟪y i, v⟫` satisfies `HasSubgaussianMGF (M - μ[M]) (c_G σ²)`
 under the standard Gaussian measure `μ`. -/
-theorem hasSubgaussianMGF_iSup_inner_stdGaussian (hσ : ∀ i, ‖y i‖ ≤ σ) :
+lemma hasSubgaussianMGF_iSup_inner_stdGaussian (hσ : ∀ i, ‖y i‖ ≤ σ) :
     HasSubgaussianMGF (fun v ↦ (⨆ i, ⟪y i, v⟫) - ∫ w, (⨆ i, ⟪y i, w⟫) ∂stdGaussian E)
       (gaussianConcentrationConst * σ ^ 2) (stdGaussian E) := by
   have := Fintype.ofFinite ι
@@ -228,14 +214,14 @@ theorem hasSubgaussianMGF_supportFn_stdGaussian (hK : IsCompact K) (hne : K.None
 /-- **Borell–TIS inequality** (upper tail): for a nonempty compact `K` with `‖x‖ ≤ R` on `K`
 and `M v = sup_{x ∈ K} ⟪x, v⟫`, under the standard Gaussian measure `μ`,
 `μ (M - μ[M] ≥ u) ≤ exp (-u² / (2 c_G R²))` for `u ≥ 0`. -/
-theorem measureReal_supportFn_sub_integral_ge_le (hK : IsCompact K) (hne : K.Nonempty)
+lemma measureReal_supportFn_sub_integral_ge_le (hK : IsCompact K) (hne : K.Nonempty)
     (hR : ∀ x ∈ K, ‖x‖ ≤ R) {u : ℝ} (hu : 0 ≤ u) :
     (stdGaussian E).real {v | u ≤ supportFn K v - ∫ w, supportFn K w ∂stdGaussian E} ≤
       exp (-u ^ 2 / (2 * (gaussianConcentrationConst * R ^ 2))) :=
   (hasSubgaussianMGF_supportFn_stdGaussian hK hne hR).measure_ge_le hu
 
 /-- **Borell–TIS inequality** (lower tail): `μ (M - μ[M] ≤ -u) ≤ exp (-u² / (2 c_G R²))`. -/
-theorem measureReal_supportFn_sub_integral_le_le (hK : IsCompact K) (hne : K.Nonempty)
+lemma measureReal_supportFn_sub_integral_le_le (hK : IsCompact K) (hne : K.Nonempty)
     (hR : ∀ x ∈ K, ‖x‖ ≤ R) {u : ℝ} (hu : 0 ≤ u) :
     (stdGaussian E).real {v | supportFn K v - ∫ w, supportFn K w ∂stdGaussian E ≤ -u} ≤
       exp (-u ^ 2 / (2 * (gaussianConcentrationConst * R ^ 2))) := by
@@ -263,7 +249,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι] {K : Set (EuclideanSpace ℝ
 /-- **Concentration of the supremum of a Gaussian linear process**, general covariance: for a
 nonempty compact `K ⊆ ℝ^d` with `xᵀ S x ≤ σ²` on `K` and `G ~ N(0, S)`,
 `M = sup_{x ∈ K} ⟪x, G⟫` satisfies `HasSubgaussianMGF (M - E M) (c_G σ²)`. -/
-theorem hasSubgaussianMGF_supportFn_multivariateGaussian (hK : IsCompact K) (hne : K.Nonempty)
+lemma hasSubgaussianMGF_supportFn_multivariateGaussian (hK : IsCompact K) (hne : K.Nonempty)
     (hS : S.PosSemidef) (hσ : ∀ x ∈ K, WithLp.ofLp x ⬝ᵥ S *ᵥ WithLp.ofLp x ≤ σ ^ 2) :
     HasSubgaussianMGF (fun v ↦ supportFn K v - ∫ w, supportFn K w ∂multivariateGaussian 0 S)
       (gaussianConcentrationConst * σ ^ 2) (multivariateGaussian 0 S) := by

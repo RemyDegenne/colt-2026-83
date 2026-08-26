@@ -38,7 +38,7 @@ lemma sum_inv_sub_half_sub_inv_pos {ι : Type*} [Fintype ι] [Nonempty ι] (a : 
 
 /-- The averaged barrier inequality: for `a i ≥ 1` with `∑ 1/a i ≤ 1`, writing `b i = a i - 1/2`,
 `P = ∑ 1/b i ^ 2`, `Δ = ∑ (1/b i - 1/a i)`, one has `P / Δ - ∑ 1/b i ≥ 2 - ∑ 1/a i`. -/
-theorem barrier_sum_ineq {ι : Type*} [Fintype ι] [Nonempty ι] (a : ι → ℝ) (ha : ∀ i, 1 ≤ a i)
+lemma barrier_sum_ineq {ι : Type*} [Fintype ι] [Nonempty ι] (a : ι → ℝ) (ha : ∀ i, 1 ≤ a i)
     (hΦ : ∑ i, (a i)⁻¹ ≤ 1) :
     2 - ∑ i, (a i)⁻¹ ≤
       (∑ i, ((a i - 1 / 2)⁻¹) ^ 2) / (∑ i, ((a i - 1 / 2)⁻¹ - (a i)⁻¹)) - ∑ i, (a i - 1 / 2)⁻¹ := by

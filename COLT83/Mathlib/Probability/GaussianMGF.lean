@@ -7,6 +7,8 @@ module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
+public import Mathlib.Probability.Moments.SubGaussian
+public import COLT83.Mathlib.Analysis.Calculus.Gradient
 
 /-!
 # Exponential moments of Gaussian measures
@@ -92,5 +94,49 @@ lemma IsGaussian.integrable_of_abs_le_add_mul_norm {F : E → ℝ} (hF : AEStron
     (Filter.Eventually.of_forall fun x ↦ ?_)
   rw [Real.norm_eq_abs]
   exact hFle x
+
+/-- A Gaussian measure has finite moments of all orders. -/
+lemma IsGaussian.integrable_norm_pow (n : ℕ) : Integrable (fun x ↦ ‖x‖ ^ n) μ :=
+  (IsGaussian.memLp_id μ n (by simp)).integrable_norm_pow'
+
+/-- A measurable function of quadratic growth is integrable under a Gaussian measure. -/
+lemma IsGaussian.integrable_of_abs_le_add_mul_norm_sq {F : E → ℝ} (hF : AEStronglyMeasurable F μ)
+    {A B C : ℝ} (hFle : ∀ x, |F x| ≤ A + B * ‖x‖ + C * ‖x‖ ^ 2) : Integrable F μ := by
+  refine (((integrable_const A).add (IsGaussian.integrable_id.norm.const_mul B)).add
+    ((IsGaussian.integrable_norm_pow 2).const_mul C)).mono' hF
+    (Filter.Eventually.of_forall fun x ↦ ?_)
+  rw [Real.norm_eq_abs]
+  exact hFle x
+
+section gradient
+
+variable {f : E → ℝ} {L : ℝ≥0}
+
+/-- A `C¹` function with bounded gradient is integrable under a Gaussian measure, with all its
+exponential moments. -/
+lemma IsGaussian.integrable_exp_of_norm_gradient_le {μ : Measure E} [IsGaussian μ]
+    (hf : ContDiff ℝ 1 f) (hL : ∀ x, ‖gradient f x‖ ≤ L) (t : ℝ) :
+    Integrable (fun x ↦ exp (t * f x)) μ :=
+  IsGaussian.integrable_exp_of_abs_le_add_mul_norm hf.continuous.aestronglyMeasurable
+    (abs_le_of_norm_gradient_le (hf.differentiable one_ne_zero) hL) t
+
+lemma IsGaussian.integrable_of_norm_gradient_le {μ : Measure E} [IsGaussian μ]
+    (hf : ContDiff ℝ 1 f) (hL : ∀ x, ‖gradient f x‖ ≤ L) : Integrable f μ :=
+  IsGaussian.integrable_of_abs_le_add_mul_norm hf.continuous.aestronglyMeasurable
+    (abs_le_of_norm_gradient_le (hf.differentiable one_ne_zero) hL)
+
+end gradient
+
+section real
+
+/-- A centered real Gaussian with variance `v` is sub-Gaussian with variance proxy `v`. -/
+lemma hasSubgaussianMGF_fun_id_gaussianReal (v : ℝ≥0) :
+    HasSubgaussianMGF (fun x ↦ x) v (gaussianReal 0 v) where
+  integrable_exp_mul t := integrable_exp_mul_gaussianReal t
+  mgf_le t := by
+    rw [mgf_fun_id_gaussianReal]
+    simp
+
+end real
 
 end ProbabilityTheory

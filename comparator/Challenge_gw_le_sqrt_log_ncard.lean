@@ -6,11 +6,52 @@ import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Mathlib.Analysis.Convex.Hull
+import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.Convex.Hull
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+import Mathlib.MeasureTheory.Integral.Pi
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Fintype.Lattice
+import Mathlib.Data.Fintype.Order
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Order.ConditionallyCompleteLattice.Finset
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import Mathlib.Data.Matrix.ColumnRowPartitioned
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.Calculus.ParametricIntegral
+import Mathlib.Analysis.SpecialFunctions.Sqrt
+import Mathlib.Analysis.Calculus.FDeriv.Equiv
+import Mathlib.Analysis.Calculus.FDeriv.CompCLM
+import Mathlib.Analysis.Calculus.Deriv.Prod
+import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Logic.Equiv.Prod
+import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.MeasureTheory.MeasurableSpace.Constructions
@@ -156,7 +197,7 @@ end
 -- ═══ Mathlib.GaussianWidth ═══
 section
 open MeasureTheory Set
-open scoped RealInnerProductSpace Pointwise
+open scoped RealInnerProductSpace Pointwise NNReal
 section SupportFn
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
@@ -177,16 +218,28 @@ end GaussianWidth
 end ProbabilityTheory
 end
 
+-- ═══ MXJ2026.OuterSelf ═══
+section
+open Matrix
+open scoped RealInnerProductSpace
+namespace COLT83
+variable {ι : Type*}
+
+/-- The design matrix `x xᵀ` of a point `x`. -/
+def outerSelf (x : EuclideanSpace ℝ ι) : Matrix ι ι ℝ :=
+  Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x)
+
+variable [Fintype ι]
+variable [DecidableEq ι]
+end COLT83
+end
+
 -- ═══ MXJ2026.Width ═══
 section
 open MeasureTheory ProbabilityTheory Real
 open scoped RealInnerProductSpace MatrixOrder Pointwise Matrix
 namespace COLT83
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-/-- The design matrix `x xᵀ` of a point `x`. -/
-def outerSelf (x : EuclideanSpace ℝ ι) : Matrix ι ι ℝ :=
-  Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x)
 
 /-- The set of design matrices of `𝒳`: the convex hull of `{x xᵀ : x ∈ 𝒳}`, that is the set of
 matrices `∑ λ_x x xᵀ` for `λ` a finitely supported probability distribution on `𝒳`. -/

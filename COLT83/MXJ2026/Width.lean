@@ -10,6 +10,7 @@ public import COLT83.Mathlib.Matrix.LoewnerInv
 public import COLT83.Mathlib.Probability.MultivariateGaussian
 public import Mathlib.Analysis.Convex.Hull
 public import Mathlib.LinearAlgebra.Matrix.PosDef
+public import COLT83.MXJ2026.OuterSelf
 
 /-!
 # Design matrices and the Gaussian width term of an action set
@@ -45,10 +46,6 @@ open scoped RealInnerProductSpace MatrixOrder Pointwise Matrix
 namespace COLT83
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-/-- The design matrix `x xᵀ` of a point `x`. -/
-def outerSelf (x : EuclideanSpace ℝ ι) : Matrix ι ι ℝ :=
-  Matrix.vecMulVec (WithLp.ofLp x) (WithLp.ofLp x)
 
 /-- The set of design matrices of `𝒳`: the convex hull of `{x xᵀ : x ∈ 𝒳}`, that is the set of
 matrices `∑ λ_x x xᵀ` for `λ` a finitely supported probability distribution on `𝒳`. -/
@@ -147,7 +144,7 @@ lemma gwMat_eq_gaussianWidth_stdGaussian (hne : K.Nonempty) (hK : ∀ x ∈ K, �
     rw [← Matrix.conjTranspose_eq_transpose_of_trivial, h.1.eq]
   rw [gwMat, multivariateGaussian]
   simp only [zero_add]
-  rw [gaussianWidth_map hne hK, adjoint_toEuclideanCLM, hsqrt]
+  rw [gaussianWidth_map hne hK, Matrix.adjoint_toEuclideanCLM, hsqrt]
 
 /-- The width of `K` for `A` is at most `sup_{x ∈ K} ‖A^{-1/2} x‖ · √d`. -/
 lemma gwMat_le_mul_sqrt_card (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R) (A : Matrix ι ι ℝ)
@@ -179,7 +176,7 @@ lemma gwMat_image (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R) (hA : A.P
     rw [← map_mul, Matrix.nonsing_inv_mul _ hM, map_one]
     rfl
   rw [gwMat, gwMat, h1, ← multivariateGaussian_zero_map_toEuclideanCLM hA.inv.posSemidef,
-    gaussianWidth_map hne' hK', adjoint_toEuclideanCLM, ← Matrix.transpose_nonsing_inv,
+    gaussianWidth_map hne' hK', Matrix.adjoint_toEuclideanCLM, ← Matrix.transpose_nonsing_inv,
     Matrix.transpose_transpose, Set.image_image]
   simp only [h2, Set.image_id']
 

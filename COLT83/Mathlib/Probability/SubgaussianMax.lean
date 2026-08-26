@@ -9,6 +9,7 @@ public import COLT83.Mathlib.Probability.GaussianMGF
 public import COLT83.Mathlib.GaussianWidth
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.Analysis.Convex.Integral
+public import COLT83.Mathlib.Order.CiSupFinite
 
 /-!
 # Expected maximum of finitely many sub-Gaussian random variables
@@ -45,15 +46,6 @@ section iSup
 
 variable {ι : Type*} [Finite ι] [Nonempty ι] {Z : ι → Ω → ℝ}
 
-omit [Finite ι] in
-lemma abs_le_sum_abs_iSup (f : ι → ℝ) [Fintype ι] : |⨆ i, f i| ≤ ∑ i, |f i| := by
-  refine abs_le.2 ⟨?_, ciSup_le fun i ↦ (le_abs_self _).trans (Finset.single_le_sum
-    (f := fun i ↦ |f i|) (fun i _ ↦ abs_nonneg _) (Finset.mem_univ i))⟩
-  obtain ⟨i⟩ := ‹Nonempty ι›
-  refine (neg_le.2 ?_).trans (le_ciSup (Finite.bddAbove_range f) i)
-  exact (neg_le_abs _).trans (Finset.single_le_sum (f := fun i ↦ |f i|)
-    (fun i _ ↦ abs_nonneg _) (Finset.mem_univ i))
-
 /-- The maximum of finitely many sub-Gaussian random variables is integrable. -/
 lemma integrable_iSup_of_hasSubgaussianMGF (h : ∀ i, HasSubgaussianMGF (Z i) c μ) :
     Integrable (fun ω ↦ ⨆ i, Z i ω) μ := by
@@ -63,16 +55,6 @@ lemma integrable_iSup_of_hasSubgaussianMGF (h : ∀ i, HasSubgaussianMGF (Z i) c
       (AEMeasurable.iSup fun i ↦ (h i).aemeasurable)
   · exact Filter.Eventually.of_forall fun ω ↦ by
       simpa [Real.norm_eq_abs] using abs_le_sum_abs_iSup (fun i ↦ Z i ω)
-
-omit [Finite ι] in
-lemma exp_mul_iSup_le_sum [Fintype ι] (t : ℝ) (f : ι → ℝ) :
-    exp (t * ⨆ i, f i) ≤ ∑ i, exp (t * f i) := by
-  obtain ⟨i₀, hi₀⟩ : ∃ i₀, ⨆ i, f i = f i₀ := by
-    obtain ⟨i₀, hi₀⟩ := Finite.exists_max f
-    exact ⟨i₀, le_antisymm (ciSup_le hi₀) (le_ciSup (Finite.bddAbove_range f) i₀)⟩
-  rw [hi₀]
-  exact Finset.single_le_sum (f := fun i ↦ exp (t * f i)) (fun i _ ↦ (exp_pos _).le)
-    (Finset.mem_univ i₀)
 
 /-- For every `β > 0`, `E[max_i Z i] ≤ log |ι| / β + c β / 2`. -/
 lemma integral_iSup_le_of_hasSubgaussianMGF_aux [IsProbabilityMeasure μ]
