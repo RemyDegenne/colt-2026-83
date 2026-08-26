@@ -26,8 +26,9 @@ Bretagnolle--Huber inequality (Lemma~\ref{lem:bretagnolle_huber}) and the convex
 in its second argument for finite mixtures (Lemma~\ref{lem:kl_mixture_convex}), all from
 Chapter~\ref{chap:pre_info} (Mathlib \texttt{ProbabilityTheory.klDiv}; see
 \cite[Chapters~14 and~15]{lattimore2020bandit}), together with Gaussian mean concentration
-(Lemma~\ref{lem:gauss_mean_concentration}) and the sequential composition of algorithms
-(Lemma~\ref{lem:composition}).
+(Lemma~\ref{lem:gauss_mean_concentration}, in the form of Lemma~\ref{lem:noise_azuma} for the
+formalization) and the sequential composition of algorithms (Lemma~\ref{lem:composition}; the
+formalization only needs the special case of Lemma~\ref{lem:prefix_transfer}).
 
 What is new with respect to the paper. The paper normalizes the instance with the L\"owner
 ellipsoid of $\conv(\Xs\cup(-\Xs))$ and John's theorem \cite{ball1997elementary}; we use
@@ -102,17 +103,20 @@ of $\R^d$, the PAC condition for all $\theta'$ on $\Xs'$ is equivalent to the PA
 for all $\theta$ on $\Xs$.
 \end{proof}
 
-\textbf{Lean remark.} The instance transformation acts on the \emph{action type}: the
-algorithms of $\mathsf{Alg}$ have actions in the subtype $\Xs$ and those of $\mathsf{Alg}'$ in
-the subtype $M\Xs$; $\phi$ is a \texttt{MeasurableEquiv} (indeed a \texttt{Homeomorph})
-between the two subtypes, and $\mathrm{alg}'$ is obtained by transporting the initial
-distribution and the policy kernels of $\mathrm{alg}$ along $\phi$ and $\Phi_t$
-(\texttt{Kernel.map} and \texttt{Kernel.comap}). The identification of the law is a general
-statement about LML algorithm-environment sequences transported along a measurable
-equivalence of the action type; it should be proved once in that generality (the
-environment $\nu'_{\theta'}$ composed with $\phi$ is $\nu_\theta$).
+\textbf{Lean remark.} The formalization does \emph{not} transform the algorithm: it works in
+the original coordinates and only uses the map $M$ inside the analysis. Indeed every quantity of
+Sections~\ref{sec:lower_adaptive_baseline} and~\ref{sec:lower_adaptive_test} is of the form
+$\ip{Mx}{u}$ for an action $x \in \Xs$ and a fixed vector $u$, and $\ip{Mx}{u} = \ip{x}{Mu}$
+since $M$ is symmetric (\texttt{COLT83.inner\_toEuclideanCLM\_normalizeMat}); the reward vectors
+of the normalized instance are therefore replaced by their images $Mu$ on the original instance
+(e.g.\ $\theta_\pm = \pm\frac{4\eps}{\varrho}Mu$ in
+Definition~\ref{def:lower_adaptive_two_point_instance}). This lemma is thus not needed for
+Theorem~\ref{thm:lower_adaptive} and is not formalized; the transport of a run along a
+measurable map of the \emph{sample space} (as opposed to the action type) is
+\texttt{Learning.IdentAlg.IsRun.comp\_hasLaw}.
 
 \begin{definition}[Normalized instance]\label{def:normalized_instance}
+\lean{COLT83.normalizeMat, COLT83.IsGOptimalDesign.norm_normalizeMat_le, COLT83.IsGOptimalDesign.norm_normalizeMat_eq_one, COLT83.IsGOptimalDesign.designMatrix_mapDomain_normalizeMat, COLT83.transpose_normalizeMat, COLT83.inner_toEuclideanCLM_normalizeMat}\leanok
 \uses{def:arm_set, thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, cor:g_optimal_normalized, lem:transform_preserves_pac}
 Let $\Xs$ be spanning and let $\lambda_G \in \simplex_{\Xs}$ be a $G$-optimal design with
 $A_G := A(\lambda_G) \succ 0$ (Theorem~\ref{thm:kiefer_wolfowitz}), with support $\{x_1, \dots, x_m\}$ ($m \ge 1$ distinct
@@ -150,6 +154,7 @@ all $x \in \Xs$. Only these three facts are used below.
 \label{sec:lower_adaptive_baseline}
 
 \begin{lemma}[A well-separated pair of unit arms]\label{lem:separated_pair}
+\lean{COLT83.IsGOptimalDesign.sum_mul_inner_normalizeMat_sq, COLT83.IsGOptimalDesign.exists_inner_normalizeMat_le, COLT83.IsGOptimalDesign.norm_sub_sq_normalizeMat, COLT83.IsGOptimalDesign.exists_separated_pair}\leanok
 \uses{def:normalized_instance}
 In the setting of Definition~\ref{def:normalized_instance},
 \[
@@ -163,6 +168,7 @@ Moreover, every $k$ with $\ip{v_1}{v_k} \le 1/\sqrt2$ satisfies $k \ne 1$ and
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:normalized_instance}
 $\sum_j\lambda_j\ip{v_1}{v_j}^2 = v_1^\top\big(\sum_j\lambda_jv_jv_j^\top\big)v_1
 = v_1^\top (I_d/d) v_1 = \norm{v_1}^2/d = 1/d$. A weighted average with weights
@@ -231,8 +237,14 @@ measurable map $x \mapsto \indic\{\ip{x}{u}\ge s\}$ from $\Xs'$ to \texttt{Bool}
 (sampling rule, this composed kernel) is a \emph{test} in the sense of
 Definition~\ref{def:mixture_test} below. The events $\{\hat H = 0\}$, $\{\hat H = 1\}$ are
 events of $(\hist_n,\rec)$, as required by Lemma~\ref{lem:kl_data_processing_recommendation}.
+In the formalization the two implications (i), (ii) and the error bounds are established inside
+the proof of Lemma~\ref{lem:baseline_lower} (\texttt{COLT83.baseline\_le\_budget\_of\_isPAC}),
+in the original coordinates (the set $B := \{x : \ip{Mx}{u} \ge s\}$ of recommendations), and the
+error probabilities are those of the canonical runs of Definition~\ref{def:bai_alg}
+(\texttt{IdentAlg.IsFixedBudget.isRun\_fixedBudgetRunMeasure}).
 
 \begin{lemma}[KL divergence between the two-point instances]\label{lem:kl_two_instances}
+\lean{Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le}\leanok
 \uses{def:normalized_instance, def:lower_adaptive_two_point_instance, def:bai_alg}
 Let $\eps > 0$ and let $\varrho$, $\theta_\pm$ be as in
 Definition~\ref{def:lower_adaptive_two_point_instance}. For every identification algorithm on
@@ -244,6 +256,7 @@ with budget $n$ (any sampling rule, any recommendation kernel),
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:kl_data_processing_recommendation, cor:divergence_decomposition_gaussian, def:normalized_instance}
 By Lemma~\ref{lem:kl_data_processing_recommendation}, the KL between the laws of
 $(\hist_n,\rec)$ equals the KL between the laws of $\hist_n$ (the recommendation kernel is
@@ -260,9 +273,11 @@ using $\abs{\ip{x_t}{u}} \le \norm{x_t}\norm{u} \le 1$ since $x_t \in \Xs' \subs
 \end{proof}
 
 \begin{lemma}[Baseline lower bound]\label{lem:baseline_lower}
+\lean{COLT83.baseline_le_budget_of_isPAC}\leanok
 \uses{def:normalized_instance, def:pac}
 Let $\eps > 0$ and $\delta \in (0, 1/4)$. Every $(\eps,\delta)$-PAC identification algorithm
-on $\Xs'$ with budget $n$ satisfies
+on $\Xs'$ (equivalently, by the Lean remark after Lemma~\ref{lem:transform_preserves_pac}, on the
+spanning action set $\Xs$ itself, $d \ge 2$) with budget $n$ satisfies
 \[
   n \;\ge\; \frac{2 - \sqrt2}{32\,\eps^2}\,\log\frac{1}{4\delta} .
 \]
@@ -270,6 +285,7 @@ In particular this holds for $\delta < 1/16$, the range of Theorem~\ref{thm:lowe
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:lower_adaptive_two_point_instance, lem:two_point_test, lem:kl_two_instances, lem:bretagnolle_huber, lem:separated_pair}
 Fix $k$, $\varrho$, $u$, $s$ and $\theta_\pm$ as in
 Definition~\ref{def:lower_adaptive_two_point_instance} (the index $k$ exists by
@@ -292,6 +308,7 @@ $n \ge \frac{\varrho^2}{32\eps^2}\log\frac1{4\delta}$, and $\varrho^2 \ge 2 - \s
 \label{sec:lower_adaptive_test}
 
 \begin{definition}[Tests and the mixture testing problem]\label{def:mixture_test}
+\lean{COLT83.mixtureParam, COLT83.designWeight, COLT83.histLaw, COLT83.mixtureHistLaw, COLT83.IsDesign.isProbabilityMeasure_mixtureHistLaw, COLT83.IsGOptimalDesign.inner_mixtureParam_self}\leanok
 \uses{def:normalized_instance, def:bai_alg}
 Let $\eps > 0$ and, for $1 \le j \le m$, $\theta^{(j)} := 3\eps\, v_j$. A \emph{test with budget
 $N \ge 1$} on $\Xs'$ is a pair $\mathsf{Test} = (\mathrm{alg}, \kappa)$ of an LML algorithm
@@ -330,8 +347,16 @@ $\sum_j \lambda_j \bullet \Prob^{\mathrm{test}}_{\theta^{(j)}}$ (\texttt{Finset.
 \texttt{ENNReal} weights); it is not the law of an algorithm-environment sequence for a
 single $\theta$, which is why the KL to it is controlled by convexity
 (Lemma~\ref{lem:kl_mixture_convex}) rather than by the divergence decomposition directly.
+In the formalization the alternatives are written in the original coordinates
+(\texttt{COLT83.mixtureParam}: $\theta^{(j)} = 3\eps M(Mx_j)$, so that
+$\ip{x}{\theta^{(j)}} = 3\eps\ip{Mx}{v_j}$), the laws $\Prob^{\mathrm{test}}_\theta$ are the laws
+\texttt{COLT83.histLaw} of the history of length $N$ under the canonical trajectory measure of
+the test's sampling rule (the decision is a measurable function of this history, so nothing is
+lost, cf.\ Lemma~\ref{lem:kl_data_processing_recommendation}), and the mixture is
+\texttt{COLT83.mixtureHistLaw}.
 
 \begin{lemma}[KL divergence to the mixture]\label{lem:mixture_kl}
+\lean{COLT83.IsGOptimalDesign.sum_mul_inner_mixtureParam_sq, COLT83.IsGOptimalDesign.sum_mul_inner_mixtureParam_sq_le, COLT83.IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le}\leanok
 \uses{def:mixture_test}
 For every test with budget $N$ on $\Xs'$,
 \[
@@ -344,6 +369,7 @@ For every test with budget $N$ on $\Xs'$,
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:kl_mixture_convex, lem:kl_data_processing_recommendation, cor:divergence_decomposition_gaussian, def:normalized_instance}
 The first inequality is the convexity of $\nu \mapsto \KL(\mu\|\nu)$ for the finite mixture
 $\Prob_1 = \sum_j\lambda_j\Prob^{\mathrm{test}}_{\theta^{(j)}}$ (Lemma~\ref{lem:kl_mixture_convex}). For each
@@ -363,6 +389,7 @@ $\norm{x_t} \le 1$ since $x_t \in \Xs' \subseteq \ball_d$.
 \end{proof}
 
 \begin{lemma}[Lower bound for the testing problem]\label{lem:test_lower}
+\lean{COLT83.IsGOptimalDesign.exp_neg_le_of_mixture}\leanok
 \uses{def:mixture_test}
 Let $\delta \in (0,1/8)$. Every test with budget $N$ on $\Xs'$ such that
 $\Prob_0(\hat H = 1) \le 2\delta$ and $\Prob_1(\hat H = 0) \le 2\delta$ satisfies
@@ -372,6 +399,7 @@ $\Prob_0(\hat H = 1) \le 2\delta$ and $\Prob_1(\hat H = 0) \le 2\delta$ satisfie
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:bretagnolle_huber, lem:mixture_kl}
 Apply the Bretagnolle--Huber inequality (Lemma~\ref{lem:bretagnolle_huber}) to the
 probability measures $\mu = \Prob_0$, $\nu = \Prob_1$ and the event $A := \{\hat H = 1\}$:
@@ -382,8 +410,15 @@ so $\KL(\Prob_0\|\Prob_1) \ge \log\frac{1}{8\delta} > 0$ (as $\delta < 1/8$). By
 Lemma~\ref{lem:mixture_kl}, $\frac{9N\eps^2}{2d} \ge \log\frac{1}{8\delta}$.
 \end{proof}
 
+\textbf{Lean remark.} The formalized statement is the intermediate inequality
+$\frac12\exp(-9N\eps^2/(2d)) \le \alpha + \beta$ for every measurable set $E$ of histories
+with $\Prob_0(E) \le \alpha$ and $\Prob^{\mathrm{test}}_{\theta^{(j)}}(E^c) \le \beta$ for all $j$
+(\texttt{COLT83.IsGOptimalDesign.exp\_neg\_le\_of\_mixture}); the passage to the bound on $N$
+is done in the proof of Theorem~\ref{thm:lower_adaptive}.
+
 \begin{lemma}[A test built from a PAC algorithm]\label{lem:test_from_alg}
-\uses{def:mixture_test, def:pac, lem:composition}
+\lean{Learning.Algorithm.thenRepeat, Learning.IdentAlg.testAlg, Learning.LinearBandit.phaseMean, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_thenRepeat, Learning.IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat, Learning.IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat, Learning.IdentAlg.IsPAC.le_measureReal_action_succ_of_testAlg, Learning.LinearBandit.phaseMean_ae_eq_of_thenRepeat, Learning.LinearBandit.measureReal_inner_add_le_phaseMean_le, Learning.LinearBandit.measureReal_phaseMean_le_inner_sub_le, Learning.LinearBandit.measureReal_lt_phaseMean_le_of_testAlg, Learning.LinearBandit.measureReal_phaseMean_le_le_of_testAlg}\leanok
+\uses{def:mixture_test, def:pac, lem:composition, lem:prefix_transfer}
 Let $\eps > 0$, $\delta \in (0,1)$ and let $\mathsf{Alg} = (\mathrm{alg},\rho)$ be an
 $(\eps,\delta)$-PAC identification algorithm on $\Xs'$ with budget $n$. Let
 \[
@@ -402,7 +437,8 @@ and therefore $\Prob_1(\hat H = 0) \le 2\delta$ as well.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:composition, lem:noise_representation, lem:gauss_mean_concentration, def:normalized_instance, def:pac, def:bai_alg}
+\leanok
+\uses{lem:composition, lem:prefix_transfer, lem:noise_representation, lem:noise_azuma, lem:gauss_mean_concentration, def:normalized_instance, def:pac, def:bai_alg}
 \emph{Construction.} $\mathsf{Test}$ is the sequential composition (Lemma~\ref{lem:composition})
 of $\mathrm{alg}_1 := \mathrm{alg}$ with $T_1 := n$ and, for a history $h$ of length $n$, the
 algorithm $\mathrm{alg}_2(h)$ whose initial action distribution is $\rho(h)$ and whose policy
@@ -456,17 +492,28 @@ Hence $\Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0) \le 2\delta$.
 \le 2\delta\sum_j\lambda_j = 2\delta$.
 \end{proof}
 
-\textbf{Lean remark.} The test is built by Lemma~\ref{lem:composition} and not by adding
-$\rec$ to the state: the second-phase algorithm $\mathrm{alg}_2(h)$ is the LML algorithm with
-initial distribution $\rho(h)$ and the deterministic policy ``play the action recorded at
-index $n$ of the history''; the recommendation of $\mathsf{Alg}$ is thus the action $x_n$,
-and the identity between the law of $(\hist_n, x_n)$ and $\Prob_\theta$ of
-Definition~\ref{def:bai_alg} is the composition-product structure of
-Lemma~\ref{lem:composition}; the good event is the $h$-independent family
-$E_h = \{\abs{\bar\eta} < \eps/2\}$, fed to Lemma~\ref{lem:composition} with $\delta' = 0$, so
-no conditional probability given $\hist_n$ has to be manipulated. The estimate $\hat v$ is the empirical mean of the observations
-of the second phase (LML \texttt{empMean}-style sums over the index range $[n, N)$), and
-$\kappa$ is \texttt{Kernel.deterministic} of the map $\hist_N \mapsto \indic\{\hat v > \eps\}$.
+\textbf{Lean remark.} The formalization does not use the general composition lemma. The
+test's sampling rule is the single LML algorithm \texttt{Learning.Algorithm.thenRepeat}
+(\texttt{Learning.IdentAlg.testAlg} when $\rho$ is the recommendation rule of $\mathsf{Alg}$):
+its policy is that of $\mathrm{alg}$ at times $t < n$, the kernel $\rho$ applied to the
+history of the first $n$ rounds at time $t = n$, and the deterministic policy ``play the action
+recorded at index $n$ of the history'' afterwards; the recommendation of $\mathsf{Alg}$ is thus
+the action $x_n$. The three facts used about a run of this algorithm are: it is an
+algorithm-environment sequence for $\mathrm{alg}$ until time $n-1$
+(\texttt{IsAlgEnvSeq.isAlgEnvSeqUntil\_of\_thenRepeat}), $x_n$ has conditional law
+$\rho(\hist_n)$ given $\hist_n$ (\texttt{hasCondDistrib\_action\_succ\_of\_thenRepeat}), and
+$x_{n+s} = x_n$ almost surely (\texttt{action\_add\_ae\_eq\_of\_thenRepeat}). The PAC guarantee
+of $\mathsf{Alg}$ is transferred to $x_n$ by Lemma~\ref{lem:prefix_transfer}
+(\texttt{IsPAC.le\_measureReal\_action\_succ\_of\_testAlg}). The concentration of
+$\bar\eta$ is Lemma~\ref{lem:noise_azuma} applied to the run of the test itself (so no
+conditioning on $\hist_n$ is needed): $\hat v = \ip{x_n}{\theta} + \bar\eta$ almost surely
+(\texttt{phaseMean\_ae\_eq\_of\_thenRepeat}, with $\hat v$ the empirical mean
+\texttt{Learning.LinearBandit.phaseMean} of the observations of rounds $n, \dots, N-1$), and the
+two error bounds are \texttt{measureReal\_lt\_phaseMean\_le\_of\_testAlg} ($\theta = 0$) and
+\texttt{measureReal\_phaseMean\_le\_le\_of\_testAlg} (an action of value at least $3\eps$
+exists), both for runs on any standard Borel probability space. The decision is the event
+$\{\hat v > \eps\}$; no decision kernel is needed because the laws of
+Definition~\ref{def:mixture_test} are laws of histories.
 
 \section{The adaptive lower bound}
 \label{sec:lower_adaptive_theorem}
@@ -486,12 +533,15 @@ $c_{\mathrm{ad}}$ is used in the rest of the blueprint.
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:transform_preserves_pac, def:normalized_instance, lem:baseline_lower, lem:test_from_alg, lem:test_lower}
 \emph{Step 0: normalization.} Let $\mathsf{Alg}$ be $(\eps,\delta)$-PAC on $\Xs$ with budget
 $n$. By Lemma~\ref{lem:transform_preserves_pac} with $M = d^{-1/2}A_G^{-1/2}$
 (Definition~\ref{def:normalized_instance}, which uses that $\Xs$ is spanning), the transformed algorithm $\mathsf{Alg}'$ is
 $(\eps,\delta)$-PAC on $\Xs'$ with the same budget $n$. We apply the lemmas of
 Sections~\ref{sec:lower_adaptive_baseline} and~\ref{sec:lower_adaptive_test} to $\mathsf{Alg}'$.
+(In the formalization these lemmas are stated in the original coordinates and applied to
+$\mathsf{Alg}$ directly; see the Lean remark after Lemma~\ref{lem:transform_preserves_pac}.)
 
 \emph{Step 1: three consequences of $\delta < 1/16$.} Write $L := \log(1/\delta) > \log 16 = 4\log 2$.
 Then

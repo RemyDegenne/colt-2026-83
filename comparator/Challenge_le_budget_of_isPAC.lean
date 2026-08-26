@@ -5,10 +5,36 @@ import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
+import Mathlib.InformationTheory.KullbackLeibler.Basic
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.MeasureTheory.Integral.MeanInequalities
+import Mathlib.Analysis.Convex.Jensen
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Instances.Matrix
 import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.MeasureTheory.Group.Convolution
+import Mathlib.MeasureTheory.Group.IntegralConvolution
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.InformationTheory.KullbackLeibler.ChainRule
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.RadonNikodym
+import Mathlib.Probability.Kernel.MeasurableLIntegral
+import Mathlib.Probability.Kernel.RadonNikodym
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Probability.Moments.SubGaussian
 
 /-! # Standalone extraction for `COLT83.le_budget_of_isPAC`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.
@@ -19,6 +45,8 @@ statement rests on vendored in below, so that this file is self-contained over M
 set_option quotPrecheck false
 
 -- Namespace stubs (so later `open`s resolve).
+namespace MeasureTheory
+end MeasureTheory
 namespace ProbabilityTheory
 end ProbabilityTheory
 namespace Learning
@@ -187,6 +215,9 @@ structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSp
   measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
   /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
   output : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓞
+  /-- The output kernels are s-finite (so that the joint law of history and output is a
+  composition-product). -/
+  [isSFiniteKernel_output : ∀ n, IsSFiniteKernel (output n)]
   /-- The output rule is a probability measure on every history at which the algorithm stops. -/
   [isProbabilityMeasure_output : ∀ n h, stop n h → IsProbabilityMeasure (output n h)]
 
@@ -246,7 +277,7 @@ open MeasureTheory ProbabilityTheory
 open scoped RealInnerProductSpace NNReal
 universe u
 namespace Learning.LinearBandit
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
+variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
 
 /-- Reward kernel of the linear Gaussian bandit on `𝒳` with reward vector `θ`: playing `x` gives an
 observation with law `N(⟪x, θ⟫, 1)`. -/
@@ -275,7 +306,8 @@ noncomputable def simpleRegret (𝒳 : Set E) (θ x : E) : ℝ :=
 /-- An identification algorithm (with actions in `𝒳`, real observations and recommendations in
 `𝒳`) is `(ε, δ)`-PAC on `𝒳` if for every reward vector `θ`, run against the linear Gaussian
 environment `linearGaussianEnv 𝒳 θ`, its recommendation has simple regret at most `ε` with
-probability at least `1 - δ`, for every run on every probability space `Ω : Type u`. -/
+probability at least `1 - δ`, for every run on every probability space `Ω` in the universe of `E`
+(the universe in which runs of `A` can be constructed, see `IdentAlg.exists_isRun`). -/
 def IsPAC (𝒳 : Set E) (A : IdentAlg 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
   A.IsPAC.{u} (linearGaussianEnv 𝒳) (fun θ x ↦ simpleRegret 𝒳 θ x ≤ ε) δ
 
@@ -284,7 +316,8 @@ end
 
 -- ═══ MXJ2026.LowerAdaptive ═══
 section
-open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit
+open MeasureTheory ProbabilityTheory Real Finset Learning Learning.LinearBandit
+open scoped RealInnerProductSpace
 namespace COLT83
 variable {ι : Type*} [Fintype ι]
 
@@ -292,7 +325,7 @@ variable {ι : Type*} [Fintype ι]
 budget `T` which is `(ε, δ)`-PAC on a spanning compact action set `𝒳 ⊆ ℝ^d`, `d ≥ 2`, with
 `δ < 1/16`, satisfies `T ≥ d log(1/δ) / (20000 ε²)`. -/
 theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳)
-    (hne : 𝒳.Nonempty) (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 2 ≤ Fintype.card ι)
+    (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 2 ≤ Fintype.card ι)
     {ε δ : ℝ} (hε : 0 < ε) (hδ : δ ∈ Set.Ioo 0 (1 / 16)) {T : ℕ}
     (A : IdentAlg 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T) (hpac : IsPAC 𝒳 A ε δ) :
     Fintype.card ι * log (1 / δ) / (20000 * ε ^ 2) ≤ T := sorry

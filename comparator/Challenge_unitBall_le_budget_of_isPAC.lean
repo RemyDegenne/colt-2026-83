@@ -8,7 +8,12 @@ import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.MeasureTheory.Group.Convolution
+import Mathlib.MeasureTheory.Group.IntegralConvolution
 
 /-! # Standalone extraction for `COLT83.unitBall_le_budget_of_isPAC`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.
@@ -19,6 +24,8 @@ statement rests on vendored in below, so that this file is self-contained over M
 set_option quotPrecheck false
 
 -- Namespace stubs (so later `open`s resolve).
+namespace MeasureTheory
+end MeasureTheory
 namespace ProbabilityTheory
 end ProbabilityTheory
 namespace Learning
@@ -187,6 +194,9 @@ structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSp
   measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
   /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
   output : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓞
+  /-- The output kernels are s-finite (so that the joint law of history and output is a
+  composition-product). -/
+  [isSFiniteKernel_output : ∀ n, IsSFiniteKernel (output n)]
   /-- The output rule is a probability measure on every history at which the algorithm stops. -/
   [isProbabilityMeasure_output : ∀ n h, stop n h → IsProbabilityMeasure (output n h)]
 
@@ -246,7 +256,7 @@ open MeasureTheory ProbabilityTheory
 open scoped RealInnerProductSpace NNReal
 universe u
 namespace Learning.LinearBandit
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
+variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
 
 /-- Reward kernel of the linear Gaussian bandit on `𝒳` with reward vector `θ`: playing `x` gives an
 observation with law `N(⟪x, θ⟫, 1)`. -/
@@ -275,7 +285,8 @@ noncomputable def simpleRegret (𝒳 : Set E) (θ x : E) : ℝ :=
 /-- An identification algorithm (with actions in `𝒳`, real observations and recommendations in
 `𝒳`) is `(ε, δ)`-PAC on `𝒳` if for every reward vector `θ`, run against the linear Gaussian
 environment `linearGaussianEnv 𝒳 θ`, its recommendation has simple regret at most `ε` with
-probability at least `1 - δ`, for every run on every probability space `Ω : Type u`. -/
+probability at least `1 - δ`, for every run on every probability space `Ω` in the universe of `E`
+(the universe in which runs of `A` can be constructed, see `IdentAlg.exists_isRun`). -/
 def IsPAC (𝒳 : Set E) (A : IdentAlg 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
   A.IsPAC.{u} (linearGaussianEnv 𝒳) (fun θ x ↦ simpleRegret 𝒳 θ x ≤ ε) δ
 

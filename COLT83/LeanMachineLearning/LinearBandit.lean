@@ -39,7 +39,7 @@ universe u
 
 namespace Learning.LinearBandit
 
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E]
 
 /-- Reward kernel of the linear Gaussian bandit on `𝒳` with reward vector `θ`: playing `x` gives an
@@ -72,7 +72,8 @@ noncomputable def simpleRegret (𝒳 : Set E) (θ x : E) : ℝ :=
 /-- An identification algorithm (with actions in `𝒳`, real observations and recommendations in
 `𝒳`) is `(ε, δ)`-PAC on `𝒳` if for every reward vector `θ`, run against the linear Gaussian
 environment `linearGaussianEnv 𝒳 θ`, its recommendation has simple regret at most `ε` with
-probability at least `1 - δ`, for every run on every probability space `Ω : Type u`. -/
+probability at least `1 - δ`, for every run on every probability space `Ω` in the universe of `E`
+(the universe in which runs of `A` can be constructed, see `IdentAlg.exists_isRun`). -/
 def IsPAC (𝒳 : Set E) (A : IdentAlg 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
   A.IsPAC.{u} (linearGaussianEnv 𝒳) (fun θ x ↦ simpleRegret 𝒳 θ x ≤ ε) δ
 

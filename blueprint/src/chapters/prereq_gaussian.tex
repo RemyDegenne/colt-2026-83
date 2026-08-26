@@ -142,6 +142,7 @@ $\E[(-G)(-G)^\top] = S$; apply (ii).
 \end{proof}
 
 \begin{lemma}[Affine images of Gaussian vectors]\label{lem:gauss_linear_image}
+\lean{ProbabilityTheory.multivariateGaussian_map_toEuclideanCLM, ProbabilityTheory.multivariateGaussian_map_toEuclideanLin}
 \uses{def:pg_gaussian_vector}
 Let $V \sim \Normal(\mu, S)$ in $\R^n$, $L \in \R^{m \times n}$ and $b \in \R^m$. Then
 $b + LV \sim \Normal(b + L\mu,\ L S L^\top)$. In particular, for $g \sim \Normal(0, I_n)$,
@@ -169,6 +170,7 @@ The proof through characteristic functions is an alternative to the one through
 and \texttt{charFun\_multivariateGaussian} on both sides.
 
 \begin{lemma}[Independent Gaussian vectors are jointly Gaussian]\label{lem:pg_indep_gaussian_pair}
+\lean{ProbabilityTheory.multivariateGaussian_conv}
 \uses{def:pg_gaussian_vector}
 Let $V_1 \sim \Normal(\mu_1, S_1)$ in $\R^{n_1}$ and $V_2 \sim \Normal(\mu_2, S_2)$ in
 $\R^{n_2}$ be independent, on the same probability space. Then the pair $(V_1, V_2)$, seen in
@@ -311,6 +313,7 @@ MGF $e^{\lambda^2\sigma^2/2}$ (Mathlib \texttt{iteratedDeriv\_mgf\_zero}).
 \end{proof}
 
 \begin{lemma}[Moments of the norm of a Gaussian vector]\label{lem:gauss_norm_moments}
+\lean{ProbabilityTheory.integral_norm_sq_multivariateGaussian, ProbabilityTheory.integral_norm_le_sqrt_trace_multivariateGaussian, ProbabilityTheory.integral_norm_stdGaussian_le}
 \uses{def:pg_gaussian_vector}
 Let $S \in \PSD$ ($d \times d$) and $Y \sim \Normal(0, S)$; equivalently $Y = S^{1/2}g$ with
 $g \sim \Normal(0,I_d)$. Then
@@ -399,6 +402,7 @@ $n\eps^2/8 \ge \log(2/\delta)$.
 
 \begin{lemma}[Suprema over a compact set reduce to a countable dense subset]
 \label{lem:sup_countable_dense}
+\lean{supportFn, lipschitzWith_supportFn, convexOn_supportFn, exists_supportFn_eq_inner}
 Let $\Xs \subset \R^d$ be nonempty and compact and $R := \max_{x\in\Xs}\norm{x}$.
 \begin{enumerate}
   \item[(i)] There is a countable dense subset $D \subseteq \Xs$; fix an enumeration
@@ -477,6 +481,7 @@ if $\sigma_i = 0$ then $Z_i = 0$ a.s.\ and the constant-$\sigma^2$ bound is triv
 \end{proof}
 
 \begin{lemma}[Comparison by covariance domination]\label{lem:gauss_comparison}
+\lean{ProbabilityTheory.gaussianWidth_multivariateGaussian_le, ProbabilityTheory.gaussianWidth_le_gaussianWidth_conv}\leanok
 \uses{def:pg_gaussian_vector, lem:sup_countable_dense}
 Let $\Xs \subset \R^d$ be nonempty and compact, let $S_X, S_Y \in \PSD$ with
 $S_X \preceq S_Y$ (i.e.\ $S_Y - S_X \in \PSD$), and let $G_X \sim \Normal(0,S_X)$,
@@ -491,6 +496,7 @@ $\Sigma_Z \preceq \Sigma_W$, then $\E\max_{i\le m}Z_i \le \E\max_{i\le m}W_i$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:sup_countable_dense, lem:gauss_norm_moments, lem:pg_indep_gaussian_pair, lem:gauss_law_of_cov}
 Write $m(v) := \sup_{x\in\Xs}\ip{x}{v}$, which is continuous with $\abs{m(v)} \le R\norm{v}$,
 $R := \max_{x\in\Xs}\norm{x}$ (Lemma~\ref{lem:sup_countable_dense}); integrability of $m(G_X)$

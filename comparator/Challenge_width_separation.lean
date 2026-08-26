@@ -1,10 +1,15 @@
 import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
+import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.MeasureTheory.Group.Convolution
+import Mathlib.MeasureTheory.Group.IntegralConvolution
+import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Probability.Process.HittingTime
@@ -19,8 +24,12 @@ statement rests on vendored in below, so that this file is self-contained over M
 set_option quotPrecheck false
 
 -- Namespace stubs (so later `open`s resolve).
+namespace MeasureTheory
+end MeasureTheory
 namespace ProbabilityTheory
 end ProbabilityTheory
+namespace Matrix
+end Matrix
 namespace COLT83
 end COLT83
 
@@ -145,37 +154,32 @@ end
 
 -- ═══ Mathlib.GaussianWidth ═══
 section
-open MeasureTheory
-open scoped RealInnerProductSpace
+open MeasureTheory Set
+open scoped RealInnerProductSpace Pointwise
+section SupportFn
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The support function of a set `K`: `supportFn K ξ = sup_{x ∈ K} ⟪x, ξ⟫`. -/
+noncomputable def supportFn (K : Set E) (ξ : E) : ℝ := ⨆ x : K, ⟪(x : E), ξ⟫
+
+variable {K K' : Set E} {R : ℝ} {ξ : E}
+end SupportFn
 namespace ProbabilityTheory
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {mE : MeasurableSpace E}
+section GaussianWidth
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {mE : MeasurableSpace E} [OpensMeasurableSpace E] {μ ν : Measure E} {K K' : Set E} {R : ℝ}
 
 /-- Gaussian width of the set `K` with respect to the measure `μ`:
 `∫ ξ, sup_{x ∈ K} ⟪x, ξ⟫ ∂μ`. -/
-noncomputable def gaussianWidth (K : Set E) (μ : Measure E) : ℝ :=
-  ∫ ξ, ⨆ x : K, ⟪(x : E), ξ⟫ ∂μ
+noncomputable def gaussianWidth (K : Set E) (μ : Measure E) : ℝ := ∫ ξ, supportFn K ξ ∂μ
 
+end GaussianWidth
 end ProbabilityTheory
-end
-
--- ═══ MXJ2026.StructuredSets ═══
-section
-namespace COLT83
-variable (ι : Type*) [Fintype ι]
-variable {ι}
-
-/-- The multi-task action set with block sizes `d : Fin m → ℕ`: vectors of
-`{0, 1}^(Σ j, Fin (d j))` with exactly one coordinate equal to `1` in each block `j`. -/
-def multitaskSet {m : ℕ} (d : Fin m → ℕ) : Set (EuclideanSpace ℝ (Σ j, Fin (d j))) :=
-  {x | (∀ i, x i = 0 ∨ x i = 1) ∧ ∀ j, ∑ l, x ⟨j, l⟩ = 1}
-
-end COLT83
 end
 
 -- ═══ MXJ2026.Width ═══
 section
 open MeasureTheory ProbabilityTheory Real
-open scoped RealInnerProductSpace
+open scoped RealInnerProductSpace MatrixOrder Pointwise Matrix
 namespace COLT83
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
@@ -205,6 +209,20 @@ inside its span `V`, in the coordinates given by the standard orthonormal basis 
 noncomputable def intrinsicGw (𝒳 : Set (EuclideanSpace ℝ ι)) : ℝ :=
   gw ((fun x : Submodule.span ℝ 𝒳 ↦ (stdOrthonormalBasis ℝ (Submodule.span ℝ 𝒳)).repr x) ''
     (Subtype.val ⁻¹' 𝒳))
+
+end COLT83
+end
+
+-- ═══ MXJ2026.StructuredSets ═══
+section
+namespace COLT83
+variable (ι : Type*) [Fintype ι]
+variable {ι}
+
+/-- The multi-task action set with block sizes `d : Fin m → ℕ`: vectors of
+`{0, 1}^(Σ j, Fin (d j))` with exactly one coordinate equal to `1` in each block `j`. -/
+def multitaskSet {m : ℕ} (d : Fin m → ℕ) : Set (EuclideanSpace ℝ (Σ j, Fin (d j))) :=
+  {x | (∀ i, x i = 0 ∨ x i = 1) ∧ ∀ j, ∑ l, x ⟨j, l⟩ = 1}
 
 end COLT83
 end

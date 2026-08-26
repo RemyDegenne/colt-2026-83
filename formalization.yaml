@@ -99,18 +99,91 @@ status:
     algorithms of the paper, whose definitions (rounding, G-optimal designs, Median Elimination,
     the norm-estimation meta-algorithm) belong to phase 2 together with the proofs.
 
-    Not yet formalized (phase 2): all proofs, the explicit algorithms, and the prerequisites of
-    Part II of the blueprint (Gaussian concentration, sub-exponential variables, divergence
-    decomposition, Kiefer–Wolfowitz, rounding, Median Elimination, Gaussian posteriors).
-  # Every headline statement below is currently `sorry`: phase 1 states, phase 2 proves.
-  sorry_count: 17
+    Phase 2 (proofs) has started with the Gaussian-width area: the support function and the
+    Gaussian width of a set for a measure (`COLT83/Mathlib/GaussianWidth.lean`: Lipschitz,
+    convexity, images, Minkowski sums, integrability, comparison by convolution/covariance
+    domination), transport lemmas and norm moments of `multivariateGaussian`
+    (`COLT83/Mathlib/Probability/MultivariateGaussian.lean`), Loewner antitonicity of the matrix
+    inverse (`COLT83/Mathlib/Matrix/LoewnerInv.lean`), and the width-for-a-matrix and design-set
+    lemmas of the model chapter (`COLT83/MXJ2026/{Width,DesignSet,WidthDesign}.lean`:
+    `lem:width_matrix_wd`, `lem:width_homog`, `lem:width_mono`, `lem:width_iso`,
+    `lem:width_symm`, `lem:width_empirical`, `lem:designset_basic`, `lem:exists_posdef_design`,
+    `lem:gauss_comparison`), all proved.
+
+    Second phase-2 area: optimal experimental design (`COLT83/MXJ2026/OptimalDesign.lean`, with
+    `COLT83/Mathlib/Matrix/Loewner.lean` and `COLT83/Mathlib/Analysis/Calculus/LocalExtr.lean`):
+    design distributions as finitely supported weights (`IsDesign`, `designMatrix`),
+    Carathéodory for design matrices, the `G`-value and the identity `∑ λ_x xᵀA(λ)⁻¹x = d`,
+    existence and positivity of `D`-optimal designs, and the Kiefer–Wolfowitz theorem
+    (`exists_isGOptimalDesign`: a `G`-optimal design with `xᵀA⁻¹x ≤ d` on `𝒳` and `= d` on the
+    support) with its normalized form used by the lower bounds; on the library side, the Loewner
+    order versus quadratic forms and congruence, the scalar form of the antitonicity of the
+    inverse, square-root identities and the matrix determinant lemma in rank-one form. The
+    log-det derivative of the blueprint outline was replaced by this rank-one determinant
+    formula (`lem:det_rank_one_mix`). Third area: the rounding theorem
+    (`COLT83/MXJ2026/Rounding.lean`, `exists_rounding`): for `T ≥ 4d`, every design distribution
+    with positive definite design matrix `A` can be rounded to `T` points of its support with
+    `∑ x xᵀ ⪰ (T/4) A`, by the one-sided barrier argument of Batson–Spielman–Srivastava (barrier
+    potential `tr (B - l I)⁻¹`, Sherman–Morrison, an averaging inequality on eigenvalues), with the
+    consequences on the inverse and on the width of the rounded design; on the library side,
+    traces and inverses of functions of a symmetric matrix through the continuous functional
+    calculus (`COLT83/Mathlib/Matrix/HermitianCFC.lean`) and the Sherman–Morrison formula.
+    Fourth area: the information-theoretic prerequisites
+    (`COLT83/Mathlib/InformationTheory/{KLCompProd,Pinsker,BretagnolleHuber}.lean`,
+    `COLT83/Mathlib/Probability/KLGaussian.lean`,
+    `COLT83/LeanMachineLearning/{DivergenceDecomposition,FixedBudget}.lean`): the integrated
+    chain rule `klDiv (μ ⊗ₘ κ) (ν ⊗ₘ η) = klDiv μ ν + ∫⁻ klDiv (κ a) (η a) ∂μ` (with the
+    measurability of `a ↦ klDiv (κ a) (η a)`), the divergence of two Gaussians, Pinsker's and
+    the Bretagnolle–Huber inequalities, the divergence decomposition for an algorithm run against
+    two stationary environments (`IsAlgEnvSeq.klDiv_map_history`) with its linear Gaussian form,
+    and the data-processing step for the outputs of fixed-budget runs (the stopping time of a
+    fixed-budget algorithm is constant; the divergence of the output laws is bounded by
+    `T R² ‖θ - θ'‖² / 2`, and Bretagnolle–Huber bounds the sum of the error probabilities of any
+    test on the output). The output kernels of an identification algorithm are now required to
+    be s-finite (`IdentAlg.isSFiniteKernel_output`). Fifth area: existence and transport of runs
+    (`COLT83/LeanMachineLearning/Run.lean`: the canonical run of a fixed-budget algorithm on the
+    space of (trajectory, output) pairs, `IsFixedBudget.isRun_fixedBudgetRunMeasure`; runs
+    transported along maps of the sample space), the geometry of the normalized `G`-optimal
+    design (`COLT83/MXJ2026/NormalizedDesign.lean`: `∑ λ_x ⟪v₁, v_x⟫² = 1/d` and a
+    well-separated pair of unit arms), convexity of the divergence in its second argument
+    (`COLT83/Mathlib/InformationTheory/KLMixture.lean`), and the **baseline adaptive lower bound**
+    `T ≥ (2 - √2)/(32 ε²) log(1/(4δ))` for `(ε, δ)`-PAC fixed-budget algorithms on spanning sets in
+    dimension `d ≥ 2`, `δ < 1/4` (`COLT83/MXJ2026/LowerAdaptiveBaseline.lean`,
+    `baseline_le_budget_of_isPAC`, blueprint `lem:baseline_lower`) — the two-point half of
+    Theorem 2, proved in the original coordinates (no transformation of the algorithm). Because runs
+    can only be constructed in the universe of the action set, `LinearBandit.IsPAC` now quantifies
+    over probability spaces in the universe of the ambient space `E` (it was universe-polymorphic);
+    the comparator challenges were regenerated accordingly. Sixth area: the noise of linear
+    Gaussian runs (`COLT83/LeanMachineLearning/GaussianNoise.lean`): conditionally on the history
+    and the current action, `Y_t - ⟪X_t, θ⟫` has the law `N(0,1)` (the blueprint's noise
+    representation), hence is conditionally sub-Gaussian, and Mathlib's Azuma–Hoeffding inequality
+    bounds the noise sums of any block of rounds (`IsAlgEnvSeq.measureReal_abs_sum_noise_ge_le`),
+    which is the concentration input of the estimation phase of Theorem 2's mixture test.
+    Seventh area: **Theorem 2 is proved** (`le_budget_of_isPAC`, no `sorry`). The missing pieces
+    were the composed test and its analysis: algorithms agreeing on a prefix and the transfer of a
+    PAC guarantee to a partial run (`COLT83/LeanMachineLearning/AlgorithmPrefix.lean`), the
+    algorithm `Algorithm.thenRepeat` "play `alg`, then repeat an action drawn from a kernel" and
+    the test algorithm `IdentAlg.testAlg` built from an identification algorithm
+    (`RepeatTest.lean`), the error bounds of the test in a linear Gaussian bandit via the
+    Azuma bound of the sixth area (`RepeatTestGaussian.lean`), and the mixture testing problem
+    (`COLT83/MXJ2026/MixtureKL.lean`: the divergence from the null law of histories to the
+    design-weighted mixture of the alternatives is at most `(N+1)·9ε²/(2d)`, and the
+    Bretagnolle–Huber inequality for this mixture). The blueprint's general sequential
+    composition lemma (`lem:composition`) is not formalized; the new `lem:prefix_transfer` is
+    the special case that is needed.
+
+    Not yet formalized: the other headline proofs, the explicit algorithms, and the remaining
+    prerequisites of Part II of the blueprint (Gaussian concentration, sub-exponential variables,
+    continuity/attainment of the width, Median Elimination, Gaussian posteriors).
+  # Phase 1 stated all headline results with `sorry`; phase 2 proves them (Theorem 2 done).
+  sorry_count: 16
   sorry_in_definitions: 0
   axioms: []               # to be filled when the proofs are in (phase 2)
   size:
-    lean_lines: 841        # COLT83/ and COLT83.lean, phase 1
-    theorems_and_lemmas: 17
-    definitions: 30
-    blueprint_tagged_declarations: 36  # blueprint/lean_decls, autogenerated
+    lean_lines: 6248       # COLT83/ and COLT83.lean
+    theorems_and_lemmas: 329
+    definitions: 56
+    blueprint_tagged_declarations: 225  # blueprint/lean_decls, autogenerated
   main_results:
     - declaration: "COLT83.exists_isFixedDesign_isPAC"
       file: "COLT83/MXJ2026/Upper.lean"
@@ -126,9 +199,12 @@ status:
     - declaration: "COLT83.le_budget_of_isPAC"
       file: "COLT83/MXJ2026/LowerAdaptive.lean"
       source_statement: "Theorem 2 — lower bound Ω(d log(1/δ)/ε²) for every (adaptive) algorithm"
-      note: "Explicit constant 1/20000 (the blueprint proof gives 1/(11556 + 5760√2)); δ < 1/16, d ≥ 2."
-      sorry_count: 1
-      axioms: []
+      note: >-
+        Explicit constant 1/20000 (the blueprint proof gives 1/(11556 + 5760√2)); δ < 1/16, d ≥ 2.
+        Fully proved (no `sorry`): Kiefer–Wolfowitz normalization, two-point baseline bound,
+        composed test with repeated recommendation, mixture divergence bound, Bretagnolle–Huber.
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/le_budget_of_isPAC.json"
       literature_dependencies: []
     - declaration: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
@@ -264,7 +340,8 @@ review:
   reviewers:
     - "Rémy Degenne"
   notes: >-
-    Phase 1: the statements were written against the blueprint and the paper; no proof exists yet.
+    Phase 1: the statements were written against the blueprint and the paper. Phase 2 (in
+    progress): Theorem 2 is proved; the other headline statements are still `sorry`.
     Each headline statement is to be verified with leanprover/comparator once proved: the
     `comparator/` challenge files restate the theorems with their definitional dependencies
     inlined over a Mathlib-only import closure (configs listed as `comparator_config` above).
@@ -286,8 +363,9 @@ alignment:
     - source: "thm:lower_adaptive — Theorem 2, adaptive lower bound"
       lean: "COLT83.le_budget_of_isPAC"
       module: "COLT83.MXJ2026.LowerAdaptive"
-      status: "stated"
-      note: ""
+      status: "proved"
+      note: "Proved with the constant 1/20000; the proof follows the blueprint chapter."
+
     - source: "thm:lower_nonadaptive — Theorem 3, non-adaptive lower bound"
       lean: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
       module: "COLT83.MXJ2026.LowerNonadaptive"

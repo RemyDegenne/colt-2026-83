@@ -86,12 +86,17 @@ structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSp
   measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
   /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
   output : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓞
+  /-- The output kernels are s-finite (so that the joint law of history and output is a
+  composition-product). -/
+  [isSFiniteKernel_output : ∀ n, IsSFiniteKernel (output n)]
   /-- The output rule is a probability measure on every history at which the algorithm stops. -/
   [isProbabilityMeasure_output : ∀ n h, stop n h → IsProbabilityMeasure (output n h)]
 
 namespace IdentAlg
 
 variable (A : IdentAlg 𝓐 𝓨 𝓞) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
+
+instance (n : ℕ) : IsSFiniteKernel (A.output n) := A.isSFiniteKernel_output n
 
 /-- The stopping rule of `A` as a set of histories of variable length. -/
 def stopSet : Set (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) := {h | A.stop h.1 h.2}
@@ -137,6 +142,58 @@ noncomputable def outputKernel : Kernel (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) �
   toFun h := A.output h.1 h.2
   measurable' := measurable_sigma_of_measurable_comp_mk fun n ↦ (A.output n).measurable
 
+section extendKernel
+
+variable {A}
+
+/-- A kernel `κ` on histories of length `n`, extended by zero to histories of variable length. -/
+noncomputable def extendKernel (n : ℕ) (κ : Kernel (Fin n → 𝓐 × 𝓨) 𝓞) :
+    Kernel (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) 𝓞 where
+  toFun h := if hn : h.1 = n then κ (fun i ↦ h.2 (Fin.cast hn.symm i)) else 0
+  measurable' := by
+    refine measurable_sigma_of_measurable_comp_mk fun m ↦ ?_
+    by_cases hm : m = n
+    · subst hm
+      simpa [Function.comp_def] using κ.measurable
+    · simp [Function.comp_def, hm]
+
+lemma extendKernel_apply (n : ℕ) (κ : Kernel (Fin n → 𝓐 × 𝓨) 𝓞) (h : Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) :
+    extendKernel n κ h = if hn : h.1 = n then κ (fun i ↦ h.2 (Fin.cast hn.symm i)) else 0 := rfl
+
+instance (n : ℕ) (κ : Kernel (Fin n → 𝓐 × 𝓨) 𝓞) [IsFiniteKernel κ] :
+    IsFiniteKernel (extendKernel n κ) := by
+  refine ⟨⟨κ.bound, κ.bound_lt_top, fun h ↦ ?_⟩⟩
+  rw [extendKernel_apply]
+  split_ifs
+  · exact κ.measure_le_bound _ _
+  · simp
+
+lemma extendKernel_sum (n : ℕ) {ι : Type*} [Countable ι] (κs : ι → Kernel (Fin n → 𝓐 × 𝓨) 𝓞) :
+    extendKernel n (Kernel.sum κs) = Kernel.sum fun i ↦ extendKernel n (κs i) := by
+  ext h s hs
+  rw [Kernel.sum_apply' _ _ hs, extendKernel_apply]
+  split_ifs with hn
+  · rw [Kernel.sum_apply' _ _ hs]
+    simp [extendKernel_apply, hn]
+  · simp [extendKernel_apply, hn]
+
+instance (n : ℕ) (κ : Kernel (Fin n → 𝓐 × 𝓨) 𝓞) [IsSFiniteKernel κ] :
+    IsSFiniteKernel (extendKernel n κ) := by
+  rw [← Kernel.kernel_sum_seq κ, extendKernel_sum]
+  infer_instance
+
+end extendKernel
+
+/-- The output kernel is the sum over `n` of the output rules at length `n`, extended by zero. -/
+lemma outputKernel_eq_sum : A.outputKernel = Kernel.sum fun n ↦ extendKernel n (A.output n) := by
+  ext h s hs
+  rw [Kernel.sum_apply' _ _ hs, tsum_eq_single h.1 fun n hn ↦ by simp [extendKernel_apply, hn.symm]]
+  simp [outputKernel, extendKernel_apply]
+
+instance : IsSFiniteKernel A.outputKernel := by
+  rw [outputKernel_eq_sum]
+  infer_instance
+
 /-- `(X, Y, out)` is a *run* of the identification algorithm `A` in the environment `env` on the
 probability space `(Ω, P)`: the action and feedback processes `X`, `Y` form an
 algorithm-environment sequence for the sampling rule `A.alg` and `env`, and the output `out` has
@@ -172,6 +229,8 @@ noncomputable def fixedBudget (alg : Algorithm 𝓐 𝓨) (T : ℕ)
   stop n _ := n = T
   measurableSet_stop n := by by_cases h : n = T <;> simp [h]
   output n := if h : n = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop) else 0
+  isSFiniteKernel_output n := by
+    by_cases h : n = T <;> simp only [h, ↓reduceDIte] <;> infer_instance
   isProbabilityMeasure_output n h hn := by
     simp only [hn, ↓reduceDIte, Kernel.coe_comap, Function.comp_apply]
     infer_instance

@@ -46,6 +46,7 @@ $\norm{A}_F$ for the Frobenius norm. For $W \in \PD$, $\norm{x}_W^2 := x^\top W 
 \label{sec:design_loewner}
 
 \begin{lemma}[Loewner order and quadratic forms]\label{lem:loewner_quadratic}
+\lean{Matrix.dotProduct_mulVec_le_of_le, Matrix.le_iff_dotProduct_mulVec_le}\leanok
 Let $A, B \in \Sym$. Then $A \preceq B$ if and only if $x^\top A x \le x^\top B x$ for every
 $x \in \R^d$, and $A \prec B$ if and only if $x^\top A x < x^\top B x$ for every $x \ne 0$.
 In particular $\preceq$ is a partial order on $\Sym$ compatible with addition and with
@@ -54,6 +55,7 @@ $A = B$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 By definition $B - A \in \PSD$ means that $x^\top(B-A)x \ge 0$ for all $x$, which is the first
 claim; the second is the definition of $\PD$. Compatibility with addition and nonnegative
 scalars is immediate on quadratic forms. Antisymmetry: if $x^\top(B-A)x = 0$ for all $x$ then
@@ -68,6 +70,7 @@ and the order instance is \texttt{Matrix.le\_iff : A ≤ B ↔ (B - A).PosSemide
 Hermitian condition is symmetry. Antisymmetry is part of the \texttt{PartialOrder} instance.
 
 \begin{lemma}[Congruence preserves the Loewner order]\label{lem:loewner_congruence}
+\lean{Matrix.mul_mul_conjTranspose_le_of_le, Matrix.conjTranspose_mul_mul_le_of_le, Matrix.PosDef.mul_mul_conjTranspose_same}\leanok
 \uses{lem:loewner_quadratic}
 Let $A, B \in \Sym$ with $A \preceq B$ and let $M \in \R^{k \times d}$. Then
 $M A M^\top \preceq M B M^\top$ in $\mathcal{S}^k$; in particular (take $A = 0$) congruence by
@@ -78,6 +81,7 @@ matrix maps $\PD$ into $\PD$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:loewner_quadratic}
 For $z \in \R^k$, $z^\top M (B-A) M^\top z = (M^\top z)^\top (B - A) (M^\top z) \ge 0$ by
 Lemma~\ref{lem:loewner_quadratic}; with $A = 0$ this says that $MBM^\top$ is positive
@@ -90,6 +94,7 @@ the quantity is $> 0$ when $A \prec B$.
 $M^\top$, i.e.\ \texttt{Function.Injective M.vecMul}) applied to $B - A$.
 
 \begin{lemma}[Eigenvalues and quadratic forms]\label{lem:eigen_quadratic_bounds}
+\lean{Matrix.IsHermitian.trace_cfc, Matrix.IsHermitian.trace_inv_sub_smul_one, Matrix.IsHermitian.trace_inv_sub_smul_one_sq, Matrix.IsHermitian.posSemidef_sub_smul_one_iff, Matrix.IsHermitian.posDef_sub_smul_one_iff, Matrix.IsHermitian.smul_one_le_iff, Matrix.PosDef.pos_of_mem_spectrum}
 \uses{lem:loewner_quadratic}
 Let $A \in \Sym$. There is an orthonormal basis $u_1, \dots, u_d$ of $\R^d$ with
 $A u_j = \lambda_j(A) u_j$, i.e.\ $A = U \operatorname{diag}(\lambda_1(A),\dots,\lambda_d(A))
@@ -140,8 +145,19 @@ index type of the matrix (not sorted), so $\lambda_{\min}$ is
 sorting matters and it is best stated as ``$\min_j \lambda_j \norm{x}^2 \le x^\top A x$''.
 The identity $x^\top A x = \sum_j \lambda_j \ip{x}{u_j}^2$ is the coordinate form of the
 spectral theorem in the eigenbasis (\texttt{OrthonormalBasis} of \texttt{EuclideanSpace}).
+The formalization never sorts the eigenvalues: the condition ``$\lambda_{\min}(A) > c$'' is
+encoded as $\forall x \in \operatorname{spec}_{\R}(A),\ c < x$ (the real spectrum is the range
+of the eigenvalues, \texttt{Matrix.IsHermitian.spectrum\_real\_eq\_range\_eigenvalues}), which
+is equivalent to $A - cI \in \PD$ (\texttt{Matrix.IsHermitian.posDef\_sub\_smul\_one\_iff}), and
+the traces of functions of $A$ are computed through the continuous functional calculus:
+$\tr(\texttt{cfc}\ f\ A) = \sum_j f(\lambda_j)$ (\texttt{Matrix.IsHermitian.trace\_cfc}), so that
+$\tr((A - cI)^{-1}) = \sum_j (\lambda_j - c)^{-1}$ and $\tr((A-cI)^{-2}) = \sum_j(\lambda_j - c)^{-2}$
+for $c$ outside the spectrum. This covers the parts of (i), (ii), (iv), (v) used by the rounding
+argument; the operator-norm statements (iii) and the bound $\tr(A^2) \le d\lambda_{\max}^2$ are not
+formalized.
 
 \begin{lemma}[Square roots of positive definite matrices]\label{lem:sqrt_props}
+\lean{Matrix.PosDef.sqrt, Matrix.PosSemidef.sqrt_mul_sqrt, Matrix.PosDef.sqrt_mul_sqrt_inv, Matrix.PosDef.sqrt_inv_mul_sqrt, Matrix.PosDef.sqrt_inv_mul_mul_sqrt_inv, Matrix.PosDef.sqrt_mul_inv_mul_sqrt, Matrix.transpose_sqrt, Matrix.norm_toEuclideanCLM_sqrt_sq, Matrix.norm_toEuclideanCLM_sqrt_inv_sq, Matrix.inner_toEuclideanCLM_sqrt_sqrt_inv}
 \uses{lem:eigen_quadratic_bounds}
 Let $A \in \PD$ with spectral decomposition $A = U\operatorname{diag}(\lambda_j)U^\top$. The
 matrix $A^{1/2} := U\operatorname{diag}(\sqrt{\lambda_j})U^\top$ is the unique $S \in \PSD$ with
@@ -191,13 +207,19 @@ the bridge between the abstract \texttt{CFC.sqrt} and the concrete computations 
 Since Lemma~\ref{lem:sqrt_props} is the only place where the definition of $A^{1/2}$ is unfolded,
 the rest of the blueprint can use whichever definition is convenient. Note that
 \texttt{CFC.sqrt A = 0} for $A$ not positive semidefinite; all uses below are for $A \in \PD$.
+The formalization uses \texttt{CFC.sqrt} and proves the items (i), (iii), (iv), (v) directly from
+\texttt{CFC.sqrt\_mul\_sqrt\_self} and \texttt{Matrix.PosSemidef.inv\_sqrt}, without the spectral
+formula; the eigenvalue statements of (i)--(ii) and the scaling rule (vi) are not formalized yet
+(the latter is proved inline where it is used, in \texttt{COLT83.gwMat\_smul}).
 
 \begin{lemma}[Inversion reverses the Loewner order]\label{lem:loewner_inv}
+\lean{Matrix.PosDef.of_le, Matrix.PosDef.inv_le_inv}\leanok
 \uses{lem:loewner_congruence, lem:eigen_quadratic_bounds, lem:sqrt_props}
 Let $A \in \PD$ and $B \in \Sym$ with $A \preceq B$. Then $B \in \PD$ and $B^{-1} \preceq A^{-1}$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:loewner_congruence, lem:loewner_quadratic, lem:eigen_quadratic_bounds, lem:sqrt_props}
 $B \in \PD$: for $x \ne 0$, $x^\top B x \ge x^\top A x > 0$ (Lemma~\ref{lem:loewner_quadratic}).
 Let $C := A^{-1/2} B A^{-1/2} \in \Sym$. Congruence of $A \preceq B$ by $M = A^{-1/2}$
@@ -221,6 +243,7 @@ plumbing (the order on matrices versus the C$^*$-algebra order,
 \texttt{Matrix.instStarOrderedRing}) turns out to be painful.
 
 \begin{lemma}[Scalar domination and inverses]\label{lem:loewner_scalar}
+\lean{Matrix.PosDef.inv_le_inv_smul, Matrix.PosDef.dotProduct_inv_mulVec_le_of_smul_le}\leanok
 \uses{lem:loewner_inv, lem:loewner_quadratic}
 Let $c > 0$, $A \in \PD$ and $B \in \Sym$ with $cA \preceq B$. Then $B \in \PD$,
 $B^{-1} \preceq c^{-1}A^{-1}$, and $\norm{x}_{B^{-1}}^2 \le c^{-1}\norm{x}_{A^{-1}}^2$ for every
@@ -228,6 +251,7 @@ $x \in \R^d$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:loewner_inv, lem:loewner_quadratic}
 $cA \in \PD$, so Lemma~\ref{lem:loewner_inv} gives $B \in \PD$ and
 $B^{-1} \preceq (cA)^{-1} = c^{-1}A^{-1}$; the quadratic-form inequality is
@@ -259,6 +283,7 @@ a design maximizes $\det A(\lambda)$ if and only if it minimizes $\max_{x \in \X
 ``$D$-optimal $\Rightarrow$ $G$-optimal'' together with the value $d$.
 
 \begin{definition}[$G$-value of a matrix]\label{def:g_value}
+\lean{COLT83.gValue}\leanok
 \uses{def:arm_set, lem:eigen_quadratic_bounds}
 For $A \in \PD$ the \emph{$G$-value} of $A$ on $\Xs$ is
 \[
@@ -269,6 +294,7 @@ nonempty.
 \end{definition}
 
 \begin{lemma}[The $G$-value of a design matrix is at least $d$]\label{lem:g_ge_d}
+\lean{COLT83.sum_mul_dotProduct_inv_mulVec, COLT83.IsDesign.card_le_gValue, COLT83.IsDesign.dotProduct_inv_mulVec_eq_card}\leanok
 \uses{def:g_value, def:design_matrix}
 Let $\lambda \in \simplex_{\Xs}$ with $A(\lambda) \in \PD$. Then
 \[
@@ -279,6 +305,7 @@ $g_{\Xs}(A(\lambda)) = d$, then $x^\top A(\lambda)^{-1} x = d$ for every $x \in 
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:g_value, def:design_matrix}
 Write $A := A(\lambda)$. For each $x$, $x^\top A^{-1} x = \tr(A^{-1} x x^\top)$ (cyclicity of the
 trace). By linearity of the trace,
@@ -298,12 +325,14 @@ $\designset(\Xs)$: $\det A_D = \max_{A \in \designset(\Xs)} \det A$.
 \end{definition}
 
 \begin{lemma}[Existence and positivity of a $D$-optimal design]\label{lem:exists_d_optimal}
+\lean{COLT83.exists_isMaxOn_det_designSet, COLT83.posDef_of_isMaxOn_det}\leanok
 \uses{def:arm_set, def:d_optimal, lem:designset_basic, lem:exists_posdef_design, lem:eigen_quadratic_bounds}
 A $D$-optimal design matrix $A_D$ exists. Assume moreover that $\Xs$ is spanning. Then
 $\det A_D > 0$; consequently $A_D \in \PD$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:designset_basic, lem:exists_posdef_design, lem:eigen_quadratic_bounds}
 $\designset(\Xs)$ is compact and nonempty (Lemma~\ref{lem:designset_basic}) and $\det$ is
 continuous (a polynomial in the entries), so a maximizer exists. If $\Xs$ is spanning,
@@ -317,42 +346,48 @@ eigenvalues are $\ge 0$ with product $\det A_D > 0$, so they are all $> 0$ and $
 the last step is \texttt{Matrix.PosSemidef.posDef\_iff\_det\_ne\_zero}
 (\texttt{Mathlib/Analysis/Matrix/Order.lean}).
 
-\begin{lemma}[Directional derivative of $\log\det$]\label{lem:logdet_directional}
-\uses{lem:eigen_quadratic_bounds, lem:sqrt_props}
-Let $A \in \PD$ and $M \in \Sym$. There is $t_0 > 0$ such that $A + tM \in \PD$ for all
-$\abs{t} < t_0$, and
+\begin{lemma}[Determinant along a rank-one mixture]\label{lem:det_rank_one_mix}
+\lean{Matrix.det_add_vecMulVec, COLT83.det_smul_add_smul_outerSelf}\leanok
+Let $A \in \R^{d\times d}$ be invertible and $u, v \in \R^d$. Then (matrix determinant lemma)
 \[
-  \lim_{t \to 0,\ t \ne 0} \frac{\log\det(A + tM) - \log\det A}{t} = \tr(A^{-1}M) .
+  \det(A + uv^\top) = \det A\,\big(1 + v^\top A^{-1} u\big) .
+\]
+Consequently, for every $x \in \R^d$ and $t \ne 1$,
+\[
+  \det\big((1-t)A + t\,xx^\top\big) = (1-t)^d\,\det A\,\Big(1 + \frac{t}{1-t}\,x^\top A^{-1}x\Big) .
 \]
 \end{lemma}
 
 \begin{proof}
-\uses{lem:eigen_quadratic_bounds, lem:sqrt_props, lem:loewner_congruence}
-Let $C := A^{-1/2} M A^{-1/2} \in \Sym$, with spectral decomposition
-$C = V\operatorname{diag}(\mu_1,\dots,\mu_d)V^\top$ (Lemma~\ref{lem:eigen_quadratic_bounds}). Set
-$t_0 := 1/(1 + \max_j\abs{\mu_j})$. For $\abs{t} < t_0$ all $1 + t\mu_j$ are $> 0$, so
-$I + tC = V\operatorname{diag}(1+t\mu_j)V^\top \in \PD$, and
-$A + tM = A^{1/2}(I + tC)A^{1/2}$ (Lemma~\ref{lem:sqrt_props}(iii)) is in $\PD$ by congruence
-(Lemma~\ref{lem:loewner_congruence}). Taking determinants,
-$\det(A + tM) = \det(A^{1/2})^2\det(I + tC) = \det A\cdot\prod_j(1 + t\mu_j)$ (using
-$\det(A^{1/2})^2 = \det((A^{1/2})^2) = \det A$ and $\det(I+tC) = \det(\operatorname{diag}(1+t\mu_j))$
-by invariance under conjugation by $V$). Hence, for $0 < \abs{t} < t_0$,
-\[
-  \frac{\log\det(A+tM) - \log\det A}{t} = \sum_{j} \frac{\log(1 + t\mu_j)}{t}
-  \xrightarrow[t \to 0]{} \sum_j \mu_j ,
-\]
-since $\log(1 + t\mu)/t \to \mu$ as $t \to 0$ (derivative of $\log$ at $1$; the term is $0$ when
-$\mu = 0$). Finally $\sum_j\mu_j = \tr C = \tr(A^{-1/2}MA^{-1/2}) = \tr(A^{-1}M)$ by cyclicity of
-the trace and $A^{-1/2}A^{-1/2} = A^{-1}$ (Lemma~\ref{lem:sqrt_props}(ii)).
+\leanok
+$A + uv^\top = A\,(I + (A^{-1}u)v^\top)$ and $\det(I + wv^\top) = 1 + v^\top w$ (the
+Weinstein--Aronszajn identity $\det(I + CD) = \det(I + DC)$ with $C = w$ a column and $D = v^\top$
+a row; Mathlib's \texttt{Matrix.det\_one\_add\_replicateCol\_mul\_replicateRow}). For the second
+identity apply the first to the invertible matrix $(1-t)A$, whose determinant is $(1-t)^d\det A$
+and whose inverse is $(1-t)^{-1}A^{-1}$, with $u = t\,x$ and $v = x$.
 \end{proof}
 
-\textbf{Lean remark.} The limit of $\log(1+t\mu)/t$ is \texttt{HasDerivAt.log} composed with
-the affine map, or \texttt{Real.hasDerivAt\_log}; the sum of limits is \texttt{Filter.Tendsto}
-over \texttt{Finset.sum}. The statement is deliberately about a one-dimensional limit along
-$t \to 0$ (\texttt{nhdsWithin 0 \{0\}ᶜ}) rather than the Fr\'echet derivative of $\det$, which
-keeps the proof inside elementary calculus. Only the one-sided limit $t \to 0^+$ is used below.
+\begin{lemma}[Sign of the derivative at a one-sided maximum]\label{lem:deriv_nonpos_right_max}
+\lean{HasDerivAt.nonpos_of_eventually_le_nhdsGT}\leanok
+Let $f : \R \to \R$ be differentiable at $a$ and assume that $f(t) \le f(a)$ for all $t$ in a
+right neighborhood of $a$. Then $f'(a) \le 0$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+The difference quotients $(f(a+t) - f(a))/t$ are $\le 0$ for small $t > 0$ and converge to
+$f'(a)$ as $t \to 0^+$ (\texttt{HasDerivAt.tendsto\_slope\_zero\_right}).
+\end{proof}
+
+\textbf{Lean remark.} The outline proves the Kiefer--Wolfowitz theorem through the directional
+derivative $\frac{d}{dt}\log\det(A + tM)|_{t=0} = \tr(A^{-1}M)$ for a symmetric direction $M$,
+whose proof goes through the spectral theorem. Since $D$-optimality is only tested along the
+segments from $A_D$ to the rank-one matrices $xx^\top$, the derivative of
+$t \mapsto \det((1-t)A_D + t\,xx^\top)$ at $t = 0$ is available in closed form from
+Lemma~\ref{lem:det_rank_one_mix}, and the formalization follows this elementary route.
 
 \begin{theorem}[Kiefer--Wolfowitz: existence of a $G$-optimal design]\label{thm:kiefer_wolfowitz}
+\lean{COLT83.IsGOptimalDesign, COLT83.exists_isGOptimalDesign, COLT83.IsGOptimalDesign.gValue_eq, COLT83.IsGOptimalDesign.dotProduct_inv_mulVec_eq_card}\leanok
 \uses{def:arm_set, def:g_value, def:design_matrix, lem:g_ge_d}
 Assume that $\Xs$ is spanning. There is a design distribution $\lambda_G \in \simplex_{\Xs}$
 (finitely supported, as every design distribution) such that $A_G := A(\lambda_G)
@@ -364,55 +399,69 @@ Remark~\ref{rem:design_kw_support}.)
 \end{theorem}
 
 \begin{proof}
-\uses{lem:exists_d_optimal, def:design_matrix, lem:caratheodory_design, lem:designset_basic, lem:logdet_directional, lem:g_ge_d}
+\leanok
+\uses{lem:exists_d_optimal, def:design_matrix, lem:caratheodory_design, lem:designset_basic, lem:det_rank_one_mix, lem:deriv_nonpos_right_max, lem:g_ge_d}
 Let $A_D$ be a $D$-optimal design matrix; since $\Xs$ is spanning, $A_D \in \PD$
 (Lemma~\ref{lem:exists_d_optimal}). By definition of $\designset(\Xs)$
 (Definition~\ref{def:design_matrix}) there is a finitely supported $\lambda_G \in \simplex_{\Xs}$
 with $A(\lambda_G) = A_D$ (Lemma~\ref{lem:caratheodory_design} shows that it can even be chosen
-with $\abs{\supp\lambda_G} \le d(d+1)/2+1$, which we do not need); write $A_G := A_D$.
+with $\abs{\supp\lambda_G} \le d^2+1$, which we do not need); write $A_G := A_D$.
 
-Fix $x \in \Xs$ and let $B := xx^\top = A(\delta_x) \in \designset(\Xs)$ and $M := B - A_G \in
-\Sym$. By convexity of $\designset(\Xs)$ (Lemma~\ref{lem:designset_basic}),
-$A_G + tM = (1-t)A_G + tB \in \designset(\Xs)$ for all $t \in [0,1]$, so by $D$-optimality
-$\det(A_G + tM) \le \det A_G$ for $t \in [0,1]$. Let $t_0$ be given by
-Lemma~\ref{lem:logdet_directional}; for $0 < t < \min(t_0, 1)$ both determinants are positive and
-$\log$ is increasing, so $\big(\log\det(A_G + tM) - \log\det A_G\big)/t \le 0$. Letting $t \to
-0^+$, Lemma~\ref{lem:logdet_directional} yields $\tr(A_G^{-1}M) \le 0$, i.e.
+Fix $x \in \Xs$ and set $g := x^\top A_G^{-1}x$. For $t \in [0,1]$, $B := xx^\top = A(\delta_x)
+\in \designset(\Xs)$ and $(1-t)A_G + tB \in \designset(\Xs)$ by convexity
+(Lemma~\ref{lem:designset_basic}), so by $D$-optimality $\det((1-t)A_G + t\,xx^\top) \le \det A_G$.
+By Lemma~\ref{lem:det_rank_one_mix} and $\det A_G > 0$, this says that
 \[
-  \tr(A_G^{-1}xx^\top) - \tr(A_G^{-1}A_G) = x^\top A_G^{-1}x - d \le 0 .
+  \varphi(t) := (1-t)^d\Big(1 + \frac{t}{1-t}\,g\Big) \le 1 = \varphi(0)
+  \qquad\text{for all } t \in (0,1) .
 \]
+The function $\varphi$ is differentiable at $0$ with $\varphi'(0) = -d + g$ (product rule:
+$\frac{d}{dt}(1-t)^d|_{0} = -d$ and $\frac{d}{dt}\frac{t}{1-t}|_0 = 1$), so
+Lemma~\ref{lem:deriv_nonpos_right_max} gives $g - d \le 0$, i.e.\ $x^\top A_G^{-1}x \le d$.
 As $x \in \Xs$ was arbitrary, $g_{\Xs}(A_G) \le d$. Lemma~\ref{lem:g_ge_d} gives
 $g_{\Xs}(A_G) \ge d$, hence $g_{\Xs}(A_G) = d$, and the same lemma gives
 $x^\top A_G^{-1}x = d$ on the support.
 \end{proof}
 
+\textbf{Lean remark.} The formalization packages the conclusion as the predicate
+\texttt{COLT83.IsGOptimalDesign 𝒳 w}: $w$ is a design distribution on $\Xs$
+(\texttt{COLT83.IsDesign}), its design matrix is positive definite and
+$x^\top A(w)^{-1}x \le d$ for all $x \in \Xs$; \texttt{COLT83.exists\_isGOptimalDesign} is the
+existence statement, and the value $g_{\Xs}(A_G) = d$ and the support property are the lemmas
+\texttt{IsGOptimalDesign.gValue\_eq} and \texttt{IsGOptimalDesign.dotProduct\_inv\_mulVec\_eq\_card}.
+The theorem needs $d \ge 1$ (the type \texttt{ι} nonempty), as does
+Lemma~\ref{lem:exists_posdef_design}.
+
 \begin{remark}[Support size of the $G$-optimal design]\label{rem:design_kw_support}
 The proof of Theorem~\ref{thm:kiefer_wolfowitz} may produce $\lambda_G$ through
-Lemma~\ref{lem:caratheodory_design}, hence with $\abs{\supp\lambda_G} \le d(d+1)/2 + 1$; the
+Lemma~\ref{lem:caratheodory_design}, hence with $\abs{\supp\lambda_G} \le d^2 + 1$; the
 paper (Appendix~B.1) states the existence of a $G$-optimal design with
-$\abs{\supp\lambda_*} \le d(d+1)/2$ (the sharper bound uses that the optimal matrices lie on
-the boundary of the hull). This numerical bound is deliberately kept out of the statements of
+$\abs{\supp\lambda_*} \le d(d+1)/2$ (the sharper bound uses Carath\'eodory's theorem in the
+space of symmetric matrices and that the optimal matrices lie on the boundary of the hull). This
+numerical bound is deliberately kept out of the statements of
 Theorem~\ref{thm:kiefer_wolfowitz} and Lemma~\ref{lem:width_attained}: only the finiteness of
-the support is ever used, and the formalization may prove Lemma~\ref{lem:caratheodory_design}
-with the weaker bound $d^2 + 1$ (see the Lean remark there) without changing either statement. In
+the support is ever used. In
 Chapter~\ref{chap:lower_adaptive}, $\lambda_G$ replaces the John ellipsoid of the paper:
 Corollary~\ref{cor:g_optimal_normalized} provides exactly the normalized points and the isotropy
 identity that the paper extracts from John's theorem.
 \end{remark}
 
 \begin{corollary}[Whitened arms have norm at most $\sqrt d$]\label{cor:g_optimal_norm_bound}
+\lean{COLT83.IsGOptimalDesign.norm_sqrt_inv_le, COLT83.IsGOptimalDesign.norm_sqrt_inv_eq}\leanok
 \uses{thm:kiefer_wolfowitz, lem:sqrt_props}
 Let $\Xs$ be spanning and let $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz}. Every $x \in \Xs$ satisfies
 $\norm{A_G^{-1/2}x}^2 = x^\top A_G^{-1}x \le d$.
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{thm:kiefer_wolfowitz, lem:sqrt_props}
 $\norm{A_G^{-1/2}x}^2 = x^\top A_G^{-1}x$ by Lemma~\ref{lem:sqrt_props}(iv), and
 $x^\top A_G^{-1} x \le g_{\Xs}(A_G) = d$.
 \end{proof}
 
 \begin{corollary}[Normalized $G$-optimal design]\label{cor:g_optimal_normalized}
+\lean{COLT83.normalizeMat, COLT83.IsGOptimalDesign.norm_normalizeMat_eq_one, COLT83.IsGOptimalDesign.designMatrix_mapDomain_normalizeMat, COLT83.IsGOptimalDesign.norm_normalizeMat_le, COLT83.IsGOptimalDesign.isDesign_mapDomain_normalizeMat, COLT83.IsGOptimalDesign.span_image_normalizeMat_eq_top, COLT83.isUnit_normalizeMat}\leanok
 \uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:sqrt_props}
 Let $\Xs$ be spanning, let $\lambda_G$, $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz} and set $M := d^{-1/2}A_G^{-1/2}$,
 $v_x := Mx = A_G^{-1/2}x/\sqrt d$ for $x \in \supp\lambda_G$, and
@@ -426,6 +475,7 @@ $\Xs' := M\Xs = \{Mx : x \in \Xs\}$. Then:
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:sqrt_props}
 (i): $\norm{v_x}^2 = x^\top A_G^{-1}x/d = 1$ by Lemma~\ref{lem:sqrt_props}(iv) and the support
 property of Theorem~\ref{thm:kiefer_wolfowitz}. (ii):
@@ -440,35 +490,38 @@ spanning.
 \label{sec:design_caratheodory}
 
 \begin{lemma}[Carath\'eodory for design matrices]\label{lem:caratheodory_design}
+\lean{COLT83.exists_isDesign_of_mem_designSet, COLT83.mem_designSet_iff}\leanok
 \uses{def:design_matrix}
 Every $A \in \designset(\Xs)$ is of the form $A = A(\lambda)$ for a design distribution
-$\lambda \in \simplex_{\Xs}$ with $\abs{\supp\lambda} \le d(d+1)/2 + 1$.
+$\lambda \in \simplex_{\Xs}$ with $\abs{\supp\lambda} \le d^2 + 1$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:design_matrix}
-$\designset(\Xs) = \conv S$ with $S := \{xx^\top : x \in \Xs\} \subset \Sym$, and $\Sym$ is a real
-vector space of dimension $n := d(d+1)/2$. By Carath\'eodory's theorem, every point of $\conv S$
+$\designset(\Xs) = \conv S$ with $S := \{xx^\top : x \in \Xs\} \subset \R^{d\times d}$, a real
+vector space of dimension $d^2$. By Carath\'eodory's theorem, every point of $\conv S$
 is a convex combination of an affinely independent family of points of $S$, which has at most
-$n + 1$ elements: $A = \sum_{i=1}^k \alpha_i s_i$ with $k \le n+1$, $\alpha_i > 0$,
+$d^2 + 1$ elements: $A = \sum_{i=1}^k \alpha_i s_i$ with $k \le d^2+1$, $\alpha_i > 0$,
 $\sum_i\alpha_i = 1$, $s_i \in S$ pairwise distinct. Choose $x_i \in \Xs$ with $s_i = x_ix_i^\top$;
 the $x_i$ are pairwise distinct since the $s_i$ are. Define $\lambda_{x_i} := \alpha_i$; then
-$\lambda \in \simplex_{\Xs}$, $A(\lambda) = A$ and $\abs{\supp\lambda} = k \le n + 1$.
+$\lambda \in \simplex_{\Xs}$, $A(\lambda) = A$ and $\abs{\supp\lambda} = k \le d^2 + 1$.
 \end{proof}
 
-\textbf{Lean remark.} \texttt{convexHull\_eq\_union} (\texttt{Mathlib/Analysis/Convex/Caratheodory.lean})
-writes the hull as a union over affinely independent finite subsets, and
-\texttt{AffineIndependent.card\_le\_finrank\_succ} bounds their cardinality by
-$\texttt{finrank} + 1$. The ambient space must be the submodule of symmetric matrices to get
-$n = d(d+1)/2$ (its \texttt{finrank} is not in Mathlib and would have to be computed from the
-basis of matrices $E_{ii}$ and $E_{ij} + E_{ji}$, $i < j$). Applying Carath\'eodory in the full
-matrix space $\texttt{Matrix (Fin d) (Fin d) ℝ}$ instead gives the weaker bound $d^2 + 1$, which
-is sufficient for every use in this blueprint (the support size of $\lambda_G$ and $\lambda_1$
-only needs to be finite); the formalization may take this shortcut. Note also that if design
-distributions are encoded as finitely supported functions $\Xs \to [0,1]$ (\texttt{Finsupp}),
-the definition of $\designset(\Xs)$ as $\{A(\lambda)\}$ and the equality with the convex hull is
-itself a small lemma (\texttt{Finset.centerMass\_mem\_convexHull} and
-\texttt{convexHull\_eq\_union\_convexHull\_finite\_subsets}).
+\textbf{Lean remark.} \texttt{eq\_pos\_convex\_span\_of\_mem\_convexHull}
+(\texttt{Mathlib/Analysis/Convex/Caratheodory.lean}) writes a point of the hull as a positive
+combination of an affinely independent family, and
+\texttt{AffineIndependent.card\_le\_finrank\_succ} bounds its cardinality by
+$\texttt{finrank} + 1$. Applying it in the space of symmetric matrices would give the bound
+$d(d+1)/2 + 1$ (its \texttt{finrank} is not in Mathlib and would have to be computed from the
+basis of matrices $E_{ii}$ and $E_{ij} + E_{ji}$, $i < j$); the formalization applies it in the
+full matrix space $\texttt{Matrix ι ι ℝ}$, of dimension $d^2$, which is sufficient for every use
+in this blueprint (the support size of $\lambda_G$ and $\lambda_1$ only needs to be finite).
+Design distributions are encoded as finitely supported functions
+$\texttt{EuclideanSpace ℝ ι →₀ ℝ}$ (\texttt{Finsupp}) with the predicate \texttt{COLT83.IsDesign}
+(support in $\Xs$, nonnegative, summing to one), and $A(\lambda)$ is the linear map
+\texttt{COLT83.designMatrix}; the equality of $\designset(\Xs)$ with the set of design matrices
+of design distributions is \texttt{COLT83.mem\_designSet\_iff}.
 
 \begin{lemma}[Local Lipschitz continuity of the square root]\label{lem:design_sqrt_continuous}
 \uses{lem:sqrt_props, lem:eigen_quadratic_bounds}
@@ -627,6 +680,7 @@ matrices given weight one (no upper barrier is needed since only a lower bound o
 $\Sigma_T$ is used).
 
 \begin{definition}[Lower barrier potential]\label{def:barrier_potential}
+\lean{COLT83.barrier, COLT83.barrier_eq_sum, COLT83.barrier_neg_card_zero}\leanok
 \uses{lem:eigen_quadratic_bounds}
 For $B \in \Sym$ and $l \in \R$ with $l < \lambda_{\min}(B)$, so that $B - lI \in \PD$, the
 \emph{lower barrier potential} is
@@ -640,6 +694,7 @@ $\Phi_l(B) \ge 1/(\lambda_{\min}(B) - l)$ (keep only the smallest eigenvalue), t
 increasing in $l$, and that $\Phi_{-d}(0) = \tr((dI)^{-1}) = 1$.
 
 \begin{lemma}[Sherman--Morrison, trace form]\label{lem:sherman_morrison_trace}
+\lean{Matrix.inv_add_vecMulVec, Matrix.trace_inv_add_vecMulVec_self}\leanok
 \uses{lem:loewner_quadratic, lem:eigen_quadratic_bounds}
 Let $M \in \PD$ and $u \in \R^d$. Then $M + uu^\top \in \PD$, $1 + u^\top M^{-1}u > 0$,
 \[
@@ -650,6 +705,7 @@ Let $M \in \PD$ and $u \in \R^d$. Then $M + uu^\top \in \PD$, $1 + u^\top M^{-1}
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:loewner_quadratic, lem:eigen_quadratic_bounds}
 $M + uu^\top \in \PD$ since $x^\top(M+uu^\top)x = x^\top Mx + \ip{u}{x}^2 > 0$ for $x \ne 0$; and
 $u^\top M^{-1}u \ge 0$ since $M^{-1} \in \PD$ (Lemma~\ref{lem:eigen_quadratic_bounds}(v)). Set
@@ -670,6 +726,7 @@ computation $(M + uu^\top)N = I$ into $(M+uu^\top)^{-1} = N$). The rank-one
 matrix $uu^\top$ is \texttt{Matrix.vecMulVec u u}.
 
 \begin{lemma}[One barrier step]\label{lem:barrier_step}
+\lean{COLT83.barrierScore, COLT83.barrier_lt_barrier_add_half, COLT83.barrier_step}\leanok
 \uses{def:barrier_potential, lem:sherman_morrison_trace, lem:eigen_quadratic_bounds}
 Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with $\lambda_{\min}(B) > l'$. Set
 $M := B - l'I \in \PD$, $\Delta := \Phi_{l'}(B) - \Phi_l(B)$, and for $u \in \R^d$
@@ -681,6 +738,7 @@ $\lambda_{\min}(B + uu^\top) > l'$ and $\Phi_{l'}(B + uu^\top) \le \Phi_l(B)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:barrier_potential, lem:sherman_morrison_trace, lem:eigen_quadratic_bounds}
 $\Delta > 0$: with $\lambda_j := \lambda_j(B)$, $\Phi_{l'}(B) - \Phi_l(B) = \sum_j\big(\tfrac{1}{\lambda_j - l'} -
 \tfrac{1}{\lambda_j - l}\big)$ and each term is positive since $0 < \lambda_j - l' < \lambda_j - l$.
@@ -697,6 +755,7 @@ $\Phi_{l'}(B + uu^\top) \le \Phi_{l'}(B) - \Delta = \Phi_l(B)$.
 \end{proof}
 
 \begin{lemma}[Averaging the barrier criterion]\label{lem:barrier_average}
+\lean{COLT83.barrier_average}\leanok
 \uses{def:barrier_potential, lem:barrier_step, lem:eigen_quadratic_bounds}
 Let $u_1,\dots,u_m \in \R^d$ and $p_1,\dots,p_m \ge 0$ with $\sum_ip_i = 1$ and
 $\sum_i p_iu_iu_i^\top = I_d$. Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with
@@ -709,6 +768,7 @@ in particular there is an index $i$ with $L_B(u_i) \ge 1$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:barrier_potential, lem:barrier_step, lem:eigen_quadratic_bounds}
 Since $1/(\lambda_{\min}(B) - l) \le \Phi_l(B) \le 1$ and $\lambda_{\min}(B) - l > 0$, we get
 $\lambda_{\min}(B) - l \ge 1$, so $\lambda_{\min}(B) \ge l + 1 > l + 1/2 = l'$ and
@@ -744,6 +804,7 @@ $L_B(u_i)$ being $\ge 1$ forces $\max_iL_B(u_i) \ge 1$.
 \end{proof}
 
 \begin{theorem}[Rounding to a fixed design of any size $T \ge 4d$]\label{thm:rounding}
+\lean{COLT83.exists_rounding}\leanok
 \uses{def:design_matrix, lem:sqrt_props, def:barrier_potential}
 Let $\lambda \in \simplex_{\Xs}$ with $A := A(\lambda) \in \PD$ and let $T \ge 4d$ be an integer.
 There exist $x_0, \dots, x_{T-1} \in \supp\lambda$ (with repetitions allowed) such that
@@ -753,6 +814,7 @@ There exist $x_0, \dots, x_{T-1} \in \supp\lambda$ (with repetitions allowed) su
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:barrier_average, lem:barrier_step, lem:loewner_congruence, lem:eigen_quadratic_bounds, lem:sqrt_props, def:barrier_potential}
 Use the notation of the beginning of the section: $v_1,\dots,v_m$, $p_i$, $u_i = A^{-1/2}v_i$
 with $\sum_ip_iu_iu_i^\top = I$. We construct by induction on $t \le T$ indices
@@ -779,14 +841,21 @@ by congruence with $M = A^{1/2}$ (Lemma~\ref{lem:loewner_congruence}) and $A^{1/
 \end{proof}
 
 \textbf{Lean remark.} The proof is an existence statement proved by induction on $t$:
-``for every $t \le T$ there is a list of $t$ indices whose $B_t$ satisfies the invariant''.
-The greedy choice at each step is \texttt{Classical.choose} applied to
-Lemma~\ref{lem:barrier_average}; no explicit sequence needs to be defined. The design matrix
-$\Sigma_T$ is $\sum_{t<T}$ \texttt{vecMulVec (x t) (x t)} for \texttt{x : Fin T → Xs}. Note that
+``for every $t$ there is a family \texttt{x : Fin t → E} of points of the support whose $B_t$
+satisfies the invariant'' (\texttt{COLT83.exists\_rounding}); the greedy choice at each step is
+the point provided by Lemma~\ref{lem:barrier_average} (\texttt{COLT83.barrier\_average}, stated
+for a design distribution with design matrix $I$, here the whitened distribution
+$\lambda \circ (A^{-1/2})^{-1}$ of \texttt{IsDesign.mapDomain}), and the family is extended with
+\texttt{Fin.snoc}. The invariant ``$\lambda_{\min}(B_t) > l_t$'' is the spectral condition
+$\forall \mu \in \operatorname{spec}_{\R}(B_t),\ l_t < \mu$ (see the Lean remark after
+Lemma~\ref{lem:eigen_quadratic_bounds}), and the eigenvalue inequality at the heart of
+Lemma~\ref{lem:barrier_average} is isolated as \texttt{barrier\_sum\_ineq}. The design matrix
+$\Sigma_T$ is $\sum_{t<T}$ \texttt{outerSelf (x t)} for \texttt{x : Fin T → E}. Note that
 the theorem produces a design of length exactly $T$ with points in the support of $\lambda$,
 which is what Definition~\ref{def:fixed_design} consumes.
 
 \begin{corollary}[Fixed design with controlled inverse and width]\label{cor:fixed_design_from_distribution}
+\lean{COLT83.posDef_of_smul_le, COLT83.dotProduct_inv_mulVec_le_of_smul_le, COLT83.gwMat_le_of_smul_le}\leanok
 \uses{thm:rounding, def:width_matrix, lem:loewner_scalar, lem:width_mono, lem:width_homog}
 In the setting of Theorem~\ref{thm:rounding}, let $x_0,\dots,x_{T-1}$ be the design it provides
 and $\Sigma_T := \sum_{t<T}x_tx_t^\top$. Then $\Sigma_T \in \PD$,
@@ -798,6 +867,7 @@ and $\Sigma_T := \sum_{t<T}x_tx_t^\top$. Then $\Sigma_T \in \PD$,
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{thm:rounding, lem:loewner_scalar, lem:width_mono, lem:width_homog}
 Theorem~\ref{thm:rounding} gives $(T/4)A \preceq \Sigma_T$ with $A = A(\lambda) \in \PD$.
 Lemma~\ref{lem:loewner_scalar} with $c = T/4$ yields $\Sigma_T \in \PD$ and

@@ -55,17 +55,20 @@ The divergence decomposition for algorithm-environment sequences is new to LML.
 \label{sec:pre_info_basic}
 
 \begin{lemma}[Invariance under measurable equivalences]\label{lem:pi_kl_measurable_equiv}
+\lean{InformationTheory.klDiv_map_measurableEquiv}\leanok
 Let $\mu,\nu$ be measures on $\Omega$ and $e : \Omega \to \Omega'$ a measurable equivalence.
 Then $\KL(e_*\mu \,\|\, e_*\nu) = \KL(\mu\|\nu)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 Two applications of the data-processing inequality (Mathlib \texttt{klDiv\_map\_le}): with
 $e$ we get $\le$, and with $e^{-1}$ applied to $e_*\mu, e_*\nu$ we get $\ge$, since
 $(e^{-1})_*e_*\mu = \mu$ (\texttt{MeasurableEquiv.map\_symm\_map}).
 \end{proof}
 
 \begin{lemma}[Divergence of two Gaussians with the same variance]\label{lem:kl_gaussian}
+\lean{ProbabilityTheory.gaussianReal_absolutelyContinuous_gaussianReal, ProbabilityTheory.llr_gaussianReal, ProbabilityTheory.integrable_llr_gaussianReal, ProbabilityTheory.klDiv_gaussianReal, ProbabilityTheory.klDiv_gaussianReal_one}\leanok
 \uses{lem:gauss_1d_moments}
 Let $m_1, m_2 \in \R$ and $v > 0$. Then $\Normal(m_1, v) \ll \Normal(m_2,v)$, the log-likelihood
 ratio is $\mathrm{llr}(y) = \frac{(m_1 - m_2)}{v}\big(y - \frac{m_1+m_2}{2}\big)$ for Lebesgue-a.e.\
@@ -77,6 +80,7 @@ In particular $\KL(\Normal(m_1,1)\|\Normal(m_2,1)) = (m_1-m_2)^2/2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_1d_moments}
 Both measures are $\mathrm{Leb}$ with the densities
 $p_i(y) = (2\pi v)^{-1/2}\exp(-(y-m_i)^2/(2v))$ (Mathlib \texttt{gaussianReal\_of\_var\_ne\_zero}),
@@ -98,6 +102,7 @@ term $\nu(\Omega)-\mu(\Omega)$ vanishes).
 \end{proof}
 
 \begin{lemma}[Divergence of two Bernoulli measures]\label{lem:pi_kl_bernoulli}
+\lean{InformationTheory.bernoulliBool, InformationTheory.klBin, InformationTheory.klDiv_bernoulliBool, InformationTheory.ofReal_le_klDiv_bernoulliBool}\leanok
 For $p \in [0,1]$ write $\mathrm{B}(p) := p\,\delta_1 + (1-p)\,\delta_0$ for the Bernoulli
 measure on $\{0,1\}$. Let $p \in [0,1]$ and $q \in (0,1)$. Then
 \[
@@ -109,6 +114,7 @@ $\KL(\mathrm{B}(p)\|\mathrm{B}(q)) = \infty$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 For $q \in (0,1)$, $\mathrm{B}(q)$ charges both points so $\mathrm{B}(p) \ll \mathrm{B}(q)$, with
 Radon--Nikodym derivative $p/q$ at $1$ and $(1-p)/(1-q)$ at $0$; every function on a finite set is
 integrable. By Mathlib \texttt{klDiv\_eq\_lintegral\_klFun\_of\_ac}, the divergence is
@@ -122,11 +128,13 @@ $q = 1$ is symmetric.
 \end{proof}
 
 \begin{lemma}[Pinsker's inequality for Bernoulli measures]\label{lem:kl_bernoulli_pinsker}
+\lean{InformationTheory.klBin_pinsker}\leanok
 \uses{lem:pi_kl_bernoulli}
 For $p \in [0,1]$ and $q \in (0,1)$, $\mathrm{kl}(p,q) \ge 2(p-q)^2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pi_kl_bernoulli}
 Fix $p \in (0,1)$ first and let $g(q) := \mathrm{kl}(p,q) - 2(p-q)^2$ on $(0,1)$. Then
 $g(p) = 0$ and
@@ -143,6 +151,7 @@ so $h \ge 0$ on $(0,1]$. The case $p = 0$ is the case $p = 1$ with $q$ replaced 
 \end{proof}
 
 \begin{lemma}[Pinsker's inequality]\label{lem:pinsker}
+\lean{InformationTheory.pinsker_measureReal, InformationTheory.abs_sub_le_sqrt_klDiv}\leanok
 \uses{lem:pi_kl_bernoulli, lem:kl_bernoulli_pinsker}
 Let $\mu, \nu$ be probability measures on a measurable space and $A$ a measurable set. Then
 \[
@@ -154,6 +163,7 @@ statement is empty.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pi_kl_bernoulli, lem:kl_bernoulli_pinsker}
 Let $g := \indic_A : \Omega \to \{0,1\}$, measurable. Then $g_*\mu = \mathrm{B}(p)$ and
 $g_*\nu = \mathrm{B}(q)$ with $p := \mu(A)$, $q := \nu(A)$, and the data-processing inequality
@@ -166,6 +176,7 @@ $2(p-q)^2 \le \mathrm{kl}(p,q) = \KL(\mathrm{B}(p)\|\mathrm{B}(q)) \le \KL(\mu\|
 \end{proof}
 
 \begin{lemma}[Bretagnolle--Huber inequality]\label{lem:bretagnolle_huber}
+\lean{InformationTheory.bretagnolle_huber}\leanok
 Let $\mu, \nu$ be probability measures on a measurable space and $A$ a measurable set. Then
 \[
   \mu(A) + \nu(A^c) \ge \tfrac12 \exp\big(-\KL(\mu\|\nu)\big),
@@ -174,6 +185,7 @@ where the right-hand side is $0$ if $\KL(\mu\|\nu) = \infty$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 If $\KL(\mu\|\nu) = \infty$ there is nothing to prove; assume $\mu \ll \nu$ and that
 $\mathrm{llr}(\mu,\nu)$ is $\mu$-integrable, so that $\KL(\mu\|\nu) = \int \mathrm{llr}\,d\mu$
 (Mathlib \texttt{klDiv\_of\_ac\_of\_integrable}). Let $\lambda := \mu + \nu$ and
@@ -208,6 +220,7 @@ Combining, $\mu(A) + \nu(A^c) \ge \int\min(p,q)\,d\lambda \ge \tfrac12 (\int\sqr
 \end{proof}
 
 \begin{lemma}[Convexity of the divergence in its second argument]\label{lem:kl_mixture_convex}
+\lean{InformationTheory.isProbabilityMeasure_sum_smul, InformationTheory.klDiv_finsetSum_smul_le, InformationTheory.klDiv_sum_smul_le}\leanok
 Let $\mu$ be a probability measure, $\nu_1,\dots,\nu_J$ probability measures on the same space,
 $c_1,\dots,c_J \ge 0$ with $\sum_j c_j = 1$, and $\nu := \sum_j c_j\nu_j$. Then
 \[
@@ -216,6 +229,7 @@ $c_1,\dots,c_J \ge 0$ with $\sum_j c_j = 1$, and $\nu := \sum_j c_j\nu_j$. Then
 \end{lemma}
 
 \begin{proof}
+\leanok
 If some $j$ with $c_j > 0$ has $\KL(\mu\|\nu_j) = \infty$ the right-hand side is $\infty$.
 Otherwise, for every $j$ with $c_j > 0$ we have $\mu \ll \nu_j$ and $\mathrm{llr}(\mu,\nu_j)$ is
 $\mu$-integrable; drop the indices with $c_j = 0$. Then $\mu \ll \nu$ (a $\nu$-null set is
@@ -252,6 +266,7 @@ Lemma~\ref{lem:kl_mixture_convex} is the measure \texttt{∑ j, (c j : ℝ≥0) 
 \label{sec:pre_info_chain}
 
 \begin{lemma}[Chain rule with an integrated conditional divergence]\label{lem:kl_compProd_kernel}
+\lean{InformationTheory.measurable_klDiv_kernel, InformationTheory.klDiv_compProd_right_eq_lintegral, InformationTheory.klDiv_compProd_eq_add_lintegral}\leanok
 Let $\mu$ be a finite measure on $\mathcal{H}$ and $\kappa,\eta$ be Markov kernels from
 $\mathcal{H}$ to a countably generated measurable space $\mathcal{Y}$. Then
 $x \mapsto \KL(\kappa_x\|\eta_x)$ is measurable and
@@ -264,6 +279,7 @@ $\KL(\mu\otimes\kappa\,\|\,\nu\otimes\eta) = \KL(\mu\|\nu) + \int^-\KL(\kappa_x\
 \end{lemma}
 
 \begin{proof}
+\leanok
 Mathlib \texttt{Measure.absolutelyContinuous\_compProd\_right\_iff} gives
 $\mu\otimes\kappa \ll \mu\otimes\eta$ iff $\kappa_x \ll \eta_x$ for $\mu$-a.e.\ $x$.
 
@@ -302,6 +318,7 @@ last claim is Mathlib \texttt{klDiv\_compProd\_eq\_add} followed by the equality
 \end{proof}
 
 \begin{lemma}[One step of an algorithm-environment pair]\label{lem:pi_kl_step}
+\lean{ProbabilityTheory.Kernel.compProd_prodMkLeft_apply, InformationTheory.klDiv_compProd_compProd_prodMkLeft}\leanok
 \uses{lem:kl_compProd_kernel}
 Let $P$ be a probability measure on a measurable space $\mathcal{H}$ (``histories''), $\pi$ a
 Markov kernel from $\mathcal{H}$ to a countably generated space $\mathcal{A}$ (``policy''),
@@ -318,6 +335,7 @@ where $\pi\circ P := \int \pi(h,\cdot)\,P(dh)$ is the law of the next action.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:kl_compProd_kernel}
 Apply Lemma~\ref{lem:kl_compProd_kernel} to $P$ and the kernels $\pi\otimes\tilde\kappa$,
 $\pi\otimes\tilde\kappa'$, Markov kernels from $\mathcal{H}$ to the countably generated space
@@ -366,6 +384,7 @@ probability space.
 \end{definition}
 
 \begin{theorem}[Divergence decomposition]\label{thm:divergence_decomposition}
+\lean{Learning.IsAlgEnvSeq.map_history_succ, Learning.IsAlgEnvSeq.klDiv_map_history}\leanok
 \uses{def:env_pair}
 In the setting of Definition~\ref{def:env_pair}, for every $n \ge 0$,
 \[
@@ -381,6 +400,7 @@ expectations.
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:pi_kl_measurable_equiv, lem:kl_compProd_kernel, lem:pi_kl_step}
 Write $\mathcal{H}_n := (\{0,\dots,n\} \to \mathcal{A}\times\mathcal{Y})$ for the space of
 histories up to time $n$. By definition of the stationary environment, the feedback kernel at
@@ -430,10 +450,13 @@ a real identity, the integrals becoming Bochner integrals of bounded measurable 
 (\texttt{integral\_eq\_lintegral\_of\_nonneg\_ae}).
 \end{proof}
 
-\textbf{Lean remark.} The statement is about \texttt{klDiv} of two pushforwards of
-\texttt{Learning.trajMeasure} by \texttt{IT.hist n} (or, equivalently, of
-\texttt{P.map (history A Y n)} for any \texttt{IsAlgEnvSeqUntil}), with the sum in
-\texttt{ℝ≥0∞} of \texttt{∫⁻ h, klDiv (κ (h t).1) (κ' (h t).1) ∂P}. The hypotheses
+\textbf{Lean remark.} The formalization (\texttt{Learning.IsAlgEnvSeq.klDiv\_map\_history})
+states the theorem for two algorithm-environment sequences \texttt{IsAlgEnvSeq X Y alg
+(stationaryEnv κ) P} and \texttt{IsAlgEnvSeq X' Y' alg (stationaryEnv κ') P'} on arbitrary
+probability spaces, as \texttt{klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) =
+∑ t ∈ range (n + 1), ∫⁻ ω, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P}; this covers the trajectory
+measures (which are such sequences) and avoids the uniqueness-of-law step. The finite form is
+only recorded for the Gaussian case (Corollary~\ref{cor:divergence_decomposition_gaussian}). The hypotheses
 \texttt{MeasurableSpace.CountablyGenerated 𝓐} and \texttt{CountablyGenerated 𝓨} are needed for
 the measurability of the integrands (Lemma~\ref{lem:kl_compProd_kernel}); they hold for
 $\mathcal{A} = \Xs$, $\mathcal{A} = \mathrm{Fin}\,K$ and $\mathcal{Y} = \R$. Only the environment
@@ -444,6 +467,7 @@ Radon--Nikodym derivative rather than its expected logarithm.
 
 \begin{lemma}[Appending the recommendation does not change the divergence]
 \label{lem:kl_data_processing_recommendation}
+\lean{Learning.IdentAlg.IsFixedBudget.stoppingTime_eq, Learning.IdentAlg.IsFixedBudget.stoppedHist_eq, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le, Learning.LinearBandit.IsRun.exp_neg_le_measureReal_add_of_sq_le}\leanok
 \uses{def:env_pair, def:bai_alg, lem:pinsker, lem:bretagnolle_huber}
 In the setting of Definition~\ref{def:env_pair}, let $T \ge 1$ and let $\rho$ be a Markov
 kernel from histories of length $T$ to a measurable space $\mathcal{X}$ (a recommendation rule).
@@ -464,6 +488,7 @@ $\Prob_\theta$ of $(\hist_T,\rec)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pinsker, lem:bretagnolle_huber}
 The equality is Mathlib \texttt{klDiv\_compProd\_left} (same kernel on both sides). The two
 inequalities are Lemma~\ref{lem:pinsker} and Lemma~\ref{lem:bretagnolle_huber} applied to the
@@ -472,8 +497,22 @@ infinite). The last sentence is the definition of $\Prob_\theta$ in
 Definition~\ref{def:bai_alg} together with the uniqueness of the law of the history.
 \end{proof}
 
+\textbf{Lean remark.} In the formalization the recommendation is the output of a run
+(Definition~\ref{def:bai_alg}, \texttt{IsRun}): for a fixed-budget algorithm the stopping time is
+$T$ and the history at the stopping time is the history of the $T$ rounds
+(\texttt{IsFixedBudget.stoppingTime\_eq}, \texttt{IsFixedBudget.stoppedHist\_eq}); the law of
+(history, output) is the composition-product with the output kernel, which is a probability kernel
+on the stopping set, so \texttt{klDiv\_compProd\_left} applies in the form
+\texttt{klDiv\_compProd\_left\_of\_ae}. Only the inequality
+$\KL(\mathrm{law}(\rec)\|\mathrm{law}'(\rec)) \le \KL(\Prob^T\|\Prob'^T)$ is recorded
+(\texttt{IsRun.klDiv\_map\_out\_le}, by data processing), which is what the lower bounds use, and
+the Bretagnolle--Huber consequence for linear Gaussian environments,
+$\Prob_\theta(\rec\in B) + \Prob_{\theta'}(\rec\notin B) \ge \tfrac12\exp(-TR^2\norm{\theta-\theta'}^2/2)$,
+is \texttt{LinearBandit.IsRun.exp\_neg\_le\_measureReal\_add}.
+
 \begin{corollary}[Divergence decomposition for linear Gaussian environments]
 \label{cor:divergence_decomposition_gaussian}
+\lean{Learning.LinearBandit.klDiv_linearGaussianKernel, Learning.LinearBandit.klDiv_map_history, Learning.LinearBandit.klDiv_map_history_le}\leanok
 \uses{def:env, def:env_pair, thm:divergence_decomposition, lem:kl_gaussian}
 Let $\Xs$ be an action set (Definition~\ref{def:arm_set}: nonempty compact, \emph{not}
 assumed spanning; Part~\ref{part:main} applies this corollary to non-spanning sets) and
@@ -490,6 +529,7 @@ $\kappa(x) = \Normal(\ip{x}{\theta},1)$),
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{thm:divergence_decomposition, lem:kl_gaussian}
 The subtype $\Xs$ of $\R^d$ is countably generated, so Definition~\ref{def:env_pair}
 applies with $\mathcal{A} = \Xs$ (compactness and spanning play no role there). The reward
