@@ -256,3 +256,73 @@ theorem IsRun.exp_neg_le_measureReal_add_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳
 end LinearBandit
 
 end Learning
+
+namespace Learning.IdentAlg
+
+variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
+  {m𝓞 : MeasurableSpace 𝓞} {Ω : Type*} {mΩ : MeasurableSpace Ω} {A : IdentAlg 𝓐 𝓨 𝓞} {T : ℕ}
+  {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {P : Measure Ω} [IsProbabilityMeasure P] {out : Ω → 𝓞}
+  {env : Environment 𝓐 𝓨}
+
+/-- The output rule of `A` at length `T` is the output kernel on histories of variable length
+composed with `Sigma.mk T`. -/
+lemma outputKernel_comap_sigma_mk (A : IdentAlg 𝓐 𝓨 𝓞) (T : ℕ) :
+    A.outputKernel.comap (Sigma.mk (β := fun n ↦ Fin n → 𝓐 × 𝓨) T) (measurable_sigma_mk T) =
+      A.output T := by
+  ext h s _
+  rfl
+
+/-- **The output of a run of a fixed-budget algorithm has conditional law `A.output T` given the
+history of the first `T` rounds.** -/
+lemma IsRun.hasCondDistrib_output_finHistory (hA : A.IsFixedBudget T)
+    (h : A.IsRun env X Y out P) :
+    HasCondDistrib out (finHistory X Y T) (A.output T) P := by
+  have hX := h.isAlgEnvSeq.measurable_action
+  have hY := h.isAlgEnvSeq.measurable_feedback
+  have hfin : Measurable (finHistory X Y T) := by unfold finHistory; fun_prop
+  have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
+  set ι : (Fin T → 𝓐 × 𝓨) → Σ n, Fin n → 𝓐 × 𝓨 := Sigma.mk (β := fun n ↦ Fin n → 𝓐 × 𝓨) T
+    with hι_def
+  have hι : MeasurableEmbedding ι := measurableEmbedding_sigma_mk T
+  have hsh : A.stoppedHist X Y = ι ∘ finHistory X Y T := funext hA.stoppedHist_eq
+  have hg : MeasurableEmbedding (Prod.map ι (id : 𝓞 → 𝓞)) := hι.prodMap MeasurableEmbedding.id
+  have h1 := h.hasCondDistrib_output.map_eq
+  rw [hsh] at h1
+  -- both sides of `h1` are images under `Prod.map ι id`
+  have h2 : (P.map fun ω ↦ ((ι ∘ finHistory X Y T) ω, out ω)) =
+      (P.map fun ω ↦ (finHistory X Y T ω, out ω)).map (Prod.map ι id) := by
+    rw [AEMeasurable.map_map_of_aemeasurable hg.measurable.aemeasurable
+      (hfin.aemeasurable.prodMk hout)]
+    rfl
+  have h3 : P.map (ι ∘ finHistory X Y T) ⊗ₘ A.outputKernel =
+      (P.map (finHistory X Y T) ⊗ₘ A.output T).map (Prod.map ι id) := by
+    rw [← outputKernel_comap_sigma_mk A T, ← Measure.map_map hι.measurable hfin]
+    ext s hs
+    rw [Measure.map_apply hg.measurable hs, Measure.compProd_apply (hg.measurable hs),
+      Measure.compProd_apply hs, lintegral_map (Kernel.measurable_kernel_prodMk_left hs)
+      hι.measurable]
+    rfl
+  rw [h2, h3] at h1
+  refine ⟨hfin.aemeasurable.prodMk hout, ?_⟩
+  calc P.map (fun ω ↦ (finHistory X Y T ω, out ω))
+      = ((P.map fun ω ↦ (finHistory X Y T ω, out ω)).map (Prod.map ι id)).comap
+          (Prod.map ι id) := (hg.comap_map _).symm
+    _ = ((P.map (finHistory X Y T) ⊗ₘ A.output T).map (Prod.map ι id)).comap (Prod.map ι id) := by
+        rw [h1]
+    _ = P.map (finHistory X Y T) ⊗ₘ A.output T := hg.comap_map _
+
+/-- For a fixed-budget algorithm whose output rule is the deterministic map `g` of the history,
+the output of a run is `g` of the history of the first `T` rounds, almost surely. -/
+lemma IsRun.output_ae_eq_of_output_eq_deterministic [MeasurableEq 𝓞] (hA : A.IsFixedBudget T)
+    (h : A.IsRun env X Y out P) {g : (Fin T → 𝓐 × 𝓨) → 𝓞} (hg : Measurable g)
+    (hout : A.output T = Kernel.deterministic g hg) :
+    out =ᵐ[P] fun ω ↦ g (finHistory X Y T ω) := by
+  have h1 := h.hasCondDistrib_output_finHistory hA
+  rw [hout] at h1
+  have hX := h.isAlgEnvSeq.measurable_action
+  have hY := h.isAlgEnvSeq.measurable_feedback
+  have hfin : Measurable (finHistory X Y T) := by unfold finHistory; fun_prop
+  exact ae_eq_of_hasCondDistrib_deterministic hg hfin.aemeasurable
+    h.hasCondDistrib_output.aemeasurable_snd h1
+
+end Learning.IdentAlg

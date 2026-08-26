@@ -184,6 +184,7 @@ maximizer $x^\star$: it follows from the subadditivity of the support function
 $\sup_x\ip{x}{\theta} \le \sup_x\ip{x}{\theta-\hat\theta} + \sup_x\ip{x}{\hat\theta}$.
 
 \begin{lemma}[Concentration of the difference process]\label{lem:difference_process_concentration}
+\lean{COLT83.diffSup, COLT83.diffSup_eq_supportFn_add_neg, COLT83.continuous_diffSup, COLT83.integral_diffSup_multivariateGaussian, COLT83.measureReal_diffSup_gt_le}\leanok
 \uses{def:width_matrix, lem:width_symm, cor:sup_bound_symmetric}
 Let $\Sigma \in \PD$, $\Delta \sim \Normal(0,\Sigma^{-1})$, $D := \max_{x,x'\in\Xs}\ip{x-x'}{\Delta}$
 and $\sigma^2 := \max_{x\in\Xs}\norm{x}_{\Sigma^{-1}}^2$. Then $\E D = 2\,\gwidth{\Xs}{\Sigma}$, and
@@ -194,6 +195,7 @@ for every $\delta \in (0,1)$,
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:width_symm, lem:width_matrix_wd, cor:sup_bound_symmetric, cor:sup_bound_whp, lem:sqrt_props}
 The expectation: $D = \max_x\ip{x}{\Delta} + \max_{x'}\ip{x'}{-\Delta}$ and both maxima have
 expectation $\gwidth{\Xs}{\Sigma}$ by Lemma~\ref{lem:width_symm} (the width only depends on the
@@ -212,6 +214,7 @@ Lemma~\ref{lem:sqrt_props}(iv).)
 \label{sec:upper_theorem}
 
 \begin{definition}[The fixed-design identification algorithm]\label{def:fixed_design_algorithm}
+\lean{COLT83.lsRecommend, COLT83.measurable_lsRecommend, COLT83.fixedDesignIdentAlg, COLT83.isFixedBudget_fixedDesignIdentAlg, COLT83.isFixedDesign_fixedDesignIdentAlg, COLT83.output_fixedDesignIdentAlg}\leanok
 \uses{def:arm_set, def:fixed_design, def:mixed_design, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:width}
 Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$, and set
 \[
@@ -247,6 +250,7 @@ reduced to $320$. The paper's constant is $360$.
 \end{remark}
 
 \begin{theorem}[Fixed-design upper bound (Theorem~1 of the paper)]\label{thm:upper}
+\lean{COLT83.isPAC_fixedDesignIdentAlg}\leanok
 \uses{def:arm_set, def:fixed_design_algorithm, def:pac, def:width}
 Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$. The algorithm
 $\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$
@@ -266,6 +270,8 @@ algorithm with budget $T$ (Definition~\ref{def:fixed_design}) that is $(\eps,\de
 $\Xs$.
 \end{corollary}
 \begin{proof}
+\leanok
+\leanok
 \uses{thm:upper}
 Take $\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$ of Theorem~\ref{thm:upper}, which is a fixed-design
 algorithm with the required budget.
@@ -314,7 +320,18 @@ Thus $\Prob_\theta(r(\rec,\theta) \le \eps) \ge \Prob_\theta(E) \ge 1 - \delta$,
 which is Definition~\ref{def:pac}. The bound $\lceil u\rceil \le u + 1$ gives the budget bound.
 \end{proof}
 
-\textbf{Lean remark.} The theorem is an existence statement whose witness is built from
+\textbf{Lean remark.} The formalized algorithm \texttt{COLT83.fixedDesignIdentAlg T x s}
+takes the design $x$ and the selector $s$ as parameters, and
+\texttt{COLT83.isPAC\_fixedDesignIdentAlg} is the guarantee in the general form ``if
+$\Sigma_T \succ 0$, $\norm{x}^2_{\Sigma_T^{-1}} \le \sigma^2$ on $\Xs$, $s$ is an $\eps/4$-selector
+and $2\gwidth{\Xs}{\Sigma_T} + 2\sigma\sqrt{2\cG\log(1/\delta)} \le 3\eps/4$, then the
+algorithm is $(\eps,\delta)$-PAC''; the choice of the design and the arithmetic of the
+constants are done in the proof of Corollary~\ref{cor:upper_exists}
+(\texttt{COLT83.exists\_isFixedDesign\_isPAC}). Instead of a width-minimizing design
+$\lambda_1$ (Lemma~\ref{lem:width_attained}, not formalized) the formal proof uses an
+approximate minimizer with $\gwidth{\Xs}{A_1}^2 \le \gw(\Xs)^2 + (\log 2)/4$, which the slack
+$337.5 - 320 = 17.5$ of the arithmetic absorbs. The case $d = 0$ is treated separately (every
+recommendation has zero regret). The theorem is an existence statement whose witness is built from
 non-constructive choices: $\lambda_1$ (Lemma~\ref{lem:width_attained}), $\lambda_G$
 (Theorem~\ref{thm:kiefer_wolfowitz}), the rounded design (Theorem~\ref{thm:rounding}) and the
 selector (Lemma~\ref{lem:approx_argmax_selector}); each is obtained by \texttt{Classical.choose}

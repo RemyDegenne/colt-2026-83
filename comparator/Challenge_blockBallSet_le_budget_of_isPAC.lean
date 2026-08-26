@@ -2,6 +2,7 @@ import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
 import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner

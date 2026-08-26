@@ -14,6 +14,7 @@ import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
 /-! # Standalone extraction for `COLT83.sqrt_log_le_gw`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.

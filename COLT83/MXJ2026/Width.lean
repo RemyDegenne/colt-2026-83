@@ -111,6 +111,17 @@ lemma gwMat_smul (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R) (hA : A.Po
   rw [gwMat, gwMat, hinv, ← multivariateGaussian_zero_map_smul hA.inv.posSemidef,
     gaussianWidth_map_smul hne hK (by positivity)]
 
+/-- Monotonicity in the set: `K ⊆ K'` implies `gwMat K A ≤ gwMat K' A`. -/
+lemma gwMat_mono {K' : Set (EuclideanSpace ℝ ι)} (hne : K.Nonempty) (hK' : ∀ x ∈ K', ‖x‖ ≤ R)
+    (hsub : K ⊆ K') (A : Matrix ι ι ℝ) :
+    gwMat K A ≤ gwMat K' A :=
+  gaussianWidth_mono hne hK' hsub IsGaussian.integrable_id.norm
+
+/-- In dimension `0`, every width is `0`. -/
+lemma gwMat_of_isEmpty [IsEmpty ι] (K : Set (EuclideanSpace ℝ ι)) (A : Matrix ι ι ℝ) :
+    gwMat K A = 0 :=
+  gaussianWidth_of_subsingleton K _
+
 /-- Monotonicity in the Loewner order: `A ≤ B` implies `gwMat K B ≤ gwMat K A` (the Gaussian
 vector `N(0, A⁻¹)` is `N(0, B⁻¹)` plus an independent centered Gaussian noise). -/
 lemma gwMat_anti (hK : IsCompact K) (hne : K.Nonempty) (hA : A.PosDef) (hAB : A ≤ B) :
@@ -191,6 +202,11 @@ lemma bddBelow_range_gwMat (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, ‖x‖ �
 
 lemma gw_nonneg (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) : 0 ≤ gw 𝒳 :=
   Real.iInf_nonneg fun A ↦ gwMat_nonneg hne hR A
+
+/-- In dimension `0`, the Gaussian width term is `0`. -/
+lemma gw_of_isEmpty [IsEmpty ι] (𝒳 : Set (EuclideanSpace ℝ ι)) : gw 𝒳 = 0 := by
+  simp only [gw, gwMat_of_isEmpty]
+  exact Real.iInf_const_zero
 
 /-- The Gaussian width term is at most the width for every positive definite design matrix. -/
 lemma gw_le_gwMat (hne : 𝒳.Nonempty) (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (hA : A ∈ designSet 𝒳)

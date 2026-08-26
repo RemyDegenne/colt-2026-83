@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+public import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
 /-!
 # Measurability of functions on a sigma type
@@ -36,3 +37,17 @@ lemma measurableSet_sigma_iff {s : Set (Σ a, β a)} :
 lemma measurable_sigma_iff {f : (Σ a, β a) → γ} :
     Measurable f ↔ ∀ a, Measurable (f ∘ Sigma.mk a) :=
   ⟨fun hf a ↦ hf.comp (measurable_sigma_mk a), measurable_sigma_of_measurable_comp_mk⟩
+
+/-- `Sigma.mk a` is a measurable embedding. -/
+lemma measurableEmbedding_sigma_mk (a : α) :
+    MeasurableEmbedding (Sigma.mk a : β a → Σ a, β a) where
+  injective := sigma_mk_injective
+  measurable := measurable_sigma_mk a
+  measurableSet_image' s hs := by
+    rw [measurableSet_sigma_iff]
+    intro b
+    by_cases hab : a = b
+    · subst hab
+      rwa [sigma_mk_preimage_image_eq_self]
+    · rw [sigma_mk_preimage_image' hab]
+      exact MeasurableSet.empty

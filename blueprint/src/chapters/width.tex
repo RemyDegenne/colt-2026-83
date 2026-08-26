@@ -29,13 +29,15 @@ Chapter~\ref{chap:log_gains} combined with the upper bound of Theorem~\ref{thm:u
 constants are explicit. Compared with the paper, the lower bounds for structured sets are
 stated as explicit inequalities (with admittedly large thresholds on $d$ inherited from the
 constants of the lower bounds), and the multi-task computation is organized around the
-Helmert matrices with every linear-algebra step isolated.
+Helmert matrices with every linear-algebra step isolated (the Lean proof replaces the explicit
+basis by a basis-free reduction to a Gaussian vector on the span, see the remarks in
+Section~\ref{sec:width_multitask}).
 
 \section{Upper bounds}
 \label{sec:width_upper}
 
 \begin{proposition}[The width is at most $d$]\label{prop:width_le_d}
-\lean{COLT83.gw_le_card}\leanok
+\lean{COLT83.gw_le_card, COLT83.IsGOptimalDesign.gwMat_le_card}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs \subset \R^d$ be a spanning action set. Then $\gw(\Xs) \le d$. More precisely, the
 $G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since
@@ -43,6 +45,7 @@ $\Xs$ is spanning) satisfies $\gwidth{\Xs}{A_G} \le d$.
 \end{proposition}
 
 \begin{proof}
+\leanok
 \uses{cor:g_optimal_norm_bound, lem:gauss_norm_moments, lem:width_matrix_wd}
 By Theorem~\ref{thm:kiefer_wolfowitz}, $A_G \in \designset(\Xs) \cap \PD$, so
 $\gw(\Xs) \le \gwidth{\Xs}{A_G}$ by definition of the infimum. For every $g \in \R^d$ and
@@ -55,7 +58,7 @@ $S = I_d$) yields $\gwidth{\Xs}{A_G} \le \sqrt d \cdot \sqrt d = d$.
 \end{proof}
 
 \begin{proposition}[Width of a finite set]\label{prop:width_finite}
-\lean{COLT83.gw_le_sqrt_log_ncard}\leanok
+\lean{COLT83.gw_le_sqrt_log_ncard, COLT83.IsGOptimalDesign.gwMat_le_sqrt_log_ncard}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs$ be a finite spanning action set with $\abs{\Xs} = m$. Then
 $\gw(\Xs) \le \sqrt{2 d \log m}$; more precisely $\gwidth{\Xs}{A_G} \le \sqrt{2d\log m}$
@@ -63,6 +66,7 @@ for the $G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz}.
 \end{proposition}
 
 \begin{proof}
+\leanok
 \uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:gauss_max_upper, lem:gauss_linear_image}
 Since $\Xs$ spans $\R^d$, $m \ge d \ge 1$. If $m = 1$ then $d = 1$, $\Xs = \{x\}$ and
 $\gwidth{\Xs}{A} = \E\ip{A^{-1/2}x}{g} = 0 = \sqrt{2d\log 1}$ for every $A \in \PD$.
@@ -76,6 +80,7 @@ Proposition~\ref{prop:width_le_d}.
 \end{proof}
 
 \begin{definition}[Regionalized width]\label{def:regionalized_width}
+\lean{COLT83.regionalizedGw, COLT83.gwMat_le_regionalizedGw, COLT83.regionalizedGw_le, COLT83.regionalizedGw_nonneg, COLT83.regionalizedGw_le_gwMat}\leanok
 \uses{def:width_matrix, lem:width_matrix_wd}
 Let $\Xs$ be an action set (spanning or not), $A \in \PD$ and let
 $\mathcal R = (R_1, \dots, R_K)$, $K \ge 1$, be a partition of
@@ -94,11 +99,12 @@ every $i$, the supremum over $R_i$ is at most the supremum over $\Xs$ pathwise, 
 $0 \le \gw(A;\Xs,\mathcal R) \le \gwidth{\Xs}{A}$, with equality when $K = 1$.
 \end{definition}
 
-\textbf{Lean remark.} A partition of a finite set is most conveniently encoded as a
-function $\mathrm{region} : \Xs \to \mathrm{Fin}\ K$ that is surjective; the pieces are its
-fibers $R_i = \mathrm{region}^{-1}(i)$ (as \texttt{Finset}s, \texttt{Finset.filter}), which
-are automatically nonempty, disjoint and cover $\Xs$. For a general compact $\Xs$ the
-pieces must be assumed closed (hence compact); only the finite case is used below. The inner
+\textbf{Lean remark.} In Lean the regions are simply a family of sets
+$\mathcal R : \kappa \to \mathcal P(\R^d)$ indexed by a finite type $\kappa$, and
+$\gw(A;\mathcal R) := \sup_{i \in \kappa}\gwidth{R_i}{A}$ (\texttt{regionalizedGw}); the
+action set $\Xs$ does not appear in the definition, and the partition property (disjointness,
+covering) is never needed: the statements below only use $R_i \subseteq \Xs$, and each region
+nonempty (and finite, with at most $p$ elements). The inner
 expectation is exactly the width for a matrix of Definition~\ref{def:width_matrix} with the
 index set $R_i$, which that definition allows (any nonempty compact index set); hence
 Lemmas~\ref{lem:width_matrix_wd}, \ref{lem:width_homog} and~\ref{lem:width_mono} apply to
@@ -106,6 +112,7 @@ $\gwidth{R_i}{A}$ verbatim, and Chapter~\ref{chap:log_gains} cites them directly
 regions.
 
 \begin{proposition}[Regionalized width of a finite set]\label{prop:width_partition}
+\lean{COLT83.IsGOptimalDesign.regionalizedGw_le_sqrt_log}\leanok
 \uses{def:regionalized_width, thm:kiefer_wolfowitz}
 Let $\Xs$ be a finite spanning action set and $\mathcal R = (R_1,\dots,R_K)$ a partition of
 $\Xs$ with $\abs{R_i} \le p$ for all $i$, where $p \ge 1$. Then, for the $G$-optimal design
@@ -116,6 +123,7 @@ matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since $\Xs$ is 
 \end{proposition}
 
 \begin{proof}
+\leanok
 \uses{cor:g_optimal_norm_bound, lem:gauss_max_upper, lem:gauss_linear_image}
 Fix $i$. If $\abs{R_i} = 1$, the expectation $\E\max_{x\in R_i}\ip{A_G^{-1/2}x}{g}$ is the
 expectation of a single centered Gaussian, i.e.\ $0 \le \sqrt{2d\log p}$. Otherwise
@@ -378,7 +386,7 @@ spanning hypothesis as an argument), related by the identity
 $\gw_{\mathrm{int}}(\Xs) = \gw(\Xs)$ for spanning $\Xs$.
 
 \begin{definition}[Multi-task bandit action set]\label{def:multitask_set}
-\lean{COLT83.multitaskSet}\leanok
+\lean{COLT83.multitaskSet, COLT83.oneHot, COLT83.multitaskSet_eq_range, COLT83.ncard_multitaskSet, COLT83.supportFn_multitaskSet, COLT83.norm_le_of_mem_multitaskSet}\leanok
 \uses{def:arm_set, def:width_subspace}
 Let $m \ge 1$ and $d_1,\dots,d_m \ge 2$ be integers, $d := \sum_{j\le m} d_j$,
 $d_{1:j} := \sum_{s\le j}d_s$ (with $d_{1:0} = 0$), and let
@@ -402,7 +410,22 @@ $(k_j)_j \mapsto \sum_j e_{(j,k_j)}$; the block $B_j$ is then the set of indices
 component $j$. If one prefers $\mathrm{Fin}\ d$ as index type, use the block map
 $b : \mathrm{Fin}\ d \to \mathrm{Fin}\ m$ and $B_j = b^{-1}(j)$; the offsets $d_{1:j}$ are
 only needed to translate between the two encodings. All statements below only use the
-partition $(B_j)_j$ of the coordinates and the sizes $d_j$.
+partition $(B_j)_j$ of the coordinates and the sizes $d_j$. The Lean development uses the sigma
+type; \texttt{oneHot d κ} is the element with ones at the positions $(k_j)_j = \kappa$, so that
+$\Xs$ is the range of \texttt{oneHot} (\texttt{multitaskSet\_eq\_range}), $\abs\Xs = \prod_j d_j$,
+and the support function is $\sup_{x\in\Xs}\ip{x}{y} = \sum_j\max_{k\in B_j}y_k$
+(\texttt{supportFn\_multitaskSet}), the identity on which the width computation rests.
+
+\textbf{Lean remark.} The Helmert matrices and the explicit orthonormal basis of
+Lemma~\ref{lem:multitask_basis} are not formalized: the Lean proof of
+Proposition~\ref{prop:width_multitask} avoids any explicit basis of the span through the
+general reduction \texttt{intrinsicGw\_le\_gaussianWidth} (the Lean form of
+Lemma~\ref{lem:multitask_width_reduction}), which only needs the span of $\Xs$
+(Lemma~\ref{lem:multitask_basis}, first part), a design matrix $\Sigma$ of $\Xs$
+(Lemma~\ref{lem:multitask_design_cov}) and a positive semidefinite matrix $S$ with range in
+$\Span\Xs$ inverting $\Sigma$ on $\Span\Xs$; the block-centering maps $P_j$ play the role
+of $H_{d_j}H_{d_j}^\top$. Definition~\ref{def:helmert} and Lemma~\ref{lem:helmert_props} are
+kept as the paper's route.
 
 \begin{definition}[Helmert matrices]\label{def:helmert}
 For $n \ge 2$, the \emph{Helmert matrix} $H_n \in \R^{n\times(n-1)}$ has entries, for
@@ -439,6 +462,7 @@ is the last identity.
 \end{proof}
 
 \begin{lemma}[An orthonormal basis of the span of the multi-task set]\label{lem:multitask_basis}
+\lean{COLT83.mem_span_multitaskSet_iff, COLT83.finrank_span_multitaskSet_add, COLT83.single_sub_single_mem_span, COLT83.blockSum}\leanok
 \uses{def:multitask_set, def:helmert}
 In the setting of Definition~\ref{def:multitask_set}, define $\mu \in \R^d$ by
 $\mu_i := 1/d_j$ for $i \in B_j$, $\kappa := \norm{\mu}^2 = \sum_{j\le m}1/d_j$,
@@ -453,6 +477,9 @@ Then $U^\top U = I_r$, $\mathrm{range}(U) = \Span(\Xs)$, and $\dim\Span(\Xs) = d
 
 \begin{proof}
 \uses{lem:helmert_props, def:multitask_set}
+(Lean: only the description $\Span\Xs = \{v : \text{all block sums of } v \text{ are equal}\}$
+and $\dim\Span\Xs = d - m + 1$ are formalized, the latter by rank--nullity for the map
+$v \mapsto (\sum_{i\in B_j}v_i - \sum_{i\in B_1}v_i)_j$; the matrix $U$ is not needed.)
 \emph{Orthonormality.} $\norm{u_0} = 1$. The columns of $Q_j$ and $Q_\ell$ have disjoint
 supports for $j \ne \ell$, so $Q_j^\top Q_\ell = 0$, and $Q_j^\top Q_j = H_{d_j}^\top H_{d_j} = I_{d_j-1}$
 (Lemma~\ref{lem:helmert_props}). Since $u_0$ is constant on $B_j$,
@@ -475,6 +502,7 @@ of $U$.
 \end{proof}
 
 \begin{lemma}[Covariance of the uniform design in the intrinsic coordinates]\label{lem:multitask_design_cov}
+\lean{COLT83.unifDesignMatrix, COLT83.unifDesignMatrix_mem_designSet, COLT83.toEuclideanLin_unifDesignMatrix_muVec, COLT83.toEuclideanLin_unifDesignMatrix_blockCenter, COLT83.blockCenter, COLT83.muVec, COLT83.kappa}\leanok
 \uses{def:multitask_set, lem:multitask_basis, def:design_matrix}
 Let $\lambda_u$ be the uniform design on $\Xs$ ($\lambda_x = 1/\abs\Xs$ for every
 $x \in \Xs$) and $\Sigma := A(\lambda_u) = \frac{1}{\abs\Xs}\sum_{x\in\Xs}xx^\top \in \R^{d\times d}$.
@@ -492,7 +520,12 @@ $\Sigma_r = \frac{1}{\abs\Xs}\sum_{x\in\Xs}(U^\top x)(U^\top x)^\top \in \design
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:helmert_props, lem:multitask_basis}
+(Lean: the formalized statements are the two eigen-relations $\Sigma\mu = \kappa\mu$ and
+$\Sigma v = v/d_j$ for $v \in R_j$, i.e.\ for $v = P_jw$ the block-centering of a vector $w$
+on the block $j$; they are obtained by splitting the sum over $\prod_jB_j$ according to one
+coordinate, \texttt{sum\_pi\_split}.)
 $\Sigma_{ik}$ is the fraction of $x \in \Xs$ with $x_i = x_k = 1$. Within a block, two
 distinct coordinates are never both $1$, and $x_i = 1$ for a fraction $1/d_j$ of the
 elements; across blocks $j \ne \ell$, the positions of the ones in different blocks are
@@ -512,6 +545,7 @@ are positive. The last claim is the identity $U^\top(\sum_x\lambda_x xx^\top)U =
 \end{proof}
 
 \begin{lemma}[Reduction of the multi-task width to block maxima]\label{lem:multitask_width_reduction}
+\lean{COLT83.intrinsicGw_le_gaussianWidth, COLT83.intrinsicGw_eq_gw_image, COLT83.spanBasisMatrix, COLT83.mtL, COLT83.mtS, COLT83.multivariateGaussian_mtS, COLT83.toEuclideanLin_unifDesignMatrix_mtL_mtL, COLT83.mtL_apply_mk}\leanok
 \uses{def:width_subspace, def:multitask_set, lem:multitask_basis, lem:multitask_design_cov}
 In the setting of Definition~\ref{def:multitask_set}, let $g^{(j)} \sim \Normal(0, I_{d_j-1})$,
 $j \le m$. Then the intrinsic width of Definition~\ref{def:width_subspace} satisfies
@@ -521,7 +555,19 @@ $j \le m$. Then the intrinsic width of Definition~\ref{def:width_subspace} satis
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:width, lem:width_matrix_wd, lem:sqrt_props, lem:multitask_design_cov, lem:multitask_basis, lem:gauss_pi}
+(Lean: the general statement \texttt{intrinsicGw\_le\_gaussianWidth} says that for any
+$\Sigma \in \designset(\Xs)$ and any $S \succeq 0$ with range in $V = \Span\Xs$ and
+$\Sigma S = \mathrm{id}$ on $V$, one has $\gw_{\mathrm{int}}(\Xs) \le \E\sup_{x\in\Xs}\ip{x}{G}$
+with $G \sim \Normal(0,S)$: with $U$ the coordinate matrix of the standard orthonormal basis
+of $V$, $A := U^\top\Sigma U$ is a positive definite design matrix of $U^\top\Xs$ with
+$A^{-1} = U^\top SU$, and $\Normal(0,U^\top SU)$ is the image of $\Normal(0,S)$ by $U^\top$
+while $\ip{U^\top x}{U^\top y} = \ip{x}{y}$ for $x \in V$. For the multi-task set, $\Sigma$ is
+the uniform design and $S = L^2$ with $L v := \kappa^{-3/2}\ip{\mu}{v}\mu + \sum_j\sqrt{d_j}P_jv$
+(\texttt{mtL}), whose coordinates in the block $j$ are $\ip{w_j}{v} + \sqrt{d_j}v_k$ for a fixed
+vector $w_j$ (\texttt{mtL\_apply\_mk}); the block maxima of $Lg$, $g\sim\Normal(0,I_d)$, are
+then $\ip{w_j}{g} + \sqrt{d_j}\max_{k\in B_j}g_k$, and the first term has mean zero.)
 By Definition~\ref{def:width_subspace} with the matrix $U$ of Lemma~\ref{lem:multitask_basis},
 $\gw_{\mathrm{int}}(\Xs) = \gw(U^\top\Xs)$, where $U^\top\Xs$ is a spanning action set in
 $\R^r$, $r = d - m + 1$, so that Definition~\ref{def:width} applies to it; and by
@@ -553,6 +599,7 @@ $\E g_0 = 0$ gives the claim (each maximum is integrable by Lemma~\ref{lem:width
 \end{proof}
 
 \begin{lemma}[Maximum of centered Gaussians]\label{lem:centered_gaussian_max}
+\lean{COLT83.integral_iSup_mtL_le, COLT83.ciSup_const_add_const_mul}\leanok
 \uses{def:helmert, lem:helmert_props}
 Let $n \ge 2$, $Z \sim \Normal(0, I_n)$, $\bar Z := \frac1n\sum_{k\le n}Z_k$ and
 $g \sim \Normal(0, I_{n-1})$. Then
@@ -563,7 +610,12 @@ $g \sim \Normal(0, I_{n-1})$. Then
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_linear_image, lem:gauss_law_of_cov, lem:gauss_max_upper, lem:helmert_props}
+(Lean: in the formalization the centered maximum appears directly as
+$\max_k(g_k - \bar g) = \max_kg_k - \bar g$ with $\E\bar g = 0$, so no change of
+variables is needed; \texttt{integral\_iSup\_mtL\_le} is the statement
+$\E\max_{k\in B_j}(Lg)_k \le \sqrt{2d_j\log d_j}$.)
 By Lemma~\ref{lem:gauss_linear_image}, $H_ng \sim \Normal(0, H_nH_n^\top) = \Normal(0, P)$
 with $P := I_n - \frac1n\mathbf 1_n\mathbf 1_n^\top$ (Lemma~\ref{lem:helmert_props}), and
 $Z - \bar Z\mathbf 1_n = PZ \sim \Normal(0, PP^\top) = \Normal(0,P)$ since $P$ is a symmetric
@@ -574,6 +626,7 @@ $\E\max_kZ_k \le \sqrt{2\log n}$ by Lemma~\ref{lem:gauss_max_upper} with $\sigma
 \end{proof}
 
 \begin{proposition}[Width of the multi-task set]\label{prop:width_multitask}
+\lean{COLT83.intrinsicGw_multitaskSet_le}\leanok
 \uses{def:multitask_set, def:width_subspace}
 In the setting of Definition~\ref{def:multitask_set}, the intrinsic width satisfies
 \[
@@ -584,6 +637,7 @@ $U^\top\Xs \subset \R^{d-m+1}$ has Gaussian width $\gw(U^\top\Xs) \le \sum_{j\le
 \end{proposition}
 
 \begin{proof}
+\leanok
 \uses{lem:multitask_width_reduction, lem:centered_gaussian_max}
 Combine Lemma~\ref{lem:multitask_width_reduction} with Lemma~\ref{lem:centered_gaussian_max}
 applied to each block ($n = d_j \ge 2$):
@@ -612,6 +666,7 @@ $\gw_{\mathrm{int}}(\Xs) = \gw(U^\top\Xs)$ is $O(\sqrt{d\log d})$.
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{prop:width_multitask, lem:multitask_basis, prop:width_le_d, prop:width_finite}
 (i) Lemma~\ref{lem:multitask_basis}: $\dim\Span\Xs = d - m + 1 = m^2 + m - 1$. It is at most
 $d$, and $d - m + 1 \ge d/2$ is equivalent to $d \ge 2m - 2$, which holds.

@@ -257,7 +257,7 @@ write $\Prob_\theta$ for the law of either.
 \end{definition}
 
 \begin{lemma}[Law of the observations under a fixed design]\label{lem:fixed_design_law}
-\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec, Learning.IsAlgEnvSeq.hasLaw_noise_finVec, Learning.IsAlgEnvSeq.iIndepFun_noise, Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec, Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign, Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign, Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign}\leanok
+\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec, Learning.IsAlgEnvSeq.hasLaw_noise_finVec, Learning.IsAlgEnvSeq.iIndepFun_noise, Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec, Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign, Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign, Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign, Learning.IdentAlg.IsRun.hasCondDistrib_output_finHistory, Learning.IdentAlg.IsRun.output_ae_eq_of_output_eq_deterministic}\leanok
 \uses{def:fixed_design, lem:noise_representation}
 Under a fixed design run against $\nu_\theta$, the observation vector
 $y = (y_t)_{t<T}$ satisfies $y = X\theta + \eta$ with $\eta \sim \Normal(0, I_T)$, and
@@ -365,7 +365,7 @@ they are written with $K = \Xs$ for readability.
 \end{definition}
 
 \begin{lemma}[The width for a matrix is well defined]\label{lem:width_matrix_wd}
-\lean{ProbabilityTheory.integrable_supportFn_of_isGaussian, COLT83.integrable_supportFn_multivariateGaussian, COLT83.gwMat_nonneg, COLT83.gwMat_eq_gaussianWidth_stdGaussian, COLT83.gwMat_le_mul_sqrt_card}\leanok
+\lean{ProbabilityTheory.integrable_supportFn_of_isGaussian, COLT83.integrable_supportFn_multivariateGaussian, COLT83.gwMat_nonneg, COLT83.gwMat_eq_gaussianWidth_stdGaussian, COLT83.gwMat_le_mul_sqrt_card, COLT83.gwMat_mono, COLT83.gwMat_of_isEmpty, COLT83.gw_of_isEmpty}\leanok
 \uses{def:width_matrix, lem:sup_countable_dense}
 (For an arbitrary nonempty compact index set $\Xs$.) The random variable $\sup_{x\in\Xs}\ip{A^{-1/2}x}{g}$ is measurable, integrable, and
 $0 \le \gwidth{\Xs}{A} \le \sup_{x\in\Xs}\norm{A^{-1/2}x}\cdot \sqrt d$.

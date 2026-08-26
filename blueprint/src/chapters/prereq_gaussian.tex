@@ -457,6 +457,7 @@ through this countable form, and Chapter~\ref{chap:pre_concentration} uses the p
 $\max_{i\le n}\ip{q_i}{G}$ as the finite approximations.
 
 \begin{lemma}[Expected maximum of $m$ sub-Gaussian variables]\label{lem:gauss_max_upper}
+\lean{ProbabilityTheory.integral_iSup_le_of_hasSubgaussianMGF, ProbabilityTheory.integrable_iSup_of_hasSubgaussianMGF, ProbabilityTheory.HasSubgaussianMGF.mono, ProbabilityTheory.hasSubgaussianMGF_inner_stdGaussian, ProbabilityTheory.integral_iSup_inner_stdGaussian_le, ProbabilityTheory.gaussianWidth_stdGaussian_le_of_finite}\leanok
 \uses{lem:gauss_tail}
 Let $m \ge 1$, $\sigma \ge 0$ and $Z_1,\dots,Z_m$ be real random variables on a common
 probability space, each with a sub-Gaussian moment generating function with constant
@@ -472,6 +473,7 @@ with $\sigma_i^2 \le \sigma^2$ for every $i$, whatever their joint law
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_tail}
 Integrability: $\abs{Z_i}\le e^{Z_i} + e^{-Z_i}$ is integrable ($\beta = \pm1$), and
 $\abs{\max_iZ_i} \le \sum_i\abs{Z_i}$. Let $\beta > 0$. By Jensen's inequality for the convex

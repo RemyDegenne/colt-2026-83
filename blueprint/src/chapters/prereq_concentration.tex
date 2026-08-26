@@ -497,6 +497,7 @@ second bound is the lower tail. If $\sigma = 0$ both events have probability one
 \end{proof}
 
 \begin{corollary}[Symmetric index set]\label{cor:sup_bound_symmetric}
+\lean{COLT83.integral_diffSup_multivariateGaussian, COLT83.measureReal_diffSup_gt_le}\leanok
 \uses{thm:borell_tis, lem:gauss_law_of_cov}
 Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$, $G \sim \Normal(0,S)$,
 $\sigma^2 := \sup_{x\in\Xs}x^\top Sx$, and consider the difference set
@@ -511,6 +512,7 @@ $D := \sup_{x,x'\in\Xs}\ip{x - x'}{G} = \sup_{z\in\Xs-\Xs}\ip{z}{G}$. Then
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{cor:sup_bound_whp, lem:gauss_law_of_cov, lem:sup_countable_dense}
 $\Xs - \Xs$ is the image of the compact $\Xs\times\Xs$ under the continuous map
 $(x,x')\mapsto x - x'$, hence compact. (i) Pointwise,

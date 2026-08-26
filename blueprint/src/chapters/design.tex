@@ -651,6 +651,11 @@ supported $\lambda_1 \in \simplex_{\Xs}$ is the definition of $\designset(\Xs)$
 (Definition~\ref{def:design_matrix}).
 \end{proof}
 
+\textbf{Lean remark.} Not formalized: the fixed-design algorithm of Chapter~\ref{chap:upper} is
+built in Lean from an \emph{approximate} minimizer of the width (any $A_1$ with
+$\gwidth{\Xs}{A_1}^2 \le \gw(\Xs)^2 + (\log 2)/4$, which exists by definition of the infimum),
+so the attainment is not needed for Theorem~\ref{thm:upper}.
+
 \textbf{Lean remark.} The argument is a standard ``minimize a continuous coercive function on a
 compact set'': it can be organized as follows. The set $K_c := \{A \in \designset(\Xs) :
 \gwidth{\Xs}{A} \le c\}$ for $c > \gw(\Xs)$ is nonempty, contained in $\PD$ (by coercivity and

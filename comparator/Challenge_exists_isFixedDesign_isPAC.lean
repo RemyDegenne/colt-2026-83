@@ -2,6 +2,7 @@ import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
 import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
@@ -13,6 +14,45 @@ import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.PosDef
 import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Analysis.Matrix.PosDef
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+import Mathlib.Probability.Independence.Basic
+import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.InformationTheory.KullbackLeibler.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.MeasureTheory.Integral.MeanInequalities
+import Mathlib.InformationTheory.KullbackLeibler.ChainRule
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.RadonNikodym
+import Mathlib.Probability.Kernel.MeasurableLIntegral
+import Mathlib.Probability.Kernel.RadonNikodym
 import Mathlib.Analysis.InnerProductSpace.PiL2
 
 /-! # Standalone extraction for `COLT83.exists_isFixedDesign_isPAC`
@@ -360,7 +400,8 @@ end
 
 -- ═══ MXJ2026.Upper ═══
 section
-open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit
+open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit Matrix
+open scoped NNReal MatrixOrder
 namespace COLT83
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 

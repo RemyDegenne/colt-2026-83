@@ -83,6 +83,12 @@ every such point is recorded in a remark next to the statement it concerns. The 
         (Lemma~\ref{lem:rademacher_square_subexp}), and the Gaussian Hanson--Wright inequality
         by diagonalization (Lemma~\ref{lem:gauss_quadratic_form_subexp}); the paper's
         tail-to-MGF lemma is not needed.
+  \item The width of the multi-task set (Theorem~\ref{thm:width_separation}) is computed in
+        Lean without the Helmert matrices: a basis-free reduction bounds the intrinsic width of
+        a non-spanning set by the expected supremum of a Gaussian vector supported on its span,
+        whose covariance is the pseudo-inverse of a design matrix
+        (Lemma~\ref{lem:multitask_width_reduction}); only the description of the span and
+        the action of the uniform design on it are needed.
 \end{itemize}
 
 \textbf{Reading guide.}

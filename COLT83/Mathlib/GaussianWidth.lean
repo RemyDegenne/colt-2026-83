@@ -55,6 +55,9 @@ variable {K K' : Set E} {R : ℝ} {ξ : E}
 lemma supportFn_eq_sSup (K : Set E) (ξ : E) : supportFn K ξ = sSup ((fun x ↦ ⟪x, ξ⟫) '' K) := by
   rw [supportFn, iSup, image_eq_range]
 
+lemma supportFn_of_subsingleton [Subsingleton E] (K : Set E) (ξ : E) : supportFn K ξ = 0 := by
+  simp [supportFn, Subsingleton.elim ξ 0, Real.iSup_const_zero]
+
 lemma bddAbove_range_inner (hK : ∀ x ∈ K, ‖x‖ ≤ R) (ξ : E) :
     BddAbove (range fun x : K ↦ ⟪(x : E), ξ⟫) := by
   refine ⟨R * ‖ξ‖, ?_⟩
@@ -210,6 +213,11 @@ lemma abs_gaussianWidth_le (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R)
   rw [gaussianWidth, ← integral_const_mul]
   exact abs_integral_le_integral_abs.trans (integral_mono (integrable_supportFn hne hK hμ).abs
     (hμ.const_mul R) fun ξ ↦ abs_supportFn_le hne hK ξ)
+
+omit [OpensMeasurableSpace E] in
+lemma gaussianWidth_of_subsingleton [Subsingleton E] (K : Set E) (μ : Measure E) :
+    gaussianWidth K μ = 0 := by
+  simp [gaussianWidth, supportFn_of_subsingleton]
 
 lemma gaussianWidth_mono (hne : K.Nonempty) (hK' : ∀ x ∈ K', ‖x‖ ≤ R) (hsub : K ⊆ K')
     (hμ : Integrable (fun ξ ↦ ‖ξ‖) μ) :
