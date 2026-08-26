@@ -306,6 +306,7 @@ $\delta \le 1/10$, or $\Xs = \{x_0\}$ and $\gw(\{x_0\}) = 0$ (as $\E\ip{x_0}{A^{
 \label{sec:lower_nonadaptive_theorem}
 
 \begin{theorem}[Lower bound for non-adaptive fixed designs]\label{thm:lower_nonadaptive}
+\lean{COLT83.le_budget_of_isFixedDesign_of_isPAC}\leanok
 \uses{def:arm_set, def:fixed_design, def:pac, def:width}
 Let $\Xs$ be spanning, $\eps > 0$ and $\delta \in (0, 1/10]$. If a fixed-design algorithm with budget $T \ge 1$
 (design $x_0,\dots,x_{T-1} \in \Xs$ and any recommendation kernel $\rho$) is

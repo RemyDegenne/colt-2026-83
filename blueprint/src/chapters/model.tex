@@ -10,6 +10,7 @@ algorithms and environments (\texttt{Learning.Algorithm}, \texttt{Learning.Envir
 \label{sec:model_env}
 
 \begin{definition}[Action set]\label{def:arm_set}
+\lean{COLT83.unitBall}\leanok
 Let $d \ge 1$. An \emph{action set} (or arm set) is a nonempty compact subset $\Xs \subset \R^d$.
 It is \emph{spanning} if $\Span(\Xs) = \R^d$. The paper assumes spanning throughout; in this
 blueprint the spanning assumption is stated explicitly in every statement that needs it (the
@@ -33,6 +34,7 @@ and several statements are first proved for finite $\Xs$ and then extended by de
 (Lemma~\ref{lem:sup_countable_dense}).
 
 \begin{definition}[Linear Gaussian environment]\label{def:env}
+\lean{Learning.LinearBandit.linearGaussianEnv, Learning.LinearBandit.linearGaussianKernel}\leanok
 \uses{def:arm_set}
 For $\theta \in \R^d$, the \emph{linear Gaussian environment} $\nu_\theta$ is the stationary
 environment (LML \texttt{stationaryEnv}) with reward kernel
@@ -62,15 +64,34 @@ independence. Joint independence of the $\eta_t$ follows by induction on $t$.
 \section{Identification algorithms and PAC guarantees}
 \label{sec:model_pac}
 
-\begin{definition}[Identification algorithm with budget $T$]\label{def:bai_alg}
+\begin{definition}[Identification algorithms; runs; fixed budget]\label{def:bai_alg}
+\lean{Learning.IdentAlg, Learning.IdentAlg.stoppingTime, Learning.IdentAlg.IsRun, Learning.IdentAlg.IsFixedBudget, Learning.IdentAlg.fixedBudget}\leanok
 \uses{def:env}
-An \emph{identification algorithm with budget $T \ge 0$} on $\Xs$ is a pair
-$\mathsf{Alg} = (\mathrm{alg}, \rho)$ of an LML algorithm $\mathrm{alg}$ with actions in $\Xs$
-and observations in $\R$ (a sampling rule), and a \emph{recommendation rule}: a Markov kernel
-$\rho$ from histories of length $T$ (the sequence $(x_t, y_t)_{t<T}$) to $\Xs$. Run against
-$\nu_\theta$, it produces the history $\hist_T = (x_t,y_t)_{t<T}$ and then the recommendation
-$\rec \sim \rho(\hist_T)$. We write $\Prob_\theta$ for the law of $(\hist_T, \rec)$ (unique by
-\texttt{Learning.isAlgEnvSeq\_unique}).
+An \emph{identification algorithm} on $\Xs$ is a triple $\mathsf{Alg} = (\mathrm{alg}, \tau, \rho)$ of
+an LML algorithm $\mathrm{alg}$ with actions in $\Xs$ and observations in $\R$ (a sampling
+rule), a \emph{stopping rule}: a measurable predicate on finite histories, ``stop after
+$n$ rounds when their history is $h = (x_t,y_t)_{t<n}$''; and a \emph{recommendation rule}
+(output rule) $\rho$: for each $n$, a kernel from histories of length $n$ to $\Xs$ which is a
+probability measure on every history at which the rule stops.
+
+A \emph{run} of $\mathsf{Alg}$ against $\nu_\theta$ on a probability space $(\Omega, \Prob)$
+consists of action and observation processes $(x_t, y_t)_{t\in\N}$ forming an
+algorithm-environment sequence for $\mathrm{alg}$ and $\nu_\theta$ (LML
+\texttt{IsAlgEnvSeq}), and of a recommendation $\rec$ whose conditional law given the history
+$\hist_\tau = (x_t,y_t)_{t<\tau}$ is $\rho(\hist_\tau)$, where the number of rounds played
+$\tau := \min\{n : \text{the stopping rule fires on } (x_t,y_t)_{t<n}\} \in \N \cup \{\infty\}$
+is the hitting time of the stopping rule by the process of histories (Mathlib
+\texttt{hittingAfter}), a stopping time of the history filtration. The law of
+$(\hist_\tau, \rec)$ is the same for all runs (\texttt{Learning.isAlgEnvSeq\_unique}); we write
+$\Prob_\theta$ for it, and $\E_\theta$ for the corresponding expectation, whenever a statement
+only depends on this law.
+
+An identification algorithm has \emph{fixed budget $T \ge 0$} if its stopping rule is ``stop
+after exactly $T$ rounds''; then $\hist_\tau = \hist_T = (x_t,y_t)_{t<T}$ and only the kernel
+$\rho$ on histories of length $T$ matters, so it is determined by the pair $(\mathrm{alg},\rho)$
+with $\rho$ a Markov kernel from histories of length $T$ to $\Xs$. All the algorithms of this
+blueprint have a fixed budget (Remark~\ref{rem:stopping_times}); \emph{fixed-confidence}
+algorithms, which stop adaptively, are covered by the same definition.
 \end{definition}
 
 \textbf{Lean remark.} The randomness of the recommendation is allowed on purpose (the lower
@@ -84,7 +105,26 @@ a deterministic budget $T = (H_1 \log(1/\delta) + H_2)/\eps^2$ and all its lower
 stated for such budgets; a randomized budget can be handled by padding
 (Remark~\ref{rem:stopping_times}).
 
+\begin{lemma}[The number of rounds is a stopping time]\label{lem:stopping_time}
+\lean{Learning.IdentAlg.isStoppingTime_stoppingTime}\leanok
+\uses{def:bai_alg}
+Let $(x_t, y_t)_{t\in\N}$ be an algorithm-environment sequence on $(\Omega,\Prob)$ (for any
+algorithm and environment) and let $\tau$ be the number of rounds played by an identification
+algorithm on it (Definition~\ref{def:bai_alg}). Then $\tau$ is a stopping time of the history
+filtration $(\mathcal F_n)_{n\in\N}$, $\mathcal F_n := \sigma((x_t,y_t)_{t\le n})$ (LML
+\texttt{IsAlgEnvSeq.filtration}): $\{\tau \le n\} \in \mathcal F_n$ for every $n$.
+\end{lemma}
+\begin{proof}
+\leanok
+$\tau$ is the hitting time of the measurable set $\{(n, h) : \text{the stopping rule fires on } h\}$
+by the process $n \mapsto (n, (x_t,y_t)_{t<n})$, which is adapted to $(\mathcal F_n)$ since
+$(x_t,y_t)_{t<n}$ is a function of $(x_t,y_t)_{t\le n}$; the hitting time of a measurable set by an
+adapted discrete-time process is a stopping time (Mathlib
+\texttt{Adapted.isStoppingTime\_hittingAfter}).
+\end{proof}
+
 \begin{definition}[Simple regret]\label{def:regret}
+\lean{Learning.LinearBandit.simpleRegret}\leanok
 \uses{def:arm_set}
 The \emph{simple regret} of $\rec \in \Xs$ for the reward vector $\theta$ is
 \[
@@ -95,12 +135,16 @@ $r(\rec,\theta) \le Z(\theta)$ for every $\rec \in \Xs$.
 \end{definition}
 
 \begin{definition}[$(\eps,\delta)$-PAC algorithm]\label{def:pac}
+\lean{Learning.LinearBandit.IsPAC, Learning.IdentAlg.IsPAC}\leanok
 \uses{def:bai_alg, def:regret}
-Let $\eps > 0$ and $\delta \in (0,1)$. An identification algorithm with budget $T$ is
-\emph{$(\eps,\delta)$-PAC on $\Xs$} if for every $\theta \in \R^d$,
+Let $\eps > 0$ and $\delta \in (0,1)$. An identification algorithm is
+\emph{$(\eps,\delta)$-PAC on $\Xs$} if for every $\theta \in \R^d$ and every run of it against
+$\nu_\theta$ on a probability space $(\Omega,\Prob)$,
 \[
-  \Prob_\theta\big( r(\rec, \theta) \le \eps \big) \ge 1 - \delta .
+  \Prob\big( r(\rec, \theta) \le \eps \big) \ge 1 - \delta ,
 \]
+that is, $\Prob_\theta(r(\rec,\theta) \le \eps) \ge 1 - \delta$ for the law $\Prob_\theta$ of
+Definition~\ref{def:bai_alg}.
 \end{definition}
 
 \begin{lemma}[Expected regret of a PAC algorithm under a prior]\label{lem:pac_expected_regret}
@@ -144,6 +188,7 @@ Appendix~I. This reduction is not part of the formalization plan.
 \label{sec:model_fixed}
 
 \begin{definition}[Fixed-design algorithm]\label{def:fixed_design}
+\lean{Learning.fixedDesignAlg, Learning.IdentAlg.IsFixedDesign}\leanok
 \uses{def:bai_alg}
 A \emph{fixed design} of length $T$ is a deterministic sequence $x_0, \dots, x_{T-1} \in \Xs$.
 The associated \emph{fixed-design (non-adaptive) algorithm} is the identification algorithm
@@ -176,6 +221,7 @@ standard Gaussians, so $\eta \sim \Normal(0,I_T)$ (Lemma~\ref{lem:gauss_pi}).
 \label{sec:model_width}
 
 \begin{definition}[Design distributions and design matrices]\label{def:design_matrix}
+\lean{COLT83.designSet, COLT83.outerSelf}\leanok
 \uses{def:arm_set}
 A \emph{design distribution} on $\Xs$ is a finitely supported probability vector
 $\lambda = (\lambda_x)_{x \in S}$, $S \subset \Xs$ finite, $\lambda_x \ge 0$,
@@ -228,6 +274,7 @@ $\ip{b_i}{v} \neq 0$ (the $b_i$ span $\R^d$).
 \end{proof}
 
 \begin{definition}[Gaussian width of a compact set for a matrix]\label{def:width_matrix}
+\lean{COLT83.gwMat, ProbabilityTheory.gaussianWidth}\leanok
 \uses{def:arm_set}
 For a nonempty compact set $K \subseteq \R^d$ (typically $K = \Xs$, or a region $K = R \subseteq \Xs$
 in Chapter~\ref{chap:log_gains}), a positive definite matrix $A \in \PD$ and
@@ -237,6 +284,10 @@ $g \sim \Normal(0, I_d)$, the \emph{Gaussian width of $K$ for $A$} is
   = \E\Big[ \sup_{x \in K} \ip{A^{-1/2}x}{g} \Big].
 \]
 Here $A^{-1/2}$ is the positive definite square root of $A^{-1}$ (Mathlib \texttt{CFC.sqrt}).
+In Lean, since $A^{-1/2}g \sim \Normal(0, A^{-1})$, $\gwidth{K}{A}$ is defined as the
+\emph{Gaussian width of $K$ for the measure $\Normal(0, A^{-1})$}, $\int \sup_{x \in K}\ip{x}{\xi}\,\Normal(0,A^{-1})(d\xi)$
+(\texttt{ProbabilityTheory.gaussianWidth}, defined for any measure), which avoids matrix square
+roots in the definition; the two expressions agree by Lemma~\ref{lem:width_matrix_wd}.
 The lemmas of this section that do not involve the design set $\designset(\Xs)$
 (Lemmas~\ref{lem:width_matrix_wd}, \ref{lem:width_homog}, \ref{lem:width_mono} and
 \ref{lem:width_symm}) are stated and proved for an arbitrary nonempty compact index set $K$;
@@ -265,6 +316,7 @@ depends on the law.
 \end{proof}
 
 \begin{definition}[Gaussian width of $\Xs$]\label{def:width}
+\lean{COLT83.gw}\leanok
 \uses{def:width_matrix, def:design_matrix, lem:exists_posdef_design}
 Let $\Xs$ be spanning. The \emph{Gaussian width term} of the action set is
 \[

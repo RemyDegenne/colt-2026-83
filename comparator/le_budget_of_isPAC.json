@@ -1,0 +1,13 @@
+{
+    "challenge_module": "Challenge_le_budget_of_isPAC",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.le_budget_of_isPAC",
+        "measurable_sigma_of_measurable_comp_mk"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}

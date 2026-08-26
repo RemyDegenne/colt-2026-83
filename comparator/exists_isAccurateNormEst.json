@@ -1,0 +1,13 @@
+{
+    "challenge_module": "Challenge_exists_isAccurateNormEst",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.exists_isAccurateNormEst",
+        "measurable_sigma_of_measurable_comp_mk"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}

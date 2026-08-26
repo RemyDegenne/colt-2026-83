@@ -29,6 +29,7 @@ $d \le k \le d^2$.
 \label{sec:separation_set}
 
 \begin{definition}[Block-ball action set]\label{def:block_ball_set}
+\lean{COLT83.blockBallSet}\leanok
 \uses{def:arm_set}
 For $i \in \{1,\dots,k\}$ let $B_i := \{(i-1)d + 1, \dots, id\}$ be the $i$-th block of
 coordinates of $\R^{kd}$, let $\iota_i : \R^d \to \R^{kd}$ be the isometric embedding which
@@ -145,6 +146,7 @@ is used. The equality of laws in (ii) is an equality of two composition-products
 Gaussian measure with kernels, obtained from Lemma~\ref{lem:fixed_design_law} on both sides.
 
 \begin{theorem}[Non-adaptive lower bound for the block-ball set]\label{thm:separation_lower_nonadaptive}
+\lean{COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, COLT83.blockBallSet_le_budget_of_isPAC}\leanok
 \uses{def:block_ball_set, lem:block_ball_basic, def:fixed_design, def:pac}
 Let $\eps \in (0,1]$. Recall that $\Xs$ is a spanning action set in $\R^{kd}$
 (Lemma~\ref{lem:block_ball_basic}).
@@ -156,15 +158,15 @@ Let $\eps \in (0,1]$. Recall that $\Xs$ is a spanning action set in $\R^{kd}$
         \[
           T \ge \frac{k d^2}{210\,\eps^2} .
         \]
-  \item[(ii)] If any identification algorithm (adaptive or not) with budget $T$ is
-        $(\eps,\delta)$-PAC on $\Xs$ with $\delta < 1/16$, then
-        $T \ge c_{\mathrm{ad}}\,kd\log(1/\delta)/\eps^2$, where $c_{\mathrm{ad}}$ is the constant of
-        Theorem~\ref{thm:lower_adaptive}.
+  \item[(ii)] If $kd \ge 2$ and any identification algorithm (adaptive or not) with budget $T$
+        is $(\eps,\delta)$-PAC on $\Xs$ with $\delta < 1/16$, then
+        $T \ge kd\log(1/\delta)/(20000\,\eps^2)$ (and $T \ge c_{\mathrm{ad}}\,kd\log(1/\delta)/\eps^2$
+        with the constant $c_{\mathrm{ad}}$ of Theorem~\ref{thm:lower_adaptive}).
 \end{enumerate}
+\end{theorem}
 In particular every fixed-design $(\eps,\delta)$-PAC algorithm with $\delta < 1/16$ has
 budget at least
 $\tfrac12\big( c_{\mathrm{ad}}\,kd\log(1/\delta) + kd^2/210 \big)/\eps^2$.
-\end{theorem}
 
 \begin{proof}
 \uses{lem:block_restriction, thm:lower_nonadaptive, prop:width_ball, thm:lower_adaptive, lem:singular_design_fails, lem:block_ball_basic}
@@ -318,6 +320,18 @@ $\tfrac12\big(c_{\mathrm{ad}}\,kd\log(1/\delta) + kd^2/210\big)/\eps^2$ samples.
 recommendation kernel, the class of Definition~\ref{def:fixed_design} and of
 Theorem~\ref{thm:lower_nonadaptive}; see Remark~\ref{rem:separation_gap}.
 \end{theorem}
+
+\begin{corollary}[Theorem~7 of the paper, existential form of the upper bound]\label{cor:separation_exists}
+\lean{COLT83.exists_isPAC_blockBallSet}\leanok
+\uses{thm:separation, def:pac}
+Let $k \ge 1$, $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
+$T \le C_{\mathrm{sep}}\,(kd\log(8k/\delta) + d^2)/\eps^2$ and an identification algorithm with
+budget $T$ that is $(\eps,\delta)$-PAC on the block-ball set $\Xs \subset \R^{kd}$.
+\end{corollary}
+\begin{proof}
+\uses{thm:separation}
+Take the block algorithm of Theorem~\ref{thm:separation}.
+\end{proof}
 
 \begin{proof}
 \uses{lem:block_selection, lem:ball_identification, lem:separation_block_embedding, lem:composition, lem:block_ball_basic, thm:norm_estimation, thm:separation_lower_nonadaptive}

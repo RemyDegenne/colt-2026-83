@@ -32,6 +32,7 @@ $\Xs = \ball_d$ and $r := \norm{\theta}$.
 \label{sec:norm_setup}
 
 \begin{definition}[Norm estimation algorithm]\label{def:norm_estimator}
+\lean{COLT83.IsAccurateNormEst}\leanok
 \uses{def:env, def:bai_alg}
 An \emph{estimation algorithm with budget $T$} on $\ball_d$ is a pair $(\mathrm{alg}, \rho)$
 of an LML algorithm with actions in $\ball_d$ and observations in $\R$, and a Markov kernel
@@ -715,6 +716,19 @@ budget satisfies
   \qquad C_{\mathrm{norm}} := 10^5 .
 \]
 \end{theorem}
+
+\begin{corollary}[Theorem~8 of the paper, existential form]\label{cor:norm_estimation_exists}
+\lean{COLT83.exists_isAccurateNormEst}\leanok
+\uses{thm:norm_estimation, def:norm_estimator}
+Let $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
+$T \le C_{\mathrm{norm}}\, d\log(4/\delta)/\eps^2$ and an $(\eps,\delta)$-accurate estimation
+algorithm on $\ball_d$ with budget $T$.
+\end{corollary}
+\begin{proof}
+\uses{thm:norm_estimation}
+Take $\mathrm{NormEst}(\eps,\delta)$ of Theorem~\ref{thm:norm_estimation}; it is
+$(\eps, 7\delta/8)$-accurate, hence $(\eps,\delta)$-accurate.
+\end{proof}
 
 \begin{proof}
 \uses{thm:multiscale_guarantee, thm:additive_estimation, thm:large_norm_guarantee, lem:multiscale_samples, lem:composition}

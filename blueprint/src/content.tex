@@ -107,8 +107,14 @@ space $(\Omega, \mathcal{F}, \Prob)$ and $\E$ is the expectation under $\Prob$; 
 reward vector matters we write $\Prob_\theta$, $\E_\theta$. Norms are Euclidean unless stated
 otherwise, and for a positive definite matrix $W$ we write $\norm{x}_W^2 := x^\top W x$.
 
-\textbf{Status.} Nothing is formalized yet. Each statement will carry a \verb+\lean+ tag naming
-its Lean declaration once formalized.
+\textbf{Status.} The formalization proceeds in two phases. Phase~1 (done) states the headline
+results of the paper in Lean, over definitions written in library generality: each such
+statement carries a \verb+\lean+ tag naming its Lean declaration and is marked as formalized,
+with its proof left to phase~2; the upper bounds are stated in the paper's existential form
+(Corollaries~\ref{cor:upper_exists}, \ref{cor:log_gains_exists}, \ref{cor:separation_exists}
+and~\ref{cor:norm_estimation_exists}), the explicit algorithms being part of the proofs. Each
+headline statement is also a standalone challenge file for \texttt{leanprover/comparator}
+(directory \texttt{comparator/}). Phase~2 will formalize the proofs, following this document.
 
 \textbf{Blueprint author.} Rémy Degenne. Anyone is welcome to contribute!
 

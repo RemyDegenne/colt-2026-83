@@ -226,6 +226,20 @@ of Definition~\ref{def:fixed_design_algorithm} is $(\eps,\delta)$-PAC on $\Xs$, 
 \]
 \end{theorem}
 
+\begin{corollary}[Theorem~1 of the paper, existential form]\label{cor:upper_exists}
+\lean{COLT83.exists_isFixedDesign_isPAC}\leanok
+\uses{thm:upper, def:fixed_design, def:pac, def:width}
+Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
+$T \le 600\,(\gw(\Xs)^2 + d\log(2/\delta))/\eps^2 + 1$ and a fixed-design identification
+algorithm with budget $T$ (Definition~\ref{def:fixed_design}) that is $(\eps,\delta)$-PAC on
+$\Xs$.
+\end{corollary}
+\begin{proof}
+\uses{thm:upper}
+Take $\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$ of Theorem~\ref{thm:upper}, which is a fixed-design
+algorithm with the required budget.
+\end{proof}
+
 \begin{proof}
 \uses{cor:fixed_design_from_distribution, lem:mixed_design_bounds, lem:least_squares_law, lem:difference_process_concentration, lem:regret_le_difference_process, lem:approx_argmax_selector, def:pac}
 Fix $\theta \in \R^d$ and write $L := \log(1/\delta) > 0$, $\gw := \gw(\Xs)$.

@@ -1,0 +1,12 @@
+{
+    "challenge_module": "Challenge_gw_le_card",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.gw_le_card"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}

@@ -472,15 +472,17 @@ $\kappa$ is \texttt{Kernel.deterministic} of the map $\hist_N \mapsto \indic\{\h
 \label{sec:lower_adaptive_theorem}
 
 \begin{theorem}[Lower bound for adaptive algorithms]\label{thm:lower_adaptive}
+\lean{COLT83.le_budget_of_isPAC}\leanok
 \uses{def:arm_set, def:pac}
 Let $\Xs$ be spanning, $d \ge 2$, $\eps > 0$ and $\delta \in (0, 1/16)$. Every $(\eps,\delta)$-PAC identification
 algorithm on $\Xs$ (adaptive or not, with any recommendation kernel) with budget $n$
 satisfies
 \[
-  n \;\ge\; c_{\mathrm{ad}}\,\frac{d\log(1/\delta)}{\eps^2},
-  \qquad
-  c_{\mathrm{ad}} := \frac{1}{11556 + 5760\sqrt2} \;\ge\; \frac{1}{20000} .
+  n \;\ge\; \frac{d\log(1/\delta)}{20000\,\eps^2} .
 \]
+More precisely the proof gives $n \ge c_{\mathrm{ad}}\, d\log(1/\delta)/\eps^2$ with
+$c_{\mathrm{ad}} := \frac{1}{11556 + 5760\sqrt2} \ge \frac{1}{20000}$; the constant
+$c_{\mathrm{ad}}$ is used in the rest of the blueprint.
 \end{theorem}
 
 \begin{proof}

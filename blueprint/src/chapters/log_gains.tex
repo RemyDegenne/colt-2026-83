@@ -184,6 +184,21 @@ Let $\Xs$ be a finite spanning action set, $\eps\in(0,1]$, $\delta\in(0,1)$.
 \end{enumerate}
 \end{theorem}
 
+\begin{corollary}[Theorem~6 of the paper, existential form]\label{cor:log_gains_exists}
+\lean{COLT83.exists_isPAC_of_finite}\leanok
+\uses{thm:log_gains, def:pac}
+Let $\Xs$ be a finite spanning action set with $m := \abs\Xs$, $\eps \in (0,1]$ and
+$\delta \in (0,1)$. There exist a budget
+$T \le C_{\mathrm{reg}}\, d\,(\log((m/d)_+) + \log(4/\delta))/\eps^2$, with
+$C_{\mathrm{reg}} = 1281 + 6C_{ME} = 97281$, and an identification algorithm with budget $T$ that is
+$(\eps,\delta)$-PAC on $\Xs$.
+\end{corollary}
+\begin{proof}
+\uses{thm:log_gains, lem:me_budget}
+Take the region algorithm of Theorem~\ref{thm:log_gains}(ii); its budget is bounded by (ii)
+with $C_{ME} = 16000$ from Lemma~\ref{lem:me_budget}.
+\end{proof}
+
 \begin{proof}
 \uses{lem:region_phase1, cor:median_elimination_linear, lem:composition, lem:me_budget, prop:width_partition}
 (i) Fix $\theta$, $x_\star$ and $i_*$ as in Lemma~\ref{lem:region_phase1}. Let $E_1$ be the
@@ -436,10 +451,22 @@ identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
 \]
 Then $\frac{1}{\abs\Xs}\sum_{\tilde x\in\Xs}\E_{\theta_{\tilde x}}\ip{\rec}{\theta_{\tilde x}} \le 5.36\,\eps$,
 and there exists $\tilde x \in \Xs$ with
-$\Prob_{\theta_{\tilde x}}\big(r(\rec,\theta_{\tilde x}) > \eps\big) \ge 0.4$. Consequently an
-$(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 0.4$ must have
-$T > S_d^2/(20000\,\eps^2)$.
+$\Prob_{\theta_{\tilde x}}\big(r(\rec,\theta_{\tilde x}) > \eps\big) \ge 0.4$.
 \end{theorem}
+
+\begin{corollary}[PAC lower bound for multi-task bandits]\label{cor:lower_multitask_pac}
+\lean{COLT83.multitaskSet_lt_budget_of_isPAC}\leanok
+\uses{thm:lower_multitask, def:pac}
+Let $\Xs$ be the multi-task action set (block sizes $d_j \ge 2$) and $\eps > 0$. An
+$(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 0.4$ has
+$T > S_d^2/(20000\,\eps^2)$.
+\end{corollary}
+\begin{proof}
+\uses{thm:lower_multitask}
+If $T \le S_d^2/(20000\eps^2)$, Theorem~\ref{thm:lower_multitask} gives an instance
+$\theta_{\tilde x}$ with $\Prob_{\theta_{\tilde x}}(r(\rec,\theta_{\tilde x}) > \eps) \ge 0.4 > \delta$,
+contradicting the PAC property.
+\end{proof}
 
 \begin{proof}
 \uses{lem:multitask_block_average, lem:fail_prob_from_expected_value, def:multitask_instances}
@@ -490,10 +517,20 @@ Let $\Xs = \{-1,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \
 Let $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
 $T \le d^2/(100\,\eps^2)$. Then
 $\frac{1}{2^d}\sum_{s}\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there exists
-$s \in \{-1,1\}^d$ with $\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$. Consequently an
-$(\eps,\delta)$-PAC algorithm on $\{-1,1\}^d$ with budget $T \ge 1$ and $\delta < 1/6$ has
-$T > d^2/(100\,\eps^2)$.
+$s \in \{-1,1\}^d$ with $\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$.
 \end{theorem}
+
+\begin{corollary}[PAC lower bound for the hypercube $\{-1,1\}^d$]\label{cor:lower_hypercube_pm_pac}
+\lean{COLT83.hypercubePM_lt_budget_of_isPAC}\leanok
+\uses{thm:lower_hypercube_pm, def:pac}
+Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{-1,1\}^d$ with budget $T \ge 1$ and
+$\delta < 1/6$ has $T > d^2/(100\,\eps^2)$.
+\end{corollary}
+\begin{proof}
+\uses{thm:lower_hypercube_pm}
+If $T \le d^2/(100\eps^2)$, Theorem~\ref{thm:lower_hypercube_pm} gives $s$ with
+$\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6 > \delta$, contradicting the PAC property.
+\end{proof}
 
 \begin{proof}
 \uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
@@ -532,9 +569,19 @@ Let $\Xs = \{0,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \f
 and $\sigma(s) := \indic\{s = 1\} \in \{0,1\}^d$ (coordinatewise). Let $\mathsf{Alg}$ be an
 identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying $T \le d^2/(400\,\eps^2)$. Then
 $\frac{1}{2^d}\sum_s\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there exists $s$ with
-$\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$. Consequently an $(\eps,\delta)$-PAC
-algorithm on $\{0,1\}^d$ with budget $T \ge 1$ and $\delta < 1/6$ has $T > d^2/(400\,\eps^2)$.
+$\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$.
 \end{theorem}
+
+\begin{corollary}[PAC lower bound for the hypercube $\{0,1\}^d$]\label{cor:lower_hypercube_01_pac}
+\lean{COLT83.hypercube01_lt_budget_of_isPAC}\leanok
+\uses{thm:lower_hypercube_01, def:pac}
+Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{0,1\}^d$ with budget $T \ge 1$ and
+$\delta < 1/6$ has $T > d^2/(400\,\eps^2)$.
+\end{corollary}
+\begin{proof}
+\uses{thm:lower_hypercube_01}
+As for Corollary~\ref{cor:lower_hypercube_pm_pac}, from Theorem~\ref{thm:lower_hypercube_01}.
+\end{proof}
 
 \begin{proof}
 \uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
@@ -579,6 +626,7 @@ $O((d\log(1/\delta) + d^2)/\eps^2)$ of Theorem~\ref{thm:upper} since $\gw \le d$
 \label{sec:log_gains_lower_msets}
 
 \begin{definition}[$m$-sets and their hard instances]\label{def:msets}
+\lean{COLT83.mSet}\leanok
 \uses{def:arm_set, def:regret}
 Let $1 \le m \le d-1$. The \emph{$m$-set} action set is
 $\Xs := \{x \in \{0,1\}^d : \sum_{i\le d}x_i = m\}$, with $\abs\Xs = \binom dm$; it spans
@@ -667,9 +715,18 @@ $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ sat
 \]
 Then $\frac{1}{\binom dm}\sum_{\abs S = m}\E_{\theta^{(S)}}\ip{\rec}{\theta^{(S)}} \le 7\eps$ and
 there exists an $m$-subset $S$ with $\Prob_{\theta^{(S)}}(r(\rec,\theta^{(S)}) > \eps) \ge 2/9$.
-Consequently an $(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 2/9$ has
-$T > mn/(2500\,\eps^2)$.
 \end{theorem}
+
+\begin{corollary}[PAC lower bound for $m$-sets]\label{cor:lower_msets_pac}
+\lean{COLT83.mSet_lt_budget_of_isPAC}\leanok
+\uses{thm:lower_msets, def:pac}
+Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$ and $\eps > 0$. An $(\eps,\delta)$-PAC
+algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 2/9$ has $T > mn/(2500\,\eps^2)$.
+\end{corollary}
+\begin{proof}
+\uses{thm:lower_msets}
+As for Corollary~\ref{cor:lower_multitask_pac}, from Theorem~\ref{thm:lower_msets}.
+\end{proof}
 
 \begin{proof}
 \uses{lem:msets_good_set, lem:msets_pinsker_step, lem:msets_equivalent_sampling, lem:fail_prob_from_expected_value, def:msets}
@@ -717,6 +774,7 @@ or \texttt{Nat.succ\_mul\_choose\_eq}). Lemma~\ref{lem:msets_good_set} is a coun
 \label{sec:log_gains_lower_ball}
 
 \begin{corollary}[Adaptive lower bound for the unit ball]\label{cor:lower_ball_adaptive}
+\lean{COLT83.unitBall_le_budget_of_isPAC}\leanok
 \uses{def:pac, cor:ball_pac_lower}
 Let $d \ge 2$, $\eps > 0$ and $\delta \le 1/500$. Every $(\eps,\delta)$-PAC identification
 algorithm on $\ball_d$ with budget $T$ satisfies $T \ge d^2/(1000\,\eps^2)$.

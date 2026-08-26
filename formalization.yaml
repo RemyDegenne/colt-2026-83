@@ -1,0 +1,337 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# formalization.yaml (v0.4): repo-root metadata for formalization projects.
+# See https://github.com/mathlib-initiative/formalization.yaml
+
+version: "v0.4"
+
+project:
+  name: "colt-2026-83"
+  description: >-
+    A Lean 4 / Mathlib formalization of "On the Power of Adaptivity for ε-Best Arm Identification
+    in Linear Bandits" (Maiti, Xu, Jamieson, COLT 2026): the fixed-design upper bound
+    O((d log(1/δ) + w(𝒳)²)/ε²) in terms of a Gaussian width term w(𝒳) of the action set, the
+    matching lower bounds Ω(d log(1/δ)/ε²) for every algorithm and Ω(w(𝒳)²/ε²) for non-adaptive
+    fixed designs, the properties of w(𝒳), the structured action sets on which adaptivity gives at
+    most logarithmic gains, the ℓ₂-norm estimation procedure, and the action set on which
+    adaptivity gives a polynomial improvement. The linear bandit model is built on the LML
+    (Lean Machine Learning) algorithm–environment framework; the objects (fixed-budget algorithms
+    with stopping and output rules, PAC guarantees, fixed designs, design matrices, Gaussian widths) are
+    introduced in library generality, to be contributed to LML and Mathlib. The development is
+    blueprint-driven and proceeds in two phases: phase 1 states the headline results (this file
+    lists them; their statements are `sorry`-ed challenge statements for leanprover/comparator),
+    phase 2 proves them.
+  authors:
+    - "Rémy Degenne"
+  responsible_maintainers:
+    - "Rémy Degenne"
+  license: "Apache-2.0"
+  # extra keys (tolerated by the schema), kept for convenience:
+  repository: "https://github.com/RemyDegenne/colt-2026-83"
+  blueprint: "https://remydegenne.github.io/colt-2026-83/blueprint/"
+
+# This repository is the substantive formalization, not a packaging or comparison layer.
+repository:
+  role: "substantive-development"
+
+sources:
+  - title: "On the Power of Adaptivity for ε-Best Arm Identification in Linear Bandits"
+    authors:
+      - "Arnab Maiti"
+      - "Yunbei Xu"
+      - "Kevin Jamieson"
+    id: "COLT 2026, paper 83"
+    type: "conference-paper"
+    location: "Theorems 1–3, 5–8, Proposition 4 and the lower bounds of Table 1; see status.scope"
+    relationship: "formalizes"
+    license: ""
+    author_endorsement: "not-contacted"
+    note: >-
+      The LaTeX source of the paper is vendored in this repository under `source/`. The
+      formalization is driven by a blueprint (`blueprint/src/`, written by Claude with the
+      formalizer's review) that decomposes the paper's proofs into small lemmas and fills the
+      steps the paper leaves to references; the blueprint is a derived artifact of this project,
+      not an independent source. The formalizer is not an author of the paper.
+
+related_formalizations: []   # no earlier or parallel formalization of this paper is known
+
+# Pure exploration / best-arm identification in linear bandits, minimax sample complexity,
+# Gaussian widths, optimal experimental design.
+classification:
+  arxiv: ["cs.LG", "stat.ML", "math.ST"]
+  msc2020:
+    - "62L05"   # sequential statistical design
+    - "62K05"   # optimal statistical designs
+    - "68T05"   # learning and adaptive systems
+    - "60G15"   # Gaussian processes
+
+status:
+  scope: >-
+    Phase 1 (statements). The headline results of the paper are stated in Lean, each as a
+    `sorry`-ed theorem, over definitions written in library generality:
+
+    Theorem 1 (`exists_isFixedDesign_isPAC`, blueprint `cor:upper_exists`/`thm:upper`): existence
+    of a fixed-design (ε,δ)-PAC algorithm with budget ≤ 600 (w(𝒳)² + d log(2/δ))/ε² + 1.
+    Theorem 2 (`le_budget_of_isPAC`, `thm:lower_adaptive`): every (ε,δ)-PAC algorithm, adaptive or
+    not, has budget ≥ d log(1/δ)/(20000 ε²) when δ < 1/16.
+    Theorem 3 (`le_budget_of_isFixedDesign_of_isPAC`, `thm:lower_nonadaptive`): every fixed-design
+    (ε,δ)-PAC algorithm has budget ≥ w(𝒳)²/(70 ε²) when δ ≤ 1/10.
+    Proposition 4 (`gw_le_card`, `gw_le_sqrt_log_ncard`, `sqrt_log_le_gw`): w(𝒳) ≤ d,
+    w(𝒳) ≤ √(2 d log |𝒳|) for finite 𝒳, and w(𝒳) ≥ (1/8) √(d log ⌊d/2⌋) for d ≥ 4.
+    Theorem 5 (`width_separation`, `thm:width_separation`): a finite multi-task set of intrinsic
+    dimension r ∈ [d/2, d] with intrinsic width ≤ 3 √(d log d) while √(d log |𝒳|) ≥ 0.49 d^{3/4}.
+    Theorem 6 (`exists_isPAC_of_finite`, `cor:log_gains_exists`/`thm:log_gains`): on every finite
+    spanning set there is an adaptive (ε,δ)-PAC algorithm with budget
+    ≤ 97281 d (log((|𝒳|/d)₊) + log(4/δ))/ε².
+    Table 1 adaptive lower bounds (`multitaskSet_lt_budget_of_isPAC`,
+    `hypercubePM_lt_budget_of_isPAC`, `hypercube01_lt_budget_of_isPAC`, `mSet_lt_budget_of_isPAC`,
+    `unitBall_le_budget_of_isPAC`): Ω((∑ⱼ √dⱼ)²/ε²), Ω(d²/ε²) (two hypercubes and the unit ball)
+    and Ω(md/ε²) for m-sets, for every (ε,δ)-PAC algorithm with δ below an absolute constant.
+    Theorem 7 (`blockBallSet_le_budget_of_isFixedDesign_of_isPAC`, `blockBallSet_le_budget_of_isPAC`,
+    `exists_isPAC_blockBallSet`; `thm:separation_lower_nonadaptive`, `cor:separation_exists`):
+    on the block-ball set of ℝ^{kd}, non-adaptive algorithms need
+    Ω(kd log(1/δ)/ε² + kd²/ε²) samples while an adaptive one uses O((kd log(8k/δ) + d²)/ε²).
+    Theorem 8 (`exists_isAccurateNormEst`, `cor:norm_estimation_exists`/`thm:norm_estimation`):
+    an (ε,δ)-accurate ℓ₂-norm estimation algorithm on the unit ball with budget
+    ≤ 10⁵ d log(4/δ)/ε².
+
+    The upper bounds (Theorems 1, 6, 7, 8) are stated in the paper's existential form ("there
+    exists an algorithm with budget ≤ …"); the blueprint additionally states them for the explicit
+    algorithms of the paper, whose definitions (rounding, G-optimal designs, Median Elimination,
+    the norm-estimation meta-algorithm) belong to phase 2 together with the proofs.
+
+    Not yet formalized (phase 2): all proofs, the explicit algorithms, and the prerequisites of
+    Part II of the blueprint (Gaussian concentration, sub-exponential variables, divergence
+    decomposition, Kiefer–Wolfowitz, rounding, Median Elimination, Gaussian posteriors).
+  # Every headline statement below is currently `sorry`: phase 1 states, phase 2 proves.
+  sorry_count: 17
+  sorry_in_definitions: 0
+  axioms: []               # to be filled when the proofs are in (phase 2)
+  size:
+    lean_lines: 841        # COLT83/ and COLT83.lean, phase 1
+    theorems_and_lemmas: 17
+    definitions: 30
+    blueprint_tagged_declarations: 36  # blueprint/lean_decls, autogenerated
+  main_results:
+    - declaration: "COLT83.exists_isFixedDesign_isPAC"
+      file: "COLT83/MXJ2026/Upper.lean"
+      source_statement: "Theorem 1 — fixed-design upper bound O((d log(1/δ) + w(𝒳)²)/ε²)"
+      note: >-
+        Existential form of the paper's statement, with the explicit constant 600 of the blueprint
+        (the paper's 360 is replaced because the rounding is done by a barrier argument); the
+        blueprint's `thm:upper` is the same guarantee for an explicit algorithm.
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/exists_isFixedDesign_isPAC.json"
+      literature_dependencies: []
+    - declaration: "COLT83.le_budget_of_isPAC"
+      file: "COLT83/MXJ2026/LowerAdaptive.lean"
+      source_statement: "Theorem 2 — lower bound Ω(d log(1/δ)/ε²) for every (adaptive) algorithm"
+      note: "Explicit constant 1/20000 (the blueprint proof gives 1/(11556 + 5760√2)); δ < 1/16, d ≥ 2."
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/le_budget_of_isPAC.json"
+      literature_dependencies: []
+    - declaration: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
+      file: "COLT83/MXJ2026/LowerNonadaptive.lean"
+      source_statement: "Theorem 3 — lower bound Ω(w(𝒳)²/ε²) for non-adaptive fixed designs"
+      note: >-
+        Explicit constant 1/70, for δ ≤ 1/10 and budget T ≥ 1. Non-adaptive means a deterministic
+        fixed design with an arbitrary (possibly randomized) recommendation kernel.
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/le_budget_of_isFixedDesign_of_isPAC.json"
+      literature_dependencies: []
+    - declaration: "COLT83.gw_le_card"
+      file: "COLT83/MXJ2026/WidthBounds.lean"
+      source_statement: "Proposition 4 — w(𝒳) ≤ O(d)"
+      note: "Companions in the same file: `gw_le_sqrt_log_ncard` (w(𝒳) ≤ √(2 d log |𝒳|)) and `sqrt_log_le_gw` (w(𝒳) ≥ (1/8)√(d log ⌊d/2⌋))."
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/gw_le_card.json"
+      literature_dependencies: []
+    - declaration: "COLT83.width_separation"
+      file: "COLT83/MXJ2026/WidthBounds.lean"
+      source_statement: "Theorem 5 — a finite set with w(𝒳) ≤ O(√(d log d)) and √(d log |𝒳|) ≥ Ω(d^{3/4})"
+      note: >-
+        The set is a multi-task set that does not span ℝ^d; the statement is about its intrinsic
+        width (width inside its span, of dimension r ∈ [d/2, d]), with explicit constants.
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/width_separation.json"
+      literature_dependencies: []
+    - declaration: "COLT83.exists_isPAC_of_finite"
+      file: "COLT83/MXJ2026/LogGains.lean"
+      source_statement: "Theorem 6 — adaptive algorithm with budget O(d log((|𝒳|/d)₊/δ)/ε²) on finite sets"
+      note: "Existential form; explicit constant 97281 = 1281 + 6·16000 (Median Elimination constant)."
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/exists_isPAC_of_finite.json"
+      literature_dependencies: []
+    - declaration: "COLT83.multitaskSet_lt_budget_of_isPAC"
+      file: "COLT83/MXJ2026/LogGains.lean"
+      source_statement: "Table 1 — adaptive lower bound Ω((∑ⱼ √dⱼ)²/ε²) for multi-task bandits"
+      note: >-
+        Companions in the same file: `hypercubePM_lt_budget_of_isPAC`,
+        `hypercube01_lt_budget_of_isPAC` (Ω(d²/ε²) on the hypercubes), `mSet_lt_budget_of_isPAC`
+        (Ω(m(d-m+1)/ε²) on m-sets) and `unitBall_le_budget_of_isPAC` (Ω(d²/ε²) on the unit ball).
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/multitaskSet_lt_budget_of_isPAC.json"
+      literature_dependencies: []
+    - declaration: "COLT83.exists_isPAC_blockBallSet"
+      file: "COLT83/MXJ2026/Separation.lean"
+      source_statement: "Theorem 7 — polynomial separation: adaptive upper bound O((kd log(8k/δ) + d²)/ε²)"
+      note: >-
+        With `blockBallSet_le_budget_of_isFixedDesign_of_isPAC` (non-adaptive lower bound
+        Ω(kd²/ε²)) and `blockBallSet_le_budget_of_isPAC` (Ω(kd log(1/δ)/ε²)) in the same file.
+        Non-adaptive means a deterministic fixed design with an arbitrary recommendation kernel.
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/exists_isPAC_blockBallSet.json"
+      literature_dependencies: []
+    - declaration: "COLT83.exists_isAccurateNormEst"
+      file: "COLT83/MXJ2026/NormEstimation.lean"
+      source_statement: "Theorem 8 — ℓ₂-norm estimation with O(d log(1/δ)/ε²) samples"
+      note: "Existential form; explicit constant 10⁵ and log(4/δ)."
+      sorry_count: 1
+      axioms: []
+      comparator_config: "comparator/exists_isAccurateNormEst.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["claude-fable-5"]
+      framework: "Claude Code"
+      tool_setup: >-
+        Claude Code in a local checkout, driving `lake build` and the blueprint toolchain
+        (`leanblueprint pdf/web/checkdecls`) directly. Project-level memory files record
+        conventions across sessions.
+      cost:
+        wall_time: "started 2026-08-25"
+        spend_usd: "subscription-based usage"
+        hardware: "API-only (developer laptop)"
+      prompting_notes: >-
+        Blueprint-driven. The blueprint (a detailed proof document filling the gaps the paper
+        leaves to references, with objects in library generality) was written first by the agent
+        from an outline, reviewed, and then the formalization proceeds in two phases: statements of
+        the headline results (phase 1), then proofs (phase 2), keeping the `\lean{}`/`\leanok` tags
+        of the blueprint in sync with the Lean source.
+  spend_usd: "subscription-based usage"
+  notes: >-
+    All Lean and blueprint LaTeX in this repository is produced with Claude Code under human
+    direction and review.
+
+fidelity:
+  divergences: >-
+    Statement-level choices (phase 1):
+
+    1. Model. The action set is a nonempty compact subset 𝒳 of a Euclidean space
+    `EuclideanSpace ℝ ι` (d = card ι); the paper's standing spanning assumption
+    `span 𝒳 = ℝ^d` is an explicit hypothesis of the results that need it, so that the
+    non-spanning structured sets (multi-task sets) are covered. An identification algorithm
+    (`Learning.IdentAlg`) is an LML `Learning.Algorithm 𝒳 ℝ` (a sequence of policy kernels) with
+    a measurable *stopping rule* on finite histories and an *output kernel* from histories to
+    recommendations; the number of rounds played is the hitting time (`hittingAfter`) of the
+    stopping rule by the process of histories. A run of the algorithm on a probability space is
+    an LML algorithm-environment sequence (`Learning.IsAlgEnvSeq`) together with an output whose
+    conditional law given the history at the stopping time is the output rule
+    (`IdentAlg.IsRun`); PAC quantifies over all runs on all probability spaces. The paper's
+    algorithms have a fixed budget T (stopping rule "stop after exactly T rounds",
+    `IdentAlg.IsFixedBudget`); the definition also covers fixed-confidence algorithms. Time is
+    0-indexed.
+
+    2. Non-adaptive algorithms are deterministic fixed designs with an arbitrary, possibly
+    randomized, recommendation kernel (the class of the paper's Theorem 3); the paper's Theorem 7
+    says "possibly randomized non-adaptive", and its lower bound is stated here for this class.
+
+    3. Gaussian width. The width of K for a positive definite matrix A, E[sup_{x∈K} ⟪x, A^{-1/2} g⟫],
+    is defined as the Gaussian width of K for the centered Gaussian measure with covariance A⁻¹
+    (the law of A^{-1/2} g), avoiding matrix square roots in the definition. The width term w(𝒳)
+    is the infimum over positive definite design matrices, as in the paper.
+
+    4. Constants. All O(·)/Ω(·) of the paper are replaced by explicit constants, which differ from
+    the paper's where the blueprint uses a different route (Theorem 1: 600 instead of 360; the
+    Table 1 bound for {0,1}^d has constant 1/400).
+
+    5. The upper bounds (Theorems 1, 6, 7, 8) are stated in the paper's existential form. The
+    blueprint proves them for explicit algorithms (Definitions `def:fixed_design_algorithm`,
+    `def:region_algorithm`, `def:block_algorithm`, `def:meta_algorithm`), from which the
+    existential statements follow.
+
+review:
+  status: "in-progress"
+  reviewers:
+    - "Rémy Degenne"
+  notes: >-
+    Phase 1: the statements were written against the blueprint and the paper; no proof exists yet.
+    Each headline statement is to be verified with leanprover/comparator once proved: the
+    `comparator/` challenge files restate the theorems with their definitional dependencies
+    inlined over a Mathlib-only import closure (configs listed as `comparator_config` above).
+
+alignment:
+  namespace: "COLT83"
+  note: >-
+    The full source-to-Lean map is the blueprint: each theorem/lemma/definition environment in
+    `blueprint/src/chapters/*.tex` carries a `\lean{}` tag naming the corresponding declaration.
+    Library-level material lives under `COLT83/LeanMachineLearning/` (namespace `Learning`) and
+    `COLT83/Mathlib/` (Mathlib namespaces); the paper's objects and results under
+    `COLT83/MXJ2026/`. Only the headline statements are repeated here.
+  statements:
+    - source: "thm:upper / cor:upper_exists — Theorem 1, fixed-design upper bound"
+      lean: "COLT83.exists_isFixedDesign_isPAC"
+      module: "COLT83.MXJ2026.Upper"
+      status: "stated"
+      note: "Existential form; the explicit algorithm of `thm:upper` is phase 2."
+    - source: "thm:lower_adaptive — Theorem 2, adaptive lower bound"
+      lean: "COLT83.le_budget_of_isPAC"
+      module: "COLT83.MXJ2026.LowerAdaptive"
+      status: "stated"
+      note: ""
+    - source: "thm:lower_nonadaptive — Theorem 3, non-adaptive lower bound"
+      lean: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
+      module: "COLT83.MXJ2026.LowerNonadaptive"
+      status: "stated"
+      note: ""
+    - source: "prop:width_le_d, prop:width_finite, prop:width_lower_sqrt_dlogd — Proposition 4"
+      lean: "COLT83.gw_le_card, COLT83.gw_le_sqrt_log_ncard, COLT83.sqrt_log_le_gw"
+      module: "COLT83.MXJ2026.WidthBounds"
+      status: "stated"
+      note: ""
+    - source: "thm:width_separation — Theorem 5"
+      lean: "COLT83.width_separation"
+      module: "COLT83.MXJ2026.WidthBounds"
+      status: "stated"
+      note: ""
+    - source: "thm:log_gains / cor:log_gains_exists — Theorem 6"
+      lean: "COLT83.exists_isPAC_of_finite"
+      module: "COLT83.MXJ2026.LogGains"
+      status: "stated"
+      note: "Existential form; the region algorithm of `thm:log_gains` is phase 2."
+    - source: "thm:lower_multitask, thm:lower_hypercube_pm, thm:lower_hypercube_01, thm:lower_msets, cor:lower_ball_adaptive — Table 1 lower bounds"
+      lean: "COLT83.multitaskSet_lt_budget_of_isPAC, COLT83.hypercubePM_lt_budget_of_isPAC, COLT83.hypercube01_lt_budget_of_isPAC, COLT83.mSet_lt_budget_of_isPAC, COLT83.unitBall_le_budget_of_isPAC"
+      module: "COLT83.MXJ2026.LogGains"
+      status: "stated"
+      note: ""
+    - source: "thm:separation_lower_nonadaptive, thm:separation / cor:separation_exists — Theorem 7"
+      lean: "COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, COLT83.blockBallSet_le_budget_of_isPAC, COLT83.exists_isPAC_blockBallSet"
+      module: "COLT83.MXJ2026.Separation"
+      status: "stated"
+      note: "Existential form for the upper bound; the block algorithm of `thm:separation` is phase 2."
+    - source: "thm:norm_estimation / cor:norm_estimation_exists — Theorem 8"
+      lean: "COLT83.exists_isAccurateNormEst"
+      module: "COLT83.MXJ2026.NormEstimation"
+      status: "stated"
+      note: "Existential form; the meta-algorithm of `thm:norm_estimation` is phase 2."
+    - source: "Part II — prerequisites (Gaussian concentration, sub-exponential variables, divergence decomposition, Sudakov–Fernique, Median Elimination, Gaussian posteriors)"
+      lean: ""
+      module: ""
+      status: "not-formalized"
+      note: "Phase 2."
+
+acknowledgements: >-
+  Built on Mathlib. Depends on LeanMachineLearning/LML for the algorithm–environment interaction
+  model (`Learning.Algorithm`, `Learning.Environment`, `Learning.stationaryEnv`,
+  `Learning.detAlgorithm`, `Learning.trajMeasure`), on LeanSpec for specification statements, and
+  on Patrick Massot's leanblueprint/checkdecls for the blueprint infrastructure. The material under
+  `COLT83/LeanMachineLearning/` and `COLT83/Mathlib/` is written to be contributed upstream.

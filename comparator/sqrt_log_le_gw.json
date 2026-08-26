@@ -1,0 +1,12 @@
+{
+    "challenge_module": "Challenge_sqrt_log_le_gw",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.sqrt_log_le_gw"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}

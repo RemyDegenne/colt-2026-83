@@ -1,0 +1,13 @@
+{
+    "challenge_module": "Challenge_hypercube01_lt_budget_of_isPAC",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.hypercube01_lt_budget_of_isPAC",
+        "measurable_sigma_of_measurable_comp_mk"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}

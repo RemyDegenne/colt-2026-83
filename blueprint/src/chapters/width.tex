@@ -35,6 +35,7 @@ Helmert matrices with every linear-algebra step isolated.
 \label{sec:width_upper}
 
 \begin{proposition}[The width is at most $d$]\label{prop:width_le_d}
+\lean{COLT83.gw_le_card}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs \subset \R^d$ be a spanning action set. Then $\gw(\Xs) \le d$. More precisely, the
 $G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since
@@ -54,6 +55,7 @@ $S = I_d$) yields $\gwidth{\Xs}{A_G} \le \sqrt d \cdot \sqrt d = d$.
 \end{proof}
 
 \begin{proposition}[Width of a finite set]\label{prop:width_finite}
+\lean{COLT83.gw_le_sqrt_log_ncard}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs$ be a finite spanning action set with $\abs{\Xs} = m$. Then
 $\gw(\Xs) \le \sqrt{2 d \log m}$; more precisely $\gwidth{\Xs}{A_G} \le \sqrt{2d\log m}$
@@ -187,16 +189,25 @@ required pairwise separation.
 \end{proof}
 
 \begin{proposition}[Lower bound $\sqrt{d\log d}$; secondary]\label{prop:width_lower_sqrt_dlogd}
+\lean{COLT83.sqrt_log_le_gw}\leanok
 \uses{def:width}
 Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 4$. Then
 \[
-  \gw(\Xs) \;\ge\; \frac18\sqrt{d\,\log\lfloor d/2\rfloor},
-\]
-and consequently, for $d \ge 6$,
-\[
-  \gw(\Xs) \;\ge\; \frac{1}{8\sqrt 2}\sqrt{d\log d} .
+  \gw(\Xs) \;\ge\; \frac18\sqrt{d\,\log\lfloor d/2\rfloor} .
 \]
 \end{proposition}
+
+\begin{corollary}[Lower bound $\sqrt{d\log d}$]\label{cor:width_lower_sqrt_dlogd}
+\uses{prop:width_lower_sqrt_dlogd}
+Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 6$. Then
+$\gw(\Xs) \ge \frac{1}{8\sqrt 2}\sqrt{d\log d}$.
+\end{corollary}
+\begin{proof}
+\uses{prop:width_lower_sqrt_dlogd}
+For $d \ge 6$, $\lfloor d/2\rfloor \ge (d-1)/2 \ge \sqrt d$ (as $(d-1)^2 \ge 4d$ for $d \ge 6$), so
+$\log\lfloor d/2\rfloor \ge \frac12\log d$ and Proposition~\ref{prop:width_lower_sqrt_dlogd} gives
+the claim.
+\end{proof}
 
 \begin{proof}
 \uses{lem:whitened_separated_points, thm:sudakov_fernique, lem:gauss_max_lower, lem:width_matrix_wd, lem:gauss_linear_image, lem:exists_posdef_design}
@@ -333,6 +344,7 @@ of the right dimension; to avoid overloading the notation $\gw(\Xs)$, this secon
 called the \emph{intrinsic width} and written $\gw_{\mathrm{int}}(\Xs)$.
 
 \begin{definition}[Intrinsic width of a set spanning a subspace]\label{def:width_subspace}
+\lean{COLT83.intrinsicGw}\leanok
 \uses{def:width, lem:width_iso}
 Let $\Xs \subset \R^d$ be an action set (nonempty compact, not necessarily spanning) and let
 $V := \Span(\Xs)$ have dimension $r \ge 1$. Let
@@ -366,6 +378,7 @@ spanning hypothesis as an argument), related by the identity
 $\gw_{\mathrm{int}}(\Xs) = \gw(\Xs)$ for spanning $\Xs$.
 
 \begin{definition}[Multi-task bandit action set]\label{def:multitask_set}
+\lean{COLT83.multitaskSet}\leanok
 \uses{def:arm_set, def:width_subspace}
 Let $m \ge 1$ and $d_1,\dots,d_m \ge 2$ be integers, $d := \sum_{j\le m} d_j$,
 $d_{1:j} := \sum_{s\le j}d_s$ (with $d_{1:0} = 0$), and let
@@ -578,6 +591,7 @@ $\sqrt{d_j}\,\E\max_k(H_{d_j}g^{(j)})_k \le \sqrt{d_j}\sqrt{2\log d_j}$.
 \end{proof}
 
 \begin{theorem}[A finite set with a small width; Theorem~5 of the paper]\label{thm:width_separation}
+\lean{COLT83.width_separation}\leanok
 \uses{def:multitask_set, def:width_subspace, prop:width_le_d, prop:width_finite}
 Let $m \ge 2$ and consider the multi-task action set $\Xs$ with $m-1$ blocks of size
 $d_j = 2$ ($j < m$) and one block of size $d_m = m^2$, so that $d = m^2 + 2m - 2$ and

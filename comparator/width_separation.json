@@ -1,0 +1,12 @@
+{
+    "challenge_module": "Challenge_width_separation",
+    "solution_module": "Solution",
+    "theorem_names": [
+        "COLT83.width_separation"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+    ]
+}
