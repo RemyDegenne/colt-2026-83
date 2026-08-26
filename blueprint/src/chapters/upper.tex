@@ -24,6 +24,7 @@ the width machinery and is used in Chapter~\ref{chap:separation}.
 \label{sec:upper_design}
 
 \begin{definition}[Mixed design]\label{def:mixed_design}
+\lean{COLT83.mixDesign, COLT83.designMatrix_mixDesign, COLT83.IsDesign.mixDesign, COLT83.posDef_designMatrix_mixDesign}\leanok
 \uses{def:arm_set, def:design_matrix, lem:width_attained, thm:kiefer_wolfowitz}
 Let $\Xs$ be spanning. Let $\lambda_1 \in \simplex_{\Xs}$ with $A_1 := A(\lambda_1) \in \PD$ and
 $\gwidth{\Xs}{A_1} = \gw(\Xs)$ (Lemma~\ref{lem:width_attained}), and let $\lambda_G \in \simplex_{\Xs}$
@@ -40,12 +41,14 @@ corresponding support).
 \end{definition}
 
 \begin{lemma}[Bounds for the mixed design]\label{lem:mixed_design_bounds}
+\lean{COLT83.smul_designMatrix_le_designMatrix_mixDesign_left, COLT83.smul_designMatrix_le_designMatrix_mixDesign_right, COLT83.IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le, COLT83.gwMat_designMatrix_mixDesign_le}\leanok
 \uses{def:mixed_design, def:width_matrix, def:g_value}
 In the setting of Definition~\ref{def:mixed_design} ($\Xs$ spanning), for every $x \in \Xs$,
 $\norm{x}_{A_0^{-1}}^2 \le 2d$, and $\gwidth{\Xs}{A_0} \le \sqrt2\,\gw(\Xs)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:loewner_scalar, cor:g_optimal_norm_bound, lem:width_mono, lem:width_homog, lem:loewner_quadratic}
 Since $\frac12A_1 \in \PSD$, $\frac12A_G \preceq A_0$ (Lemma~\ref{lem:loewner_quadratic}), and
 Lemma~\ref{lem:loewner_scalar} with $c = 1/2$ gives $\norm{x}_{A_0^{-1}}^2 \le 2\norm{x}_{A_G^{-1}}^2
@@ -56,10 +59,17 @@ $c^{-1/2} = \sqrt2$),
 $\gwidth{\Xs}{A_0} \le \gwidth{\Xs}{\tfrac12A_1} = \sqrt2\,\gwidth{\Xs}{A_1} = \sqrt2\,\gw(\Xs)$.
 \end{proof}
 
+\textbf{Lean remark.} The mixture \texttt{COLT83.mixDesign w₁ w₂} and the two bounds are
+formalized for an arbitrary design distribution $\lambda_1$ with $A(\lambda_1) \succ 0$ (the
+width bound reads $\gwidth{\Xs}{A_0} \le \sqrt2\,\gwidth{\Xs}{A(\lambda_1)}$); the choice of a
+width-minimizing $\lambda_1$ (Lemma~\ref{lem:width_attained}) is made only when the algorithm
+is assembled.
+
 \section{Least squares and the difference process}
 \label{sec:upper_ls}
 
 \begin{definition}[Least-squares estimator]\label{def:least_squares}
+\lean{COLT83.leastSquares, COLT83.designRows, COLT83.lsMatrix, COLT83.leastSquares_eq_toEuclideanLin}\leanok
 \uses{def:fixed_design}
 For a fixed design $x_0,\dots,x_{T-1}$ with $\Sigma_T = X^\top X \in \PD$ and observations
 $y \in \R^T$, the \emph{least-squares estimator} is
@@ -70,6 +80,7 @@ a linear (hence measurable) function of $y$.
 \end{definition}
 
 \begin{lemma}[Law of the least-squares error]\label{lem:least_squares_law}
+\lean{COLT83.leastSquares_inner_add, COLT83.lsMatrix_mul_transpose, COLT83.hasLaw_leastSquares_of_fixedDesign}\leanok
 \uses{def:least_squares, lem:fixed_design_law}
 Under the fixed design run against $\nu_\theta$,
 $\hat\theta - \theta = \Sigma_T^{-1}X^\top\eta \sim \Normal(0,\Sigma_T^{-1})$, where
@@ -78,6 +89,7 @@ $\hat\theta - \theta \eqd \Sigma_T^{-1/2}g$ with $g \sim \Normal(0,I_d)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:fixed_design_law, lem:gauss_linear_image, lem:gauss_law_of_cov, lem:sqrt_props}
 By Lemma~\ref{lem:fixed_design_law}, $y = X\theta + \eta$ with $\eta \sim \Normal(0,I_T)$. Then
 $\hat\theta = \Sigma_T^{-1}X^\top X\theta + \Sigma_T^{-1}X^\top\eta = \theta + \Sigma_T^{-1}X^\top\eta$.
@@ -88,7 +100,17 @@ Lemma~\ref{lem:gauss_law_of_cov} together with $(\Sigma_T^{-1/2})^2 = \Sigma_T^{
 (Lemma~\ref{lem:sqrt_props}(ii)).
 \end{proof}
 
+\textbf{Lean remark.} The formalized statement is
+$\hat\theta \sim \Normal(\theta, \Sigma_T^{-1})$ (\texttt{COLT83.hasLaw\_leastSquares\_of\_fixedDesign},
+for the run of the fixed design in the environment $\nu_\theta$ and any $T$ with
+$\Sigma_T \succ 0$), obtained from $\hat\theta = \theta + \Sigma_T^{-1}X^\top\eta$
+(\texttt{leastSquares\_inner\_add}), the standard Gaussian law of $\eta$
+(Lemma~\ref{lem:fixed_design_law}) and \texttt{multivariateGaussian\_zero\_map\_toEuclideanLin}
+with $M M^\top = \Sigma_T^{-1}$ (\texttt{lsMatrix\_mul\_transpose}); the representation
+$\Sigma_T^{-1/2}g$ is not needed.
+
 \begin{lemma}[Measurable approximate argmax selector]\label{lem:approx_argmax_selector}
+\lean{exists_measurable_of_forall_exists_mem, exists_measurable_approx_argmax, exists_measurable_argmax_of_finite}\leanok
 \uses{def:arm_set, lem:sup_countable_dense}
 Let $\Xs \subset \R^d$ be compact and nonempty and let $\gamma > 0$. There is a Borel measurable
 map $s_\gamma : \R^d \to \Xs$ such that for every $v \in \R^d$,
@@ -100,6 +122,7 @@ If $\Xs$ is finite, there is a measurable $s_0 : \R^d \to \Xs$ with $\ip{s_0(v)}
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:sup_countable_dense}
 Let $M(v) := \max_{x\in\Xs}\ip{x}{v}$; it is continuous in $v$ (Lipschitz with constant
 $R := \sup_{x\in\Xs}\norm{x}$, Lemma~\ref{lem:sup_countable_dense}). Let $(q_n)_{n\in\N}$ be a
@@ -131,6 +154,7 @@ measurable map $y \mapsto s_\gamma(\hat\theta(y))$. The paper uses an exact argm
 $\gamma = \eps/4$ and absorb the loss in the constant (Theorem~\ref{thm:upper}).
 
 \begin{lemma}[Regret is controlled by the difference process]\label{lem:regret_le_difference_process}
+\lean{COLT83.simpleRegret_le_supportFn_add_supportFn}\leanok
 \uses{def:regret}
 Let $\theta, \hat\theta \in \R^d$, $\gamma \ge 0$, and $\rec \in \Xs$ with
 $\ip{\rec}{\hat\theta} \ge \max_{x\in\Xs}\ip{x}{\hat\theta} - \gamma$. Then
@@ -142,6 +166,7 @@ $\ip{\rec}{\hat\theta} \ge \max_{x\in\Xs}\ip{x}{\hat\theta} - \gamma$. Then
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:regret}
 Let $x^\star \in \argmax_{x\in\Xs}\ip{x}{\theta}$. Then
 \[
@@ -151,6 +176,12 @@ Let $x^\star \in \argmax_{x\in\Xs}\ip{x}{\theta}$. Then
 The second bracket is at most $\max_x\ip{x}{\hat\theta} - \ip{\rec}{\hat\theta} \le \gamma$, and the
 first term equals $\ip{\rec - x^\star}{\hat\theta - \theta} \le D$ (take $x = \rec$, $x' = x^\star$).
 \end{proof}
+
+\textbf{Lean remark.} The formalized bound is
+$r(\rec,\theta) \le \sup_{x\in\Xs}\ip{x}{\theta - \hat\theta} + \sup_{x\in\Xs}\ip{x}{\hat\theta-\theta} + \gamma$
+(the two support functions add up to $D$), for a bounded set $\Xs$ and without choosing a
+maximizer $x^\star$: it follows from the subadditivity of the support function
+$\sup_x\ip{x}{\theta} \le \sup_x\ip{x}{\theta-\hat\theta} + \sup_x\ip{x}{\hat\theta}$.
 
 \begin{lemma}[Concentration of the difference process]\label{lem:difference_process_concentration}
 \uses{def:width_matrix, lem:width_symm, cor:sup_bound_symmetric}

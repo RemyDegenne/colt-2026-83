@@ -55,10 +55,12 @@ differentiability; the class $C^1$ is \texttt{ContDiff ℝ 1 f}.
 \label{sec:pre_concentration_prelim}
 
 \begin{definition}[The Gaussian concentration constant]\label{def:pc_gaussian_constant}
+\lean{ProbabilityTheory.gaussianConcentrationConst}\leanok
 $\cG := \pi^2/4$ ($\approx 2.4674$).
 \end{definition}
 
 \begin{lemma}[MGF of a linear form of a standard Gaussian vector]\label{lem:gauss_mgf_inner}
+\lean{ProbabilityTheory.stdGaussian_map_toDual, ProbabilityTheory.integrable_exp_mul_inner_stdGaussian, ProbabilityTheory.integral_exp_mul_inner_stdGaussian, ProbabilityTheory.integral_exp_inner_stdGaussian}\leanok
 \uses{def:pg_gaussian_vector}
 Let $g' \sim \Normal(0, I_d)$ and $a \in \R^d$. Then $e^{\ip{a}{g'}}$ is integrable and
 $\E e^{\ip{a}{g'}} = e^{\norm{a}^2/2}$. More generally, for $s \in \R$,
@@ -66,6 +68,7 @@ $\E e^{s\ip{a}{g'}} = e^{s^2\norm{a}^2/2}$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_linear_image, lem:gauss_1d_moments}
 $\ip{a}{g'} \sim \Normal(0,\norm{a}^2)$ by Lemma~\ref{lem:gauss_linear_image}, and
 Lemma~\ref{lem:gauss_1d_moments} (Mathlib \texttt{mgf\_gaussianReal} at the point $s$, with
@@ -75,6 +78,7 @@ $\E\prod_ie^{sa_ig'_i} = \prod_ie^{s^2a_i^2/2}$ (\texttt{iIndepFun.mgf\_sum}).
 \end{proof}
 
 \begin{lemma}[Exponential moments of Gaussian norms]\label{lem:pc_exp_norm_integrable}
+\lean{ProbabilityTheory.IsGaussian.integrable_exp_mul_norm, ProbabilityTheory.IsGaussian.integrable_exp_of_abs_le_add_mul_norm, ProbabilityTheory.IsGaussian.integrable_of_abs_le_add_mul_norm}\leanok
 \uses{def:pg_gaussian_vector}
 Let $G \sim \Normal(\mu, S)$ in $\R^n$ and $c \ge 0$. Then $e^{c\norm{G}}$ is integrable.
 Consequently, if $F : \R^n \to \R$ is measurable with $\abs{F(x)} \le A + B\norm{x}$ for
@@ -83,6 +87,7 @@ $\lambda \in \R$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_1d_moments, lem:gauss_pi}
 By Fernique's theorem (Mathlib \texttt{IsGaussian.exists\_integrable\_exp\_sq}) there is
 $C > 0$ with $e^{C\norm{x}^2}$ integrable under the law of $G$; since
@@ -97,6 +102,7 @@ part with $c = \abs{\lambda}B$.
 \end{proof}
 
 \begin{lemma}[Bounded gradient implies Lipschitz and linear growth]\label{lem:pc_lipschitz_of_grad}
+\lean{ProbabilityTheory.lipschitzWith_of_norm_gradient_le, ProbabilityTheory.abs_le_of_norm_gradient_le, ProbabilityTheory.abs_inner_gradient_le, ProbabilityTheory.ContDiff.continuous_gradient, ProbabilityTheory.IsGaussian.integrable_exp_of_norm_gradient_le, ProbabilityTheory.IsGaussian.integrable_of_norm_gradient_le}\leanok
 Let $f : \R^d \to \R$ be differentiable with $\norm{\nabla f(x)} \le L$ for every $x$, where
 $L \ge 0$. Then $\abs{f(x) - f(y)} \le L\norm{x-y}$ for all $x,y$, $\abs{f(x)} \le \abs{f(0)} +
 L\norm{x}$, and $\abs{\ip{\nabla f(x)}{v}} \le L\norm{v}$ for all $x, v$. In particular, for
@@ -105,6 +111,7 @@ $\lambda\in\R$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pc_exp_norm_integrable}
 The Lipschitz bound is the mean value inequality (Mathlib
 \texttt{lipschitzWith\_of\_nnnorm\_fderiv\_le}, the operator norm of $f'(x)$ being
@@ -114,6 +121,7 @@ $A = \abs{f(0)}$, $B = L$.
 \end{proof}
 
 \begin{lemma}[The log-sum-exp smoothing of a finite maximum]\label{lem:logsumexp_props}
+\lean{softmax, logSumExp, sum_exp_inner_pos, softmax_nonneg, sum_softmax, contDiff_logSumExp, hasGradientAt_logSumExp, norm_gradient_logSumExp_le, ciSup_inner_le_logSumExp, logSumExp_le_ciSup_inner_add}\leanok
 Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $\beta > 0$ and
 \[
   f_\beta(v) := \frac1\beta\log\sum_{i\le m}e^{\beta\ip{x_i}{v}}, \qquad v \in \R^d .
@@ -129,6 +137,7 @@ Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $\beta > 0$ and
 \end{lemma}
 
 \begin{proof}
+\leanok
 (i) $v \mapsto \sum_ie^{\beta\ip{x_i}{v}}$ is a finite sum of compositions of $\exp$ with
 linear forms, hence $C^\infty$ and strictly positive; $\log$ is $C^\infty$ on $(0,\infty)$
 (Mathlib \texttt{ContDiff.log}, \texttt{contDiff\_exp}, \texttt{ContDiff.inner}). The chain
@@ -152,6 +161,7 @@ $\theta \in \R$ we write, as in Lemma~\ref{lem:gauss_rotation},
 so that $g_0 = g'$, $g_{\pi/2} = g$ and $\frac{d}{d\theta}g_\theta = g'_\theta$.
 
 \begin{lemma}[Interpolation along a quarter circle]\label{lem:pc_interpolation_ftc}
+\lean{ProbabilityTheory.hasDerivAt_comp_quarterCircle, ProbabilityTheory.sub_eq_integral_quarterCircle}\leanok
 Let $f : \R^d \to \R$ be of class $C^1$ and $u, v \in \R^d$. Set
 $\gamma(\theta) := u\sin\theta + v\cos\theta$ and $\gamma'(\theta) := u\cos\theta - v\sin\theta$.
 Then $\theta \mapsto f(\gamma(\theta))$ is differentiable on $\R$ with derivative
@@ -163,6 +173,7 @@ and
 \end{lemma}
 
 \begin{proof}
+\leanok
 $\gamma$ is differentiable with $\gamma'(\theta) = u\cos\theta - v\sin\theta$
 (\texttt{HasDerivAt.smul\_const} for $\sin$ and $\cos$, \texttt{HasDerivAt.add}). The chain
 rule (\texttt{HasFDerivAt.comp\_hasDerivAt}) gives that $f\circ\gamma$ has derivative
@@ -176,6 +187,7 @@ $\int_0^{\pi/2}(f\circ\gamma)' = f(\gamma(\pi/2)) - f(\gamma(0)) = f(u) - f(v)$.
 
 \begin{lemma}[{Jensen's inequality for the uniform measure on $[0,\pi/2]$}]
 \label{lem:pc_jensen_exp_average}
+\lean{ProbabilityTheory.exp_mul_integral_le_integral_exp}\leanok
 Let $h : [0,\pi/2] \to \R$ be continuous and $s \in \R$. Then
 \[
   \exp\Big(s\int_0^{\pi/2}h(\theta)\,d\theta\Big)
@@ -184,6 +196,7 @@ Let $h : [0,\pi/2] \to \R$ be continuous and $s \in \R$. Then
 \end{lemma}
 
 \begin{proof}
+\leanok
 Let $\nu := \frac2\pi\,\mathrm{Leb}|_{[0,\pi/2]}$, a probability measure, and
 $k(\theta) := \frac{\pi s}{2}h(\theta)$, which is continuous, hence bounded on the compact
 interval; so $k$ and $e^{k}$ are $\nu$-integrable. Jensen's inequality for the convex
@@ -195,6 +208,7 @@ $\int e^k\,d\nu = \frac2\pi\int_0^{\pi/2}e^{k(\theta)}d\theta$.
 \end{proof}
 
 \begin{lemma}[MGF of the rotated gradient term]\label{lem:pc_rotated_mgf_bound}
+\lean{ProbabilityTheory.integral_comp_rotation_swap_prod, ProbabilityTheory.integral_exp_inner_gradient_prod_stdGaussian_le}\leanok
 \uses{def:pg_gaussian_vector, lem:pc_lipschitz_of_grad}
 Let $f$ be $C^1$ with $\norm{\nabla f} \le L$ everywhere, $g, g'$ independent
 $\Normal(0,I_d)$ vectors, $s \in \R$ and $\theta \in \R$. Then
@@ -207,6 +221,7 @@ $\omega \mapsto \exp(s\ip{\nabla f(g_\theta)}{g'_\theta})$ is integrable and
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_rotation, lem:gauss_mgf_inner, lem:pc_lipschitz_of_grad, lem:pc_exp_norm_integrable}
 Let $\Phi(u,v) := \exp(s\ip{\nabla f(u)}{v})$, a continuous function on $\R^d\times\R^d$ with
 $0 < \Phi(u,v) \le \exp(\abs{s}L\norm{v})$ (Lemma~\ref{lem:pc_lipschitz_of_grad}). By
@@ -225,6 +240,7 @@ $\exp(s^2L^2/2)$ pointwise, and $\Normal(0,I_d)$ is a probability measure.
 \end{proof}
 
 \begin{lemma}[Maurey--Pisier Gaussian concentration]\label{lem:maurey_pisier}
+\lean{ProbabilityTheory.hasSubgaussianMGF_sub_integral_stdGaussian}\leanok
 \uses{def:pg_gaussian_vector, def:pc_gaussian_constant}
 Let $L \ge 0$ and let $f : \R^d \to \R$ be of class $C^1$ with $\norm{\nabla f(x)} \le L$ for
 every $x \in \R^d$. Let $g \sim \Normal(0, I_d)$. Then $f(g)$ is integrable, and for every
@@ -238,6 +254,7 @@ $\cG L^2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pc_lipschitz_of_grad, lem:pc_exp_norm_integrable, lem:pc_interpolation_ftc, lem:pc_jensen_exp_average, lem:pc_rotated_mgf_bound, lem:gauss_rotation}
 \emph{Step 0 (integrability).} By Lemma~\ref{lem:pc_lipschitz_of_grad}, $f$ is $L$-Lipschitz,
 $\abs{f(x)} \le \abs{f(0)} + L\norm{x}$, $f(g)$ is integrable, and $e^{\lambda f(g)}$ is
@@ -329,6 +346,7 @@ absolute constants.
 
 \begin{lemma}[Concentration of a finite maximum of Gaussian linear forms]
 \label{lem:finite_sup_subgaussian}
+\lean{ProbabilityTheory.abs_ciSup_inner_le, ProbabilityTheory.measurable_ciSup_inner, ProbabilityTheory.hasSubgaussianMGF_iSup_inner_stdGaussian}\leanok
 \uses{def:pg_gaussian_vector, def:pc_gaussian_constant}
 Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $S \in \PSD$ and $G \sim \Normal(0,S)$. Let
 $M := \max_{i\le m}\ip{x_i}{G}$ and $\sigma^2 := \max_{i\le m}x_i^\top Sx_i$. Then $M$ is
@@ -338,6 +356,7 @@ $\E e^{\lambda(M-\E M)} \le \exp(\cG\sigma^2\lambda^2/2)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gauss_law_of_cov, lem:maurey_pisier, lem:logsumexp_props, lem:pc_exp_norm_integrable}
 The statement only involves the law of $M$, a measurable function of $G$, so by
 Lemma~\ref{lem:gauss_law_of_cov}(iii) we may assume $G = S^{1/2}g$ with $g \sim \Normal(0,I_d)$
@@ -367,6 +386,7 @@ integrals is needed here.
 
 \begin{lemma}[Concentration of the supremum over a compact index set]
 \label{lem:compact_sup_subgaussian}
+\lean{ProbabilityTheory.hasSubgaussianMGF_supportFn_stdGaussian}\leanok
 \uses{def:pg_gaussian_vector, def:pc_gaussian_constant, lem:sup_countable_dense}
 Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$ and $G \sim \Normal(0,S)$. Let
 $M := \sup_{x\in\Xs}\ip{x}{G}$ (a random variable by Lemma~\ref{lem:sup_countable_dense})
@@ -376,6 +396,7 @@ $e^{\lambda(M-\E M)}$ is integrable and $\E e^{\lambda(M - \E M)} \le \exp(\cG\s
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:sup_countable_dense, lem:finite_sup_subgaussian, lem:pc_exp_norm_integrable}
 Let $R := \max_{x\in\Xs}\norm{x}$ and let $(q_n)_{n\in\N}$ enumerate a countable dense subset
 of $\Xs$ (Lemma~\ref{lem:sup_countable_dense}(i)). $\sigma^2$ is the maximum of the continuous
@@ -408,14 +429,22 @@ as a limit of numbers bounded by the right-hand side (\texttt{le\_of\_tendsto}).
 of $e^{\lambda(M-\E M)} = e^{-\lambda\E M}e^{\lambda M}$ was shown above.
 \end{proof}
 
-\textbf{Lean remark.} The supremum over $\Xs$ is encoded as an \texttt{iSup} over the dense
-sequence \texttt{q : ℕ → Xs} (Lemma~\ref{lem:sup_countable_dense}), so that $M_n$ is
-\texttt{⨆ i : Fin (n+1), ⟪q i, G ω⟫} (or a \texttt{Finset.sup'} over \texttt{Finset.range}),
-and the two limits are \texttt{Filter.Tendsto} statements along \texttt{atTop}. Lemma
-\ref{lem:finite_sup_subgaussian} is stated for an indexed family \texttt{x : Fin m → E}, $m \ge 1$,
-and the constant $\sigma^2$ is \texttt{⨆ i, ⟪x i, S (x i)⟫} coerced to \texttt{ℝ≥0}.
+\textbf{Lean remark.} The formalization states Lemmas~\ref{lem:finite_sup_subgaussian},
+\ref{lem:compact_sup_subgaussian} and Theorem~\ref{thm:borell_tis} for the standard Gaussian
+measure $\Normal(0, I_d)$ (Mathlib \texttt{stdGaussian E}, on any finite-dimensional inner
+product space $E$) and a bound $\sigma$ on the norms of the index vectors, which is the case
+$S = I_d$; the case of a general covariance $S \in \PSD$ is the image of this one under
+$S^{1/2}$ (Lemma~\ref{lem:gauss_law_of_cov}(iii) and \texttt{supportFn\_image}), see
+\texttt{ProbabilityTheory.hasSubgaussianMGF\_supportFn\_multivariateGaussian}. The supremum
+over $\Xs$ is \texttt{supportFn K} and the partial maxima are \texttt{partialSupInner q n}
+(\texttt{⨆ i : Fin (n+1), ⟪q i, v⟫}) for the dense sequence of
+Lemma~\ref{lem:sup_countable_dense}; the two limits are \texttt{Filter.Tendsto} statements
+along \texttt{atTop} proved by dominated convergence. Lemma~\ref{lem:finite_sup_subgaussian}
+is stated for a family \texttt{y : ι → E} indexed by a nonempty finite type, and the limit
+$\beta \to \infty$ is \texttt{ge\_of\_tendsto}.
 
 \begin{theorem}[Borell--TIS inequality for linear Gaussian processes]\label{thm:borell_tis}
+\lean{ProbabilityTheory.measureReal_supportFn_sub_integral_ge_le, ProbabilityTheory.measureReal_supportFn_sub_integral_le_le, ProbabilityTheory.hasSubgaussianMGF_supportFn_multivariateGaussian}\leanok
 \uses{def:pg_gaussian_vector, def:pc_gaussian_constant, lem:sup_countable_dense}
 Let $\Xs \subset \R^d$ be nonempty and compact, $S \in \PSD$, $G \sim \Normal(0,S)$,
 $M := \sup_{x\in\Xs}\ip{x}{G}$ and $\sigma^2 := \sup_{x\in\Xs}x^\top Sx$, assumed positive.
@@ -429,6 +458,7 @@ probabilities vanish for $u > 0$.)
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:compact_sup_subgaussian}
 By Lemma~\ref{lem:compact_sup_subgaussian}, $M - \E M$ satisfies \texttt{HasSubgaussianMGF}
 with constant $c := \cG\sigma^2$. The upper tail is the Chernoff bound

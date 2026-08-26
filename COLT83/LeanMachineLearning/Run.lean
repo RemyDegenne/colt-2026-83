@@ -122,8 +122,7 @@ lemma IsFixedBudget.isMarkovKernel_output {A : IdentAlg 𝓐 𝓨 𝓞} {T : ℕ
 the environment `env`: the trajectory `ℕ → 𝓐 × 𝓨` has the law `trajMeasure A.alg env` and,
 given the trajectory, the output is drawn from `A.output T` applied to the history of the first
 `T` rounds. -/
-noncomputable def fixedBudgetRunMeasure [IsMarkovKernel (A.output T)] :
-    Measure ((ℕ → 𝓐 × 𝓨) × 𝓞) :=
+noncomputable def fixedBudgetRunMeasure : Measure ((ℕ → 𝓐 × 𝓨) × 𝓞) :=
   trajMeasure A.alg env ⊗ₘ (A.output T).comap (finHistory IT.action IT.feedback T)
     (measurable_finHistory_traj T)
 

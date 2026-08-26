@@ -1,0 +1,96 @@
+/-
+Copyright (c) 2026 Rémy Degenne. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Rémy Degenne
+-/
+module
+
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+public import Mathlib.Probability.Distributions.Gaussian.Fernique
+
+/-!
+# Exponential moments of Gaussian measures
+
+* `integral_exp_inner_stdGaussian`: the moment generating function of a linear form
+  `⟪a, ·⟫` under the standard Gaussian measure is `exp (t² ‖a‖² / 2)`.
+* `IsGaussian.integrable_exp_mul_norm`: `exp (c ‖x‖)` is integrable for every Gaussian measure
+  (a consequence of Fernique's theorem), and therefore `exp (t F x)` is integrable for every
+  function `F` of linear growth (`IsGaussian.integrable_exp_of_abs_le_add_mul_norm`).
+-/
+
+@[expose] public section
+
+open MeasureTheory ProbabilityTheory Real InnerProductSpace
+open scoped RealInnerProductSpace NNReal
+
+namespace ProbabilityTheory
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+
+/-- The law of the linear form `⟪a, ·⟫` under the standard Gaussian measure is `N(0, ‖a‖²)`. -/
+lemma stdGaussian_map_toDual (a : E) :
+    (stdGaussian E).map (toDual ℝ E a) = gaussianReal 0 (‖a‖₊ ^ 2) := by
+  rw [IsGaussian.map_eq_gaussianReal (toDual ℝ E a), integral_strongDual_stdGaussian,
+    variance_dual_stdGaussian, LinearIsometryEquiv.norm_map]
+  congr
+  rw [← coe_nnnorm, ← NNReal.coe_pow, Real.toNNReal_coe]
+
+lemma integrable_exp_mul_inner_stdGaussian (a : E) (t : ℝ) :
+    Integrable (fun x ↦ exp (t * ⟪a, x⟫)) (stdGaussian E) := by
+  have h := integrable_exp_mul_gaussianReal (μ := 0) (v := ‖a‖₊ ^ 2) t
+  rw [← stdGaussian_map_toDual a, integrable_map_measure (by fun_prop) (by fun_prop)] at h
+  exact h
+
+/-- The moment generating function of `⟪a, ·⟫` under the standard Gaussian measure. -/
+lemma integral_exp_mul_inner_stdGaussian (a : E) (t : ℝ) :
+    ∫ x, exp (t * ⟪a, x⟫) ∂stdGaussian E = exp (t ^ 2 * ‖a‖ ^ 2 / 2) := by
+  have h : ∫ x, exp (t * ⟪a, x⟫) ∂stdGaussian E =
+      exp (0 * t + ((‖a‖₊ ^ 2 : ℝ≥0) : ℝ) * t ^ 2 / 2) :=
+    mgf_gaussianReal (stdGaussian_map_toDual a) t
+  rw [h]
+  push_cast
+  ring_nf
+
+lemma integral_exp_inner_stdGaussian (a : E) :
+    ∫ x, exp ⟪a, x⟫ ∂stdGaussian E = exp (‖a‖ ^ 2 / 2) := by
+  simpa using integral_exp_mul_inner_stdGaussian a 1
+
+variable {μ : Measure E} [IsGaussian μ]
+
+/-- **Exponential moments of Gaussian norms**: `exp (c ‖x‖)` is integrable for every Gaussian
+measure (Fernique's theorem). -/
+lemma IsGaussian.integrable_exp_mul_norm (c : ℝ) : Integrable (fun x ↦ exp (c * ‖x‖)) μ := by
+  obtain ⟨C, hC, hint⟩ := IsGaussian.exists_integrable_exp_sq μ
+  refine (hint.const_mul (exp (c ^ 2 / (4 * C)))).mono'
+    (continuous_const.mul continuous_norm).rexp.aestronglyMeasurable
+    (Filter.Eventually.of_forall fun x ↦ ?_)
+  rw [Real.norm_of_nonneg (exp_pos _).le, ← Real.exp_add]
+  refine Real.exp_le_exp.2 ?_
+  rw [div_add' _ _ _ (by positivity), le_div_iff₀ (by positivity)]
+  nlinarith [sq_nonneg (2 * C * ‖x‖ - c)]
+
+/-- A measurable function of linear growth has integrable exponential moments under a Gaussian
+measure. -/
+lemma IsGaussian.integrable_exp_of_abs_le_add_mul_norm {F : E → ℝ} (hF : AEStronglyMeasurable F μ)
+    {A B : ℝ} (hFle : ∀ x, |F x| ≤ A + B * ‖x‖) (t : ℝ) :
+    Integrable (fun x ↦ exp (t * F x)) μ := by
+  refine ((IsGaussian.integrable_exp_mul_norm (|t| * B)).const_mul (exp (|t| * A))).mono'
+    (Real.continuous_exp.comp_aestronglyMeasurable (hF.const_mul t))
+    (Filter.Eventually.of_forall fun x ↦ ?_)
+  rw [Real.norm_of_nonneg (exp_pos _).le, ← Real.exp_add]
+  refine Real.exp_le_exp.2 ?_
+  calc t * F x ≤ |t * F x| := le_abs_self _
+    _ = |t| * |F x| := abs_mul _ _
+    _ ≤ |t| * (A + B * ‖x‖) := mul_le_mul_of_nonneg_left (hFle x) (abs_nonneg t)
+    _ = |t| * A + |t| * B * ‖x‖ := by ring
+
+/-- A measurable function of linear growth is integrable under a Gaussian measure. -/
+lemma IsGaussian.integrable_of_abs_le_add_mul_norm {F : E → ℝ} (hF : AEStronglyMeasurable F μ)
+    {A B : ℝ} (hFle : ∀ x, |F x| ≤ A + B * ‖x‖) : Integrable F μ := by
+  refine ((integrable_const A).add (IsGaussian.integrable_id.norm.const_mul B)).mono' hF
+    (Filter.Eventually.of_forall fun x ↦ ?_)
+  rw [Real.norm_eq_abs]
+  exact hFle x
+
+end ProbabilityTheory

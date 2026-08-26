@@ -257,6 +257,7 @@ write $\Prob_\theta$ for the law of either.
 \end{definition}
 
 \begin{lemma}[Law of the observations under a fixed design]\label{lem:fixed_design_law}
+\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec, Learning.IsAlgEnvSeq.hasLaw_noise_finVec, Learning.IsAlgEnvSeq.iIndepFun_noise, Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec, Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign, Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign, Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign}\leanok
 \uses{def:fixed_design, lem:noise_representation}
 Under a fixed design run against $\nu_\theta$, the observation vector
 $y = (y_t)_{t<T}$ satisfies $y = X\theta + \eta$ with $\eta \sim \Normal(0, I_T)$, and
@@ -265,10 +266,22 @@ $\Normal(X\theta, I_T) \otimes \rho$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:noise_representation, lem:gauss_pi}
 Lemma~\ref{lem:noise_representation} with deterministic actions: the $\eta_t$ are i.i.d.\
 standard Gaussians, so $\eta \sim \Normal(0,I_T)$ (Lemma~\ref{lem:gauss_pi}).
 \end{proof}
+
+\textbf{Lean remark.} The noise $\eta_t = y_t - \ip{x_t}{\theta}$ is i.i.d.\ $\Normal(0,1)$ for
+\emph{every} algorithm, not only for fixed designs: by Lemma~\ref{lem:noise_representation} its
+conditional law given the past (hence given the past noises) is constant, and
+Lemma~\ref{lem:gauss_pi} in its sequential form applies
+(\texttt{Learning.IsAlgEnvSeq.hasLaw\_noise\_finVec}, \texttt{iIndepFun\_noise},
+\texttt{hasLaw\_toLp\_noise\_finVec} for the standard Gaussian law on
+\texttt{EuclideanSpace ℝ (Fin T)}). For a fixed design the actions are $x_t$ almost surely
+(LML \texttt{action\_detAlgorithm\_ae\_all\_eq}) and $y_t = \ip{x_t}{\theta} + \eta_t$, which
+gives the law of $y$ (\texttt{hasLaw\_feedback\_finVec\_of\_fixedDesign}); the joint law with
+the recommendation is \texttt{Learning.IdentAlg.map\_finHistory\_out\_eq}.
 
 \section{Design matrices and the Gaussian width}
 \label{sec:model_width}

@@ -3,6 +3,7 @@ module  -- shake: keep-all --deprecated_module: ignore
 public import COLT83.LeanMachineLearning.AlgorithmPrefix
 public import COLT83.LeanMachineLearning.DivergenceDecomposition
 public import COLT83.LeanMachineLearning.FixedBudget
+public import COLT83.LeanMachineLearning.FixedDesignRun
 public import COLT83.LeanMachineLearning.GaussianNoise
 public import COLT83.LeanMachineLearning.IdentAlg
 public import COLT83.LeanMachineLearning.LinearBandit
@@ -10,10 +11,13 @@ public import COLT83.LeanMachineLearning.RepeatTest
 public import COLT83.LeanMachineLearning.RepeatTestGaussian
 public import COLT83.LeanMachineLearning.Run
 public import COLT83.MXJ2026.DesignSet
+public import COLT83.MXJ2026.DifferenceProcess
+public import COLT83.MXJ2026.LeastSquares
 public import COLT83.MXJ2026.LogGains
 public import COLT83.MXJ2026.LowerAdaptive
 public import COLT83.MXJ2026.LowerAdaptiveBaseline
 public import COLT83.MXJ2026.LowerNonadaptive
+public import COLT83.MXJ2026.MixedDesign
 public import COLT83.MXJ2026.MixtureKL
 public import COLT83.MXJ2026.NormEstimation
 public import COLT83.MXJ2026.NormalizedDesign
@@ -27,6 +31,8 @@ public import COLT83.MXJ2026.WidthBounds
 public import COLT83.MXJ2026.WidthDesign
 public import COLT83.Mathlib.Analysis.BarrierSum
 public import COLT83.Mathlib.Analysis.Calculus.LocalExtr
+public import COLT83.Mathlib.Analysis.LogSumExp
+public import COLT83.Mathlib.Analysis.SupportFnDense
 public import COLT83.Mathlib.GaussianWidth
 public import COLT83.Mathlib.InformationTheory.BretagnolleHuber
 public import COLT83.Mathlib.InformationTheory.KLCompProd
@@ -36,5 +42,10 @@ public import COLT83.Mathlib.Matrix.HermitianCFC
 public import COLT83.Mathlib.Matrix.Loewner
 public import COLT83.Mathlib.Matrix.LoewnerInv
 public import COLT83.Mathlib.MeasurableSigma
+public import COLT83.Mathlib.MeasureTheory.ApproxArgmax
+public import COLT83.Mathlib.Probability.BorellTIS
+public import COLT83.Mathlib.Probability.GaussianMGF
+public import COLT83.Mathlib.Probability.IidOfCondDistrib
 public import COLT83.Mathlib.Probability.KLGaussian
+public import COLT83.Mathlib.Probability.MaureyPisier
 public import COLT83.Mathlib.Probability.MultivariateGaussian
