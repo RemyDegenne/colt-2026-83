@@ -6,7 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import COLT83.Mathlib.Probability.GaussianMGF
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Probability.GaussianWidth
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.Analysis.Convex.Integral
 public import COLT83.Mathlib.Order.CiSupFinite

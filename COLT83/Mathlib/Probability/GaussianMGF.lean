@@ -16,8 +16,11 @@ public import COLT83.Mathlib.Analysis.Calculus.Gradient
 * `integral_exp_inner_stdGaussian`: the moment generating function of a linear form
   `⟪a, ·⟫` under the standard Gaussian measure is `exp (t² ‖a‖² / 2)`.
 * `IsGaussian.integrable_exp_mul_norm`: `exp (c ‖x‖)` is integrable for every Gaussian measure
-  (a consequence of Fernique's theorem), and therefore `exp (t F x)` is integrable for every
-  function `F` of linear growth (`IsGaussian.integrable_exp_of_abs_le_add_mul_norm`).
+  on a separable Banach space (a consequence of Fernique's theorem), and therefore `exp (t F x)`
+  is integrable for every function `F` of linear growth
+  (`IsGaussian.integrable_exp_of_abs_le_add_mul_norm`), and functions of linear or quadratic
+  growth are integrable (`IsGaussian.integrable_of_abs_le_add_mul_norm`,
+  `IsGaussian.integrable_of_abs_le_add_mul_norm_sq`).
 -/
 
 @[expose] public section
@@ -26,6 +29,8 @@ open MeasureTheory ProbabilityTheory Real InnerProductSpace
 open scoped RealInnerProductSpace NNReal
 
 namespace ProbabilityTheory
+
+section stdGaussian
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   [MeasurableSpace E] [BorelSpace E]
@@ -58,7 +63,12 @@ lemma integral_exp_inner_stdGaussian (a : E) :
     ∫ x, exp ⟪a, x⟫ ∂stdGaussian E = exp (‖a‖ ^ 2 / 2) := by
   simpa using integral_exp_mul_inner_stdGaussian a 1
 
-variable {μ : Measure E} [IsGaussian μ]
+end stdGaussian
+
+section isGaussian
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+  [SecondCountableTopology E] [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [IsGaussian μ]
 
 /-- **Exponential moments of Gaussian norms**: `exp (c ‖x‖)` is integrable for every Gaussian
 measure (Fernique's theorem). -/
@@ -108,9 +118,12 @@ lemma IsGaussian.integrable_of_abs_le_add_mul_norm_sq {F : E → ℝ} (hF : AESt
   rw [Real.norm_eq_abs]
   exact hFle x
 
+end isGaussian
+
 section gradient
 
-variable {f : E → ℝ} {L : ℝ≥0}
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+  [SecondCountableTopology E] [MeasurableSpace E] [BorelSpace E] {f : E → ℝ} {L : ℝ≥0}
 
 /-- A `C¹` function with bounded gradient is integrable under a Gaussian measure, with all its
 exponential moments. -/

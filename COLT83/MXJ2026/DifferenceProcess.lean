@@ -6,7 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import COLT83.LeanMachineLearning.LinearBandit
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Probability.GaussianWidth
 public import COLT83.Mathlib.Probability.BorellTIS
 public import COLT83.Mathlib.Matrix.Loewner
 public import COLT83.MXJ2026.Width

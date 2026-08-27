@@ -6,7 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import COLT83.LeanMachineLearning.LinearBandit
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Analysis.InnerProductSpace.SupportFn
 public import COLT83.MXJ2026.StructuredSets
 
 /-!

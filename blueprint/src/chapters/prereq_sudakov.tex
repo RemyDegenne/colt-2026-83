@@ -27,7 +27,8 @@ Numerical bounds on $\pi$, $e$ and $\log 2$: \texttt{Real.pi\_lt\_d2}, \texttt{R
 Sudakov--Fernique inequality itself, the lower Mills-ratio bound and the lower bound on the
 expected maximum are all absent from Mathlib; they are formalized in this project in
 \texttt{COLT83/Mathlib/Probability/\{SteinReal, SteinIdentity, GaussianInterpolation,
-SudakovFernique, GaussianMaxLower\}.lean} and \texttt{COLT83/Mathlib/Analysis/LogSumExp.lean}.
+SudakovFernique, GaussianMaxLower\}.lean} and
+\texttt{COLT83/Mathlib/Analysis/\{SpecialFunctions, InnerProductSpace\}/LogSumExp.lean}.
 
 \textbf{Lean remark (organisation).} The Lean development is coordinate-free where possible.
 Stein's identity is proved for the standard Gaussian measure of a finite-dimensional inner
@@ -45,8 +46,11 @@ $L_0 g = S_Y^{1/2}(g\circ\mathrm{inr})$ (\texttt{blockInl}, \texttt{blockInr}), 
 derivative of $\psi(t) = \E F(Z_t)$ is
 $\E[\sum_k D^2F(Z_t)(Z_te_k, Z_t'e_k)]$ with the cross terms vanishing block by block
 (\texttt{hasDerivAt\_integral\_comp\_gaussianInterp}, \texttt{sum\_apply\_gaussianInterp\_block}).
-The soft-max is \texttt{logSumExp β (EuclideanSpace.basisFun ι ℝ)}, whose Hessian is computed
-in \texttt{COLT83/Mathlib/Analysis/LogSumExp.lean} for an arbitrary finite family of vectors.
+The soft-max is \texttt{logSumExp β (EuclideanSpace.basisFun ι ℝ)}: the coordinate soft-max
+\texttt{Real.logSumExp} of \texttt{COLT83/Mathlib/Analysis/SpecialFunctions/LogSumExp.lean}
+(defined on $\R^m$, with its Hessian \texttt{Real.fderiv\_fderiv\_logSumExp\_single}) composed
+with the coordinates, as an instance of the general log-sum-exp smoothing of a maximum of linear
+forms of \texttt{COLT83/Mathlib/Analysis/InnerProductSpace/LogSumExp.lean}.
 
 \section{Gaussian integration by parts}
 \label{sec:pre_sudakov_stein}
@@ -189,7 +193,7 @@ we obtain $\psi'(t) = \frac12\sum_{ij}(S_X)_{ij}\E[\partial_{ij}F(Z_t)] - \frac1
 \end{proof}
 
 \begin{lemma}[The soft-max and its Hessian]\label{lem:logsumexp_hessian}
-\lean{logSumExp, softmax, ciSup_inner_le_logSumExp, logSumExp_le_ciSup_inner_add, hasFDerivAt_logSumExp, norm_gradient_logSumExp_le, fderiv_fderiv_logSumExp_apply, norm_fderiv_fderiv_logSumExp_le, ProbabilityTheory.fderiv_fderiv_logSumExp_basisFun_single, ProbabilityTheory.sum_mul_fderiv_fderiv_logSumExp_basisFun}\leanok
+\lean{Real.logSumExp, Real.softmax, Real.softmax_nonneg, Real.sum_softmax, Real.ciSup_le_logSumExp, Real.logSumExp_le_ciSup_add, Real.contDiff_logSumExp, Real.hasFDerivAt_logSumExp, Real.norm_fderiv_logSumExp_le, Real.lipschitzWith_logSumExp, Real.fderiv_fderiv_logSumExp_apply, Real.fderiv_fderiv_logSumExp_single, Real.norm_fderiv_fderiv_logSumExp_le, logSumExp, softmax, ciSup_inner_le_logSumExp, logSumExp_le_ciSup_inner_add, hasFDerivAt_logSumExp, norm_gradient_logSumExp_le, fderiv_fderiv_logSumExp_apply, norm_fderiv_fderiv_logSumExp_le, ProbabilityTheory.fderiv_fderiv_logSumExp_basisFun_single, ProbabilityTheory.sum_mul_fderiv_fderiv_logSumExp_basisFun}\leanok
 For $\beta > 0$ and $z\in\R^m$ let $F_\beta(z) := \beta^{-1}\log\sum_{i=1}^m e^{\beta z_i}$ and
 $p_i(z) := e^{\beta z_i}/\sum_k e^{\beta z_k}$, so that $p(z)$ is a probability vector. Then:
 \begin{enumerate}

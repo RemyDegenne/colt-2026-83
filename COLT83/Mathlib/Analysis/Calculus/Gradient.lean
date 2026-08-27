@@ -22,6 +22,11 @@ public import Mathlib.Analysis.Calculus.ContDiff.Comp
 * `abs_le_of_norm_gradient_le`: it has linear growth `|f x| ≤ |f 0| + L ‖x‖`;
 * `abs_inner_gradient_le`: `|⟪∇f x, v⟫| ≤ L ‖v‖`;
 * `ContDiff.continuous_gradient`: the gradient of a `C¹` function is continuous.
+
+## TODO
+
+The `fderiv` statements of the first section are proved for real normed spaces only (through
+`Convex.norm_image_sub_le_of_norm_fderiv_le`); they hold over any `RCLike` field.
 -/
 
 @[expose] public section

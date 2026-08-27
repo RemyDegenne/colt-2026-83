@@ -6,8 +6,9 @@ Authors: Rémy Degenne
 module
 
 public import COLT83.Mathlib.Probability.MaureyPisier
-public import COLT83.Mathlib.Analysis.LogSumExp
-public import COLT83.Mathlib.Analysis.SupportFnDense
+public import COLT83.Mathlib.Analysis.InnerProductSpace.LogSumExp
+public import COLT83.Mathlib.Analysis.InnerProductSpace.SupportFnDense
+public import COLT83.Mathlib.Probability.GaussianWidth
 public import COLT83.Mathlib.Matrix.Loewner
 public import COLT83.Mathlib.Probability.MultivariateGaussian
 

@@ -6,6 +6,12 @@ import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.Data.Fintype.Order
+import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Normed.Group.Pointwise
+import Mathlib.Topology.Order.Compact
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
@@ -32,6 +38,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 import Mathlib.Analysis.Calculus.Gradient.Basic
 import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.ExpDeriv
@@ -203,7 +210,7 @@ def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
 end Learning
 end
 
--- ═══ Mathlib.MeasurableSigma ═══
+-- ═══ Mathlib.MeasureTheory.MeasurableSpace.Sigma ═══
 section
 open MeasurableSpace
 variable {α γ : Type*} {β : α → Type*} [∀ a, MeasurableSpace (β a)] [MeasurableSpace γ]
@@ -349,9 +356,9 @@ def IsPAC (𝒳 : Set E) (A : IdentAlg 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
 end Learning.LinearBandit
 end
 
--- ═══ Mathlib.GaussianWidth ═══
+-- ═══ Mathlib.Analysis.InnerProductSpace.SupportFn ═══
 section
-open MeasureTheory Set
+open Set
 open scoped RealInnerProductSpace Pointwise NNReal
 section SupportFn
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
@@ -361,6 +368,12 @@ noncomputable def supportFn (K : Set E) (ξ : E) : ℝ := ⨆ x : K, ⟪(x : E),
 
 variable {K K' : Set E} {R : ℝ} {ξ : E}
 end SupportFn
+end
+
+-- ═══ Mathlib.Probability.GaussianWidth ═══
+section
+open MeasureTheory Set
+open scoped RealInnerProductSpace Pointwise NNReal
 namespace ProbabilityTheory
 section GaussianWidth
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {mE : MeasurableSpace E} [OpensMeasurableSpace E] {μ ν : Measure E} {K K' : Set E} {R : ℝ}

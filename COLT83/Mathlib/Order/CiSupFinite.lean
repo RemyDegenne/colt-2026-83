@@ -17,6 +17,13 @@ public import Mathlib.Order.ConditionallyCompleteLattice.Finset
 Elementary facts about `⨆ i, f i` for `f : ι → ℝ` with `ι` finite and nonempty:
 `|⨆ i, f i| ≤ ∑ i, |f i|`, `exp (t * ⨆ i, f i) ≤ ∑ i, exp (t * f i)` and
 `⨆ i, (b + c * f i) = b + c * ⨆ i, f i` for `c ≥ 0`.
+
+## TODO
+
+These are stated for `ℝ` only: `abs_le_sum_abs_iSup` and `ciSup_const_add_const_mul` hold in
+any conditionally complete linear ordered field, and `exp_mul_iSup_le_sum` (which is what forces
+the import of the exponential into this `Order` file) is an instance of the general fact that a
+nonnegative monotone function of a finite maximum is at most the sum of its values.
 -/
 
 @[expose] public section

@@ -5,7 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Analysis.InnerProductSpace.SupportFn
 
 /-!
 # The support function as a supremum over a dense sequence

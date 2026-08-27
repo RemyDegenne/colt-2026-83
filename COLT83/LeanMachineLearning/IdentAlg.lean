@@ -5,7 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import COLT83.Mathlib.MeasurableSigma
+public import COLT83.Mathlib.MeasureTheory.MeasurableSpace.Sigma
 public import LeanMachineLearning.SequentialLearning.Deterministic
 public import Mathlib.Probability.Process.HittingTime
 

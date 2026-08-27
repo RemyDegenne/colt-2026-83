@@ -16,18 +16,26 @@ For a Hermitian matrix `A` with eigenvalues `λ i`, the continuous functional ca
 `cfc f A = U diag(f (λ i)) U*`. We record:
 
 * `Matrix.IsHermitian.trace_cfc`: `tr (cfc f A) = ∑ i, f (λ i)`;
-* for a real symmetric matrix `B` and `l : ℝ`: `B - l • 1 = cfc (· - l) B`
-  (`Matrix.IsHermitian.sub_smul_one_eq_cfc`), its inverse is `cfc (· - l)⁻¹ B` when `l` is not in
-  the spectrum (`Matrix.IsHermitian.inv_sub_smul_one_eq_cfc`), the traces of that inverse and of
-  its square are the sums `∑ i, (λ i - l)⁻¹` and `∑ i, (λ i - l)⁻¹ ^ 2`
-  (`Matrix.IsHermitian.trace_inv_sub_smul_one`, `Matrix.IsHermitian.trace_inv_sub_smul_one_sq`);
-* `B - l • 1` is positive semidefinite iff `l ≤ x` on the spectrum, and positive definite iff
+* for a Hermitian matrix `A` over `𝕜` and `l : ℝ`: `A - l • 1 = cfc (· - l) A`
+  (`Matrix.IsHermitian.sub_smul_one_eq_cfc`), its inverse is `cfc (· - l)⁻¹ A` when `l` is not in
+  the spectrum (`Matrix.IsHermitian.inv_sub_smul_one_eq_cfc`);
+* `A - l • 1` is positive semidefinite iff `l ≤ x` on the spectrum, and positive definite iff
   `l < x` on the spectrum (`Matrix.IsHermitian.posSemidef_sub_smul_one_iff`,
-  `Matrix.IsHermitian.posDef_sub_smul_one_iff`); in Loewner terms, `l • 1 ≤ B` iff `l ≤ x` on the
-  spectrum (`Matrix.IsHermitian.smul_one_le_iff`).
+  `Matrix.IsHermitian.posDef_sub_smul_one_iff`); in Loewner terms, `l • 1 ≤ A` iff `l ≤ x` on the
+  spectrum (`Matrix.IsHermitian.smul_one_le_iff`);
+* for a real symmetric matrix `B`, the traces of `(B - l • 1)⁻¹` and of its square are the sums
+  `∑ i, (λ i - l)⁻¹` and `∑ i, (λ i - l)⁻¹ ^ 2`
+  (`Matrix.IsHermitian.trace_inv_sub_smul_one`, `Matrix.IsHermitian.trace_inv_sub_smul_one_sq`).
 
-Together these express "the smallest eigenvalue of `B` is larger than `l`" as the spectral
-condition `∀ x ∈ spectrum ℝ B, l < x`, without choosing an ordering of the eigenvalues.
+Together these express "the smallest eigenvalue of `A` is larger than `l`" as the spectral
+condition `∀ x ∈ spectrum ℝ A, l < x`, without choosing an ordering of the eigenvalues.
+
+## TODO
+
+The trace identities `trace_inv_sub_smul_one` and `trace_inv_sub_smul_one_sq` are stated for
+real symmetric matrices only (their real-valued right-hand side is what the barrier argument of
+the rounding procedure consumes); over `𝕜` the same identities hold with the sums cast to `𝕜`,
+as in `trace_cfc`.
 -/
 
 @[expose] public section
@@ -38,7 +46,7 @@ namespace Matrix
 
 section RCLike
 
-variable {𝕜 n : Type*} [RCLike 𝕜] [Fintype n] [DecidableEq n] {A : Matrix n n 𝕜}
+variable {𝕜 n : Type*} [RCLike 𝕜] [Fintype n] [DecidableEq n] {A : Matrix n n 𝕜} {l : ℝ}
 
 /-- The trace of `cfc f A` is the sum of `f` over the eigenvalues of the Hermitian matrix `A`. -/
 lemma IsHermitian.trace_cfc (hA : A.IsHermitian) (f : ℝ → ℝ) :
@@ -58,6 +66,50 @@ lemma PosDef.pos_of_mem_spectrum (hA : A.PosDef) {x : ℝ} (hx : x ∈ spectrum 
   obtain ⟨i, rfl⟩ := hx
   exact hA.eigenvalues_pos i
 
+/-- `A - l • 1 = cfc (· - l) A` for a Hermitian matrix `A`. -/
+lemma IsHermitian.sub_smul_one_eq_cfc (hA : A.IsHermitian) (l : ℝ) :
+    A - l • 1 = cfc (fun x ↦ x - l) A := by
+  rw [cfc_sub _ _ A (continuousOn_spectrum_real _ _) (continuousOn_spectrum_real _ _), cfc_id' ℝ A,
+    cfc_const l A, Algebra.algebraMap_eq_smul_one]
+
+/-- `(A - l • 1)⁻¹ = cfc (· - l)⁻¹ A` for a Hermitian matrix `A` and `l` outside its
+spectrum. -/
+lemma IsHermitian.inv_sub_smul_one_eq_cfc (hA : A.IsHermitian) (hl : ∀ x ∈ spectrum ℝ A, x ≠ l) :
+    (A - l • 1)⁻¹ = cfc (fun x ↦ (x - l)⁻¹) A := by
+  rw [hA.sub_smul_one_eq_cfc, nonsing_inv_eq_ringInverse,
+    ← cfc_inv (a := A) (f := fun x ↦ x - l) (fun x hx ↦ sub_ne_zero.2 (hl x hx))
+      (continuousOn_spectrum_real _ _) hA.isSelfAdjoint]
+
+/-- `A - l • 1` is positive semidefinite iff `l ≤ x` for every `x` in the spectrum of the
+Hermitian matrix `A`. -/
+lemma IsHermitian.posSemidef_sub_smul_one_iff (hA : A.IsHermitian) :
+    (A - l • 1).PosSemidef ↔ ∀ x ∈ spectrum ℝ A, l ≤ x := by
+  rw [← nonneg_iff_posSemidef, hA.sub_smul_one_eq_cfc, ← cfc_zero ℝ A,
+    cfc_le_iff _ _ A (continuousOn_spectrum_real _ _) (continuousOn_spectrum_real _ _)]
+  simp
+
+/-- `l • 1 ≤ A` (Loewner order) iff `l ≤ x` for every `x` in the spectrum of the Hermitian
+matrix `A`. -/
+lemma IsHermitian.smul_one_le_iff (hA : A.IsHermitian) :
+    l • 1 ≤ A ↔ ∀ x ∈ spectrum ℝ A, l ≤ x := by
+  rw [le_iff, hA.posSemidef_sub_smul_one_iff]
+
+/-- `A - l • 1` is positive definite iff `l < x` for every `x` in the spectrum of the Hermitian
+matrix `A`. -/
+lemma IsHermitian.posDef_sub_smul_one_iff (hA : A.IsHermitian) :
+    (A - l • 1).PosDef ↔ ∀ x ∈ spectrum ℝ A, l < x := by
+  constructor
+  · intro h x hx
+    have hx' : x - l ∈ spectrum ℝ (A - l • 1) := by
+      rw [hA.sub_smul_one_eq_cfc, cfc_map_spectrum _ A hA.isSelfAdjoint
+        (continuousOn_spectrum_real _ _)]
+      exact ⟨x, hx, rfl⟩
+    exact sub_pos.1 (h.pos_of_mem_spectrum hx')
+  · intro h
+    refine (hA.posSemidef_sub_smul_one_iff.2 fun x hx ↦ (h x hx).le).posDef_iff_isUnit.2 ?_
+    rw [hA.sub_smul_one_eq_cfc, isUnit_cfc_iff _ A (continuousOn_spectrum_real _ _)]
+    exact fun x hx ↦ sub_ne_zero.2 (h x hx).ne'
+
 end RCLike
 
 section real
@@ -68,20 +120,6 @@ variable {n : Type*} [Fintype n] [DecidableEq n] {B : Matrix n n ℝ} {l : ℝ}
 lemma IsHermitian.trace_cfc_real (hB : B.IsHermitian) (f : ℝ → ℝ) :
     (cfc f B).trace = ∑ i, f (hB.eigenvalues i) := by
   simpa using hB.trace_cfc f
-
-/-- `B - l • 1 = cfc (· - l) B` for a symmetric matrix `B`. -/
-lemma IsHermitian.sub_smul_one_eq_cfc (hB : B.IsHermitian) (l : ℝ) :
-    B - l • 1 = cfc (fun x ↦ x - l) B := by
-  rw [cfc_sub _ _ B (continuousOn_spectrum_real _ _) (continuousOn_spectrum_real _ _), cfc_id' ℝ B,
-    cfc_const l B, Algebra.algebraMap_eq_smul_one]
-
-/-- `(B - l • 1)⁻¹ = cfc (· - l)⁻¹ B` for a symmetric matrix `B` and `l` outside its
-spectrum. -/
-lemma IsHermitian.inv_sub_smul_one_eq_cfc (hB : B.IsHermitian) (hl : ∀ x ∈ spectrum ℝ B, x ≠ l) :
-    (B - l • 1)⁻¹ = cfc (fun x ↦ (x - l)⁻¹) B := by
-  rw [hB.sub_smul_one_eq_cfc, nonsing_inv_eq_ringInverse,
-    ← cfc_inv (a := B) (f := fun x ↦ x - l) (fun x hx ↦ sub_ne_zero.2 (hl x hx))
-      (continuousOn_spectrum_real _ _) hB.isSelfAdjoint]
 
 /-- `tr (B - l • 1)⁻¹ = ∑ i, (λ i - l)⁻¹` for a symmetric matrix `B` with eigenvalues `λ i` and
 `l` outside its spectrum. -/
@@ -98,36 +136,6 @@ lemma IsHermitian.trace_inv_sub_smul_one_sq (hB : B.IsHermitian)
   rw [hB.inv_sub_smul_one_eq_cfc hl, ← cfc_mul _ _ B (continuousOn_spectrum_real _ _)
     (continuousOn_spectrum_real _ _), hB.trace_cfc_real]
   simp_rw [sq]
-
-/-- `B - l • 1` is positive semidefinite iff `l ≤ x` for every `x` in the spectrum of the
-symmetric matrix `B`. -/
-lemma IsHermitian.posSemidef_sub_smul_one_iff (hB : B.IsHermitian) :
-    (B - l • 1).PosSemidef ↔ ∀ x ∈ spectrum ℝ B, l ≤ x := by
-  rw [← nonneg_iff_posSemidef, hB.sub_smul_one_eq_cfc, ← cfc_zero ℝ B,
-    cfc_le_iff _ _ B (continuousOn_spectrum_real _ _) (continuousOn_spectrum_real _ _)]
-  simp
-
-/-- `l • 1 ≤ B` (Loewner order) iff `l ≤ x` for every `x` in the spectrum of the symmetric
-matrix `B`. -/
-lemma IsHermitian.smul_one_le_iff (hB : B.IsHermitian) :
-    l • 1 ≤ B ↔ ∀ x ∈ spectrum ℝ B, l ≤ x := by
-  rw [le_iff, hB.posSemidef_sub_smul_one_iff]
-
-/-- `B - l • 1` is positive definite iff `l < x` for every `x` in the spectrum of the symmetric
-matrix `B`. -/
-lemma IsHermitian.posDef_sub_smul_one_iff (hB : B.IsHermitian) :
-    (B - l • 1).PosDef ↔ ∀ x ∈ spectrum ℝ B, l < x := by
-  constructor
-  · intro h x hx
-    have hx' : x - l ∈ spectrum ℝ (B - l • 1) := by
-      rw [hB.sub_smul_one_eq_cfc, cfc_map_spectrum _ B hB.isSelfAdjoint
-        (continuousOn_spectrum_real _ _)]
-      exact ⟨x, hx, rfl⟩
-    exact sub_pos.1 (h.pos_of_mem_spectrum hx')
-  · intro h
-    refine (hB.posSemidef_sub_smul_one_iff.2 fun x hx ↦ (h x hx).le).posDef_iff_isUnit.2 ?_
-    rw [hB.sub_smul_one_eq_cfc, isUnit_cfc_iff _ B (continuousOn_spectrum_real _ _)]
-    exact fun x hx ↦ sub_ne_zero.2 (h x hx).ne'
 
 end real
 

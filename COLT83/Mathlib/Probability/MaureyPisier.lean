@@ -46,18 +46,6 @@ lemma coe_gaussianConcentrationConst : (gaussianConcentrationConst : ℝ) = π ^
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   [MeasurableSpace E] [BorelSpace E]
 
-section gradient
-
-variable {f : E → ℝ} {L : ℝ≥0}
-
-end gradient
-
-section interpolation
-
-variable {f : E → ℝ}
-
-end interpolation
-
 section rotation
 
 variable {μ : Measure E} [IsGaussian μ]

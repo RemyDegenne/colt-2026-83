@@ -7,9 +7,9 @@ module
 
 public import COLT83.Mathlib.Probability.GaussianInterpolation
 public import COLT83.Mathlib.Probability.MultivariateGaussian
-public import COLT83.Mathlib.Analysis.LogSumExp
+public import COLT83.Mathlib.Analysis.InnerProductSpace.LogSumExp
 public import COLT83.Mathlib.Matrix.Loewner
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Probability.GaussianWidth
 public import Mathlib.Data.Matrix.ColumnRowPartitioned
 public import Mathlib.Analysis.Calculus.Deriv.MeanValue
 
@@ -175,7 +175,7 @@ lemma fderiv_fderiv_logSumExp_basisFun_single (hβ : β ≠ 0) (v : EuclideanSpa
       β * ((if j = l then softmax β ⇑(EuclideanSpace.basisFun ι ℝ) v j else 0) -
         softmax β ⇑(EuclideanSpace.basisFun ι ℝ) v j *
           softmax β ⇑(EuclideanSpace.basisFun ι ℝ) v l) := by
-  rw [fderiv_fderiv_logSumExp_apply hβ]
+  rw [_root_.fderiv_fderiv_logSumExp_apply hβ]
   simp only [EuclideanSpace.basisFun_apply, EuclideanSpace.inner_single_left, conj_trivial,
     PiLp.single_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   by_cases hjl : j = l

@@ -25,6 +25,12 @@ public import COLT83.Mathlib.Probability.GaussianMGF
 * `indepFun_add_prod_stdGaussian_of_comp_adjoint_eq_zero`: if `A₁ ∘L B₁† + A₂ ∘L B₂† = 0`, then
   the linear images `A₁ p.1 + A₂ p.2` and `B₁ p.1 + B₂ p.2` of a pair of independent standard
   Gaussian vectors are independent.
+
+## TODO
+
+`covariance_comp_fst_prod` and `covariance_comp_snd_prod` (the covariance of two functions of one
+coordinate under a product measure) are general facts about `ProbabilityTheory.covariance` which
+belong next to `covariance_fst_snd_prod` in Mathlib rather than in this Gaussian file.
 -/
 
 @[expose] public section

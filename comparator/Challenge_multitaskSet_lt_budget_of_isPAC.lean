@@ -18,6 +18,12 @@ import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.Data.Fintype.Order
+import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Normed.Group.Pointwise
+import Mathlib.Topology.Order.Compact
 import Mathlib.Logic.Equiv.Prod
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Prod
@@ -26,7 +32,6 @@ import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Fintype.Lattice
-import Mathlib.Data.Fintype.Order
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Order.ConditionallyCompleteLattice.Finset
 import Mathlib.Analysis.Calculus.Gradient.Basic
@@ -195,7 +200,7 @@ def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
 end Learning
 end
 
--- ═══ Mathlib.MeasurableSigma ═══
+-- ═══ Mathlib.MeasureTheory.MeasurableSpace.Sigma ═══
 section
 open MeasurableSpace
 variable {α γ : Type*} {β : α → Type*} [∀ a, MeasurableSpace (β a)] [MeasurableSpace γ]

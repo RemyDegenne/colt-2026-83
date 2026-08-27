@@ -35,13 +35,6 @@ is sub-Gaussian, in `COLT83.Mathlib.Probability.GaussianMGF`) and
 open MeasureTheory ProbabilityTheory Real Finset
 open scoped RealInnerProductSpace NNReal
 
-namespace ProbabilityTheory
-
-variable {Ω 𝓧 : Type*} {mΩ : MeasurableSpace Ω} {m𝓧 : MeasurableSpace 𝓧} {P : Measure Ω}
-  [IsProbabilityMeasure P]
-
-end ProbabilityTheory
-
 namespace Learning.LinearBandit
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]

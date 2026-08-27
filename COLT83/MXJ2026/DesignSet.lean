@@ -78,7 +78,7 @@ omit [Fintype ι] in
 /-- Every design matrix is positive semidefinite. -/
 lemma posSemidef_of_mem_designSet [Finite ι] (hA : A ∈ designSet 𝒳) : A.PosSemidef :=
   convexHull_min (by rintro _ ⟨x, -, rfl⟩; exact outerSelf_posSemidef x)
-    Matrix.convex_posSemidef hA
+    (Matrix.convex_posSemidef (𝕜 := ℝ)) hA
 
 /-- If `𝒳` is contained in the ball of radius `R`, every design matrix has trace at most
 `R ^ 2`. -/

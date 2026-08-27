@@ -222,10 +222,10 @@ end euclidean
 
 section convex
 
-variable {n : Type*}
+variable {𝕜 n : Type*} [RCLike 𝕜]
 
 /-- The cone of positive semidefinite matrices is convex. -/
-lemma convex_posSemidef : Convex ℝ {A : Matrix n n ℝ | A.PosSemidef} := by
+lemma convex_posSemidef : Convex ℝ {A : Matrix n n 𝕜 | A.PosSemidef} := by
   intro A hA B hB a b ha hb _
   exact (hA.smul ha).add (hB.smul hb)
 

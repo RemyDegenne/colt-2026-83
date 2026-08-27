@@ -5,7 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Probability.GaussianWidth
 public import COLT83.Mathlib.Matrix.LoewnerInv
 public import COLT83.Mathlib.Probability.MultivariateGaussian
 public import Mathlib.Analysis.Convex.Hull

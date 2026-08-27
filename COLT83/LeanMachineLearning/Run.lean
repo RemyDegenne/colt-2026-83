@@ -63,13 +63,6 @@ lemma IdentAlg.IsRun.comp_hasLaw {A : IdentAlg 𝓐 𝓨 𝓞} {out : Ω' → �
 
 end transport
 
-section existence
-
-variable {α β γ : Type*} {mα : MeasurableSpace α} {mβ : MeasurableSpace β}
-  {mγ : MeasurableSpace γ}
-
-end existence
-
 namespace IdentAlg
 
 variable (A : IdentAlg 𝓐 𝓨 𝓞) (env : Environment 𝓐 𝓨) (T : ℕ)

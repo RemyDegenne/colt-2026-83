@@ -7,7 +7,7 @@ module
 
 public import COLT83.LeanMachineLearning.RepeatTest
 public import COLT83.LeanMachineLearning.GaussianNoise
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Analysis.InnerProductSpace.SupportFn
 
 /-!
 # The repeated-action test in a linear Gaussian bandit

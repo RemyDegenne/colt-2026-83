@@ -121,7 +121,7 @@ $A = \abs{f(0)}$, $B = L$.
 \end{proof}
 
 \begin{lemma}[The log-sum-exp smoothing of a finite maximum]\label{lem:logsumexp_props}
-\lean{softmax, logSumExp, sum_exp_inner_pos, softmax_nonneg, sum_softmax, contDiff_logSumExp, hasGradientAt_logSumExp, norm_gradient_logSumExp_le, ciSup_inner_le_logSumExp, logSumExp_le_ciSup_inner_add}\leanok
+\lean{innerPi, softmax, logSumExp, logSumExp_eq_comp, sum_exp_inner_pos, softmax_nonneg, sum_softmax, contDiff_logSumExp, hasGradientAt_logSumExp, norm_gradient_logSumExp_le, ciSup_inner_le_logSumExp, logSumExp_le_ciSup_inner_add}\leanok
 Let $m \ge 1$, $x_1,\dots,x_m \in \R^d$, $\beta > 0$ and
 \[
   f_\beta(v) := \frac1\beta\log\sum_{i\le m}e^{\beta\ip{x_i}{v}}, \qquad v \in \R^d .

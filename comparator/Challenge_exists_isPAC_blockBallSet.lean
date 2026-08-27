@@ -18,6 +18,12 @@ import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.Data.Fintype.Order
+import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Normed.Group.Pointwise
+import Mathlib.Topology.Order.Compact
 
 /-! # Standalone extraction for `COLT83.exists_isPAC_blockBallSet`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.
@@ -160,7 +166,7 @@ def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
 end Learning
 end
 
--- ═══ Mathlib.MeasurableSigma ═══
+-- ═══ Mathlib.MeasureTheory.MeasurableSpace.Sigma ═══
 section
 open MeasurableSpace
 variable {α γ : Type*} {β : α → Type*} [∀ a, MeasurableSpace (β a)] [MeasurableSpace γ]

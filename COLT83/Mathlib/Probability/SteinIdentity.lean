@@ -41,8 +41,9 @@ namespace ProbabilityTheory
 
 section integrability
 
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
-  [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [IsGaussian μ] {F : E → ℝ} {L : ℝ}
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+  [SecondCountableTopology E] [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [IsGaussian μ]
+  {F : E → ℝ} {L : ℝ}
 
 /-- `⟪a, x⟫ F x` is integrable under a Gaussian measure when `F` is `C¹` with bounded
 derivative. -/
@@ -59,6 +60,14 @@ lemma IsGaussian.integrable_inner_mul_of_norm_fderiv_le (hF : ContDiff ℝ 1 F)
           (by positivity)
     _ = 0 + ‖a‖ * |F 0| * ‖x‖ + ‖a‖ * L * ‖x‖ ^ 2 := by ring
 
+end integrability
+
+section integrabilityNormed
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+  [SecondCountableTopology E] [MeasurableSpace E] [BorelSpace E] {μ : Measure E} [IsGaussian μ]
+  {F : E → ℝ} {L : ℝ}
+
 /-- `DF(x) a` is integrable under a Gaussian measure when `F` is `C¹` with bounded
 derivative. -/
 lemma IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le (hF : ContDiff ℝ 1 F)
@@ -70,7 +79,7 @@ lemma IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le (hF : ContDiff ℝ 1 
       exact (ContinuousLinearMap.le_opNorm _ _).trans
         (mul_le_mul_of_nonneg_right (hL x) (norm_nonneg _))
 
-end integrability
+end integrabilityNormed
 
 section euclidean
 

@@ -5,7 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import COLT83.Mathlib.GaussianWidth
+public import COLT83.Mathlib.Analysis.InnerProductSpace.SupportFn
+public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 
 /-!
 # Measurable approximate argmax selectors

@@ -1,6 +1,12 @@
 import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.Data.Fintype.Order
+import Mathlib.Analysis.Convex.Function
+import Mathlib.Analysis.Normed.Group.Pointwise
+import Mathlib.Topology.Order.Compact
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
@@ -21,7 +27,6 @@ import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.MeasureTheory.Integral.Pi
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Fintype.Lattice
-import Mathlib.Data.Fintype.Order
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Order.ConditionallyCompleteLattice.Finset
 import Mathlib.Probability.Moments.SubGaussian
@@ -194,9 +199,9 @@ def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
 end Learning
 end
 
--- ═══ Mathlib.GaussianWidth ═══
+-- ═══ Mathlib.Analysis.InnerProductSpace.SupportFn ═══
 section
-open MeasureTheory Set
+open Set
 open scoped RealInnerProductSpace Pointwise NNReal
 section SupportFn
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
@@ -206,6 +211,12 @@ noncomputable def supportFn (K : Set E) (ξ : E) : ℝ := ⨆ x : K, ⟪(x : E),
 
 variable {K K' : Set E} {R : ℝ} {ξ : E}
 end SupportFn
+end
+
+-- ═══ Mathlib.Probability.GaussianWidth ═══
+section
+open MeasureTheory Set
+open scoped RealInnerProductSpace Pointwise NNReal
 namespace ProbabilityTheory
 section GaussianWidth
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {mE : MeasurableSpace E} [OpensMeasurableSpace E] {μ ν : Measure E} {K K' : Set E} {R : ℝ}
