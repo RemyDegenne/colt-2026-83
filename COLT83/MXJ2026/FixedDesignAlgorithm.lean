@@ -36,11 +36,6 @@ namespace COLT83
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {𝒳 : Set (EuclideanSpace ℝ ι)} {T : ℕ}
 
-/-- The least-squares estimator is continuous in the observations. -/
-lemma continuous_leastSquares (x : Fin T → EuclideanSpace ℝ ι) : Continuous (leastSquares x) :=
-  (Matrix.toEuclideanCLM (𝕜 := ℝ) _).continuous.comp
-    (continuous_finsetSum _ fun t _ ↦ (continuous_apply t).smul continuous_const)
-
 /-- The recommendation rule of the fixed-design algorithm: least squares on the observations of
 the history, then the selector `s`. -/
 noncomputable def lsRecommend (T : ℕ) (x : ℕ → 𝒳) (s : EuclideanSpace ℝ ι → 𝒳)
@@ -69,15 +64,8 @@ lemma isFixedDesign_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixed
 
 lemma output_fixedDesignIdentAlg :
     (fixedDesignIdentAlg T x s hs).output T =
-      Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs) := by
-  change (if h : T = T then (Kernel.deterministic (lsRecommend T x s)
-    (measurable_lsRecommend T x hs)).comap
-      (fun (y : Fin T → 𝒳 × ℝ) (i : Fin T) ↦ y (Fin.cast h.symm i)) (by fun_prop)
-    else 0) = _
-  split_ifs with h
-  · ext y u _
-    simp [Kernel.deterministic_apply]
-  · exact absurd rfl h
+      Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs) :=
+  IdentAlg.output_fixedBudget _ _ _
 
 /-- **Fixed-design upper bound** (blueprint `thm:upper`, general form): the fixed-design
 algorithm with design `x`, design matrix `Σ = ∑ t < T, x t x tᵀ ≻ 0`, `xᵀ Σ⁻¹ x ≤ σ²` on `𝒳`, an

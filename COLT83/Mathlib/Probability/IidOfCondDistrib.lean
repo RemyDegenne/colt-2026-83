@@ -18,6 +18,10 @@ If `W 0` has law `ν` and, for every `n`, the conditional law of `W (n + 1)` giv
 `n` (`hasLaw_pi_of_hasCondDistrib_const`), hence the `W i` are independent with law `ν`
 (`iIndepFun_of_hasCondDistrib_const`). The conditioning variable can be replaced by any variable
 of which `(W 0, …, W n)` is a measurable function (`HasCondDistrib.const_comp_right`).
+With an additional conditioning variable `Z` (`hasCondDistrib_pi_of_hasCondDistrib_const`):
+if the conditional law of `W k` given `(Z, W 0, …, W (k - 1))` is the constant `ν` for every `k`,
+then `(W 0, …, W (n - 1))` has the constant conditional law `ν^n` given `Z`, i.e. it is
+independent of `Z` with law `ν^n`.
 
 This is the abstract form of "the noise of a sequential experiment is i.i.d.", used for the
 noise of a linear Gaussian bandit run.
@@ -101,5 +105,66 @@ lemma iIndepFun_of_hasCondDistrib_const (h0 : HasLaw (W 0) ν P)
     (n : ℕ) : iIndepFun (fun i : Fin n ↦ W i) P :=
   (iIndepFun_iff_hasLaw_pi_pi (X := fun i : Fin n ↦ W i)
     fun i ↦ hasLaw_of_hasCondDistrib_const h0 h i).2 (hasLaw_pi_of_hasCondDistrib_const h0 h n)
+
+section conditional
+
+variable {Z : Ω → 𝓩}
+
+/-- **A sequence with a constant conditional law given `Z` is i.i.d. and independent of `Z`**:
+if for every `k` the conditional law of `W k` given `(Z, W 0, …, W (k - 1))` is the constant `ν`,
+then the conditional law of `(W 0, …, W (n - 1))` given `Z` is the constant product law `ν^n`. -/
+lemma hasCondDistrib_pi_of_hasCondDistrib_const (hZ : AEMeasurable Z P)
+    (h : ∀ k, HasCondDistrib (W k) (fun ω ↦ (Z ω, fun i : Fin k ↦ W i ω)) (Kernel.const _ ν) P)
+    (n : ℕ) :
+    HasCondDistrib (fun ω (i : Fin n) ↦ W i ω) Z (Kernel.const _ (Measure.pi fun _ ↦ ν)) P := by
+  induction n with
+  | zero =>
+    have hvec : (fun ω (i : Fin 0) ↦ W i ω) = fun _ ↦ (isEmptyElim : Fin 0 → β) := by
+      funext ω i
+      exact i.elim0
+    unfold HasCondDistrib
+    rw [hvec, Measure.compProd_const, Measure.pi_of_empty, Measure.prod_dirac]
+    refine ⟨hZ.prodMk aemeasurable_const, ?_⟩
+    rw [AEMeasurable.map_map_of_aemeasurable (by fun_prop) hZ]
+    rfl
+  | succ n ih =>
+    -- the law of `((Z, (W 0, …, W (n - 1))), W n)`
+    have h1 : HasLaw (fun ω ↦ ((Z ω, fun i : Fin n ↦ W i ω), W n ω))
+        (((P.map Z).prod (Measure.pi fun _ : Fin n ↦ ν)).prod ν) P := by
+      have h2 : HasLaw (fun ω ↦ (Z ω, fun i : Fin n ↦ W i ω))
+          ((P.map Z).prod (Measure.pi fun _ : Fin n ↦ ν)) P := by
+        have := ih
+        unfold HasCondDistrib at this
+        rwa [Measure.compProd_const] at this
+      have h3 := h2.prodMk_of_hasCondDistrib (h n)
+      rwa [Measure.compProd_const] at h3
+    -- transport through `((z, v), w) ↦ (z, (w, v))` and `piFinSuccAbove`
+    set e := MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) ↦ β) (Fin.last n) with he
+    have hpres : MeasurePreserving
+        (fun p : (𝓩 × (Fin n → β)) × β ↦ (p.1.1, e.symm (p.2, p.1.2)))
+        (((P.map Z).prod (Measure.pi fun _ : Fin n ↦ ν)).prod ν)
+        ((P.map Z).prod (Measure.pi fun _ : Fin (n + 1) ↦ ν)) := by
+      have h3 := measurePreserving_prodAssoc (P.map Z) (Measure.pi fun _ : Fin n ↦ ν) ν
+      have h5 : MeasurePreserving e.symm (ν.prod (Measure.pi fun _ : Fin n ↦ ν))
+          (Measure.pi fun _ : Fin (n + 1) ↦ ν) :=
+        (measurePreserving_piFinSuccAbove (fun _ : Fin (n + 1) ↦ ν) (Fin.last n)).symm e
+      have h6 : MeasurePreserving (fun q : (Fin n → β) × β ↦ e.symm (q.2, q.1))
+          ((Measure.pi fun _ : Fin n ↦ ν).prod ν) (Measure.pi fun _ : Fin (n + 1) ↦ ν) :=
+        h5.comp Measure.measurePreserving_swap
+      exact ((MeasurePreserving.id (P.map Z)).prod h6).comp h3
+    have hcomp : e ∘ (fun ω (i : Fin (n + 1)) ↦ W i ω) =
+        fun ω ↦ (W n ω, fun i : Fin n ↦ W i ω) := by
+      funext ω
+      rw [Function.comp_apply, he, MeasurableEquiv.piFinSuccAbove_apply]
+      exact Prod.ext (by simp) (funext fun i ↦ by simp [Fin.init])
+    unfold HasCondDistrib
+    rw [Measure.compProd_const]
+    refine (hpres.comp_hasLaw h1).congr (Filter.Eventually.of_forall fun ω ↦ ?_)
+    have h5 : e.symm (W n ω, fun i : Fin n ↦ W i ω) = fun i : Fin (n + 1) ↦ W i ω := by
+      rw [MeasurableEquiv.symm_apply_eq]
+      exact (congrFun hcomp ω).symm
+    rw [Function.comp_apply, h5]
+
+end conditional
 
 end ProbabilityTheory

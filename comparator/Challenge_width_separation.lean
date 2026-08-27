@@ -37,8 +37,13 @@ import Mathlib.Analysis.Calculus.ContDiff.Comp
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.Calculus.ContDiff.Operations
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.Calculus.FDeriv.Prod
 import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Algebra.Order.Ring.Abs
 import Mathlib.Analysis.Calculus.ParametricIntegral
 import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Mathlib.Analysis.Calculus.FDeriv.Equiv
@@ -71,6 +76,8 @@ statement rests on vendored in below, so that this file is self-contained over M
 set_option quotPrecheck false
 
 -- Namespace stubs (so later `open`s resolve).
+namespace Set
+end Set
 namespace MeasureTheory
 end MeasureTheory
 namespace ProbabilityTheory
@@ -79,6 +86,8 @@ namespace Matrix
 end Matrix
 namespace COLT83
 end COLT83
+namespace Real
+end Real
 
 -- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,

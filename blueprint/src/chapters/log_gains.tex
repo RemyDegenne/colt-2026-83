@@ -38,7 +38,8 @@ spanning hypothesis is what makes the $G$-optimal design of
 Theorem~\ref{thm:kiefer_wolfowitz} available; it is repeated in each statement.
 
 \begin{definition}[Region-based adaptive algorithm]\label{def:region_algorithm}
-\uses{def:bai_alg, def:regionalized_width, thm:kiefer_wolfowitz, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:median_elimination, cor:median_elimination_linear, lem:composition}
+\lean{COLT83.regionCandidates, COLT83.regionAlg, COLT83.start_regionAlg}\leanok
+\uses{def:bai_alg, def:regionalized_width, thm:kiefer_wolfowitz, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:median_elimination, cor:median_elimination_linear, lem:composition, lem:phased}
 Let $\Xs$ be a finite spanning action set and let $\mathcal R = (R_1,\dots,R_K)$, $K \ge 1$,
 be a partition of $\Xs$ into nonempty subsets. Let $\lambda_G \in \simplex_{\Xs}$ and
 $A_G = A(\lambda_G) \succ 0$ be the $G$-optimal design of Theorem~\ref{thm:kiefer_wolfowitz}
@@ -69,15 +70,19 @@ The recommendation is $\rec := x^{(\hat a)}$. The budget is the deterministic nu
 $T := T_1 + N_{ME}(K, \eps/2, \delta/2)$.
 \end{definition}
 
-\textbf{Lean remark.} Phase~(2) is the algorithm $\mathrm{alg}_2(h)$ of
-Lemma~\ref{lem:composition}: it depends on the phase-(1) history $h$ only through the finite
-list of candidates $(x^{(i)})_{i\le K}$, which is a measurable function of $\hat\theta(h)$,
-itself a linear function of $y$. The fixed design of phase~(1) is obtained from the existence
-statement of Theorem~\ref{thm:rounding} by choice. The final recommendation kernel is
-deterministic: it maps the full history to $x^{(\hat a)}$, where both the candidates and
-$\hat a$ are functions of the history.
+\textbf{Lean remark.} The region algorithm is the phased algorithm (Lemma~\ref{lem:phased})
+\texttt{regionAlg}, obtained by prepending to Median Elimination on the state $(c, S)$
+(Definition~\ref{def:median_elimination}, \texttt{PhasedAlg.cons}) a first phase of length $T_1$
+which plays the design $x$ and whose observations $y$ set the state to
+$(\,(s_i(\hat\theta(y)))_{i \le K},\ \mathrm{Fin}\,K\,)$ (\texttt{regionCandidates}); the regions
+need only cover $\Xs$ (they need not be disjoint). The fixed design of phase~(1) is obtained
+from the existence statement of Theorem~\ref{thm:rounding} by choice, in
+Corollary~\ref{cor:log_gains_exists}. The recommendation is the surviving candidate
+(\texttt{MedianElim.meOut}) and the budget is
+$T_1 + N_{\mathrm{ME}}(K,\eps/2,\delta/2)$ (\texttt{start\_regionAlg}).
 
 \begin{lemma}[Width of a region under a scalar Loewner bound]\label{lem:log_gains_region_width_bound}
+\lean{COLT83.gwMat_le_of_smul_le}\leanok
 \uses{def:width_matrix, lem:width_matrix_wd}
 Let $R \subset \R^d$ be nonempty and compact (typically a region of a partition of $\Xs$),
 $A, B \in \PD$ and $c > 0$ with $B \succeq cA$. Then, in the notation of
@@ -92,7 +97,9 @@ Lemma~\ref{lem:width_matrix_wd}),
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:width_mono, lem:width_homog}
+(Formalized for $c = T/4$, the case of the rounding theorem.)
 Both lemmas invoked below are stated in Chapter~\ref{chap:model} for an arbitrary nonempty
 compact index set, here $R$. Since $cA \in \PD$ and $cA \preceq B$, Lemma~\ref{lem:width_mono}
 (monotonicity in the Loewner order, index set $R$) gives $\gwidth{R}{B} \le \gwidth{R}{cA}$,
@@ -101,6 +108,7 @@ $\gwidth{R}{cA} = c^{-1/2}\gwidth{R}{A}$.
 \end{proof}
 
 \begin{lemma}[The candidate of the optimal region is good]\label{lem:region_phase1}
+\lean{COLT83.one_sub_le_measureReal_regionCandidates, COLT83.region_phase1_arith}\leanok
 \uses{def:region_algorithm}
 Let $\Xs$ be a finite spanning action set and $\mathcal R$ a partition of $\Xs$ as in
 Definition~\ref{def:region_algorithm}.
@@ -114,7 +122,15 @@ algorithm satisfies
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{cor:fixed_design_from_distribution, cor:g_optimal_norm_bound, lem:least_squares_law, lem:log_gains_region_width_bound, cor:sup_bound_symmetric, lem:width_matrix_wd}
+(In Lean the statement is about the noise of the first phase: the observations are
+$\ip{x_t}{\theta} + \eta_t$ with $\eta \sim \Normal(0, I_{T_1})$, and the conclusion holds with
+probability at least $1 - \delta'$ over $\eta$ for any design with $\Sigma_{T_1} \succ 0$,
+$\norm{x}^2_{\Sigma_{T_1}^{-1}} \le \sigma^2$ on $\Xs$ and
+$2\gwidth{R_i}{\Sigma_{T_1}} + 2\sigma\sqrt{2\cG\log(1/\delta')} \le \eps'$ for all $i$;
+the arithmetic below is \texttt{region\_phase1\_arith}.)
+
 Let $\Delta := \hat\theta - \theta$ and $D := \max_{x,x'\in R_{i_*}}\ip{x-x'}{\Delta}$.
 
 \emph{Deterministic step.} Since $x^{(i_*)}$ maximizes $\ip{\cdot}{\hat\theta}$ over
@@ -164,15 +180,31 @@ by the choice $T_1 \ge 640(w_{\mathcal R}^2 + d\log(4/\delta))/\eps^2$. Hence $D
 on the good event.
 \end{proof}
 
+\begin{lemma}[Covering a finite set by small regions]\label{lem:cover_regions}
+\lean{Set.exists_cover_ncard_le}\leanok
+A finite set of $m \ge d \ge 1$ elements is covered by $d$ nonempty subsets of at most
+$\lfloor m/d\rfloor + 1$ elements each.
+\end{lemma}
+
+\begin{proof}
+\leanok
+Enumerate the set as $y_0, \dots, y_{m-1}$ and let the $i$-th region be
+$\{y_k : k \equiv i \pmod d\}$; it is nonempty since $i < d \le m$ and has at most
+$\lfloor m/d\rfloor + 1$ elements.
+\end{proof}
+
 \begin{theorem}[Theorem~6 of the paper]\label{thm:log_gains}
+\lean{COLT83.isPAC_regionAlg, COLT83.regionGood, COLT83.logGains_budget_arith}\leanok
 \uses{def:region_algorithm, def:pac}
 Let $\Xs$ be a finite spanning action set, $\eps\in(0,1]$, $\delta\in(0,1)$.
 \begin{enumerate}
-  \item[(i)] For every partition $\mathcal R = (R_1,\dots,R_K)$ of $\Xs$, the region
+  \item[(i)] For every family $\mathcal R = (R_1,\dots,R_K)$ of nonempty subsets covering
+        $\Xs$, the region
         algorithm of Definition~\ref{def:region_algorithm} is $(\eps,\delta)$-PAC on $\Xs$,
         with budget $T_1 + N_{ME}(K,\eps/2,\delta/2)$.
-  \item[(ii)] Let $m := \abs\Xs$, $K := d$, and let $\mathcal R$ be a partition of $\Xs$ into
-        $d$ nonempty regions of size at most $\lceil m/d\rceil$ (it exists since $m \ge d$).
+  \item[(ii)] Let $m := \abs\Xs$, $K := d$, and let $\mathcal R$ be a family of
+        $d$ nonempty subsets covering $\Xs$, of size at most $p := \lfloor m/d\rfloor + 1$
+        (it exists since $m \ge d$, Lemma~\ref{lem:cover_regions}).
         Then the budget of the region algorithm satisfies
         \[
           T \le C_{\mathrm{reg}}\ \frac{d\,\big(\log((m/d)_+) + \log(4/\delta)\big)}{\eps^2},
@@ -194,13 +226,25 @@ $C_{\mathrm{reg}} = 1281 + 6C_{ME} = 97281$, and an identification algorithm wit
 $(\eps,\delta)$-PAC on $\Xs$.
 \end{corollary}
 \begin{proof}
-\uses{thm:log_gains, lem:me_budget}
+\leanok
+\uses{thm:log_gains, lem:me_budget, lem:cover_regions, thm:kiefer_wolfowitz, thm:rounding}
 Take the region algorithm of Theorem~\ref{thm:log_gains}(ii); its budget is bounded by (ii)
-with $C_{ME} = 16000$ from Lemma~\ref{lem:me_budget}.
+with $C_{ME} = 16000$ from Lemma~\ref{lem:me_budget}. (In Lean the case $d = 0$ is handled
+separately, as in Corollary~\ref{cor:upper_exists}.)
 \end{proof}
 
 \begin{proof}
-\uses{lem:region_phase1, cor:median_elimination_linear, lem:composition, lem:me_budget, prop:width_partition}
+\leanok
+\uses{lem:region_phase1, cor:median_elimination_linear, lem:composition, lem:me_budget, prop:width_partition, lem:phased, lem:cover_regions}
+\textbf{Lean.} (i) is \texttt{isPAC\_regionAlg}, by the phase-by-phase analysis of
+Lemma~\ref{lem:phased} with the good states \texttt{regionGood}: after the first phase, the
+surviving set is $\mathrm{Fin}\,K$ and some candidate is $\eps/2$-optimal
+(Lemma~\ref{lem:region_phase1}); each round of Median Elimination preserves the goodness
+(Lemma~\ref{lem:me_round}) with the target value $\max_x\ip{x}{\theta} - \eps/2$; the final
+surviving candidate has regret at most $\eps/2 + \sum_\ell \eps_\ell(\eps/2) \le \eps$. The
+failure probabilities $\delta/2 + \sum_\ell \delta_\ell(\delta/2) \le \delta$ add up over the phases.
+(ii) is the arithmetic \texttt{logGains\_budget\_arith} with $p = \lfloor m/d\rfloor + 1 \le 2(m/d)_+$.
+
 (i) Fix $\theta$, $x_\star$ and $i_*$ as in Lemma~\ref{lem:region_phase1}. Let $E_1$ be the
 event $\{\ip{x^{(i_*)}}{\theta} \ge \max_x\ip{x}{\theta} - \eps/2\}$, which depends on the
 phase-(1) history only and has probability at least $1-\delta/2$
@@ -219,9 +263,9 @@ $\Prob_\theta(E_1 \cap E_2(\hist_{T_1})) \ge 1 - \delta$. On this event,
 i.e.\ $r(\rec,\theta) \le \eps$. Since $\theta$ is arbitrary, the algorithm is
 $(\eps,\delta)$-PAC.
 
-(ii) \emph{Phase (1).} By Proposition~\ref{prop:width_partition} with $p = \lceil m/d\rceil$,
-$w_{\mathcal R}^2 \le 2d\log\lceil m/d\rceil$. Now $\lceil u\rceil = 1$ for $u \le 1$ and
-$\lceil u\rceil \le 2u$ for $u \ge 1$, so $\log\lceil m/d\rceil \le \log((m/d)_+) + \log 2$.
+(ii) \emph{Phase (1).} By Proposition~\ref{prop:width_partition} with $p = \lfloor m/d\rfloor + 1$,
+$w_{\mathcal R}^2 \le 2d\log p$. Now $\lfloor m/d\rfloor \ge 1$ since $m \ge d$, so
+$p \le 2\lfloor m/d\rfloor \le 2 (m/d)_+$ and $\log p \le \log((m/d)_+) + \log 2$.
 Hence, using $2\log 2 = \log 4 \le \log(4/\delta)$,
 \[
   T_1 \le \frac{640\big(2d\log((m/d)_+) + 2d\log2 + d\log(4/\delta)\big)}{\eps^2} + 1

@@ -19,7 +19,9 @@ For any algorithm run in the linear Gaussian environment with reward vector `θ`
 (`IsAlgEnvSeq.hasCondDistrib_noise_finVec`), hence the noise vector `(noise 0, …, noise (n-1))`
 has the product law `N(0,1)^n` (`IsAlgEnvSeq.hasLaw_noise_finVec`), the noises are independent
 (`IsAlgEnvSeq.iIndepFun_noise`) and, as a vector of `EuclideanSpace ℝ (Fin n)`, the noise is
-standard Gaussian (`IsAlgEnvSeq.hasLaw_toLp_noise_finVec`).
+standard Gaussian (`IsAlgEnvSeq.hasLaw_toLp_noise_finVec`). More generally the noises of the
+rounds `m, …, m + n - 1` are i.i.d. `N(0,1)` conditionally on the history of the first `m` rounds,
+i.e. independent of the past (`IsAlgEnvSeq.hasCondDistrib_noise_window`).
 
 Under a fixed design `fixedDesignAlg x`, the actions are `x t` almost surely and the observation
 vector `(Y 0, …, Y (n-1))` is `(⟪x t, θ⟫)_t` plus the noise vector
@@ -77,6 +79,41 @@ lemma _root_.Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec (n : ℕ) :
   rw [← map_pi_eq_stdGaussian]
   exact (⟨(WithLp.measurable_toLp 2 _).aemeasurable, rfl⟩ :
     HasLaw (WithLp.toLp 2) _ _).comp (h.hasLaw_noise_finVec n)
+
+/-- **The future noise is independent of the past**: conditionally on the history of the first
+`m` rounds, the noises of the rounds `m, …, m + n - 1` are i.i.d. `N(0, 1)`. -/
+lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise_window (m n : ℕ) :
+    HasCondDistrib (fun ω (j : Fin n) ↦ noise θ X Y (m + j) ω) (finHistory X Y m)
+      (Kernel.const _ (Measure.pi fun _ ↦ gaussianReal 0 1)) P := by
+  have hX := h.measurable_action
+  have hY := h.measurable_feedback
+  have hfin : Measurable (finHistory X Y m) := by unfold finHistory; fun_prop
+  refine hasCondDistrib_pi_of_hasCondDistrib_const (P := P) (ν := gaussianReal 0 1)
+    (Z := finHistory X Y m) (W := fun k ↦ noise θ X Y (m + k)) hfin.aemeasurable (fun k ↦ ?_) n
+  rcases Nat.eq_zero_or_pos (m + k) with hmk | hmk
+  · obtain ⟨rfl, rfl⟩ : m = 0 ∧ k = 0 := by omega
+    have hf0 : Measurable fun _ : 𝒳 ↦ ((fun i : Fin 0 ↦ i.elim0 : Fin 0 → 𝒳 × ℝ),
+        (fun i : Fin 0 ↦ i.elim0 : Fin 0 → ℝ)) := measurable_const
+    have h0 := h.hasCondDistrib_noise_zero.const_comp_right hf0
+    have heq : (fun ω ↦ (finHistory X Y 0 ω, fun i : Fin 0 ↦ noise θ X Y (0 + i) ω)) =
+        (fun _ : 𝒳 ↦ ((fun i : Fin 0 ↦ i.elim0 : Fin 0 → 𝒳 × ℝ),
+          (fun i : Fin 0 ↦ i.elim0 : Fin 0 → ℝ))) ∘ X 0 := by
+      funext ω
+      exact Prod.ext (funext fun i ↦ i.elim0) (funext fun i ↦ i.elim0)
+    rw [heq]
+    exact h0
+  · have h1 := h.hasCondDistrib_noise (m + k - 1)
+    rw [show m + k - 1 + 1 = m + k by omega] at h1
+    have hf : Measurable fun p : (Iic (m + k - 1) → 𝒳 × ℝ) × 𝒳 ↦
+        ((fun i : Fin m ↦ p.1 ⟨i, Finset.mem_Iic.2 (by omega)⟩),
+          fun i : Fin k ↦ (p.1 ⟨m + i, Finset.mem_Iic.2 (by omega)⟩).2 -
+            ⟪((p.1 ⟨m + i, Finset.mem_Iic.2 (by omega)⟩).1 : E), θ⟫) := by
+      have h2 : ∀ i (hi : i ∈ Iic (m + k - 1)), Measurable fun p : (Iic (m + k - 1) → 𝒳 × ℝ) × 𝒳 ↦
+          p.1 ⟨i, hi⟩ := fun i hi ↦ (measurable_pi_apply _).comp measurable_fst
+      refine (measurable_pi_lambda _ fun i ↦ h2 _ _).prodMk (measurable_pi_lambda _ fun i ↦ ?_)
+      exact (h2 _ _).snd.sub ((continuous_id.inner continuous_const).measurable.comp
+        (measurable_subtype_coe.comp (h2 _ _).fst))
+    exact h1.const_comp_right hf
 
 end noise
 

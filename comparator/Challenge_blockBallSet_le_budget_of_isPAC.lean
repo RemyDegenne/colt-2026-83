@@ -46,6 +46,8 @@ namespace Learning.LinearBandit
 end Learning.LinearBandit
 namespace COLT83
 end COLT83
+namespace Real
+end Real
 
 -- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,

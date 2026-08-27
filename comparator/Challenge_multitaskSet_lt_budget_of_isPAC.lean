@@ -7,11 +7,20 @@ import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Convex.Hull
-import Mathlib.LinearAlgebra.Matrix.PosDef
-import Mathlib.Topology.Instances.Matrix
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Data.Set.Card
+import Mathlib.Data.Set.Finite.Lemmas
+import Mathlib.Order.Interval.Finset.Nat
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.Distributions.Gaussian.Fernique
@@ -24,24 +33,34 @@ import Mathlib.Data.Fintype.Order
 import Mathlib.Analysis.Convex.Function
 import Mathlib.Analysis.Normed.Group.Pointwise
 import Mathlib.Topology.Order.Compact
-import Mathlib.Logic.Equiv.Prod
-import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Data.Fintype.Prod
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Probability.Moments.SubGaussian
-import Mathlib.Analysis.Convex.Integral
-import Mathlib.Analysis.SpecialFunctions.Exp
-import Mathlib.Data.Fintype.Lattice
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Order.ConditionallyCompleteLattice.Finset
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Analysis.Matrix.PosDef
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.Calculus.ContDiff.Operations
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.Calculus.FDeriv.Prod
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Algebra.Order.Ring.Abs
 import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
 import Mathlib.Analysis.Calculus.ContDiff.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Comp
-import Mathlib.Analysis.Convex.Caratheodory
-import Mathlib.Analysis.Convex.StdSimplex
-import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+import Mathlib.Probability.Independence.Basic
+import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.Probability.Kernel.Composition.MeasureComp
 import Mathlib.Probability.Kernel.Composition.Comp
 import Mathlib.InformationTheory.KullbackLeibler.Basic
@@ -53,8 +72,28 @@ import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
 import Mathlib.Probability.Kernel.Composition.RadonNikodym
 import Mathlib.Probability.Kernel.MeasurableLIntegral
 import Mathlib.Probability.Kernel.RadonNikodym
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.Real.Sqrt
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Data.Nat.Cast.Order.Field
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Fintype.Lattice
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Order.ConditionallyCompleteLattice.Finset
+import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
+import Mathlib.Data.Finset.Sort
+import Mathlib.Data.Prod.Lex
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
+import Mathlib.Algebra.Order.Field.GeomSum
+import Mathlib.Analysis.SpecificLimits.Basic
+import Mathlib.Logic.Equiv.Prod
+import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Probability.Distributions.Bernoulli
+import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
+import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 import Mathlib.Algebra.BigOperators.Sym
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Data.Finset.Powerset
@@ -80,6 +119,12 @@ namespace Learning.LinearBandit
 end Learning.LinearBandit
 namespace COLT83
 end COLT83
+namespace Real
+end Real
+namespace Learning.MedianElim
+end Learning.MedianElim
+namespace Matrix
+end Matrix
 
 -- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,
@@ -353,7 +398,8 @@ end
 
 -- ═══ MXJ2026.LogGains ═══
 section
-open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit
+open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit Learning.MedianElim Matrix
+open scoped RealInnerProductSpace NNReal MatrixOrder
 namespace COLT83
 variable {ι : Type*} [Fintype ι]
 

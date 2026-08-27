@@ -41,8 +41,12 @@ import Mathlib.Tactic.Positivity
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 import Mathlib.Analysis.Calculus.Gradient.Basic
 import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.Calculus.ContDiff.Operations
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.Calculus.FDeriv.Prod
 import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Algebra.Order.Ring.Abs
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.MeasureTheory.Integral.Prod
@@ -86,10 +90,14 @@ namespace Learning.IdentAlg
 end Learning.IdentAlg
 namespace Learning.LinearBandit
 end Learning.LinearBandit
+namespace Set
+end Set
 namespace Matrix
 end Matrix
 namespace COLT83
 end COLT83
+namespace Real
+end Real
 
 -- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,

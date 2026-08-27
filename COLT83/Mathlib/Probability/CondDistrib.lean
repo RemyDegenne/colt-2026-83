@@ -22,7 +22,9 @@ sequential-learning developments:
   conditional law given any measurable function of `Z`;
 * `hasCondDistrib_snd_compProd_comap`: the conditional law of the second coordinate under
   `μ ⊗ₘ η.comap f`, and the transport `map_prodMk_compProd_comap`,
-  `map_snd_compProd_comap` of that measure along `f`.
+  `map_snd_compProd_comap` of that measure along `f`;
+* `HasCondDistrib.measureReal_le_mul`, `HasCondDistrib.measureReal_sub_le`: a uniform bound on
+  the conditional probability of an event given `Z` bounds its probability (Fubini).
 -/
 
 @[expose] public section
@@ -134,5 +136,69 @@ lemma map_snd_compProd_comap (μ : Measure α) [SFinite μ] (η : Kernel β γ) 
   rfl
 
 end compProd
+
+section bound
+
+variable {Ω β 𝓩 : Type*} {mΩ : MeasurableSpace Ω} {mβ : MeasurableSpace β}
+  {m𝓩 : MeasurableSpace 𝓩} {P : Measure Ω} [IsFiniteMeasure P] {W : Ω → β} {Z : Ω → 𝓩}
+  {κ : Kernel 𝓩 β} {G : Set 𝓩} {G' : Set (𝓩 × β)} {δ : ℝ}
+
+/-- If the conditional law of `W` given `Z` is `κ` and, for every `z` in the measurable set `G`,
+the section of the measurable set `G'` at `z` has `κ z`-probability at most `δ`, then
+`P(Z ∈ G, (Z, W) ∈ G') ≤ δ P(Z ∈ G)`. -/
+lemma HasCondDistrib.measureReal_le_mul [IsFiniteKernel κ] (h : HasCondDistrib W Z κ P)
+    (hG : MeasurableSet G) (hG' : MeasurableSet G') (hδ0 : 0 ≤ δ)
+    (hδ : ∀ z ∈ G, (κ z).real (Prod.mk z ⁻¹' G') ≤ δ) :
+    P.real (Z ⁻¹' G ∩ (fun ω ↦ (Z ω, W ω)) ⁻¹' G') ≤ δ * P.real (Z ⁻¹' G) := by
+  have hS : MeasurableSet ((G ×ˢ Set.univ) ∩ G') := (hG.prod MeasurableSet.univ).inter hG'
+  have h1 : Z ⁻¹' G ∩ (fun ω ↦ (Z ω, W ω)) ⁻¹' G' =
+      (fun ω ↦ (Z ω, W ω)) ⁻¹' ((G ×ˢ Set.univ) ∩ G') := by
+    ext ω
+    simp
+  have h2 : ∀ z, κ z (Prod.mk z ⁻¹' ((G ×ˢ Set.univ) ∩ G')) =
+      G.indicator (fun z ↦ κ z (Prod.mk z ⁻¹' G')) z := fun z ↦ by
+    by_cases hz : z ∈ G
+    · rw [Set.indicator_of_mem hz]
+      congr 1
+      ext w
+      simp [hz]
+    · rw [Set.indicator_of_notMem hz]
+      convert measure_empty (μ := κ z)
+      ext w
+      simp [hz]
+  rw [h1, measureReal_def, measureReal_def,
+    ← Measure.map_apply_of_aemeasurable h.aemeasurable_fst hG,
+    ← Measure.map_apply_of_aemeasurable h.aemeasurable hS, h.map_eq, Measure.compProd_apply hS]
+  simp_rw [h2]
+  rw [lintegral_indicator hG, ← ENNReal.toReal_ofReal hδ0, ← ENNReal.toReal_mul]
+  refine ENNReal.toReal_mono (ENNReal.mul_ne_top ENNReal.ofReal_ne_top (measure_ne_top _ _)) ?_
+  rw [← setLIntegral_const]
+  refine setLIntegral_mono' hG fun z hz ↦ ?_
+  rw [← ENNReal.ofReal_toReal (measure_ne_top (κ z) _)]
+  exact ENNReal.ofReal_le_ofReal (hδ z hz)
+
+/-- If the conditional law of `W` given `Z` is `κ` and, for every `z` in the measurable set `G`,
+the section of the measurable set `G'` at `z` has `κ z`-probability at least `1 - δ`, then
+`P((Z, W) ∈ G') ≥ P(Z ∈ G) - δ`. -/
+lemma HasCondDistrib.measureReal_sub_le [IsProbabilityMeasure P] [IsMarkovKernel κ]
+    (h : HasCondDistrib W Z κ P) (hG : MeasurableSet G) (hG' : MeasurableSet G') (hδ0 : 0 ≤ δ)
+    (hδ : ∀ z ∈ G, 1 - δ ≤ (κ z).real (Prod.mk z ⁻¹' G')) :
+    P.real (Z ⁻¹' G) - δ ≤ P.real ((fun ω ↦ (Z ω, W ω)) ⁻¹' G') := by
+  have h1 := h.measureReal_le_mul hG hG'.compl hδ0 fun z hz ↦ by
+    rw [Set.preimage_compl, measureReal_compl (measurable_prodMk_left hG'), probReal_univ]
+    linarith [hδ z hz]
+  have h2 : P.real (Z ⁻¹' G) ≤ P.real (Z ⁻¹' G ∩ (fun ω ↦ (Z ω, W ω)) ⁻¹' G') +
+      P.real (Z ⁻¹' G ∩ (fun ω ↦ (Z ω, W ω)) ⁻¹' G'ᶜ) := by
+    refine (measureReal_mono ?_).trans (measureReal_union_le _ _)
+    intro ω hω
+    by_cases hω' : (Z ω, W ω) ∈ G' <;> simp [hω]
+  have h3 : P.real (Z ⁻¹' G ∩ (fun ω ↦ (Z ω, W ω)) ⁻¹' G') ≤
+      P.real ((fun ω ↦ (Z ω, W ω)) ⁻¹' G') := measureReal_mono Set.inter_subset_right
+  have h4 : δ * P.real (Z ⁻¹' G) ≤ δ := by
+    calc δ * P.real (Z ⁻¹' G) ≤ δ * 1 := by gcongr; exact measureReal_le_one
+      _ = δ := mul_one δ
+  linarith
+
+end bound
 
 end ProbabilityTheory

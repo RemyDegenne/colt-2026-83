@@ -33,6 +33,17 @@ sample complexity are not in LML. The empirical means used by the algorithm are 
 averages (not the cumulative \texttt{empMean}), so a small variant of \texttt{empMean}
 restricted to a time window is needed.
 
+\textbf{Formalization note.} The chapter is formalized for Gaussian rewards: Median Elimination
+runs on $K$ candidate arms $x^{(1)},\dots,x^{(K)}$ of a linear Gaussian bandit (arm $a$ has the
+reward law $\Normal(\ip{x^{(a)}}{\theta},1)$), which is the only case used in
+Chapter~\ref{chap:log_gains}; the sub-Gaussian generality of
+Definition~\ref{def:pm_subgaussian_bandit} is not formalized. The algorithm is a \emph{phased
+algorithm} in the sense of Lemma~\ref{lem:phased} (LML \texttt{PhasedAlg}), whose round-by-round
+analysis replaces the sequential composition of Lemma~\ref{lem:composition}; the additive
+Gaussian noise of a phase is independent of the past (Lemma~\ref{lem:noise_azuma} and
+\texttt{IsAlgEnvSeq.hasCondDistrib\_noise\_window}), which is what makes the per-round
+analysis possible without conditioning on the history.
+
 \section{Sub-Gaussian bandits and fixed designs}
 \label{sec:pre_median_setting}
 
@@ -47,6 +58,7 @@ $\nu(a) = \Normal(\mu_a,1)$ is $1$-sub-Gaussian (Mathlib \texttt{mgf\_gaussianRe
 \end{definition}
 
 \begin{lemma}[Rewards of a history-independent design are independent]\label{lem:pm_fixed_design_rewards}
+\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_window, Learning.PhasedAlg.hasCondDistrib_phaseNoise, ProbabilityTheory.hasCondDistrib_pi_of_hasCondDistrib_const}\leanok
 \uses{def:pm_subgaussian_bandit}
 Let $\nu$ be a Markov kernel from $\mathcal{A}$ to $\mathcal{Y}$, $a_0,a_1,\dots\in\mathcal{A}$ a
 deterministic sequence, and $\mathrm{alg}$ the deterministic algorithm playing $a_t$ at round $t$
@@ -56,6 +68,7 @@ observations $(y_t)_{t\ge0}$ are independent and $y_t\sim\nu(a_t)$ for every $t$
 \end{lemma}
 
 \begin{proof}
+\leanok
 By induction on $t$. The structure field \texttt{IsAlgEnvSeq.hasCondDistrib\_feedback n} of
 LML states that the conditional law of $y_{n+1}$ given the \emph{pair} (history up to time
 $n$, $x_{n+1}$) is the feedback kernel \texttt{env.feedback n} evaluated at that pair; for a
@@ -75,9 +88,20 @@ $t = 0$ is \texttt{hasCondDistrib\_feedback\_zero} (law $\nu(x_0) = \nu(a_0)$). 
 $y_{n+1}$ from $(y_s)_{s\le n}$ for every $n$ gives joint independence of the whole sequence
 (\texttt{iIndepFun}, by induction on finite subfamilies). This is the argument of
 Lemma~\ref{lem:noise_representation} for a general kernel.
+
+\textbf{Lean.} Formalized in the Gaussian case in the stronger form used by the phased
+analysis: for any algorithm, the noises $y_t - \ip{x_t}{\theta}$ of the rounds $t \ge m$ are
+i.i.d.\ $\Normal(0,1)$ conditionally on the history of the first $m$ rounds
+(\texttt{hasCondDistrib\_noise\_window}, from the abstract statement
+\texttt{hasCondDistrib\_pi\_of\_hasCondDistrib\_const}: a sequence whose conditional law
+given an extra variable $Z$ and its past is a constant $\nu$ is i.i.d.\ $\nu$ and independent
+of $Z$); hence the noise of a phase is independent of the state at the start of the phase
+(\texttt{PhasedAlg.hasCondDistrib\_phaseNoise}), and the observations of a design determined
+by that state are the means plus this noise.
 \end{proof}
 
 \begin{lemma}[Tail of an empirical mean]\label{lem:pm_empmean_tail}
+\lean{Learning.MedianElim.empMean, Learning.MedianElim.hasSubgaussianMGF_empMean, Learning.MedianElim.measureReal_le_empMean_le, Learning.MedianElim.measureReal_empMean_le_le}\leanok
 \uses{def:pm_subgaussian_bandit}
 Let $Y_1,\dots,Y_n$ be independent real random variables such that each $Y_i - \mu$ has
 sub-Gaussian moment generating function with constant $1$, and let $\hat\mu := \frac1n\sum_iY_i$.
@@ -91,6 +115,7 @@ $\Prob(\hat\mu-\mu\le-\eps/2)$ is at most $\delta/3$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 Mathlib \texttt{HasSubgaussianMGF.sum\_of\_iIndepFun} (independent summands, constants add up to $n$) and
 \texttt{HasSubgaussianMGF.const\_mul} with the factor $1/n$ (constant $n\cdot(1/n)^2 = 1/n$),
 then \texttt{measure\_ge\_le} / \texttt{measure\_le\_le}: $\Prob(X\ge u)\le\exp(-u^2/(2c))$ with
@@ -101,6 +126,7 @@ $c = 1/n$. With $u = \eps/2$ the bound is $\exp(-n\eps^2/8)\le\exp(-\log(3/\delt
 \label{sec:pre_median_alg}
 
 \begin{definition}[Schedule of Median Elimination]\label{def:me_schedule}
+\lean{Learning.MedianElim.epsSched, Learning.MedianElim.deltaSched, Learning.MedianElim.numPulls}\leanok
 For $\eps>0$, $\delta\in(0,1)$ and $\ell\in\N$ (rounds are $0$-indexed) let
 \[
   \eps_\ell := \frac{\eps}{4}\Big(\frac34\Big)^\ell,\qquad
@@ -112,6 +138,7 @@ $\delta_{\ell+1} = \delta_\ell/2$.
 \end{definition}
 
 \begin{lemma}[Sums of the schedule]\label{lem:me_schedule_sums}
+\lean{Learning.MedianElim.sum_epsSched_le, Learning.MedianElim.sum_deltaSched_le, Learning.MedianElim.le_numPulls, Learning.MedianElim.log_deltaSched}\leanok
 \uses{def:me_schedule}
 $\sum_{\ell\ge0}\eps_\ell = \eps$ and $\sum_{\ell\ge0}\delta_\ell = \delta$; in particular every
 finite partial sum is at most $\eps$, resp.\ $\delta$. Moreover $n_\ell\ge 8\log(3/\delta_\ell)/\eps_\ell^2$
@@ -119,6 +146,7 @@ and $\log(3/\delta_\ell) = \log(3/\delta) + (\ell+1)\log 2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:me_schedule}
 Geometric series: $\frac\eps4\sum_\ell(3/4)^\ell = \frac\eps4\cdot4$ and
 $\frac\delta2\sum_\ell 2^{-\ell} = \delta$ (Mathlib \texttt{tsum\_geometric\_of\_lt\_one}); the
@@ -126,6 +154,7 @@ rest is the definition and $\log(2^{\ell+1}) = (\ell+1)\log2$.
 \end{proof}
 
 \begin{definition}[Halving sizes and number of rounds]\label{def:pm_halving}
+\lean{Learning.MedianElim.survivors, Learning.MedianElim.numRounds, Learning.MedianElim.survivors_succ, Learning.MedianElim.two_le_survivors_of_lt, Learning.MedianElim.survivors_numRounds, Learning.MedianElim.survivors_le_two_mul}\leanok
 For $K\ge1$ and $\ell\in\N$ let $s_\ell := \lceil K/2^\ell\rceil$ and
 $L := \min\{\ell : s_\ell = 1\} = \lceil\log_2K\rceil$. Then $s_0 = K$,
 $s_{\ell+1} = \lceil s_\ell/2\rceil$, $s_\ell\ge2$ for $\ell<L$, and $s_\ell\le 2K/2^\ell$ for
@@ -133,6 +162,7 @@ $\ell<L$ (since $\lceil x\rceil\le x+1\le 2x$ when $x\ge1$, and $K/2^\ell>1$ whe
 \end{definition}
 
 \begin{definition}[Top-half selection]\label{def:pm_top}
+\lean{Finset.topBy, Finset.topBy_subset, Finset.card_topBy, Finset.apply_le_of_notMem_topBy, Finset.mem_topBy_iff_card_filter_lt, Finset.measurable_topBy}\leanok
 Let $S\subseteq\mathrm{Fin}\,K$ be finite with $\abs S = s\ge2$ and $v : S\to\R$. Order $S$ by the
 strict total order $a\succ b$ iff $v_a>v_b$, or $v_a = v_b$ and $a<b$ (ties broken by index).
 $\mathrm{Top}(S,v)$ is the set of the $\lceil s/2\rceil$ largest elements of $S$ for $\succ$.
@@ -141,7 +171,8 @@ $b\in\mathrm{Top}(S,v)$.
 \end{definition}
 
 \begin{definition}[Median Elimination]\label{def:median_elimination}
-\uses{def:pm_subgaussian_bandit, def:me_schedule, def:pm_halving, def:pm_top}
+\lean{Learning.MedianElim.roundArm, Learning.MedianElim.roundScore, Learning.MedianElim.roundNext, Learning.MedianElim.medianElim, Learning.MedianElim.meOut, Learning.MedianElim.budget, Learning.MedianElim.start_medianElim_numRounds}\leanok
+\uses{def:pm_subgaussian_bandit, def:me_schedule, def:pm_halving, def:pm_top, lem:phased}
 Let $K\ge1$, $\eps>0$, $\delta\in(0,1)$. Median Elimination $\mathrm{ME}(K,\eps,\delta)$ is the
 deterministic algorithm with actions in $\mathrm{Fin}\,K$ and observations in $\R$ defined round
 by round. Set $S_0 := \mathrm{Fin}\,K$ and $\tau_0 := 0$. For $\ell<L$, given the surviving set
@@ -169,23 +200,24 @@ composition of Lemma~\ref{lem:composition} is the content of
 Lemma~\ref{lem:pm_policy_composition}; it is not part of the definition.
 \end{definition}
 
-\textbf{Lean remark.} The algorithm is \texttt{detAlgorithm nextA} where
-\texttt{nextA n h} decodes from $n$ the round $\ell$ with $\tau_\ell\le n<\tau_{\ell+1}$ and the
-offset $j = n-\tau_\ell$ (all deterministic functions of $(K,\eps,\delta,n)$), recomputes
-$S_0,\dots,S_\ell$ from the history \texttt{h : Iic (n-1) → Fin K × ℝ} by the recursion
-(ii)--(iii), and returns the $(j\bmod s_\ell)$-th element of $S_\ell$ (\texttt{Finset.sort} or
-\texttt{Finset.orderEmbOfFin}). Measurability of \texttt{nextA n} holds because it is a function
-of finitely many real coordinates of \texttt{h} through comparisons: the map
-$h\mapsto S_\ell(h)$ takes finitely many values and each fiber is a finite Boolean combination
-of measurable sets $\{\hat\mu^{(k)}_a\ge\hat\mu^{(k)}_b\}$. The per-round empirical mean
-$\hat\mu^{(\ell)}_a$ is \texttt{(∑ t ∈ Finset.Ico (τ ℓ) (τ (ℓ+1)) with (h t).1 = a, (h t).2) / n ℓ}.
-The definition deliberately does not go through the composition operation of
-Lemma~\ref{lem:composition} (an existence lemma cannot be part of a definition); the
-identification with the composition, round by round, is Lemma~\ref{lem:pm_policy_composition}.
+\textbf{Lean remark.} The algorithm is the phased algorithm (Lemma~\ref{lem:phased},
+\texttt{MedianElim.medianElim}) with state $(c, S)$, where $c : \mathrm{Fin}\,K \to \Xs$ maps
+arms to actions (fixed along the run) and $S$ is the surviving set: phase $\ell$ has length
+$s_\ell n_\ell$, plays the round-robin design over $S$ (\texttt{roundArm}: offset $j$ decodes to
+$(i, r) \in \mathrm{Fin}\,s_\ell \times \mathrm{Fin}\,n_\ell$ and plays the $i$-th element of
+$S$ in increasing order, \texttt{Finset.orderEmbOfFin}), and updates $S$ to the $s_{\ell+1}$ arms
+with the largest per-round empirical means (\texttt{roundNext}, through the top selection
+\texttt{Finset.topBy} of Definition~\ref{def:pm_top}). Measurability of the update holds because
+the surviving set is a measurable function of the scores (\texttt{Finset.measurable\_topBy}) and
+the state space of surviving sets is finite. The recommendation is the surviving arm
+(\texttt{meOut}) and the budget is $\tau_L$ (\texttt{budget}, \texttt{start\_medianElim\_numRounds}).
+The lengths of the phases are deterministic while the size of $S$ is only guaranteed by the
+analysis: the good states of Lemma~\ref{lem:me_round} record $\abs{S_\ell} = s_\ell$.
 
 \begin{lemma}[Median Elimination as a sequential composition, round by round]
 \label{lem:pm_policy_composition}
-\uses{def:median_elimination, lem:composition}
+\lean{Learning.PhasedAlg.ae_action_start_add_eq, Learning.PhasedAlg.ae_phaseObs_eq, Learning.PhasedAlg.ae_stateProc_succ_eq, Learning.PhasedAlg.hasCondDistrib_phaseNoise}\leanok
+\uses{def:median_elimination, lem:composition, lem:phased}
 Let $\ell<L$ and $T_1 := \tau_\ell$. Let $\mathrm{alg}_1 := \mathrm{ME}(K,\eps,\delta)$ and, for a
 history $h$ of length $T_1$, let $\mathrm{alg}_2(h)$ be the history-independent deterministic
 algorithm playing the round-robin design of Definition~\ref{def:median_elimination}(i) over
@@ -202,7 +234,14 @@ Lemma~\ref{lem:composition} applies to events of the history of length $\tau_{\e
 \end{lemma}
 
 \begin{proof}
-\uses{def:median_elimination, lem:composition}
+\leanok
+\uses{def:median_elimination, lem:composition, lem:phased}
+\textbf{Lean.} This is the general run structure of phased algorithms (Lemma~\ref{lem:phased}):
+the actions of phase $\ell$ are the design of the state at the start of the phase, the
+observations are the means plus the noise of the phase, which is i.i.d.\ $\Normal(0,1)$ and
+independent of that state, and the next state is the update applied to them. The composition
+argument below is the informal version of that lemma.
+
 For $t<\tau_\ell$ both algorithms follow the policy of $\mathrm{alg}_1 = \mathrm{ME}$. For
 $\tau_\ell\le t<\tau_{\ell+1}$ and a history $h'$ of length $t$ with prefix $h$ of length
 $\tau_\ell$, $\mathrm{nextA}(t,h')$ decodes the round $\ell$ and the offset $j = t-\tau_\ell$,
@@ -227,6 +266,7 @@ probability bound are then those of Lemma~\ref{lem:composition}.
 \label{sec:pre_median_analysis}
 
 \begin{lemma}[The median counting argument]\label{lem:pm_selection}
+\lean{Finset.exists_mem_topBy_of_card_filter_lt}\leanok
 \uses{def:pm_top}
 Let $S$ be finite with $\abs S = s\ge2$, $\mu,v : S\to\R$, $\eps>0$, and $a_*\in S$ with
 $\mu_{a_*} = \max_{a\in S}\mu_a$. Define the set of \emph{bad} arms
@@ -237,6 +277,7 @@ If $\abs B < s/2$ then $\max_{a\in\mathrm{Top}(S,v)}\mu_a\ge\mu_{a_*}-\eps$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pm_top}
 Let $S' := \mathrm{Top}(S,v)$, of size $\lceil s/2\rceil\ge s/2>\abs B$. If $a_*\in S'$ the
 conclusion holds since $\mu_{a_*}\ge\mu_{a_*}-\eps$. Otherwise $a_*\in S\setminus S'$, so by the
@@ -246,6 +287,7 @@ condition defining $B$ fails: $\mu_b\ge\mu_{a_*}-\eps$. Hence $\max_{a\in S'}\mu
 \end{proof}
 
 \begin{lemma}[One round of Median Elimination]\label{lem:me_round}
+\lean{Learning.MedianElim.one_sub_le_measureReal_round, Learning.MedianElim.goodSet, Learning.MedianElim.one_sub_le_measureReal_roundNext_mem}\leanok
 \uses{def:pm_top, lem:pm_selection, lem:pm_empmean_tail, lem:pm_fixed_design_rewards, def:median_elimination, def:me_schedule}
 Let $S$ be finite with $\abs S = s\ge2$, $\eps>0$, $\delta\in(0,1)$, and let $(\hat\mu_a)_{a\in S}$
 be real random variables (not necessarily independent) and $(\mu_a)_{a\in S}$ real numbers such
@@ -263,6 +305,7 @@ before the round, by Lemmas~\ref{lem:pm_fixed_design_rewards} and~\ref{lem:pm_em
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pm_selection, lem:pm_empmean_tail, lem:pm_fixed_design_rewards, def:median_elimination, lem:me_schedule_sums, lem:pm_policy_composition}
 Fix $a_*\in S$ with $\mu_{a_*} = \max_S\mu$ and let $B$ be the (random) set of bad arms of
 Lemma~\ref{lem:pm_selection} with $v = \hat\mu$. Consider the events
@@ -287,6 +330,7 @@ bounds with $\delta_\ell/3$.
 \end{proof}
 
 \begin{theorem}[Median Elimination is $(\eps,\delta)$-PAC]\label{thm:median_elimination}
+\lean{Learning.MedianElim.isPAC_medianElim}\leanok
 \uses{def:pm_subgaussian_bandit, def:median_elimination, lem:me_round, lem:me_schedule_sums, lem:composition, lem:pm_policy_composition}
 Let $\nu$ be a $1$-sub-Gaussian $K$-armed bandit with means $(\mu_a)_a$, $\eps>0$ and
 $\delta\in(0,1)$. Run against $\mathrm{stationaryEnv}(\nu)$, Median Elimination
@@ -295,10 +339,17 @@ its recommendation $\hat a$ satisfies
 \[
   \Prob\Big(\mu_{\hat a}\ge\max_{a}\mu_a-\eps\Big)\ge1-\delta .
 \]
+\textbf{Lean.} Formalized for the Gaussian bandit of candidate arms $x^{(1)},\dots,x^{(K)}\in\Xs$ of
+a linear Gaussian bandit (Corollary~\ref{cor:median_elimination_linear} with fixed candidates),
+i.e.\ $\nu(a) = \Normal(\ip{x^{(a)}}{\theta}, 1)$, for every $\theta$: the identification
+algorithm with budget $N_{\mathrm{ME}}$ built from the phased algorithm is
+$\delta$-PAC for the goodness predicate
+$\ip{x^{(\hat a)}}{\theta}\ge\max_a\ip{x^{(a)}}{\theta}-\eps$ (\texttt{isPAC\_medianElim}).
 \end{theorem}
 
 \begin{proof}
-\uses{lem:me_round, lem:me_schedule_sums, lem:composition, lem:pm_fixed_design_rewards, lem:pm_policy_composition}
+\leanok
+\uses{lem:me_round, lem:me_schedule_sums, lem:composition, lem:pm_fixed_design_rewards, lem:pm_policy_composition, lem:phased}
 If $K = 1$ then $L = 0$, $\hat a$ is the unique arm and there is nothing to prove. Let $K\ge2$.
 For $\ell<L$ let $G_\ell := \{\max_{a\in S_\ell}\mu_a\le\max_{a\in S_{\ell+1}}\mu_a+\eps_\ell\}$,
 an event of the history of length $\tau_{\ell+1}$. By Lemma~\ref{lem:pm_policy_composition},
@@ -319,6 +370,7 @@ again by Lemma~\ref{lem:me_schedule_sums}, since $S_L = \{\hat a\}$.
 \end{proof}
 
 \begin{lemma}[Budget of Median Elimination]\label{lem:me_budget}
+\lean{Learning.MedianElim.budget_le, Learning.MedianElim.budget_le_of_le_one}\leanok
 \uses{def:median_elimination, def:me_schedule, def:pm_halving, lem:me_schedule_sums}
 For all $K\ge1$, $\eps>0$, $\delta\in(0,1)$,
 \[
@@ -329,6 +381,7 @@ with $C_{\mathrm{ME}} := 16000$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:me_schedule_sums}
 By Definition~\ref{def:pm_halving}, $s_\ell\le2K/2^\ell$ for $\ell<L$, and
 $n_\ell\le8\log(3/\delta_\ell)/\eps_\ell^2+1$ with $1/\eps_\ell^2 = 16(16/9)^\ell/\eps^2$ and
@@ -362,7 +415,8 @@ Theorem~\ref{thm:log_gains}.
 \end{remark}
 
 \begin{corollary}[Median Elimination on candidate arms of a linear bandit]\label{cor:median_elimination_linear}
-\uses{def:env, def:median_elimination, thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail}
+\lean{Learning.MedianElim.isPAC_medianElim, Learning.MedianElim.one_sub_le_measureReal_roundNext_mem, Learning.PhasedAlg.one_sub_sum_le_measureReal_stateProc_mem}\leanok
+\uses{def:env, def:median_elimination, thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail, lem:phased}
 Let $\Xs$ be an action set, $\theta\in\R^d$, $K\ge1$, and $x^{(1)},\dots,x^{(K)}\in\Xs$. Consider
 the algorithm with actions in $\Xs$ that runs $\mathrm{ME}(K,\eps,\delta)$ on the arms
 $\mathrm{Fin}\,K$ and plays $x^{(a)}$ whenever $\mathrm{ME}$ pulls $a$ (its next action is
@@ -379,7 +433,18 @@ phase fails with probability at most $\delta'$.
 \end{corollary}
 
 \begin{proof}
-\uses{thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail}
+\leanok
+\uses{thm:median_elimination, lem:me_budget, lem:composition, lem:gauss_tail, lem:phased}
+\textbf{Lean.} The fixed-candidates statement is \texttt{isPAC\_medianElim} (this is the form in
+which Theorem~\ref{thm:median_elimination} is formalized). For candidates chosen by a previous
+phase, the candidates are part of the state of the phased algorithm (they are never modified
+by the rounds of Median Elimination), and the per-round guarantee
+\texttt{one\_sub\_le\_measureReal\_roundNext\_mem} applies to the candidates of the current
+state; the union bound over the phases (Lemma~\ref{lem:phased},
+\texttt{PhasedAlg.one\_sub\_sum\_le\_measureReal\_stateProc\_mem}) then gives the bound
+$\delta + \delta'$ directly, without a composition lemma; see the region algorithm of
+Definition~\ref{def:region_algorithm}.
+
 Let $\nu'(a) := \Normal(\ip{x^{(a)}}{\theta},1)$, a $1$-sub-Gaussian $K$-armed bandit with means
 $\mu_a = \ip{x^{(a)}}{\theta}$ (Definition~\ref{def:pm_subgaussian_bandit}; the Gaussian moment
 generating function is \texttt{mgf\_gaussianReal}, see also Lemma~\ref{lem:gauss_tail}). The

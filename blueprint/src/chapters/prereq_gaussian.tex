@@ -385,6 +385,7 @@ $d \ge 1$ gives $d \ge (d+2)/3$.
 \end{proof}
 
 \begin{lemma}[Gaussian tail]\label{lem:gauss_tail}
+\lean{ProbabilityTheory.hasSubgaussianMGF_fun_id_gaussianReal}\leanok
 \uses{def:pg_gaussian_vector}
 Let $\mu \in \R$, $\sigma > 0$ and $Z \sim \Normal(\mu,\sigma^2)$. Then $Z - \mu$ has a
 sub-Gaussian moment generating function with constant $\sigma^2$
@@ -398,6 +399,7 @@ for all $\lambda$, with equality), and for every $t \ge 0$,
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pg_gaussian_vector}
 $Z - \mu \sim \Normal(0,\sigma^2)$ (\texttt{gaussianReal\_sub\_const}) and
 \texttt{mgf\_gaussianReal} gives $\E e^{\lambda(Z-\mu)} = e^{\sigma^2\lambda^2/2}$, with

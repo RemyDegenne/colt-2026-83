@@ -87,6 +87,37 @@ lemma lsMatrix_mul_transpose (x : Fin T → EuclideanSpace ℝ ι)
     _ = (∑ t, outerSelf (x t))⁻¹ := by
         rw [transpose_designRows_mul_designRows, Matrix.nonsing_inv_mul _ hdet, Matrix.one_mul]
 
+/-- The least-squares estimator is continuous in the observations. -/
+lemma continuous_leastSquares (x : Fin T → EuclideanSpace ℝ ι) : Continuous (leastSquares x) :=
+  (Matrix.toEuclideanCLM (𝕜 := ℝ) _).continuous.comp
+    (continuous_finsetSum _ fun t _ ↦ (continuous_apply t).smul continuous_const)
+
+/-- **Law of the least-squares estimator** for the observations `⟪x t, θ⟫ + η t` of the fixed
+design `x` with an i.i.d. `N(0, 1)` noise vector `η`: if the design matrix `Σ = ∑ t < T, x t x tᵀ`
+is positive definite then the least-squares estimator has the law `N(θ, Σ⁻¹)`. -/
+lemma hasLaw_leastSquares_add_pi (x : Fin T → EuclideanSpace ℝ ι) (θ : EuclideanSpace ℝ ι)
+    (hS : (∑ t, outerSelf (x t)).PosDef) :
+    HasLaw (fun η : Fin T → ℝ ↦ leastSquares x fun t ↦ ⟪x t, θ⟫ + η t)
+      (multivariateGaussian θ (∑ t, outerSelf (x t))⁻¹) (Measure.pi fun _ ↦ gaussianReal 0 1) := by
+  have hη : HasLaw (fun η : Fin T → ℝ ↦ WithLp.toLp 2 η) (stdGaussian (EuclideanSpace ℝ (Fin T)))
+      (Measure.pi fun _ ↦ gaussianReal 0 1) := by
+    rw [← map_pi_eq_stdGaussian]
+    exact ⟨(WithLp.measurable_toLp 2 _).aemeasurable, rfl⟩
+  have h1 : HasLaw (fun η : Fin T → ℝ ↦ Matrix.toEuclideanLin (lsMatrix x) (WithLp.toLp 2 η))
+      (multivariateGaussian 0 (∑ t, outerSelf (x t))⁻¹) (Measure.pi fun _ ↦ gaussianReal 0 1) := by
+    have h2 := (⟨(LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin
+      (lsMatrix x))).continuous.measurable.aemeasurable, rfl⟩ :
+      HasLaw (LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin (lsMatrix x))) _ _).comp hη
+    rw [← multivariateGaussian_zero_one, multivariateGaussian_zero_map_toEuclideanLin
+      Matrix.PosDef.one.posSemidef (lsMatrix x), Matrix.mul_one, lsMatrix_mul_transpose x hS]
+      at h2
+    exact h2
+  have h2 := (⟨(measurable_const_add θ).aemeasurable, rfl⟩ :
+    HasLaw (fun v : EuclideanSpace ℝ ι ↦ θ + v) _ _).comp h1
+  rw [multivariateGaussian_zero_map_const_add] at h2
+  refine h2.congr (Filter.Eventually.of_forall fun η ↦ ?_)
+  exact leastSquares_inner_add x hS θ η
+
 /-- **Law of the least-squares estimator** (blueprint `lem:least_squares_law`): under the
 fixed-design run of `x` in the linear Gaussian environment with reward vector `θ`, if the design
 matrix `Σ = ∑ t < T, x t x tᵀ` is positive definite then the least-squares estimator of the first
@@ -98,26 +129,9 @@ lemma hasLaw_leastSquares_of_fixedDesign {𝒳 : Set (EuclideanSpace ℝ ι)}
     (hS : (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)).PosDef) :
     HasLaw (fun ω ↦ leastSquares (fun t : Fin T ↦ (x t : EuclideanSpace ℝ ι)) (fun t ↦ Y t ω))
       (multivariateGaussian θ (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι))⁻¹) P := by
-  set xT : Fin T → EuclideanSpace ℝ ι := fun t ↦ (x t : EuclideanSpace ℝ ι) with hxT
-  have hη := h.hasLaw_toLp_noise_finVec T
-  have h1 : HasLaw (fun ω ↦ Matrix.toEuclideanLin (lsMatrix xT)
-      (WithLp.toLp 2 fun i : Fin T ↦ noise θ X Y i ω))
-      (multivariateGaussian 0 (∑ t, outerSelf (xT t))⁻¹) P := by
-    have h2 := (⟨(LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin
-      (lsMatrix xT))).continuous.measurable.aemeasurable, rfl⟩ :
-      HasLaw (LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin (lsMatrix xT))) _ _).comp hη
-    rw [← multivariateGaussian_zero_one, multivariateGaussian_zero_map_toEuclideanLin
-      Matrix.PosDef.one.posSemidef (lsMatrix xT), Matrix.mul_one, lsMatrix_mul_transpose xT hS]
-      at h2
-    exact h2
-  have h2 := (⟨(measurable_const_add θ).aemeasurable, rfl⟩ :
-    HasLaw (fun v : EuclideanSpace ℝ ι ↦ θ + v) _ _).comp h1
-  rw [multivariateGaussian_zero_map_const_add] at h2
-  refine h2.congr ?_
+  refine ((hasLaw_leastSquares_add_pi _ θ hS).comp (h.hasLaw_noise_finVec T)).congr ?_
   filter_upwards [h.ae_feedback_eq_of_fixedDesign] with ω hω
-  change leastSquares xT (fun t ↦ Y t ω) =
-    θ + Matrix.toEuclideanLin (lsMatrix xT) (WithLp.toLp 2 fun i : Fin T ↦ noise θ X Y i ω)
-  rw [← leastSquares_inner_add xT hS]
+  simp only [Function.comp_apply]
   congr 1
   funext t
   exact hω t

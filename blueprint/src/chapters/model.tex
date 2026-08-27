@@ -525,12 +525,15 @@ shifted by $T_1$. The probability bound is then Fubini for the composition-produ
 \end{proof}
 
 \textbf{Lean remark.} This lemma is a general statement about the LML framework, to be
-contributed to LML; it is not formalized yet. The measurability of $h \mapsto \mathrm{alg}_2(h)$ means that the policy
+contributed to LML; it is not formalized. The measurability of $h \mapsto \mathrm{alg}_2(h)$ means that the policy
 kernels and initial distributions, as functions of $(h, \cdot)$, are kernels; in all uses
 below $\mathrm{alg}_2(h)$ is a fixed algorithm reparametrized by a measurable function of $h$
 (a finite set of candidate arms, or a scale $r_0$). The adaptive lower bound
 (Lemma~\ref{lem:test_from_alg}) only needs the following special case, in which the composed
-algorithm is written down directly and the first phase is a PAC algorithm.
+algorithm is written down directly and the first phase is a PAC algorithm; Median Elimination
+and the region algorithm of Chapter~\ref{chap:log_gains} are \emph{phased algorithms}
+(Lemma~\ref{lem:phased}), for which the composition is replaced by a round-by-round analysis
+using the independence of the future noise from the past.
 
 \begin{lemma}[Algorithms agreeing on a prefix; transfer of PAC guarantees]\label{lem:prefix_transfer}
 \lean{Learning.Algorithm.AgreeUntil, Learning.IsAlgEnvSeqUntil.of_agreeUntil, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_agreeUntil, Learning.IsAlgEnvSeqUntil.map_history_eq, Learning.IdentAlg.map_finHistory_out_eq, Learning.IdentAlg.IsPAC.le_measureReal_of_isAlgEnvSeqUntil}\leanok
@@ -560,4 +563,62 @@ assertion, the law of $(\hist_{T_1+1}, \rec)$ is the composition-product of the 
 $\hist_{T_1+1}$ with $\rho$, and so is the law of (history, recommendation) under the canonical
 run of $\mathsf{Alg}$ (\texttt{Learning.IdentAlg.fixedBudgetRunMeasure}); the PAC property
 applied to the canonical run gives the bound.
+\end{proof}
+
+\begin{lemma}[Phased algorithms]\label{lem:phased}
+\lean{Learning.PhasedAlg, Learning.PhasedAlg.state, Learning.PhasedAlg.state_congr, Learning.PhasedAlg.toAlgorithm, Learning.PhasedAlg.toIdentAlg, Learning.PhasedAlg.cons, Learning.PhasedAlg.ae_action_start_add_eq, Learning.PhasedAlg.hasCondDistrib_phaseNoise, Learning.PhasedAlg.ae_stateProc_succ_eq, Learning.PhasedAlg.measureReal_stateProc_mem_sub_le, Learning.PhasedAlg.one_sub_sum_le_measureReal_stateProc_mem, Learning.PhasedAlg.isPAC_toIdentAlg, Learning.PhasedAlg.linearBandit_isPAC_toIdentAlg, Learning.IsAlgEnvSeq.hasCondDistrib_noise_window, ProbabilityTheory.hasCondDistrib_pi_of_hasCondDistrib_const, ProbabilityTheory.HasCondDistrib.measureReal_sub_le}\leanok
+\uses{def:bai_alg, def:pac, def:env, lem:noise_azuma}
+A \emph{phased algorithm} with states in a measurable space $S$ is given by phase lengths
+$n_0, n_1, \dots \ge 1$, an initial state $s_0$, measurable designs
+$\mathrm{act}_\ell : S \to \Xs^{n_\ell}$ and measurable updates
+$\mathrm{upd}_\ell : S \times \R^{n_\ell} \to S$: during phase $\ell$ (the rounds
+$\tau_\ell \le t < \tau_\ell + n_\ell$, $\tau_\ell := \sum_{k<\ell} n_k$) it plays the design
+$\mathrm{act}_\ell(s_\ell)$ of the state $s_\ell$ at the start of the phase, and at the end of
+the phase it sets $s_{\ell+1} := \mathrm{upd}_\ell(s_\ell, y^{(\ell)})$ where $y^{(\ell)}$ are
+the observations of the phase. It is a deterministic algorithm: $s_\ell$ is a measurable
+function of the observations before time $\tau_\ell$. With a budget of $L$ phases and a
+measurable output $\mathrm{out} : S \to \mathcal O$ of the final state, it is a fixed-budget
+identification algorithm with budget $\tau_L$. Prepending a fixed-design phase whose
+observations set the state (\texttt{PhasedAlg.cons}) gives a phased algorithm.
+
+Along any run in the linear Gaussian bandit $\nu_\theta$: the actions of phase $\ell$ are
+$\mathrm{act}_\ell(s_\ell)$, the observations are $\ip{\mathrm{act}_\ell(s_\ell)_j}{\theta} + \eta^{(\ell)}_j$
+where the noise $\eta^{(\ell)} \sim \Normal(0, I_{n_\ell})$ is independent of $s_\ell$, and
+$s_{\ell+1} = \mathrm{upd}_\ell(s_\ell, \ip{\mathrm{act}_\ell(s_\ell)}{\theta} + \eta^{(\ell)})$.
+Consequently, if $G_0, \dots, G_L \subseteq S$ are measurable sets of \emph{good} states with
+$s_0 \in G_0$ and, for every $\ell < L$ and every $s \in G_\ell$,
+$\Prob_{\eta \sim \Normal(0,I_{n_\ell})}\big(\mathrm{upd}_\ell(s, \ip{\mathrm{act}_\ell(s)}{\theta} + \eta) \in G_{\ell+1}\big) \ge 1 - \delta_\ell$,
+then $\Prob(s_L \in G_L) \ge 1 - \sum_{\ell<L}\delta_\ell$; and if moreover $\mathrm{out}(s)$ is
+good for every $s \in G_L$, the identification algorithm is $\delta$-PAC for
+$\delta \ge \sum_{\ell<L}\delta_\ell$ (for every $\theta$, with good sets depending on $\theta$).
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:noise_azuma, lem:noise_representation, lem:prefix_transfer}
+The state at the start of phase $\ell$ only depends on the observations before the phase
+(\texttt{state\_congr}), so the phased algorithm is the deterministic algorithm whose next
+action at time $t$ in phase $\ell$ is $\mathrm{act}_\ell(s_\ell)_{t - \tau_\ell}$
+(\texttt{toAlgorithm}), and along a run the actions are almost surely these
+(\texttt{ae\_action\_start\_add\_eq}, from the deterministic policy).
+The noise $\eta_t := y_t - \ip{x_t}{\theta}$ satisfies: conditionally on the history up to
+time $t - 1$ and $x_t$, $\eta_t \sim \Normal(0,1)$ (Lemma~\ref{lem:noise_azuma}). Hence, for
+every $m$, the noises $(\eta_{m+j})_{j < n}$ are i.i.d.\ $\Normal(0,1)$ conditionally on the
+history of the first $m$ rounds (\texttt{hasCondDistrib\_noise\_window}; abstractly, a
+sequence $W_k$ whose conditional law given $(Z, W_0, \dots, W_{k-1})$ is a constant $\nu$ for
+every $k$ has the constant conditional law $\nu^{\otimes n}$ given $Z$,
+\texttt{hasCondDistrib\_pi\_of\_hasCondDistrib\_const}, by induction on $n$ with the product
+structure of the joint law). Since $s_\ell$ is a function of the history of the first
+$\tau_\ell$ rounds, the noise of phase $\ell$ is independent of $s_\ell$ with law
+$\Normal(0, I_{n_\ell})$ (\texttt{hasCondDistrib\_phaseNoise}), and the observations of the
+phase are the means plus this noise. The per-phase step is Fubini for the product law of
+$(s_\ell, \eta^{(\ell)})$: for any measurable $G \subseteq S$ and $G' \subseteq S \times \R^n$
+with $\Prob_\eta((s, \eta) \in G') \ge 1 - \delta$ for all $s \in G$,
+$\Prob((s_\ell, \eta^{(\ell)}) \in G') \ge \Prob(s_\ell \in G) - \delta$
+(\texttt{HasCondDistrib.measureReal\_sub\_le}), which gives
+$\Prob(s_{\ell+1} \in G_{\ell+1}) \ge \Prob(s_\ell \in G_\ell) - \delta_\ell$
+(\texttt{measureReal\_stateProc\_mem\_sub\_le}); induction over the phases gives the union
+bound (\texttt{one\_sub\_sum\_le\_measureReal\_stateProc\_mem}). The output of a run of the
+identification algorithm is almost surely $\mathrm{out}(s_L)$ (the output kernel is
+deterministic), which gives the PAC guarantee (\texttt{isPAC\_toIdentAlg}).
 \end{proof}

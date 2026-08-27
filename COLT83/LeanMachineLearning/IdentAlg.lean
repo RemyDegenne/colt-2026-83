@@ -239,6 +239,15 @@ lemma isFixedBudget_fixedBudget (alg : Algorithm 𝓐 𝓨) (T : ℕ)
     (ρ : Kernel (Fin T → 𝓐 × 𝓨) 𝓞) [IsMarkovKernel ρ] :
     (fixedBudget alg T ρ).IsFixedBudget T := rfl
 
+/-- The output rule of `fixedBudget alg T ρ` at the budget `T` is `ρ`. -/
+lemma output_fixedBudget (alg : Algorithm 𝓐 𝓨) (T : ℕ)
+    (ρ : Kernel (Fin T → 𝓐 × 𝓨) 𝓞) [IsMarkovKernel ρ] :
+    (fixedBudget alg T ρ).output T = ρ := by
+  change (if h : T = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop) else 0) = ρ
+  simp only [↓reduceDIte, Fin.cast_eq_self]
+  ext y u _
+  simp
+
 end IdentAlg
 
 end Learning
