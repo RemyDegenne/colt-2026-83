@@ -6,6 +6,9 @@ Authors: Rémy Degenne
 module
 
 public import COLT83.LeanMachineLearning.LinearBandit
+public import COLT83.MXJ2026.LowerCube
+public import COLT83.MXJ2026.LowerMSet
+public import COLT83.MXJ2026.LowerMultitask
 public import COLT83.MXJ2026.StructuredSets
 public import COLT83.MXJ2026.Width
 
@@ -54,7 +57,16 @@ theorem multitaskSet_lt_budget_of_isPAC {m : ℕ} (d : Fin m → ℕ) (hd : ∀ 
     (A : IdentAlg (multitaskSet d) ℝ (multitaskSet d)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (multitaskSet d) A ε δ) :
     (∑ j, √(d j)) ^ 2 / (20000 * ε ^ 2) < T := by
-  sorry
+  by_contra hcon
+  push Not at hcon
+  rcases Nat.eq_zero_or_pos m with hm | hm
+  · subst hm
+    have hT' : (1 : ℝ) ≤ T := by exact_mod_cast hT
+    simp only [Finset.univ_eq_empty, Finset.sum_empty] at hcon
+    rw [show (0 : ℝ) ^ 2 / (20000 * ε ^ 2) = 0 by simp] at hcon
+    linarith
+  · have hkey := le_of_isPAC_multitaskSet hm hd hε A hA hpac (by rw [mtSum]; exact hcon)
+    linarith
 
 /-- **Table 1, hypercube `{-1, 1}^d`**: an `(ε, δ)`-PAC identification algorithm with budget
 `T ≥ 1` on `{-1, 1}^d`, with `δ < 1/6`, satisfies `T > d² / (100 ε²)`. -/
@@ -62,7 +74,24 @@ theorem hypercubePM_lt_budget_of_isPAC {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 
     (hT : 1 ≤ T) (A : IdentAlg (hypercubePM ι) ℝ (hypercubePM ι)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (hypercubePM ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (100 * ε ^ 2) < T := by
-  sorry
+  classical
+  by_contra hcon
+  push Not at hcon
+  rcases Nat.eq_zero_or_pos (Fintype.card ι) with hd | hd
+  · rw [hd] at hcon
+    have : (1 : ℝ) ≤ T := by exact_mod_cast hT
+    simp only [Nat.cast_zero] at hcon
+    rw [show (0 : ℝ) ^ 2 / (100 * ε ^ 2) = 0 by simp] at hcon
+    linarith
+  · have hd' : (0 : ℝ) < Fintype.card ι := by exact_mod_cast hd
+    have h2 : (T : ℝ) * (100 * ε ^ 2) ≤ (Fintype.card ι : ℝ) ^ 2 :=
+      (le_div_iff₀ (by positivity)).1 hcon
+    have hkey := le_of_isPAC_cubeSet hypercubePM_eq_cubeSet (by norm_num)
+      (M := 1) (c := 5 * ε / Fintype.card ι) (fun b ↦ by cases b <;> norm_num) hε
+      (by positivity) (by field_simp; norm_num) A hA hpac ?_
+    · linarith
+    · rw [mul_one, div_pow, mul_div_assoc', div_le_iff₀ (by positivity)]
+      nlinarith [h2]
 
 /-- **Table 1, hypercube `{0, 1}^d`**: an `(ε, δ)`-PAC identification algorithm with budget
 `T ≥ 1` on `{0, 1}^d`, with `δ < 1/6`, satisfies `T > d² / (400 ε²)`. -/
@@ -70,7 +99,24 @@ theorem hypercube01_lt_budget_of_isPAC {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 
     (hT : 1 ≤ T) (A : IdentAlg (hypercube01 ι) ℝ (hypercube01 ι)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (hypercube01 ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (400 * ε ^ 2) < T := by
-  sorry
+  classical
+  by_contra hcon
+  push Not at hcon
+  rcases Nat.eq_zero_or_pos (Fintype.card ι) with hd | hd
+  · rw [hd] at hcon
+    have : (1 : ℝ) ≤ T := by exact_mod_cast hT
+    simp only [Nat.cast_zero] at hcon
+    rw [show (0 : ℝ) ^ 2 / (400 * ε ^ 2) = 0 by simp] at hcon
+    linarith
+  · have hd' : (0 : ℝ) < Fintype.card ι := by exact_mod_cast hd
+    have h2 : (T : ℝ) * (400 * ε ^ 2) ≤ (Fintype.card ι : ℝ) ^ 2 :=
+      (le_div_iff₀ (by positivity)).1 hcon
+    have hkey := le_of_isPAC_cubeSet hypercube01_eq_cubeSet (by norm_num)
+      (M := 1) (c := 10 * ε / Fintype.card ι) (fun b ↦ by cases b <;> norm_num) hε
+      (by positivity) (by field_simp; norm_num) A hA hpac ?_
+    · linarith
+    · rw [mul_one, div_pow, mul_div_assoc', div_le_iff₀ (by positivity)]
+      nlinarith [h2]
 
 /-- **Table 1, `m`-sets**: for `1 ≤ m` with `n := d - m + 1 ≥ 20 m`, an `(ε, δ)`-PAC
 identification algorithm with budget `T ≥ 1` on the `m`-sets of `ℝ^d`, with `δ < 2/9`, satisfies
@@ -80,7 +126,21 @@ theorem mSet_lt_budget_of_isPAC (m : ℕ) (hm : 1 ≤ m) (hmd : 20 * m ≤ Finty
     (A : IdentAlg (mSet ι m) ℝ (mSet ι m)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (mSet ι m) A ε δ) :
     m * ((Fintype.card ι : ℝ) - m + 1) / (2500 * ε ^ 2) < T := by
-  sorry
+  classical
+  by_contra hcon
+  push Not at hcon
+  obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+  have hkd : k ≤ Fintype.card ι := by omega
+  have hn : Fintype.card ι = k + (Fintype.card ι - k) := by omega
+  have hk : 20 * (k + 1) ≤ Fintype.card ι - k := by omega
+  have hcast : ((Fintype.card ι - k : ℕ) : ℝ) = (Fintype.card ι : ℝ) - k := Nat.cast_sub hkd
+  have hbud : (T : ℝ) ≤ ((k + 1 : ℕ) : ℝ) * ((Fintype.card ι - k : ℕ) : ℝ) / (2500 * ε ^ 2) := by
+    refine hcon.trans_eq ?_
+    rw [hcast]
+    push_cast
+    ring
+  have hkey := le_of_isPAC_mSet rfl hn hk hε hT A hA hpac hbud
+  linarith
 
 /-- **Table 1, unit ball**: an `(ε, δ)`-PAC identification algorithm with budget `T` on the unit
 ball of `ℝ^d`, `d ≥ 2`, with `δ ≤ 1/500`, satisfies `T ≥ d² / (1000 ε²)`. -/

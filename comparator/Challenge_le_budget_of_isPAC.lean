@@ -64,6 +64,8 @@ namespace Learning.IdentAlg
 end Learning.IdentAlg
 namespace Learning.LinearBandit
 end Learning.LinearBandit
+namespace Finset
+end Finset
 namespace COLT83
 end COLT83
 

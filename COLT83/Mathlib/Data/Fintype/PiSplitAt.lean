@@ -16,7 +16,9 @@ public import Mathlib.Algebra.BigOperators.Ring.Finset
 Using `Equiv.piSplitAt`, a sum over `∀ j, β j` is written as a double sum over the `i`-th
 coordinate and the remaining ones (`Fintype.sum_pi_piSplitAt`), the cardinality factors
 accordingly (`Fintype.card_pi_eq_mul_card_pi_subtype`), and `∑ κ, [κ i = k]` is the number of
-choices of the other coordinates (`Fintype.sum_ite_apply_eq`).
+choices of the other coordinates (`Fintype.sum_ite_apply_eq`). Summing over all the values of
+one coordinate multiplies the total sum by the cardinality of that coordinate
+(`Fintype.sum_sum_update`).
 -/
 
 @[expose] public section
@@ -38,6 +40,27 @@ variable [Fintype ι] [∀ i, Fintype (β i)]
 lemma Fintype.sum_pi_piSplitAt {M : Type*} [AddCommMonoid M] (i : ι) (F : (∀ j, β j) → M) :
     ∑ κ, F κ = ∑ a : β i, ∑ r : ∀ j : {j // j ≠ i}, β j, F ((Equiv.piSplitAt i β).symm (a, r)) := by
   rw [← Equiv.sum_comp (Equiv.piSplitAt i β).symm, Fintype.sum_prod_type]
+
+/-- Summing a function of a dependent product over all values of its `i`-th coordinate multiplies
+the total sum by the cardinality of `β i`: the map `(κ, a) ↦ (update κ i a, κ i)` is an
+involution of `(∀ j, β j) × β i`. -/
+lemma Fintype.sum_sum_update {R : Type*} [NonAssocSemiring R] (i : ι) (F : (∀ j, β j) → R) :
+    ∑ κ : ∀ j, β j, ∑ a : β i, F (Function.update κ i a) =
+      Fintype.card (β i) * ∑ κ : ∀ j, β j, F κ := by
+  have hΦ : Function.Involutive
+      (fun p : (∀ j, β j) × β i ↦ (Function.update p.1 i p.2, p.1 i)) := by
+    rintro ⟨κ, a⟩
+    simp [Function.update_idem, Function.update_eq_self]
+  calc ∑ κ : ∀ j, β j, ∑ a : β i, F (Function.update κ i a)
+      = ∑ p : (∀ j, β j) × β i, F (Function.update p.1 i p.2) :=
+        (Fintype.sum_prod_type fun p : (∀ j, β j) × β i ↦ F (Function.update p.1 i p.2)).symm
+    _ = ∑ p : (∀ j, β j) × β i, F p.1 :=
+        Fintype.sum_bijective _ hΦ.bijective _ _ fun _ ↦ rfl
+    _ = Fintype.card (β i) * ∑ κ : ∀ j, β j, F κ := by
+        rw [Fintype.sum_prod_type, Finset.mul_sum]
+        refine Finset.sum_congr rfl fun κ _ ↦ ?_
+        change ∑ _y : β i, F κ = _
+        rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
 
 lemma Fintype.card_pi_eq_mul_card_pi_subtype (i : ι) :
     Fintype.card (∀ j, β j) = Fintype.card (β i) * Fintype.card (∀ j : {j // j ≠ i}, β j) := by

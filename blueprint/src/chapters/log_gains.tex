@@ -282,6 +282,7 @@ $\Prob_{\theta_I}(\cdot) \ge p$'' follows from \texttt{Finset.exists\_le\_of\_su
 (or \texttt{Finset.exists\_lt\_of\_sum\_lt}) applied to the average.
 
 \begin{lemma}[Two-instance Pinsker inequality for identification algorithms]\label{lem:two_point_pinsker}
+\lean{Learning.LinearBandit.IsRun.klDiv_map_out_le_sum_integral, Learning.LinearBandit.IsRun.abs_measureReal_sub_le_of_sum_le, Learning.LinearBandit.IsRun.abs_measureReal_sub_le_of_sq_le}\leanok
 \uses{def:bai_alg, def:arm_set}
 Let $\Xs$ be an arbitrary action set (nonempty compact, not necessarily spanning), let
 $\mathsf{Alg}$ be an identification algorithm with budget $T \ge 1$ on $\Xs$, and
@@ -298,6 +299,7 @@ Then for every measurable event $E$ of $(\hist_T, \rec)$,
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:pinsker, cor:divergence_decomposition_gaussian, lem:kl_data_processing_recommendation}
 By Corollary~\ref{cor:divergence_decomposition_gaussian} (stated for an arbitrary action
 set: it only uses that $\sup_{x\in\Xs}\norm x < \infty$), the Kullback--Leibler divergence
@@ -310,7 +312,19 @@ applied to the complement $E^c$ it gives
 $\Prob_\theta(E^c) - \Prob_{\theta'}(E^c) \le \sqrt{\KL/2}$, i.e.\ the first one.
 \end{proof}
 
+\textbf{Lean remark.} All the events used below depend on the recommendation only, so the Lean
+statement is for events of $\rec$: \texttt{klDiv\_map\_out\_le\_sum\_integral} bounds the
+divergence between the laws of the outputs of two runs by $\KL(\theta,\theta')$ (data processing
+on top of the divergence decomposition), and
+\texttt{abs\_measureReal\_sub\_le\_of\_sum\_le} turns any upper bound $K$ on
+$\KL(\theta,\theta')$ into $\abs{\Prob_\theta(E) - \Prob_{\theta'}(E)} \le \sqrt{K/2}$, in the
+two-sided form. \texttt{abs\_measureReal\_sub\_le\_of\_sq\_le} is the special case
+$K = TC/2$ of a uniform bound $\ip{x}{\theta-\theta'}^2 \le C$ on $\Xs$, which is what the
+hypercubes use; the multi-task and $m$-set arguments need the data-dependent form, whose $K$
+involves the expected number of pulls of a coordinate.
+
 \begin{lemma}[Three-point inequality]\label{lem:log_gains_three_point}
+\lean{Learning.LinearBandit.IsRun.one_sub_le_measureReal_add_of_sq_le}\leanok
 \uses{def:bai_alg}
 Let $\mathsf{Alg}$ be an identification algorithm with budget $T$, let
 $\theta^0, \theta^+, \theta^- \in \R^d$ and $\kappa \ge 0$ with
@@ -322,6 +336,7 @@ Lemma~\ref{lem:two_point_pinsker}). Then for every measurable event $E$ of $(\hi
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:two_point_pinsker}
 Lemma~\ref{lem:two_point_pinsker} with $(\theta,\theta') = (\theta^0,\theta^+)$ and the event
 $E^c$ gives $\Prob_{\theta^+}(E^c) \le \Prob_{\theta^0}(E^c) + \sqrt{\kappa/2}$, i.e.\
@@ -332,6 +347,7 @@ $\Prob_{\theta^0}(E) + \Prob_{\theta^0}(E^c) = 1$.
 \end{proof}
 
 \begin{lemma}[From an average regret bound to a failure probability]\label{lem:fail_prob_from_expected_value}
+\lean{Learning.LinearBandit.integral_simpleRegret_le_of_measureReal_le}\leanok
 \uses{def:bai_alg, def:regret}
 Let $\mathsf{Alg}$ be an identification algorithm on a compact $\Xs$, let $\eps_* > 0$ and let
 $(\theta_I)_{I\in\mathcal I}$ be a finite family of reward vectors with
@@ -359,10 +375,24 @@ average of the $p_I$ is at least $(b-1)/9$ and some $p_I$ is at least that. The 
 formulation is the first with $b = 10 - a$, since $\E[G] = 10\eps_* - \E[r]$.
 \end{proof}
 
+\textbf{Lean remark.} What the four lower bounds below actually use is the pathwise
+inequality of the proof, in the contrapositive direction: if the recommendation of
+$\mathsf{Alg}$ is $\eps_*$-optimal with probability at least $1-\delta$ on the instance
+$\theta$ and $0 \le r(\rec,\theta) \le Z$ on $\Xs$ with $\eps_* \le Z$, then
+\[
+  \E_\theta\big[r(\rec,\theta)\big] \le \eps_* + (Z - \eps_*)\,\delta ,
+\]
+which for $Z = 10\eps_*$ reads $\E_\theta[r] \le \eps_*(1 + 9\delta)$. This is the Lean
+statement \texttt{integral\_simpleRegret\_le\_of\_measureReal\_le}. Averaging it over the
+family and comparing with a lower bound $b\eps_*$ on the average expected regret gives
+$\delta \ge (b-1)/9$ directly, so no bad instance needs to be exhibited (and
+\texttt{Finset.exists\_le\_of\_sum\_le} is not needed).
+
 \subsection{Multi-task bandits}
 \label{sec:log_gains_lower_multitask}
 
 \begin{definition}[Hard instances for the multi-task set]\label{def:multitask_instances}
+\lean{COLT83.mtSum, COLT83.mtEps, COLT83.mtParam, COLT83.mtParam0, COLT83.sum_mtEps, COLT83.inner_mtParam, COLT83.supportFn_mtParam, COLT83.inner_mtParam0_sub_mtParam, COLT83.mtParam0_update, COLT83.inner_mtParam_nonneg}\leanok
 \uses{def:multitask_set, def:regret}
 Let $\Xs$ be the multi-task action set of Definition~\ref{def:multitask_set} (blocks
 $B_1,\dots,B_m$ of sizes $d_j \ge 2$) and $\eps > 0$. Let
@@ -397,6 +427,13 @@ through $\theta \mapsto U^\top\theta$; this is what the non-adaptive upper bound
 Remark~\ref{rem:table} uses.)
 In the family $(\theta_{\tilde x})$, the coordinate $i \in B_j$ of $\rec$ is written
 $\rec_i \in \{0,1\}$, and $\rec$ has exactly one nonzero coordinate in each block.
+In Lean the instances are indexed by the arms themselves, in the form
+$\kappa : \prod_j B_j$ of Definition~\ref{def:multitask_set}: \texttt{mtParam}$(d,\eps,\kappa)$
+has the value $10\eps_j$ at the position $\kappa_j$ of the block $j$, and the alternative
+\texttt{mtParam0}$(d,\eps,\kappa,j)$ is the same vector with the block $j$ zeroed. The relaxed set
+$\tilde{\Xs}$ and the sets $\Xs^{(j)}$ are not needed: the alternative of the block $j$ is a
+reward vector like any other (it is not required to lie in $\Xs$), and it depends on $\kappa$
+only through the coordinates $\ell \ne j$ (\texttt{mtParam0\_update}).
 
 \begin{lemma}[Average value of a block]\label{lem:multitask_block_average}
 \uses{def:multitask_instances, def:bai_alg}
@@ -442,7 +479,50 @@ $i \in B_j$ and using (i) and the Cauchy--Schwarz inequality,
 Multiply by $10\eps_j/d_j$.
 \end{proof}
 
+\textbf{Lean remark.} The four parts are carried out inside the proof of
+Theorem~\ref{thm:lower_multitask} rather than as separate declarations, since they all speak
+about the same fixed run measures: (i) is the pathwise identity
+$\sum_{i\in B_j}\rec_i = \sum_{i\in B_j}x_t[i] = 1$ integrated, (ii) is
+Lemma~\ref{lem:two_point_pinsker} in its data-dependent form applied to
+$\theta = \texttt{mtParam0}(d,\eps,\kappa,j)$ and
+$\theta' = \texttt{mtParam}(d,\eps,\kappa^{j\to i})$, and
+(iv) is Cauchy--Schwarz (Lemma~\ref{lem:sum_sqrt_cs}) over the block.
+
+\begin{lemma}[Cauchy--Schwarz for square roots]\label{lem:sum_sqrt_cs}
+\lean{COLT83.sum_sqrt_le_sqrt_card_mul_sum}\leanok
+For nonnegative reals $(a_k)_{k \in K}$ indexed by a finite set $K$,
+$\sum_{k\in K}\sqrt{a_k} \le \sqrt{\abs K\sum_{k\in K}a_k}$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+Cauchy--Schwarz applied to the vectors $(1)_{k}$ and $(\sqrt{a_k})_k$ gives
+$\big(\sum_k\sqrt{a_k}\big)^2 \le \abs K\sum_k a_k$; take square roots.
+\end{proof}
+
+\begin{lemma}[Averaging over one block]\label{lem:multitask_block_reindex}
+\lean{Fintype.sum_sum_update}\leanok
+\uses{def:multitask_set}
+Let $j \le m$ and let $g$ be a real function of the arms $\kappa \in \prod_\ell B_\ell$ of the
+multi-task set. Writing $\kappa^{j\to i}$ for $\kappa$ with its $j$-th coordinate replaced by
+$i \in B_j$,
+\[
+  \sum_{\kappa}\sum_{i\in B_j} g\big(\kappa^{j\to i}\big) = d_j \sum_\kappa g(\kappa) .
+\]
+\end{lemma}
+
+\begin{proof}
+\leanok
+The map $(\kappa, i) \mapsto (\kappa^{j\to i}, \kappa_j)$ is an involution of
+$\big(\prod_\ell B_\ell\big)\times B_j$, so the left-hand side, which is the sum of
+$g(\kappa^{j\to i})$ over all pairs $(\kappa,i)$, equals the sum of $g(\kappa)$ over all pairs,
+namely $d_j\sum_\kappa g(\kappa)$. This replaces the bijection
+$\Xs^{(j)}\times B_j \to \Xs$ of Definition~\ref{def:multitask_instances}, which would require
+naming the set $\Xs^{(j)}$ of arms with an empty block.
+\end{proof}
+
 \begin{theorem}[Lower bound for multi-task bandits]\label{thm:lower_multitask}
+\lean{COLT83.le_of_isPAC_multitaskSet}\leanok
 \uses{def:multitask_instances, def:pac}
 Let $\Xs$ be the multi-task action set, $\eps > 0$, and let $\mathsf{Alg}$ be an
 identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
@@ -462,6 +542,7 @@ $(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 0.4$ 
 $T > S_d^2/(20000\,\eps^2)$.
 \end{corollary}
 \begin{proof}
+\leanok
 \uses{thm:lower_multitask}
 If $T \le S_d^2/(20000\eps^2)$, Theorem~\ref{thm:lower_multitask} gives an instance
 $\theta_{\tilde x}$ with $\Prob_{\theta_{\tilde x}}(r(\rec,\theta_{\tilde x}) > \eps) \ge 0.4 > \delta$,
@@ -469,7 +550,8 @@ contradicting the PAC property.
 \end{proof}
 
 \begin{proof}
-\uses{lem:multitask_block_average, lem:fail_prob_from_expected_value, def:multitask_instances}
+\leanok
+\uses{lem:multitask_block_average, lem:fail_prob_from_expected_value, def:multitask_instances, lem:multitask_block_reindex, lem:sum_sqrt_cs}
 For $\tilde x \in \Xs$, $\ip{\rec}{\theta_{\tilde x}} = \sum_{j\le m}V_j(\tilde x)$ with
 $V_j(\tilde x) := \sum_{i\in B_j}\rec_i\theta_{\tilde x}[i]$. Fix $j$. Using the bijection
 $\Xs^{(j)}\times B_j \to \Xs$, $(x,i)\mapsto x^{+i}$, and $\abs\Xs = \abs{\Xs^{(j)}}\,d_j$,
@@ -495,6 +577,13 @@ Lemma~\ref{lem:fail_prob_from_expected_value} (gap form, $\eps_* = \eps$, $a = 5
 an instance with failure probability at least $(9 - 5.36)/9 = 0.4044 \ge 0.4$. The PAC
 consequence is immediate: an $(\eps,\delta)$-PAC algorithm has failure probability at most
 $\delta < 0.4$ on every instance.
+
+\textbf{Lean remark.} The Lean statement \texttt{le\_of\_isPAC\_multitaskSet} is the
+contrapositive form: an $(\eps,\delta)$-PAC algorithm with $T \le S_d^2/(20000\eps^2)$ has
+$\delta \ge 2/5$. It is obtained by comparing the upper bound $5.36\,\eps$ on the average value
+with the lower bound $9\eps(1-\delta)$ that Lemma~\ref{lem:fail_prob_from_expected_value}
+(PAC form) gives on every instance, using $Z(\theta_{\tilde x}) = 10\eps$; the averaging over
+the block uses Lemma~\ref{lem:multitask_block_reindex}.
 \end{proof}
 
 \begin{remark}
@@ -511,8 +600,80 @@ $K = d_1$ arms.
 \subsection{Hypercubes}
 \label{sec:log_gains_lower_hypercubes}
 
+Both hypercubes of Table~1 are sets of vertices of a box, and the same argument covers them.
+
+\begin{definition}[Boxes with two values per coordinate]\label{def:cube_set}
+\lean{COLT83.cubeSet, COLT83.cubeVec, COLT83.cubeSet_eq_range, COLT83.cubeSet_finite, COLT83.isCompact_cubeSet, COLT83.norm_le_of_mem_cubeSet, COLT83.signVec, COLT83.signVecZero, COLT83.signVecZero_update, COLT83.inner_smul_signVecZero_sub, COLT83.supportFn_cubeSet, COLT83.hammingCard, COLT83.simpleRegret_smul_signVec, COLT83.hypercubePM_eq_cubeSet, COLT83.hypercube01_eq_cubeSet}\leanok
+\uses{def:arm_set, def:regret}
+Let $u_- < u_+$ be two reals. The \emph{box} they define is the action set
+\[
+  \cubeset(u) := \{x \in \R^d : x_i \in \{u_-, u_+\}\ \text{ for all } i \le d\},
+\]
+a finite --- hence compact --- set of $2^d$ points, whose elements are indexed by the sign
+patterns $s \in \{-,+\}^d$ through $c(s)_i := u_{s_i}$. Both hypercubes are boxes:
+$\{-1,1\}^d$ is the box of $(u_-,u_+) = (-1,1)$ and $\{0,1\}^d$ that of $(u_-,u_+) = (0,1)$.
+For a sign pattern $s$ let $\sigma(s) \in \{-1,1\}^d$ be the vector with $\sigma(s)_i = +1$ if
+$s_i = +$ and $-1$ otherwise, and let $\sigma(s)^{\setminus j}$ be $\sigma(s)$ with the
+coordinate $j$ replaced by $0$. For $c > 0$,
+\[
+  \max_{x\in\cubeset(u)}\ip{x}{c\,\sigma(s)} = \sum_{i\le d}\max\big(u_+c\sigma(s)_i, u_-c\sigma(s)_i\big)
+  = c\sum_{i\le d}u_{s_i}\sigma(s)_i ,
+\]
+and for $x \in \cubeset(u)$ the simple regret is $c(u_+-u_-)$ times the Hamming distance to the
+maximizer $c(s)$:
+\[
+  r\big(x, c\,\sigma(s)\big) = c\,(u_+ - u_-)\,\#\{i \le d : x_i \ne u_{s_i}\} ,
+\]
+so $0 \le r \le c(u_+-u_-)d$ on $\cubeset(u)$ and $Z(c\,\sigma(s)) = c(u_+-u_-)d$.
+\end{definition}
+
+\begin{lemma}[Lower bound on a box]\label{lem:lower_cube}
+\lean{COLT83.le_of_isPAC_cubeSet}\leanok
+\uses{def:cube_set, def:pac}
+Let $\cubeset(u)$ be a box in $\R^d$, let $\eps > 0$, let $M$ satisfy
+$\abs{u_-} \le M$ and $\abs{u_+} \le M$, and let $c > 0$ be normalized by
+$c\,(u_+-u_-)\,d = 10\eps$. Every $(\eps,\delta)$-PAC identification algorithm on
+$\cubeset(u)$ with budget $T$ satisfying $T\,(cM)^2 \le 1/4$ has $\delta \ge 1/6$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, def:cube_set}
+The hard instances are the $2^d$ reward vectors $c\,\sigma(s)$, $s \in \{-,+\}^d$.
+
+\emph{One coordinate.} Fix $j \le d$ and a sign pattern $s$, and let $s'$ be $s$ with the sign
+of the coordinate $j$ flipped. The vector $\theta^0 := c\,\sigma(s)^{\setminus j}$ is the same
+for $s$ and for $s'$, and $\theta^0 - c\,\sigma(s) = -c\,\sigma(s)_je_j$, so for every
+$x \in \cubeset(u)$,
+$\ip{x}{\theta^0 - c\,\sigma(s)}^2 = c^2x_j^2 \le c^2M^2 =: C$, and likewise with $s'$. Since
+$\rec \in \cubeset(u)$ takes only the two values $u_\pm$ in the coordinate $j$, the event
+$\{\rec_j \ne u_{s_j}\}$ is $E := \{\rec_j = u_-\}$ when $s_j = +$ and $E^c$ when $s_j = -$, so
+Lemma~\ref{lem:log_gains_three_point} gives
+\[
+  \Prob_{c\sigma(s)}(\rec_j \ne u_{s_j}) + \Prob_{c\sigma(s')}(\rec_j \ne u_{s'_j})
+  \ge 1 - 2\sqrt{TC/4} \ge \frac12 ,
+\]
+using $T(cM)^2 \le 1/4$.
+
+\emph{Averaging.} The map $s \mapsto s'$ is an involution of $\{-,+\}^d$, so summing the
+display over the $2^d$ sign patterns gives
+$2\sum_s\Prob_{c\sigma(s)}(\rec_j\ne u_{s_j}) \ge 2^{d}/2$: the average over $s$ of
+$\Prob_{c\sigma(s)}(\rec_j\ne u_{s_j})$ is at least $1/4$. Summing over $j \le d$ and using the
+Hamming form of the regret (Definition~\ref{def:cube_set}),
+\[
+  \frac{1}{2^d}\sum_s\E_{c\sigma(s)}\big[r(\rec, c\sigma(s))\big]
+  = c(u_+-u_-)\sum_{j\le d}\frac{1}{2^d}\sum_s\Prob_{c\sigma(s)}(\rec_j\ne u_{s_j})
+  \ge c(u_+-u_-)\frac d4 = \frac{10\eps}{4} = 2.5\,\eps .
+\]
+
+\emph{Conclusion.} On every instance $0 \le r \le Z(c\sigma(s)) = 10\eps$, so
+Lemma~\ref{lem:fail_prob_from_expected_value} (PAC form) gives
+$\E_{c\sigma(s)}[r] \le \eps + 9\eps\delta$. Averaging over $s$ and comparing with $2.5\eps$
+yields $2.5 \le 1 + 9\delta$, i.e.\ $\delta \ge 1/6$.
+\end{proof}
+
 \begin{theorem}[Lower bound for the hypercube $\{-1,1\}^d$]\label{thm:lower_hypercube_pm}
-\uses{def:bai_alg, def:pac, def:regret}
+\uses{def:bai_alg, def:pac, def:regret, def:cube_set}
 Let $\Xs = \{-1,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \frac{5\eps}{d}s$.
 Let $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
 $T \le d^2/(100\,\eps^2)$. Then
@@ -520,51 +681,32 @@ $\frac{1}{2^d}\sum_{s}\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there e
 $s \in \{-1,1\}^d$ with $\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$.
 \end{theorem}
 
+\begin{proof}
+\uses{lem:lower_cube, lem:fail_prob_from_expected_value, def:cube_set}
+$\{-1,1\}^d$ is the box of $(u_-,u_+) = (-1,1)$, with $M = 1$ and
+$c = 5\eps/d$ (so that $c(u_+-u_-)d = 10\eps$) and $\theta_s = c\,\sigma(s)$; the budget
+assumption is $T(cM)^2 = 25\eps^2T/d^2 \le 1/4$. The average regret bound is the display of the
+proof of Lemma~\ref{lem:lower_cube}, and Lemma~\ref{lem:fail_prob_from_expected_value} with
+$\eps_* = \eps$ and $b = 2.5$ gives an instance with failure probability at least
+$1.5/9 = 1/6$.
+\end{proof}
+
 \begin{corollary}[PAC lower bound for the hypercube $\{-1,1\}^d$]\label{cor:lower_hypercube_pm_pac}
 \lean{COLT83.hypercubePM_lt_budget_of_isPAC}\leanok
-\uses{thm:lower_hypercube_pm, def:pac}
+\uses{lem:lower_cube, def:pac}
 Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{-1,1\}^d$ with budget $T \ge 1$ and
 $\delta < 1/6$ has $T > d^2/(100\,\eps^2)$.
 \end{corollary}
 \begin{proof}
-\uses{thm:lower_hypercube_pm}
-If $T \le d^2/(100\eps^2)$, Theorem~\ref{thm:lower_hypercube_pm} gives $s$ with
-$\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6 > \delta$, contradicting the PAC property.
-\end{proof}
-
-\begin{proof}
-\uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
-\emph{Regret as a Hamming distance.} $\max_{x\in\Xs}\ip{x}{\theta_s} = 5\eps$ (at $x = s$),
-$\min_x\ip{x}{\theta_s} = -5\eps$ (at $x = -s$), so $Z(\theta_s) = 10\eps$, and for
-$\rec\in\{-1,1\}^d$,
-\[
-  r(\rec,\theta_s) = \frac{5\eps}{d}\sum_{j\le d}(1 - \rec_js_j) = \frac{10\eps}{d}\sum_{j\le d}\indic\{\rec_j \ne s_j\}.
-\]
-
-\emph{One coordinate.} Fix $j \le d$ and $s_{-j} \in \{-1,1\}^{d-1}$ (the coordinates other
-than $j$); let $s^+, s^-$ be the two completions (with $s_j = +1$, resp.\ $-1$) and let
-$\theta^0 \in \R^d$ be $\theta_{s^\pm}$ with coordinate $j$ set to $0$ (the same vector for
-both). Then $\theta^0 - \theta_{s^\pm} = \mp\frac{5\eps}{d}e_j$ and, since $x_t[j]^2 = 1$,
-$\KL(\theta^0,\theta_{s^\pm}) = \frac12\sum_{t<T}\E_{\theta^0}\big[\tfrac{25\eps^2}{d^2}x_t[j]^2\big]
-= \frac{25\eps^2T}{2d^2} =: \kappa$. Lemma~\ref{lem:log_gains_three_point} with the event
-$E := \{\rec_j = -1\}$ gives
-\[
-  \Prob_{\theta_{s^+}}(\rec_j \ne s^+_j) + \Prob_{\theta_{s^-}}(\rec_j \ne s^-_j)
-  = \Prob_{\theta_{s^+}}(E) + \Prob_{\theta_{s^-}}(E^c) \ge 1 - 2\sqrt{\kappa/2}
-  = 1 - \frac{5\eps\sqrt T}{d} \ge \frac12 ,
-\]
-using $T \le d^2/(100\eps^2)$. Averaging over the $2^{d-1}$ choices of $s_{-j}$:
-$\frac{1}{2^d}\sum_{s}\Prob_{\theta_s}(\rec_j \ne s_j) \ge \frac14$.
-
-\emph{Average regret.} Summing over $j$,
-$\frac{1}{2^d}\sum_s\E_{\theta_s}[r(\rec,\theta_s)] = \frac{10\eps}{d}\sum_{j\le d}\frac{1}{2^d}\sum_s\Prob_{\theta_s}(\rec_j\ne s_j)
-\ge \frac{10\eps}{d}\cdot d\cdot\frac14 = 2.5\,\eps$.
-Lemma~\ref{lem:fail_prob_from_expected_value} with $\eps_* = \eps$, $b = 2.5$ gives an
-instance with failure probability at least $1.5/9 = 1/6$.
+\leanok
+\uses{lem:lower_cube}
+If $T \le d^2/(100\eps^2)$, Lemma~\ref{lem:lower_cube} applied to the box of $(-1,1)$ with
+$M = 1$ and $c = 5\eps/d$ gives $\delta \ge 1/6$, a contradiction. (For $d = 0$ the bound reads
+$0 < T$, which holds since $T \ge 1$.)
 \end{proof}
 
 \begin{theorem}[Lower bound for the hypercube $\{0,1\}^d$]\label{thm:lower_hypercube_01}
-\uses{def:bai_alg, def:pac, def:regret}
+\uses{def:bai_alg, def:pac, def:regret, def:cube_set}
 Let $\Xs = \{0,1\}^d$ and $\eps > 0$. For $s \in \{-1,1\}^d$ let $\theta_s := \frac{10\eps}{d}s$
 and $\sigma(s) := \indic\{s = 1\} \in \{0,1\}^d$ (coordinatewise). Let $\mathsf{Alg}$ be an
 identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying $T \le d^2/(400\,\eps^2)$. Then
@@ -572,42 +714,24 @@ $\frac{1}{2^d}\sum_s\E_{\theta_s}[r(\rec,\theta_s)] \ge 2.5\,\eps$ and there exi
 $\Prob_{\theta_s}(r(\rec,\theta_s) > \eps) \ge 1/6$.
 \end{theorem}
 
+\begin{proof}
+\uses{lem:lower_cube, lem:fail_prob_from_expected_value, def:cube_set}
+$\{0,1\}^d$ is the box of $(u_-,u_+) = (0,1)$, with $M = 1$ and $c = 10\eps/d$ (so that
+$c(u_+-u_-)d = 10\eps$); the budget assumption is $T(cM)^2 = 100\eps^2T/d^2 \le 1/4$. The rest
+is as for Theorem~\ref{thm:lower_hypercube_pm}: the vertex maximizing $\ip{x}{\theta_s}$ is
+$\indic\{s = 1\}$ and the regret is $\frac{10\eps}{d}$ times the Hamming distance to it.
+\end{proof}
+
 \begin{corollary}[PAC lower bound for the hypercube $\{0,1\}^d$]\label{cor:lower_hypercube_01_pac}
 \lean{COLT83.hypercube01_lt_budget_of_isPAC}\leanok
-\uses{thm:lower_hypercube_01, def:pac}
+\uses{lem:lower_cube, def:pac}
 Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{0,1\}^d$ with budget $T \ge 1$ and
 $\delta < 1/6$ has $T > d^2/(400\,\eps^2)$.
 \end{corollary}
 \begin{proof}
-\uses{thm:lower_hypercube_01}
-As for Corollary~\ref{cor:lower_hypercube_pm_pac}, from Theorem~\ref{thm:lower_hypercube_01}.
-\end{proof}
-
-\begin{proof}
-\uses{lem:log_gains_three_point, lem:fail_prob_from_expected_value, lem:two_point_pinsker}
-\emph{Regret.} $\max_{x\in\{0,1\}^d}\ip{x}{\theta_s} = \frac{10\eps}{d}\abs{\{j : s_j = 1\}}$
-(at $x = \sigma(s)$) and $\min_x\ip{x}{\theta_s} = -\frac{10\eps}{d}\abs{\{j : s_j = -1\}}$, so
-$Z(\theta_s) = 10\eps$, and for $\rec \in \{0,1\}^d$,
-\[
-  r(\rec,\theta_s) = \frac{10\eps}{d}\sum_{j\le d}\big(\sigma(s)_j - \rec_js_j\big)
-  = \frac{10\eps}{d}\sum_{j\le d}\indic\{\rec_j \ne \sigma(s)_j\},
-\]
-since $\sigma_j - \rec_js_j$ equals $1 - \rec_j$ when $s_j = 1$ and $\rec_j$ when $s_j = -1$.
-
-\emph{One coordinate.} Fix $j$ and $s_{-j}$, with completions $s^\pm$ and the common
-alternative $\theta^0$ (coordinate $j$ zeroed). Now
-$\KL(\theta^0,\theta_{s^\pm}) = \frac12\sum_t\E_{\theta^0}\big[\tfrac{100\eps^2}{d^2}x_t[j]^2\big]
-= \frac{50\eps^2}{d^2}\E_{\theta^0}[N_j] \le \frac{50\eps^2T}{d^2} =: \kappa$, where
-$N_j := \sum_{t<T}x_t[j] \le T$ (as $x_t[j]\in\{0,1\}$).
-Lemma~\ref{lem:log_gains_three_point} with $E := \{\rec_j = 0\}$ gives
-\[
-  \Prob_{\theta_{s^+}}(\rec_j \ne \sigma(s^+)_j) + \Prob_{\theta_{s^-}}(\rec_j \ne \sigma(s^-)_j)
-  \ge 1 - 2\sqrt{\kappa/2} = 1 - \frac{10\eps\sqrt T}{d} \ge \frac12 ,
-\]
-using $T \le d^2/(400\eps^2)$. The rest is identical to the proof of
-Theorem~\ref{thm:lower_hypercube_pm}: averaging over $s_{-j}$ and summing over $j$ gives the
-average regret bound $2.5\eps$, and Lemma~\ref{lem:fail_prob_from_expected_value} with
-$b = 2.5$ gives the failure probability $1/6$.
+\leanok
+\uses{lem:lower_cube}
+As for Corollary~\ref{cor:lower_hypercube_pm_pac}, with $c = 10\eps/d$.
 \end{proof}
 
 \begin{remark}
@@ -622,11 +746,12 @@ $O((d\log(1/\delta) + d^2)/\eps^2)$ of Theorem~\ref{thm:upper} since $\gw \le d$
 (Proposition~\ref{prop:width_le_d}).
 \end{remark}
 
+
 \subsection{\texorpdfstring{$m$}{m}-sets}
 \label{sec:log_gains_lower_msets}
 
 \begin{definition}[$m$-sets and their hard instances]\label{def:msets}
-\lean{COLT83.mSet}\leanok
+\lean{COLT83.mSet, COLT83.msParam, COLT83.msVec, COLT83.msVec_mem_mSet, COLT83.mSet_nonempty, COLT83.norm_le_of_mem_mSet, COLT83.inner_msParam, COLT83.inner_msParam_sub_insert, COLT83.inner_msParam_nonneg, COLT83.supportFn_msParam}\leanok
 \uses{def:arm_set, def:regret}
 Let $1 \le m \le d-1$. The \emph{$m$-set} action set is
 $\Xs := \{x \in \{0,1\}^d : \sum_{i\le d}x_i = m\}$, with $\abs\Xs = \binom dm$; it spans
@@ -642,6 +767,7 @@ and $Z(\theta^{(S)}) = 10\eps$.
 \end{definition}
 
 \begin{lemma}[Equivalent sampling of $(B, i)$]\label{lem:msets_equivalent_sampling}
+\lean{Finset.sum_powersetCard_succ_sum_mem}\leanok
 \uses{def:msets}
 For every function $F$ on pairs $(B, i)$ with $B \subseteq [d]$, $\abs B = m-1$, $i \notin B$,
 \[
@@ -654,6 +780,7 @@ $i$ uniformly in $[d]\setminus B$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:msets}
 The map $(S, i) \mapsto (S\setminus\{i\}, i)$ is a bijection from
 $\{(S,i) : \abs S = m,\ i \in S\}$ onto $\{(B,i) : \abs B = m-1,\ i\notin B\}$ (inverse
@@ -661,6 +788,13 @@ $(B,i)\mapsto(B\cup\{i\},i)$), so both sides are sums of $F$ over the same set o
 with the constant weights $1/(m\binom dm)$ and $1/(n\binom{d}{m-1})$ respectively. These
 are equal: $n\binom{d}{m-1} = (d-m+1)\frac{d!}{(m-1)!\,(d-m+1)!} = \frac{d!}{(m-1)!\,(d-m)!} = m\binom dm$.
 \end{proof}
+
+\textbf{Lean remark.} The Lean statement is the unnormalized identity
+$\sum_{\abs S = m}\sum_{i\in S}F(S\setminus\{i\},i) = \sum_{\abs B = m-1}\sum_{i\notin B}F(B,i)$
+(the bijection alone, proved with \texttt{Finset.sum\_nbij'} on the two $\Sigma$-types); the
+normalization $n\binom{d}{m-1} = m\binom dm$ is Mathlib's
+\texttt{Nat.choose\_succ\_right\_eq} and is applied once, at the end of the proof of
+Theorem~\ref{thm:lower_msets}.
 
 \begin{lemma}[Good coordinates under an alternative instance]\label{lem:msets_good_set}
 \uses{def:msets, def:bai_alg}
@@ -706,7 +840,15 @@ $\Prob_{\theta^{(B\cup\{i\})}}(A_i) \le \Prob_{\theta^{(B)}}(A_i) + \sqrt{\KL/2}
 \le \frac{4m}{n} + \sqrt{\Delta^2mT/n}$.
 \end{proof}
 
+\textbf{Lean remark.} Lemmas~\ref{lem:msets_good_set} and~\ref{lem:msets_pinsker_step} are
+carried out inside the proof of Theorem~\ref{thm:lower_msets} rather than as separate
+declarations, since they speak about the run measures of the fixed algorithm: $G_B$ is a
+\texttt{Finset.filter} of $B^c$, the counting argument bounds the cardinalities of the two
+exceptional sets by $n/4$ each from $\sum_{i}\E N_i = mT$ and $\sum_i\Prob(A_i) = m$, and the
+Pinsker step is Lemma~\ref{lem:two_point_pinsker} in its data-dependent form.
+
 \begin{theorem}[Lower bound for $m$-sets]\label{thm:lower_msets}
+\lean{COLT83.le_of_isPAC_mSet}\leanok
 \uses{def:msets, def:pac}
 Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$, let $\eps > 0$ and let
 $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
@@ -724,11 +866,13 @@ Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$ and $\eps > 0$. An $(\eps
 algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 2/9$ has $T > mn/(2500\,\eps^2)$.
 \end{corollary}
 \begin{proof}
+\leanok
 \uses{thm:lower_msets}
 As for Corollary~\ref{cor:lower_multitask_pac}, from Theorem~\ref{thm:lower_msets}.
 \end{proof}
 
 \begin{proof}
+\leanok
 \uses{lem:msets_good_set, lem:msets_pinsker_step, lem:msets_equivalent_sampling, lem:fail_prob_from_expected_value, def:msets}
 Note that $n \ge 20m$ implies $d = n + m - 1 \ge 21m - 1 \ge 2m$, so
 Definition~\ref{def:msets} gives $Z(\theta^{(S)}) = 10\eps$ and
@@ -760,6 +904,14 @@ $B = S\setminus\{i\}$),
 
 \emph{Conclusion.} Lemma~\ref{lem:fail_prob_from_expected_value} (gap form, $a = 7$) gives
 an $m$-subset $S$ with $\Prob_{\theta^{(S)}}(r > \eps) \ge 2/9$.
+
+\textbf{Lean remark.} The Lean statement \texttt{le\_of\_isPAC\_mSet} is the contrapositive
+form: an $(\eps,\delta)$-PAC algorithm with $1 \le T \le mn/(2500\eps^2)$ has $\delta \ge 2/9$.
+It compares the upper bound $7\eps\binom dm$ on $\sum_{\abs S = m}\E_{\theta^{(S)}}\ip{\rec}{\theta^{(S)}}$
+with the lower bound $9\eps(1-\delta)\binom dm$ coming from
+Lemma~\ref{lem:fail_prob_from_expected_value} (PAC form) and
+$Z(\theta^{(S)}) = 10\eps$. The sizes are handled by $m = k+1$ and $d = k+n$ rather than by
+truncated subtraction.
 \end{proof}
 
 \textbf{Lean remark.} The instances are indexed by \texttt{Finset (Fin d)} of card $m$

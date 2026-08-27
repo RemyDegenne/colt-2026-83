@@ -18,6 +18,41 @@ import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
+import Mathlib.Logic.Equiv.Prod
+import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Fintype.Lattice
+import Mathlib.Data.Fintype.Order
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Order.ConditionallyCompleteLattice.Finset
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.Comp
+import Mathlib.InformationTheory.KullbackLeibler.Basic
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.MeasureTheory.Integral.MeanInequalities
+import Mathlib.InformationTheory.KullbackLeibler.ChainRule
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
+import Mathlib.Probability.Kernel.Composition.RadonNikodym
+import Mathlib.Probability.Kernel.MeasurableLIntegral
+import Mathlib.Probability.Kernel.RadonNikodym
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Algebra.BigOperators.Sym
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
+import Mathlib.Data.Finset.Powerset
 
 /-! # Standalone extraction for `COLT83.hypercubePM_lt_budget_of_isPAC`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.

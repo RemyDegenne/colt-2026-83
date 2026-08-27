@@ -12,7 +12,9 @@ public import COLT83.LeanMachineLearning.LinearBandit
 public import COLT83.LeanMachineLearning.RepeatTest
 public import COLT83.LeanMachineLearning.RepeatTestGaussian
 public import COLT83.LeanMachineLearning.Run
+public import COLT83.LeanMachineLearning.TwoPoint
 public import COLT83.MXJ2026.BayesModel
+public import COLT83.MXJ2026.CubeSet
 public import COLT83.MXJ2026.DesignSet
 public import COLT83.MXJ2026.DifferenceProcess
 public import COLT83.MXJ2026.FixedDesignAlgorithm
@@ -21,10 +23,15 @@ public import COLT83.MXJ2026.LeastSquares
 public import COLT83.MXJ2026.LogGains
 public import COLT83.MXJ2026.LowerAdaptive
 public import COLT83.MXJ2026.LowerAdaptiveBaseline
+public import COLT83.MXJ2026.LowerCube
+public import COLT83.MXJ2026.LowerMSet
+public import COLT83.MXJ2026.LowerMultitask
 public import COLT83.MXJ2026.LowerNonadaptive
+public import COLT83.MXJ2026.MSetInstances
 public import COLT83.MXJ2026.MixedDesign
 public import COLT83.MXJ2026.MixtureKL
 public import COLT83.MXJ2026.Multitask
+public import COLT83.MXJ2026.MultitaskInstances
 public import COLT83.MXJ2026.NormEstimation
 public import COLT83.MXJ2026.NormalizedDesign
 public import COLT83.MXJ2026.OptimalDesign
@@ -49,6 +56,7 @@ public import COLT83.Mathlib.Analysis.InnerProductSpace.IsotropicSeparated
 public import COLT83.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 public import COLT83.Mathlib.Analysis.LogSumExp
 public import COLT83.Mathlib.Analysis.SupportFnDense
+public import COLT83.Mathlib.Data.Finset.PowersetCardSum
 public import COLT83.Mathlib.Data.Fintype.PiSplitAt
 public import COLT83.Mathlib.GaussianWidth
 public import COLT83.Mathlib.InformationTheory.BretagnolleHuber
