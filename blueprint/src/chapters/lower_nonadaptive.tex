@@ -262,12 +262,13 @@ this is the maximizer, as stated in the paper. Only the value at $\sqrt2 - 1$ is
 \label{sec:lower_nonadaptive_singular}
 
 \begin{lemma}[Singular designs fail]\label{lem:singular_design_fails}
-\lean{COLT83.exists_singular_instances, COLT83.exists_ne_zero_inner_eq_zero_of_not_posDef, COLT83.diffSup_pos_of_inner_eq_zero, COLT83.simpleRegret_smul_add_simpleRegret_neg_smul}\leanok
+\lean{COLT83.exists_singular_instances, COLT83.exists_singular_instances_of_zero_mem, COLT83.exists_singular_instances_of_forall, COLT83.exists_ne_zero_inner_eq_zero_of_not_posDef, COLT83.diffSup_pos_of_inner_eq_zero, COLT83.simpleRegret_smul_add_simpleRegret_neg_smul}\leanok
 \uses{def:arm_set, def:fixed_design, lem:fixed_design_law, def:regret}
 Let $\Xs$ be spanning and let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design of length $T \ge 0$
 (Definition~\ref{def:fixed_design}) whose design matrix $\Sigma_T = \sum_{t<T}x_tx_t^\top$ is
-singular; if $T = 0$ (so that $\Sigma_0 = 0$), assume moreover that $\Xs$ has at least two points
-(for $T \ge 1$ this follows from the spanning hypothesis, see the proof). Let
+singular; if $T = 0$ (so that $\Sigma_0 = 0$), assume moreover that $0 \in \Xs$ (more generally,
+it suffices that every direction $v$ orthogonal to the design, $\ip{x_t}{v} = 0$ for all $t$, is
+orthogonal to some point of $\Xs$; for $T \ge 1$ this holds with the point $x_0$). Let
 $\eps > 0$ and let $\rho$ be any recommendation kernel from $\R^T$ to $\Xs$. Then there are
 $\theta_+, \theta_- \in \R^d$ such that
 \begin{enumerate}
@@ -291,8 +292,10 @@ $0 = v^\top\Sigma_T v = \sum_{t<T}\ip{x_t}{v}^2$ forces $\ip{x_t}{v} = 0$ for ev
 $\ip{\cdot}{v}$ were constant on $\Xs$, its value would be $\ip{x_0}{v} = 0$, so
 $v \perp \Xs$, hence $v \perp \Span(\Xs) = \R^d$ (spanning) and $v = 0$, a contradiction. (This also
 shows that $\Xs$ has at least two points when $T \ge 1$.)
-If $T = 0$: pick $x \ne x'$ in $\Xs$ and $v := x - x'$; then
-$\ip{x}{v} - \ip{x'}{v} = \norm{v}^2 > 0$, and the condition on the $x_t$ is vacuous.
+In general: the singularity of $\Sigma_T$ gives $v \ne 0$ with $\ip{x_t}{v} = 0$ for all $t$
+(for $T = 0$ any $v \ne 0$ works, as $d \ge 1$), and by assumption $\ip{y_0}{v} = 0$ for some
+$y_0 \in \Xs$ ($y_0 = x_0$ if $T \ge 1$, $y_0 = 0$ if $0 \in \Xs$); if $\ip\cdot v$ were constant
+on $\Xs$ its value would be $\ip{y_0}{v} = 0$, and we conclude as before.
 
 \emph{Step 2: the two instances.} Let $a := \max_{x\in\Xs}\ip{x}{v}$ and
 $b := \min_{x\in\Xs}\ip{x}{v}$ (compactness); by Step~1, $a > b$. Put
@@ -319,14 +322,71 @@ $\Prob_{\theta_\pm}(r(\rec,\theta_\pm) > \eps) = \mu(E_\pm)$.
 \begin{remark}[The case $T = 0$]\label{rem:lower_nonadaptive_singleton}
 Budget $T = 0$ is a legitimate fixed design (Definitions~\ref{def:bai_alg}
 and~\ref{def:fixed_design}): the design is empty, $\Sigma_0 = 0$ is singular and $\rho$ is a
-probability measure on $\Xs$. For $T = 0$ the hypothesis that $\Xs$ has at least two points
-cannot be dropped: if $\Xs = \{x_0\}$ with $x_0 \ne 0$ (a spanning action set when $d = 1$),
+probability measure on $\Xs$. For $T = 0$ the additional hypothesis ($0 \in \Xs$, or a
+direction condition) cannot be dropped: if $\Xs = \{x_0\}$ with $x_0 \ne 0$ (a spanning action set when $d = 1$),
 then every recommendation equals $x_0$ and the regret is identically $0$, so the length-$0$
 design is $(\eps,\delta)$-PAC. For $T \ge 1$ no such assumption is needed. This is harmless for
 Theorem~\ref{thm:lower_nonadaptive}, which assumes $T \ge 1$; its conclusion also holds for
 $T = 0$, since either $\Xs$ has two points and no length-$0$ design is $(\eps,\delta)$-PAC with
 $\delta \le 1/10$, or $\Xs = \{x_0\}$ and $\gw(\{x_0\}) = 0$ (as $\E\ip{x_0}{A^{-1/2}g} = 0$).
 \end{remark}
+
+\begin{lemma}[A PAC design is nonsingular]\label{lem:lower_nonadaptive_posdef}
+\lean{COLT83.posDef_of_isFixedDesign_of_isPAC_of_forall, COLT83.posDef_of_isFixedDesign_of_isPAC, COLT83.posDef_of_isFixedDesign_of_isPAC_of_zero_mem}\leanok
+\uses{def:fixed_design, def:pac, def:arm_set}
+Let $\Xs$ be spanning, $\eps > 0$ and $\delta < 1/2$. If a fixed-design algorithm with design
+$x_0,\dots,x_{T-1} \in \Xs$ is $(\eps,\delta)$-PAC on $\Xs$, and either $T \ge 1$ or
+$0 \in \Xs$ (more generally, every direction orthogonal to the design is orthogonal to some
+point of $\Xs$), then $\Sigma_T \succ 0$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:singular_design_fails, lem:fixed_design_law}
+Otherwise Lemma~\ref{lem:singular_design_fails} gives $\theta_\pm$ under which $(y,\rec)$ has
+the same law and $r(\rec,\theta_+) + r(\rec,\theta_-) = 4\eps$ pointwise, so that
+$\Prob_{\theta_+}(r \le \eps) + \Prob_{\theta_-}(r \le \eps) \le 1$, while the PAC property
+gives $2(1-\delta) > 1$.
+\end{proof}
+
+\begin{lemma}[The Bayesian step]\label{lem:lower_nonadaptive_bayes_step}
+\lean{COLT83.gwMat_le_of_isFixedDesign_of_isPAC}\leanok
+\uses{def:fixed_design, def:pac, def:width_matrix}
+Let $\Xs$ be compact and nonempty, $\eps \ge 0$ and $\delta \in (0, 1/10]$. If a fixed-design
+algorithm with design $x_0,\dots,x_{T-1} \in \Xs$ and $\Sigma_T \succ 0$ is $(\eps,\delta)$-PAC
+on $\Xs$, then
+\[
+  0.12\,\gwidth{\Xs}{\Sigma_T} \le \eps .
+\]
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:bayes_prior, lem:fixed_design_law, lem:pac_expected_regret, lem:width_symm, lem:width_matrix_wd, lem:gauss_linear_image, lem:bayes_regret_lower_opt}
+Write $w_T := \gwidth{\Xs}{\Sigma_T} \ge 0$.
+
+\emph{Step 1: upper bound on the Bayesian regret.} Let $\tau := \sqrt2 - 1$ and consider the
+Bayesian model of Definition~\ref{def:bayes_prior} with prior $\pi = \Normal(0,\tau^2\Sigma_T^{-1})$.
+Its joint law is $\pi \otimes \kappa$ with the Markov kernel
+$\kappa(\theta) = \Normal(X\theta, I_T) \otimes \rho$ (a Gaussian kernel whose mean depends
+linearly on $\theta$, composed with $\rho$), and $\kappa(\theta) = \Prob_\theta$ for every
+$\theta$ by Lemma~\ref{lem:fixed_design_law}, with $(\hist_T, \rec)$ identified with
+$(y, \rec)$ as in Definition~\ref{def:fixed_design}. Hence Lemma~\ref{lem:pac_expected_regret}
+applies with this $\kappa$, provided $\int Z\,d\pi < \infty$. With $G := \tau^{-1}\theta \sim \Normal(0,\Sigma_T^{-1})$
+(Lemma~\ref{lem:gauss_linear_image}) and $Z(\theta) = \tau Z(G)$, Lemma~\ref{lem:width_symm}
+gives $\int Z\,d\pi = \E Z(\theta) = \tau\,\E Z(G) = 2\tau w_T < \infty$. Hence
+\[
+  \E\big[r(\rec,\theta)\big] \le \eps + \delta \cdot 2\tau\, w_T .
+\]
+
+\emph{Step 2: lower bound on the Bayesian regret.} By Lemma~\ref{lem:bayes_regret_lower_opt},
+$\E[r(\rec,\theta)] \ge 0.207\, w_T$.
+
+\emph{Step 3: arithmetic.} Combining, $(0.207 - 2\tau\delta)\, w_T \le \eps$. Since
+$1.4143^2 = 2.00024 \ge 2$ we have $\tau = \sqrt2 - 1 \le 0.4143$, so with $\delta \le 1/10$,
+$2\tau\delta \le 0.08286 \le 0.083$, and $0.207 - 0.083 = 0.124 \ge 0.12$. Therefore
+$0.12\, w_T \le \eps$.
+\end{proof}
 
 \section{The lower bound}
 \label{sec:lower_nonadaptive_theorem}
@@ -344,35 +404,15 @@ $(\eps,\delta)$-PAC on $\Xs$, then
 
 \begin{proof}
 \leanok
-\uses{lem:singular_design_fails, def:bayes_prior, def:fixed_design, lem:fixed_design_law, lem:pac_expected_regret, lem:width_symm, lem:width_matrix_wd, lem:gauss_linear_image, lem:bayes_regret_lower_opt, lem:width_empirical}
-\emph{Step 1: $\Sigma_T$ is positive definite.} Otherwise Lemma~\ref{lem:singular_design_fails}
-(with $T \ge 1$ and $\Xs$ spanning) gives $\theta$ with $\Prob_\theta(r(\rec,\theta) > \eps) \ge 1/2 > \delta$,
-contradicting the PAC property. So $\Sigma_T \succ 0$, and we write
+\uses{lem:lower_nonadaptive_posdef, lem:lower_nonadaptive_bayes_step, lem:width_empirical}
+\emph{Step 1: $\Sigma_T$ is positive definite}, by Lemma~\ref{lem:lower_nonadaptive_posdef}
+(with $T \ge 1$, $\Xs$ spanning and $\delta \le 1/10 < 1/2$). Write
 $w_T := \gwidth{\Xs}{\Sigma_T} \ge 0$.
 
-\emph{Step 2: upper bound on the Bayesian regret.} Let $\tau := \sqrt2 - 1$ and consider the
-Bayesian model of Definition~\ref{def:bayes_prior} with prior $\pi = \Normal(0,\tau^2\Sigma_T^{-1})$.
-Its joint law is $\pi \otimes \kappa$ with the Markov kernel
-$\kappa(\theta) = \Normal(X\theta, I_T) \otimes \rho$ (a Gaussian kernel whose mean depends
-linearly on $\theta$, composed with $\rho$), and $\kappa(\theta) = \Prob_\theta$ for every
-$\theta$ by Lemma~\ref{lem:fixed_design_law}, with $(\hist_T, \rec)$ identified with
-$(y, \rec)$ as in Definition~\ref{def:fixed_design}. Hence Lemma~\ref{lem:pac_expected_regret}
-applies with this $\kappa$, provided $\int Z\,d\pi < \infty$. With $G := \tau^{-1}\theta \sim \Normal(0,\Sigma_T^{-1})$
-(Lemma~\ref{lem:gauss_linear_image}) and $Z(\theta) = \tau Z(G)$, Lemma~\ref{lem:width_symm}
-gives $\int Z\,d\pi = \E Z(\theta) = \tau\,\E Z(G) = 2\tau w_T < \infty$. Hence
-\[
-  \E\big[r(\rec,\theta)\big] \le \eps + \delta \cdot 2\tau\, w_T .
-\]
-
-\emph{Step 3: lower bound on the Bayesian regret.} By Lemma~\ref{lem:bayes_regret_lower_opt},
-$\E[r(\rec,\theta)] \ge 0.207\, w_T$.
-
-\emph{Step 4: arithmetic.} Combining, $(0.207 - 2\tau\delta)\, w_T \le \eps$. Since
-$1.4143^2 = 2.00024 \ge 2$ we have $\tau = \sqrt2 - 1 \le 0.4143$, so with $\delta \le 1/10$,
-$2\tau\delta \le 0.08286 \le 0.083$, and $0.207 - 0.083 = 0.124 \ge 0.12$. Therefore
+\emph{Step 2: the Bayesian step.} Lemma~\ref{lem:lower_nonadaptive_bayes_step} gives
 $0.12\, w_T \le \eps$.
 
-\emph{Step 5: from $w_T$ to $\gw(\Xs)$.} By Lemma~\ref{lem:width_empirical},
+\emph{Step 3: from $w_T$ to $\gw(\Xs)$.} By Lemma~\ref{lem:width_empirical},
 $w_T \ge \gw(\Xs)/\sqrt T$, so $0.12\,\gw(\Xs) \le \eps\sqrt T$; squaring (both sides are
 nonnegative), $0.0144\,\gw(\Xs)^2 \le \eps^2 T$. Since $0.0144 \cdot 70 = 1.008 \ge 1$, this
 gives $T \ge \gw(\Xs)^2/(70\,\eps^2)$.

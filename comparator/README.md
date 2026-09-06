@@ -4,9 +4,12 @@ Machine-checkable verification, with [leanprover/comparator](https://github.com/
 that this repository proves the headline results claimed in [`formalization.yaml`](../formalization.yaml)
 — without having to read (or trust) the Lean development in `COLT83/`.
 
-**Status (phase 1).** The headline statements are stated but not yet proved (their proofs are
-`sorry`), so comparator currently reports the `sorryAx` axiom for every config. The challenge
-files are the phase-1 deliverable: they fix the statements to be proved in phase 2.
+**Status (phase 2 complete, 2026-09-06).** Every headline statement is proved, and
+`scripts/comparator-verify.sh` passes on all 17 configs: each challenged statement is proved by
+the project with exactly the challenged statement, using no axioms beyond `propext`,
+`Classical.choice` and `Quot.sound`, with the proofs replayed through the kernel (the last run
+used `--insecure`, i.e. comparator's fake-landrun shim, on the developer's machine). The
+challenge files were the phase-1 deliverable: they fixed the statements to be proved in phase 2.
 
 Each challenge is **one self-contained file whose transitive imports resolve to Mathlib and Lean
 core only**. That is the shape the [Palomar registry](https://palomar-registry.org/)'s mechanical

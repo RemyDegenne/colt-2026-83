@@ -72,6 +72,16 @@ import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
 import Mathlib.Probability.Kernel.Composition.RadonNikodym
 import Mathlib.Probability.Kernel.MeasurableLIntegral
 import Mathlib.Probability.Kernel.RadonNikodym
+import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+import Mathlib.Analysis.Calculus.FDeriv.Equiv
+import Mathlib.Analysis.Calculus.FDeriv.CompCLM
+import Mathlib.Analysis.Calculus.Deriv.Prod
+import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Probability.Distributions.Bernoulli
+import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
+import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -90,10 +100,6 @@ import Mathlib.Logic.Equiv.Prod
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Prod
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Analysis.Calculus.Deriv.MeanValue
-import Mathlib.Probability.Distributions.Bernoulli
-import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
-import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 import Mathlib.Algebra.BigOperators.Sym
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Data.Finset.Powerset

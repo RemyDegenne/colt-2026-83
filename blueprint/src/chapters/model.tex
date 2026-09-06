@@ -292,6 +292,43 @@ Lemma~\ref{lem:gauss_pi} in its sequential form applies
 gives the law of $y$ (\texttt{hasLaw\_feedback\_finVec\_of\_fixedDesign}); the joint law with
 the recommendation is \texttt{Learning.IdentAlg.map\_finHistory\_out\_eq}.
 
+\begin{lemma}[Transport of a fixed-design algorithm through a linear map]\label{lem:fixed_design_transport}
+\lean{Learning.LinearBandit.relabelHist, Learning.LinearBandit.transportKernel, Learning.LinearBandit.fixedDesignTransport, Learning.LinearBandit.fixedDesignHistLaw_map_relabelHist, Learning.LinearBandit.isPAC_fixedDesignTransport}\leanok
+\uses{def:fixed_design, def:pac, def:regret, def:env}
+Let $\Xs \subseteq E$ and $\mathcal Y \subseteq F$ be action sets in two Euclidean spaces, let
+$L : F \to E$ be linear, let $x_0, \dots, x_{T-1} \in \Xs$ be a fixed design with
+recommendation kernel $\rho$ (from $\R^T$ to $\Xs$), and let $x'_0, \dots, x'_{T-1} \in
+\mathcal Y$ satisfy $\ip{x'_t}{\vartheta} = \ip{x_t}{L\vartheta}$ for all $t$ and
+$\vartheta \in F$ (for instance $x'_t = L^*x_t$, when $L^*x_t \in \mathcal Y$). Let
+$\pi : \Xs \to \mathcal Y$ be measurable with
+$r_{\mathcal Y}(\pi(\rec), \vartheta) \le r_{\Xs}(\rec, L\vartheta)$ for all $\rec \in \Xs$ and
+$\vartheta \in F$. The \emph{transported algorithm} is the fixed-design algorithm on
+$\mathcal Y$ with design $x'$ and recommendation kernel $\pi_*\rho$: draw $\rec \sim \rho(y)$
+(with the history relabelled by the actions $x_t$) and output $\pi(\rec)$. If the original
+algorithm is $(\eps,\delta)$-PAC on $\Xs$, the transported algorithm is $(\eps,\delta)$-PAC on
+$\mathcal Y$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:fixed_design_law, def:regret}
+Fix $\vartheta \in F$ and put $\theta := L\vartheta$. By Lemma~\ref{lem:fixed_design_law},
+under $\nu_\vartheta$ on $\mathcal Y$ the observations of the transported algorithm are
+$y'_t = \ip{x'_t}{\vartheta} + \eta_t = \ip{x_t}{\theta} + \eta_t$, so $y'$ has the law
+$\Normal(X\theta, I_T)$ of the observation vector $y$ of the original design under
+$\nu_\theta$ on $\Xs$; hence the pair (observations, recommendation) of the transported
+algorithm has the law of $(y, \pi(\rec))$ for the original algorithm under $\theta$. Therefore
+$\Prob_\vartheta\big(r_{\mathcal Y}(\pi(\rec),\vartheta) \le \eps\big)
+\ge \Prob_\theta\big(r_{\Xs}(\rec,\theta) \le \eps\big) \ge 1 - \delta$.
+\end{proof}
+
+\textbf{Lean remark.} \texttt{fixedDesignTransport A T x x' hπ} is
+\texttt{IdentAlg.fixedBudget} of the fixed design $x'$ with the output kernel
+\texttt{transportKernel}, the composition of the relabelling of the history
+(\texttt{relabelHist}, a deterministic kernel), of the output kernel of \texttt{A} and of the
+deterministic kernel of $\pi$. The proof is a computation with the explicit laws
+\texttt{fixedDesignPairLaw} of Lemma~\ref{lem:fixed_design_law}.
+
 \section{Design matrices and the Gaussian width}
 \label{sec:model_width}
 
@@ -564,6 +601,55 @@ $\hist_{T_1+1}$ with $\rho$, and so is the law of (history, recommendation) unde
 run of $\mathsf{Alg}$ (\texttt{Learning.IdentAlg.fixedBudgetRunMeasure}); the PAC property
 applied to the canonical run gives the bound.
 \end{proof}
+
+\begin{lemma}[Seeded algorithms and the seed representation of a run]\label{lem:seeded}
+\lean{Learning.SeededAlg, Learning.SeededAlg.toAlgorithm, Learning.SeededAlg.policy_apply, Learning.noiseEnv, Learning.LinearBandit.linearGaussianEnv_eq_noiseEnv, Learning.SeededAlg.seedMeasure, Learning.SeededAlg.seedStep, Learning.SeededAlg.seedFinHist, Learning.SeededAlg.seedFeedback_eq, Learning.SeededAlg.isAlgEnvSeq_seed, Learning.IsAlgEnvSeq.map_history_eq, Learning.IsAlgEnvSeq.map_finHistory_eq, Learning.IsAlgEnvSeq.map_finHistory_eq_seed, Learning.IdentAlg.IsRun.measureReal_eq_seed, Learning.SeededAlg.isPAC_fixedBudget_deterministic, Learning.SeededAlg.linearBandit_isPAC_fixedBudget_deterministic, ProbabilityTheory.Kernel.mapOfConst, ProbabilityTheory.IndepFun.hasCondDistrib_const, ProbabilityTheory.HasCondDistrib.mapOfConst, ProbabilityTheory.HasCondDistrib.snd_of_const_prod}\leanok
+\uses{def:bai_alg, def:pac, def:env}
+A \emph{seeded algorithm} with seed space $U$ is given by a probability measure $\mu_U$ on
+$U$ (the law of the seeds), a measurable first action $a_0 : U \to \Xs$ and measurable
+maps $\mathrm{next}_n : \Xs^{n+1} \times \R^{n+1} \times U \to \Xs$: at every round a fresh seed
+$u_n \sim \mu_U$ is drawn, independently of everything else, and the action
+$x_n = \mathrm{next}_{n-1}(\hist_{n-1}, u_n)$ is played ($x_0 = a_0(u_0)$). It is an
+algorithm in the sense of Definition~\ref{def:bai_alg}, whose policy at round $n$ is the
+kernel $h \mapsto \mu_U \circ \mathrm{next}_{n-1}(h, \cdot)^{-1}$. A \emph{noise environment}
+answers the action $x$ with $F(x, e)$ for a fresh noise $e \sim \mu_E$; the linear Gaussian
+environment $\nu_\theta$ is the case $F(x, e) = \ip{x}{\theta} + e$, $\mu_E = \Normal(0,1)$.
+
+\emph{Seed representation.} On the product space $(U \times E)^{\N}$ with the product
+measure $\Prob_{\mathrm{seed}} := (\mu_U \otimes \mu_E)^{\otimes\N}$ define recursively
+$x_0 := a_0(u_0)$, $y_n := F(x_n, e_n)$ and $x_{n+1} := \mathrm{next}_n(\hist_n, u_{n+1})$.
+Then $(x_n, y_n)_n$ is an algorithm-environment sequence for the seeded algorithm and the
+noise environment. Since the law of the history of an algorithm-environment sequence is
+determined by the algorithm and the environment (by induction on the rounds, from the
+conditional laws of the steps), the history $\hist_T$ of \emph{every} run of the seeded
+algorithm in the noise environment has the law of the recursively defined history under
+$\Prob_{\mathrm{seed}}$. Consequently, for the fixed-budget identification algorithm with
+budget $T$ and a deterministic output $g(\hist_T)$: if for every $\theta$,
+$\Prob_{\mathrm{seed}}\big(g(\hist_T) \text{ is good for } \theta\big) \ge 1 - \delta$, then
+the algorithm is $\delta$-PAC.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:bai_alg, def:pac, def:env}
+The conditional law of the coordinate $(u_{n+1}, e_{n+1})$ given the coordinates
+$0, \dots, n$ is the constant $\mu_U \otimes \mu_E$ (independence of the coordinates of a
+product measure), and $\hist_n$ is a measurable function of these coordinates. Hence the
+conditional law of $x_{n+1} = \mathrm{next}_n(\hist_n, u_{n+1})$ given $\hist_n$ is the
+policy kernel, and the conditional law of $y_{n+1} = F(x_{n+1}, e_{n+1})$ given
+$(\hist_n, x_{n+1})$ is the feedback kernel $\mu_E \circ F(x_{n+1}, \cdot)^{-1}$: these are the
+defining properties of an algorithm-environment sequence. The uniqueness of the history law
+is the induction $\hist_{n+1} \sim \mathrm{law}(\hist_n) \otimes (\text{step kernel at } n)$.
+The PAC statement follows since the output of the fixed-budget algorithm is almost surely
+$g(\hist_T)$.
+\end{proof}
+
+\textbf{Lean remark.} This framework replaces Lemma~\ref{lem:composition} for the randomized
+algorithms of Chapter~\ref{chap:norm}: the Rademacher directions are the seeds, and the
+analysis of an adaptive composition is a computation on the product space of seeds and
+noises, where independence between the rounds of different phases is the product structure.
+The deterministic phased algorithms of Lemma~\ref{lem:phased} are the case of a trivial seed
+space.
 
 \begin{lemma}[Phased algorithms]\label{lem:phased}
 \lean{Learning.PhasedAlg, Learning.PhasedAlg.state, Learning.PhasedAlg.state_congr, Learning.PhasedAlg.toAlgorithm, Learning.PhasedAlg.toIdentAlg, Learning.PhasedAlg.cons, Learning.PhasedAlg.ae_action_start_add_eq, Learning.PhasedAlg.hasCondDistrib_phaseNoise, Learning.PhasedAlg.ae_stateProc_succ_eq, Learning.PhasedAlg.measureReal_stateProc_mem_sub_le, Learning.PhasedAlg.one_sub_sum_le_measureReal_stateProc_mem, Learning.PhasedAlg.isPAC_toIdentAlg, Learning.PhasedAlg.linearBandit_isPAC_toIdentAlg, Learning.IsAlgEnvSeq.hasCondDistrib_noise_window, ProbabilityTheory.hasCondDistrib_pi_of_hasCondDistrib_const, ProbabilityTheory.HasCondDistrib.measureReal_sub_le}\leanok

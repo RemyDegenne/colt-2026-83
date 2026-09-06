@@ -13,6 +13,7 @@ public import COLT83.MXJ2026.StructuredSets
 public import COLT83.MXJ2026.Width
 public import COLT83.MXJ2026.RegionAlgorithm
 public import COLT83.MXJ2026.LogGainsArith
+public import COLT83.MXJ2026.LowerBall
 public import COLT83.MXJ2026.FixedDesignAlgorithm
 public import COLT83.MXJ2026.Rounding
 public import COLT83.Mathlib.Data.Set.CoverSmall
@@ -289,6 +290,57 @@ theorem unitBall_le_budget_of_isPAC (hd : 2 ≤ Fintype.card ι) {ε δ : ℝ} (
     (hδ : δ ≤ 1 / 500) {T : ℕ} (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (unitBall ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (1000 * ε ^ 2) ≤ T := by
-  sorry
+  classical
+  have := hA.isMarkovKernel_output
+  have hd0 : 0 < Fintype.card ι := by omega
+  rcases Nat.eq_zero_or_pos T with rfl | hT
+  · exact absurd hpac (not_isPAC_unitBall_of_isFixedBudget_zero A hd0 hε (by linarith) hA)
+  -- `δ ≥ 0`
+  have hδ0 : 0 ≤ δ := by
+    have h1 := hpac.le_measureReal_pairKernel hA (0 : EuclideanSpace ℝ ι)
+    have h2 : (pairKernel A T (0 : EuclideanSpace ℝ ι)).real
+        {p | simpleRegret (unitBall ι) 0 p.2 ≤ ε} ≤ 1 := measureReal_le_one
+    linarith
+  -- the hard instance
+  obtain ⟨θ, hθR, hθ⟩ := exists_norm_le_and_le_expRegret_unitBall A hT hd0
+  -- the PAC property bounds its expected regret
+  have hup : expRegret T A θ ≤ ε + 2 * ‖θ‖ * δ := by
+    by_cases hεθ : ε ≤ 2 * ‖θ‖
+    · have h := hpac.integral_simpleRegret_pairKernel_le hA θ (Z := 2 * ‖θ‖)
+        (fun x hx ↦ simpleRegret_unitBall_nonneg θ ⟨x, hx⟩)
+        (fun x hx ↦ simpleRegret_unitBall_le θ ⟨x, hx⟩) hεθ
+      have he : expRegret T A θ = ∫ p, simpleRegret (unitBall ι) θ p.2 ∂pairKernel A T θ := rfl
+      rw [he]
+      nlinarith [mul_nonneg hε.le hδ0]
+    · push Not at hεθ
+      have := expRegret_le (T := T) A θ
+      nlinarith [mul_nonneg (norm_nonneg θ) hδ0]
+  -- arithmetic
+  set d : ℝ := (Fintype.card ι : ℝ) with hd_def
+  have hd0' : (0 : ℝ) < d := by rw [hd_def]; exact_mod_cast hd0
+  have hT0 : (0 : ℝ) < T := by exact_mod_cast hT
+  have hs0 : 0 < √(T : ℝ) := Real.sqrt_pos.2 hT0
+  have hs2 : √(T : ℝ) ^ 2 = T := Real.sq_sqrt hT0.le
+  have h1 : 3 * d / (40 * √T) ≤ ε + 2 * (10 * d / √T) * δ := by
+    calc 3 * d / (40 * √T) ≤ expRegret T A θ := hθ
+      _ ≤ ε + 2 * ‖θ‖ * δ := hup
+      _ ≤ ε + 2 * (10 * d / √T) * δ := by gcongr
+  have h2 : 7 * d ≤ 200 * ε * √T := by
+    have hu : 0 ≤ d / √T := by positivity
+    have hδ' : 2 * (10 * d / √T) * δ ≤ d / (25 * √T) := by
+      rw [show 2 * (10 * d / √T) * δ = 20 * δ * (d / √T) by ring,
+        show d / (25 * √T) = (1 / 25) * (d / √T) by ring]
+      nlinarith
+    have h3 : 3 * d / (40 * √T) - d / (25 * √T) ≤ ε := by linarith
+    have h4 : 3 * d / (40 * √T) - d / (25 * √T) = 7 * d / (200 * √T) := by
+      field_simp
+      ring
+    rw [h4, div_le_iff₀ (by positivity)] at h3
+    linarith
+  have h5 : 49 * d ^ 2 ≤ 40000 * ε ^ 2 * T := by
+    have := mul_self_le_mul_self (by positivity : (0 : ℝ) ≤ 7 * d) h2
+    nlinarith [hs2]
+  rw [div_le_iff₀ (by positivity)]
+  nlinarith [sq_nonneg d, mul_pos (pow_pos hε 2) hT0]
 
 end COLT83

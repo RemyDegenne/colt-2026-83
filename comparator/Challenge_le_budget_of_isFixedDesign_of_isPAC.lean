@@ -441,8 +441,9 @@ end
 -- ═══ MXJ2026.LowerNonadaptive ═══
 section
 open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit
+open scoped RealInnerProductSpace
 namespace COLT83
-variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {𝒳 : Set (EuclideanSpace ℝ ι)}
 
 /-- **Theorem 3** (Maiti, Xu, Jamieson 2026): a fixed-design (non-adaptive) identification
 algorithm with budget `T ≥ 1` which is `(ε, δ)`-PAC on a spanning compact action set `𝒳`, with

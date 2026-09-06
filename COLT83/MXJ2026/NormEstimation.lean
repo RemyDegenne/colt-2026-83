@@ -8,6 +8,8 @@ module
 public import COLT83.LeanMachineLearning.LinearBandit
 public import COLT83.MXJ2026.StructuredSets
 public import COLT83.MXJ2026.Width
+public import COLT83.MXJ2026.NormEstProof
+public import COLT83.MXJ2026.NormEstBudget
 
 /-!
 # `ℓ₂`-norm estimation on the unit ball (Theorem 8)
@@ -46,6 +48,29 @@ def IsAccurateNormEst (A : IdentAlg (unitBall ι) ℝ ℝ) (ε δ : ℝ) : Prop 
 theorem exists_isAccurateNormEst {ε δ : ℝ} (hε : ε ∈ Set.Ioc 0 1) (hδ : δ ∈ Set.Ioo 0 1) :
     ∃ T : ℕ, (T : ℝ) ≤ 100000 * Fintype.card ι * log (4 / δ) / ε ^ 2 ∧
       ∃ A : IdentAlg (unitBall ι) ℝ ℝ, A.IsFixedBudget T ∧ IsAccurateNormEst A ε δ := by
-  sorry
+  classical
+  let P : NormEstParam := ⟨ε, δ, hε, hδ⟩
+  have hgood : ∀ θ : EuclideanSpace ℝ ι, MeasurableSet {r : ℝ | |r - ‖θ‖| ≤ ε} := fun θ ↦
+    measurableSet_le (continuous_abs.measurable.comp (measurable_id.sub_const _)) measurable_const
+  rcases isEmpty_or_nonempty ι with hι | hι
+  · -- degenerate case `d = 0`: every reward vector is `0`, the constant output `ε` is accurate
+    refine ⟨0, by simp, IdentAlg.fixedBudget (P.alg ι).toAlgorithm 0
+      (Kernel.deterministic (fun _ ↦ ε) measurable_const),
+      IdentAlg.isFixedBudget_fixedBudget _ _ _, ?_⟩
+    refine SeededAlg.linearBandit_isPAC_fixedBudget_deterministic (P.alg ι) measurable_const hgood
+      fun θ ↦ ?_
+    have hθ : θ = 0 := by
+      ext i
+      exact isEmptyElim i
+    have huniv : {ω : ℕ → (ι → Bool) × ℝ | |ε - ‖θ‖| ≤ ε} = Set.univ :=
+      Set.eq_univ_of_forall fun ω ↦ by simp [hθ, abs_of_pos hε.1]
+    rw [huniv, probReal_univ]
+    linarith [hδ.1]
+  · have hd : 0 < Fintype.card ι := Fintype.card_pos
+    refine ⟨P.T ι, P.T_le hd, IdentAlg.fixedBudget (P.alg ι).toAlgorithm (P.T ι)
+      (Kernel.deterministic (P.output ι) P.measurable_output),
+      IdentAlg.isFixedBudget_fixedBudget _ _ _, ?_⟩
+    exact SeededAlg.linearBandit_isPAC_fixedBudget_deterministic (P.alg ι) P.measurable_output
+      hgood fun θ ↦ P.one_sub_le_seedMeasure_real_output hd θ
 
 end COLT83

@@ -33,22 +33,22 @@ from a prior and the trajectory. Gaussians: \texttt{gaussianReal\_of\_var\_ne\_z
 \texttt{MeasureTheory.Measure.map\_linearMap\_addHaar\_eq\_smul\_addHaar} and
 \texttt{MeasureTheory.integral\_map\_equiv}.
 
-\textbf{What is missing.} The kernel-level identity
-$\pi\otimes(\eta.\mathrm{withDensity}\,f) = (\pi\otimes\eta).\mathrm{withDensity}(f)$ for a
-density on the \emph{right} factor (Lemma~\ref{lem:pb_kernel_compProd_withDensity_right};
-neither Mathlib's measure-level \texttt{Measure.compProd\_withDensity} nor LML's
-\texttt{Kernel.compProd\_withDensity\_left} covers it); the environment density (product of
-one-step density ratios along the trajectory) and its proof; the Gaussian likelihood ratio;
-the Markov kernel $\theta\mapsto\Prob_\theta$ (Lemma~\ref{lem:pb_kernel_of_likelihood}); the
-density of the multivariate
-Gaussian $\Normal(0,\sigma^2I_d)$ with respect to the Lebesgue measure on $\R^d$ in the
-\texttt{EuclideanSpace} encoding; the completion of the square; the posterior identities; and
-the lower bound itself.
+\textbf{Formalization note.} The chapter is formalized along the plan above, with two
+deviations. The posterior identities of Section~\ref{sec:pre_bayes_posterior} are obtained
+from Stein's identity (Gaussian integration by parts, Lemma~\ref{lem:gauss_ibp}, extended to
+functions of exponential growth in Lemma~\ref{lem:gauss_ibp_exp}) applied to the tilt
+$\theta \mapsto \exp(\ip{b}{\theta} - \tfrac12\theta^\top S\theta)$, instead of the Lebesgue
+density of the prior and a change of variables; no density with respect to the Lebesgue
+measure on $\R^d$ is ever used. And the lower bound $\E\norm\theta \ge \sigma d/\sqrt{d+2}$ of
+the outline is replaced by the sharper $\E\norm\theta \ge \sqrt{2/\pi}\,\sigma\sqrt d$ of
+Lemma~\ref{lem:gauss_norm_lower}, which improves the constants (we keep the outline's
+headline constants).
 
 \section{Likelihood ratio of the history with respect to a reference environment}
 \label{sec:pre_bayes_lr}
 
 \begin{definition}[Environment density along a history]\label{def:pb_env_density}
+\lean{Learning.envDensity, Learning.measurable_envDensity, Learning.envDensity_zero, Learning.envDensity_snoc}\leanok
 Let $\mathcal{A},\mathcal{Y}$ be measurable spaces and $\rho : \mathcal{A}\times\mathcal{Y}\to[0,\infty]$
 be measurable. For $n\ge0$ and a history $h = (x_t,y_t)_{t\le n}$ define
 $D_n^\rho(h) := \prod_{t=0}^n\rho(x_t,y_t)$, a measurable function of $h$. For a history of
@@ -57,6 +57,7 @@ length $T\ge1$ we write $D_T^\rho := D_{T-1}^\rho$.
 
 \begin{lemma}[Composition-product of a kernel with a kernel having a density]
 \label{lem:pb_kernel_compProd_withDensity_right}
+\lean{ProbabilityTheory.Kernel.compProd_withDensity_right, ProbabilityTheory.Kernel.prodMkLeft_withDensity}\leanok
 Let $\pi$ be an s-finite kernel from $\mathcal{H}$ to $\mathcal{A}$, $\eta$ an s-finite kernel
 from $\mathcal{H}\times\mathcal{A}$ to $\mathcal{Y}$, and
 $f : (\mathcal{H}\times\mathcal{A})\times\mathcal{Y}\to[0,\infty]$ measurable such that the
@@ -71,7 +72,11 @@ composition-product is $(h,(a,y))\mapsto\rho(a,y)$, i.e.\ $\rho\circ\mathrm{snd}
 \end{lemma}
 
 \begin{proof}
-Fiberwise. Fix $h\in\mathcal{H}$. For every kernel $\eta'$ from $\mathcal{H}\times\mathcal{A}$
+\leanok
+(The Lean proof is not fiberwise: both sides are evaluated on a measurable set through
+\texttt{Kernel.compProd\_apply}, \texttt{Kernel.withDensity\_apply'} and
+\texttt{Kernel.lintegral\_compProd}, exactly as Mathlib's measure-level
+\texttt{Measure.compProd\_withDensity}.) Fiberwise. Fix $h\in\mathcal{H}$. For every kernel $\eta'$ from $\mathcal{H}\times\mathcal{A}$
 to $\mathcal{Y}$, $(\pi\otimes\eta')(h) = \pi(h)\otimes\eta'_h$, where
 $\eta'_h := \eta'((h,\cdot))$ is the section kernel from $\mathcal{A}$ to $\mathcal{Y}$
 (Mathlib \texttt{Kernel.compProd\_apply\_eq\_compProd\_sectR}). The section of a kernel with
@@ -93,6 +98,7 @@ at every point are equal (\texttt{Kernel.ext}).
 \end{proof}
 
 \begin{lemma}[Environment likelihood ratio]\label{lem:env_likelihood_ratio}
+\lean{Learning.IsAlgEnvSeq.map_history_eq_withDensity_env, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_env, Learning.toFinHistory_IicSuccProd_symm}\leanok
 \uses{def:pb_env_density, lem:pb_kernel_compProd_withDensity_right}
 Let $\kappa_0,\kappa$ be Markov kernels from $\mathcal{A}$ to $\mathcal{Y}$ and
 $\rho : \mathcal{A}\times\mathcal{Y}\to[0,\infty]$ measurable with
@@ -108,6 +114,7 @@ $\Prob^{(n)}$), $\int f\,d\Prob^{(n)} = \int f\,D_n^\rho\,d\Prob_0^{(n)}$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pb_env_density, lem:pb_kernel_compProd_withDensity_right}
 Induction on $n$, exactly as LML's \texttt{hasLaw\_history\_withDensity} for the algorithm
 density. Write $\tilde\kappa$, $\tilde\kappa_0$ for the kernels $(h,a)\mapsto\kappa(a)$,
@@ -142,24 +149,25 @@ $D_{n+1}^\rho(e^{-1}(h,(a,y))) = D_n^\rho(h)\rho(a,y)$. The integral formulas ar
 \texttt{integral\_withDensity\_eq\_integral\_smul}.
 \end{proof}
 
-\textbf{Lean remark.} The natural LML statement is a definition
-\texttt{Environment.density ρ n : (Iic n → 𝓐 × 𝓨) → ℝ≥0∞} (the product over
-\texttt{Finset.univ : Finset (Iic n)}) with the recursion
-\texttt{density ρ (n+1) h = density ρ n p.1 * ρ p.2.1 p.2.2} where
-\texttt{p = MeasurableEquiv.IicSuccProd \_ n h}, mirroring \texttt{Algorithm.density}, and a
-lemma \texttt{hasLaw\_history\_withDensity\_env} for any \texttt{IsAlgEnvSeq} with the two
-environments (the law of the history is the same on any probability space,
-\texttt{isAlgEnvSeqUntil\_unique}). The kernel-level identity
+\textbf{Lean remark.} \texttt{Learning.envDensity ρ n : (Fin n → 𝓐 × 𝓨) → ℝ≥0∞} is the
+product $\prod_{t<n}\rho(x_t,y_t)$ over \texttt{Fin n} (so that it applies to the histories
+\texttt{finHistory} used throughout), with the recursion \texttt{envDensity\_snoc}; the law
+identity is proved first for LML's \texttt{history X Y n : Iic n → 𝓐 × 𝓨} by the induction of
+\texttt{hasLaw\_history\_withDensity} (\texttt{map\_history\_eq\_withDensity\_env}) and
+transported to \texttt{finHistory} through \texttt{toFinHistory}
+(\texttt{map\_finHistory\_eq\_withDensity\_env}). The kernel-level identity
 $\pi\otimes(\tilde\kappa_0.\mathrm{withDensity}\,\rho) = (\pi\otimes\tilde\kappa_0).\mathrm{withDensity}(\rho\circ\mathrm{snd})$
 is Lemma~\ref{lem:pb_kernel_compProd_withDensity_right}, the right-factor analogue of LML's
 \texttt{Kernel.compProd\_withDensity\_left}; it is not in Mathlib or LML and is proved
 fiberwise from \texttt{Measure.compProd\_withDensity}.
 
 \begin{lemma}[Gaussian density ratio]\label{lem:pb_gaussian_density_ratio}
+\lean{ProbabilityTheory.gaussianReal_eq_withDensity_exp, ProbabilityTheory.gaussianPDFReal_eq_mul_exp, ProbabilityTheory.measurable_gaussianDensityRatio}\leanok
 For $m\in\R$, $\Normal(m,1) = \Normal(0,1).\mathrm{withDensity}\big(y\mapsto e^{ym-m^2/2}\big)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 Both are Lebesgue measure with densities (Mathlib \texttt{gaussianReal\_of\_var\_ne\_zero}):
 $\Normal(m,1) = \mathrm{Leb}.\mathrm{withDensity}(\varphi(\cdot-m))$ with
 $\varphi(y) = (2\pi)^{-1/2}e^{-y^2/2}$, and
@@ -168,6 +176,7 @@ $\varphi(y-m) = \varphi(y)\,e^{ym-m^2/2}$ since $-(y-m)^2/2 = -y^2/2+ym-m^2/2$. 
 \end{proof}
 
 \begin{corollary}[Likelihood ratio of a linear Gaussian history]\label{cor:pb_gaussian_likelihood}
+\lean{Learning.LinearBandit.stepLogLR, Learning.LinearBandit.stepLR, Learning.LinearBandit.measurable_uncurry_stepLR, Learning.LinearBandit.linearGaussianKernel_eq_withDensity, Learning.LinearBandit.likelihood, Learning.LinearBandit.likelihood_pos, Learning.LinearBandit.envDensity_stepLR, Learning.LinearBandit.measurable_likelihood, Learning.LinearBandit.measurable_likelihood_prod, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood, COLT83.histB, COLT83.histS, COLT83.likelihood_eq_gaussTilt}\leanok
 \uses{def:env, lem:env_likelihood_ratio, lem:pb_gaussian_density_ratio}
 Let $\Xs$ be an action set, $\theta\in\R^d$, $T\ge1$, and for a history $h = (x_t,y_t)_{t<T}$
 define
@@ -183,10 +192,15 @@ jointly measurable and positive. (In Lean, \texttt{withDensity} takes an
 \texttt{ℝ≥0∞}-valued density, so the density is \texttt{fun h ↦ ENNReal.ofReal (ℓ θ h)}, and
 likewise $\mathrm{ENNReal.ofReal}\circ\rho_\theta$ in the proof; joint measurability of
 $(\theta,h)\mapsto\mathrm{ENNReal.ofReal}(\ell_\theta(h))$ follows from that of $\ell$ and
-\texttt{ENNReal.measurable\_ofReal}.)
+\texttt{ENNReal.measurable\_ofReal}.) In Lean, \texttt{likelihood θ h} is the sum form
+$\exp(\sum_{t<T}(y_t\ip{x_t}{\theta} - \tfrac12\ip{x_t}{\theta}^2))$, valid on any action
+set; the identification with $\ip{b_T}{\theta} - \tfrac12\theta^\top S_T\theta$ is
+\texttt{COLT83.likelihood\_eq\_gaussTilt} (stated on the unit ball, with
+\texttt{histB}, \texttt{histS} for $b_T$, $S_T$).
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{lem:env_likelihood_ratio, lem:pb_gaussian_density_ratio}
 Lemma~\ref{lem:pb_gaussian_density_ratio} with $m = \ip{x}{\theta}$ gives
 $\Normal(\ip{x}{\theta},1) = \Normal(0,1).\mathrm{withDensity}(\rho_\theta(x,\cdot))$ with
@@ -201,6 +215,7 @@ $\mathrm{ENNReal.ofReal}(\prod_t\rho_\theta(x_t,y_t)) = \prod_t\mathrm{ENNReal.o
 \end{proof}
 
 \begin{lemma}[The law of the run as a Markov kernel in $\theta$]\label{lem:pb_kernel_of_likelihood}
+\lean{Learning.LinearBandit.noiseHistLaw, Learning.LinearBandit.histKernel, Learning.LinearBandit.histKernel_apply, Learning.IsAlgEnvSeq.map_finHistory_eq_histKernel, Learning.IsAlgEnvSeq.hasLaw_finHistory_histKernel, Learning.LinearBandit.pairKernel, Learning.LinearBandit.pairKernel_apply, Learning.IdentAlg.IsRun.hasLaw_finHistory_out_pairKernel, Learning.LinearBandit.IsPAC.le_measureReal_pairKernel, Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le, COLT83.expRegret, COLT83.stronglyMeasurable_expRegret}\leanok
 \uses{def:bai_alg, cor:pb_gaussian_likelihood}
 Let $\Xs$ be an action set and $\mathsf{Alg} = (\mathrm{alg},\rho)$ an identification algorithm
 with budget $T\ge1$ on $\Xs$ (Definition~\ref{def:bai_alg}). Define, for $\theta\in\R^d$,
@@ -219,6 +234,7 @@ measurable.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{cor:pb_gaussian_likelihood}
 $K$ is \texttt{Kernel.withDensity} of the constant kernel $\theta\mapsto\Prob_0^T$ with the
 density $(\theta,h)\mapsto\mathrm{ENNReal.ofReal}(\ell_\theta(h))$, which is jointly measurable
@@ -246,6 +262,7 @@ is built from the single reference law $\Prob_0^T$ and the explicit density $\el
 \label{sec:pre_bayes_joint}
 
 \begin{definition}[Bayesian joint law and posterior quantities]\label{def:bayes_joint}
+\lean{COLT83.noisePairLaw, COLT83.pairKernel_eq_withDensity, COLT83.bayesJointLaw, COLT83.bayesJointLaw_eq_withDensity, ProbabilityTheory.gaussPrior, ProbabilityTheory.postPrec, ProbabilityTheory.postCov, ProbabilityTheory.postMean, ProbabilityTheory.posDef_postPrec, ProbabilityTheory.posDef_postCov, ProbabilityTheory.toEuclideanCLM_postPrec_postMean, ProbabilityTheory.sub_toEuclideanCLM_postMean}\leanok
 \uses{def:bai_alg, cor:pb_gaussian_likelihood, lem:pb_kernel_of_likelihood, lem:loewner_inv, lem:eigen_quadratic_bounds}
 Let $d\ge1$, $\Xs$ an action set, $\mathsf{Alg} = (\mathrm{alg},\rho)$ an identification algorithm
 with budget $T\ge1$ on $\Xs$ (Definition~\ref{def:bai_alg}) and $\sigma>0$. Let
@@ -256,214 +273,228 @@ the probability measure on $\R^d\times\mathcal{H}_T\times\Xs$
 \]
 where $\kappa$ is the Markov kernel of Lemma~\ref{lem:pb_kernel_of_likelihood} (built from
 $\Prob_\theta^T = \Prob_0^T.\mathrm{withDensity}(\ell_\theta)$,
-Corollary~\ref{cor:pb_gaussian_likelihood}). We write $\E$ for the expectation under $Q$ and, for
+Corollary~\ref{cor:pb_gaussian_likelihood}). Equivalently, with $Q_0 := \Prob_0^T\otimes\rho$
+the law of (history, recommendation) under pure noise,
+$\kappa(\theta) = Q_0.\mathrm{withDensity}((h,x)\mapsto\ell_\theta(h))$ and
+\[
+  Q = (\pi\times Q_0).\mathrm{withDensity}\big((\theta,h,x)\mapsto\ell_\theta(h)\big) .
+\]
+We write $\E$ for the expectation under $Q$ and, for
 a history $h$ of length $T$,
 \[
   V_T(h) := \big(\sigma^{-2}I_d+S_T(h)\big)^{-1}\in\PD,\qquad m_T(h) := V_T(h)\,b_T(h)\in\R^d ,
 \]
-both measurable functions of $h$ (matrix inversion is continuous on $\PD$). Note that
-$V_T\preceq\sigma^2I_d$ (Lemma~\ref{lem:loewner_inv} applied to $\sigma^{-2}I\preceq\sigma^{-2}I+S_T$),
-so $\tr V_T\le\sigma^2d$ and $\norm{m_T}\le\sigma^2\norm{b_T}$ (Lemma~\ref{lem:eigen_quadratic_bounds}).
+so that $(\sigma^{-2}I + S_T)m_T = b_T$ and $b_T - S_Tm_T = \sigma^{-2}m_T$.
 \end{definition}
 
+\textbf{Lean remark.} The pure-noise laws are \texttt{noiseHistLaw} and \texttt{noisePairLaw},
+the kernel is \texttt{pairKernel}, the joint law is \texttt{bayesJointLaw A T σ} and its
+product-with-density form is \texttt{bayesJointLaw\_eq\_withDensity}. The posterior quantities
+are defined for a general tilt $(b, S)$: \texttt{postPrec σ S} $= \sigma^{-2}I + S$,
+\texttt{postCov σ S} its inverse and \texttt{postMean σ b S} $= V b$; they are measurable
+functions of the history through $b_T$, $S_T$, but this measurability is never needed (see the
+Lean remark after Lemma~\ref{lem:posterior_second_moment}).
+
 \begin{lemma}[Fubini for the joint law]\label{lem:pb_joint_fubini}
+\lean{COLT83.integral_bayesJointLaw, COLT83.integrable_bayesJointLaw_iff, COLT83.integral_likelihood_noisePairLaw, COLT83.integrable_likelihood_noisePairLaw, COLT83.integrable_likelihood_mul_prod, COLT83.integral_likelihood_mul_prod, COLT83.integral_indicator_mul_simpleRegret_bayesJointLaw}\leanok
 \uses{def:bayes_joint, cor:pb_gaussian_likelihood}
 For every measurable $f : \R^d\times\mathcal{H}_T\times\Xs\to[0,\infty]$,
 \[
   \E[f(\theta,\hist_T,\rec)]
   = \int\!\!\int\!\!\int f(\theta,h,x)\,\rho(h,dx)\,\Prob_\theta^T(dh)\,\pi(d\theta)
-  = \int\!\!\int\ell_\theta(h)\!\int f(\theta,h,x)\,\rho(h,dx)\,\pi(d\theta)\,\Prob_0^T(dh),
+  = \int\!\!\int\ell_\theta(h)\,f(\theta,h,x)\,Q_0(dh,dx)\,\pi(d\theta)
+  = \int\!\!\int\ell_\theta(h)\,f(\theta,h,x)\,\pi(d\theta)\,Q_0(dh,dx),
 \]
-and the same holds for real-valued $f$ that are $Q$-integrable (all iterated integrals then
-converge absolutely). In particular the marginal law of $\theta$ is $\pi$, the conditional law
-of $(\hist_T,\rec)$ given $\theta$ is $\Prob_\theta$, and $\E[g(\theta,\hist_T,\rec)] = \int\E_\theta[g(\theta,\cdot)]\,\pi(d\theta)$.
+and the same holds for real-valued $f$ that are $Q$-integrable, i.e.\ such that
+$\ell\cdot f$ is $\pi\times Q_0$-integrable. In particular $\int\ell_\theta\,dQ_0 = 1$ for every
+$\theta$, the marginal law of $\theta$ is $\pi$, the conditional law
+of $(\hist_T,\rec)$ given $\theta$ is $\Prob_\theta$, and for a function $g$ of $\theta$ alone,
+$\int\ell_\theta(h)g(\theta)\,d(\pi\times Q_0) = \int g\,d\pi$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{cor:pb_gaussian_likelihood}
 The first equality is Tonelli/Fubini for composition-products (Mathlib
 \texttt{Measure.lintegral\_compProd}, \texttt{Measure.integral\_compProd}), the second is the
-density of Corollary~\ref{cor:pb_gaussian_likelihood}
-(\texttt{lintegral\_withDensity\_eq\_lintegral\_mul}) followed by Tonelli for the product
-$\pi\times\Prob_0^T$ (the integrand $(\theta,h)\mapsto\ell_\theta(h)\int f\,\rho(h,dx)$ is jointly
-measurable).
+density of Corollary~\ref{cor:pb_gaussian_likelihood} and the product form of $Q$
+(\texttt{integral\_withDensity\_eq\_integral\_toReal\_smul}), the third is Fubini for the product
+$\pi\times Q_0$ (\texttt{integral\_prod}, \texttt{integral\_prod\_symm}). Since
+$\kappa(\theta)$ is a probability measure, $\int\ell_\theta\,dQ_0 = \kappa(\theta)(\text{all}) = 1$.
 \end{proof}
-
-\textbf{Lean remark.} The measure $Q$ is the composition-product \texttt{π ⊗ₘ (K ⊗ₖ ρ')} of
-Lemma~\ref{lem:pb_kernel_of_likelihood}, where
-\texttt{K θ := (P₀.map hist).withDensity (fun h ↦ ENNReal.ofReal (ℓ θ h))} is
-\texttt{Kernel.withDensity} of the constant kernel (measurable by joint measurability of
-$(\theta,h)\mapsto\ell_\theta(h)$), which sidesteps the measurability of
-$\theta\mapsto\mathrm{trajMeasure}(\mathrm{alg},\nu_\theta)$. Alternatively
-$Q$ is the pushforward of LML's \texttt{IT.bayesTrajMeasure π κ alg} with
-\texttt{κ : Kernel (EuclideanSpace ℝ (Fin d) × Xs) ℝ := fun (θ, x) ↦ gaussianReal ⟪x, θ⟫ 1}
-by $(\theta,\text{trajectory})\mapsto(\theta,\mathrm{hist}_{T-1})$, followed by the composition
-with $\rho$; the equality of the two constructions follows from
-\texttt{IsBayesAlgEnvSeq.ae\_IsAlgEnvSeq} and the uniqueness of the law of the history.
 
 \section{Posterior mean and posterior second moment}
 \label{sec:pre_bayes_posterior}
 
-\begin{lemma}[Density of the prior]\label{lem:pb_prior_density}
-\uses{lem:gauss_pi}
-$\Normal(0,\sigma^2I_d) = \mathrm{Leb}_{\R^d}.\mathrm{withDensity}\big(\theta\mapsto(2\pi\sigma^2)^{-d/2}e^{-\norm\theta^2/(2\sigma^2)}\big)$.
+\begin{lemma}[Stein's identity for functions of exponential growth]\label{lem:gauss_ibp_exp}
+\lean{ProbabilityTheory.integral_sub_mul_gaussianReal_of_integrable, ProbabilityTheory.integral_mul_gaussianReal_zero_one_of_integrable, ProbabilityTheory.integrable_exp_mul_abs_gaussianReal, ProbabilityTheory.IsGaussian.integrable_of_abs_le_mul_exp, ProbabilityTheory.IsGaussian.integrable_norm_mul_of_abs_le_mul_exp, ProbabilityTheory.IsGaussian.integrable_inner_mul_of_abs_le_mul_exp, ProbabilityTheory.IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le_mul_exp, ProbabilityTheory.integral_apply_mul_stdGaussian_of_le_exp, ProbabilityTheory.integral_inner_mul_stdGaussian_euclidean_of_le_exp, ProbabilityTheory.integral_inner_mul_stdGaussian_of_le_exp, ProbabilityTheory.integral_inner_mul_multivariateGaussian_of_le_exp, ProbabilityTheory.norm_toLp_insertNth_le, ProbabilityTheory.abs_apply_toLp_insertNth_le}\leanok
+\uses{lem:gauss_ibp, lem:psf_ibp_1d, def:pg_gaussian_vector}
+Let $F : \R^d\to\R$ be $C^1$ with $\abs{F(x)} \le Ae^{B\norm x}$ and
+$\norm{DF(x)} \le Ae^{B\norm x}$ for all $x$ (some constants $A, B$). Then for
+$g\sim\Normal(0,I_d)$ and every $a\in\R^d$, $\E[\ip{a}{g}F(g)] = \E[DF(g)\,a]$, and for
+$X\sim\Normal(0,S)$ with $S\in\PSD$, $\E[\ip{a}{X}F(X)] = \E[DF(X)\,(Sa)]$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:gauss_pi}
-By Lemma~\ref{lem:gauss_pi}, $\Normal(0,\sigma^2I_d)$ is the law of $\sigma g$ with $g$ having
-i.i.d.\ standard coordinates, i.e.\ the product measure of $d$ copies of
-$\Normal(0,\sigma^2) = \mathrm{Leb}.\mathrm{withDensity}((2\pi\sigma^2)^{-1/2}e^{-u^2/(2\sigma^2)})$
-(Mathlib \texttt{gaussianReal\_of\_var\_ne\_zero}). A product of measures with densities is the
-product measure with the product density (Mathlib \texttt{Measure.pi} and
-\texttt{withDensity}; the identity $\prod_i\mathrm{Leb}.\mathrm{withDensity}(f_i) = \mathrm{Leb}^{\otimes d}.\mathrm{withDensity}(\prod_if_i)$
-is checked on boxes), and $\prod_i(2\pi\sigma^2)^{-1/2}e^{-\theta_i^2/(2\sigma^2)} = (2\pi\sigma^2)^{-d/2}e^{-\norm\theta^2/(2\sigma^2)}$.
+\leanok
+\uses{lem:gauss_ibp, lem:psf_ibp_1d}
+The one-dimensional identity $\E[\xi f(\xi)] = \E[f'(\xi)]$ (Lemma~\ref{lem:psf_ibp_1d}) only
+needs the integrability of $f$, $\xi f(\xi)$ and $f'$, which holds for functions of exponential
+growth since $e^{B\abs t}$ has all Gaussian moments. The multivariate identity follows by the
+coordinate-wise Fubini argument of Lemma~\ref{lem:gauss_ibp}: the section
+$t\mapsto F(x + te_i)$ has growth $Ae^{B\norm{x}}e^{B\abs t}$, and the integrability of
+$\ip{a}{g}F(g)$ and $DF(g)a$ under a Gaussian measure is Fernique's theorem.
 \end{proof}
 
-\begin{lemma}[Completing the square]\label{lem:pb_complete_square_identity}
-Let $\sigma>0$, $S\in\PSD$, $b\in\R^d$, $V := (\sigma^{-2}I_d+S)^{-1}\in\PD$ and $m := Vb$. Then
-for every $\theta\in\R^d$,
+\begin{lemma}[Gaussian tilt: derivative and growth]\label{lem:pb_complete_square_identity}
+\lean{ProbabilityTheory.gaussTilt, ProbabilityTheory.gaussTilt_pos, ProbabilityTheory.gaussTilt_le, ProbabilityTheory.hasFDerivAt_gaussTilt, ProbabilityTheory.contDiff_gaussTilt, ProbabilityTheory.hasFDerivAt_affine_mul_gaussTilt, ProbabilityTheory.abs_affine_mul_gaussTilt_le, ProbabilityTheory.norm_fderiv_affine_mul_gaussTilt_le, ProbabilityTheory.inner_toEuclideanCLM_symm, ProbabilityTheory.inner_toEuclideanCLM_nonneg}\leanok
+Let $S\in\PSD$, $b\in\R^d$ and $\ell(\theta) := \exp(\ip{b}{\theta}-\tfrac12\theta^\top S\theta)$.
+Then $\ell > 0$, $\ell(\theta) \le e^{\norm b\norm\theta}$, $\ell$ is $C^1$ with
+$D\ell(\theta) = \ell(\theta)\,\ip{b - S\theta}{\cdot}$, and for $c\in\R^d$, $r\in\R$ the
+function $\theta\mapsto(\ip{c}{\theta}+r)\ell(\theta)$ and its derivative have exponential
+growth: they are bounded by $A e^{(\norm b+2)\norm\theta}$ with
+$A = (\norm c+\abs r)(\norm b+\norm S+1)+\norm c$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+$\theta^\top S\theta\ge0$ gives the bound; the derivative is the chain rule, and the growth
+bounds use $\norm\theta \le e^{\norm\theta}$.
+\end{proof}
+
+\begin{lemma}[Stein's identity for the affine tilt]\label{lem:pb_gaussian_integrals}
+\lean{ProbabilityTheory.integral_inner_mul_affine_mul_gaussTilt, ProbabilityTheory.integrable_affine_mul_affine_mul_gaussTilt, ProbabilityTheory.integrable_affine_mul_gaussTilt, ProbabilityTheory.integrable_gaussTilt, ProbabilityTheory.integrable_gaussTilt_smul, ProbabilityTheory.integral_inner_mul_gaussTilt, ProbabilityTheory.integral_gaussTilt_pos}\leanok
+\uses{lem:gauss_ibp_exp, lem:pb_complete_square_identity}
+Let $\sigma>0$, $\pi = \Normal(0,\sigma^2I_d)$, $S\in\PSD$, $b\in\R^d$ and $\ell$ as above.
+For all $a, c\in\R^d$ and $r\in\R$,
 \[
-  \ip{b}{\theta}-\tfrac12\theta^\top S\theta-\frac{\norm\theta^2}{2\sigma^2}
-  = -\tfrac12(\theta-m)^\top V^{-1}(\theta-m)+\tfrac12\,b^\top Vb .
+  \int\ip{a}{\theta}\,(\ip{c}{\theta}+r)\,\ell(\theta)\,\pi(d\theta)
+  = \sigma^2\int\big(\ip{c}{a} + (\ip{c}{\theta}+r)\ip{b-S\theta}{a}\big)\ell(\theta)\,\pi(d\theta).
 \]
+All the functions $\theta\mapsto(\ip{a}{\theta}+r)(\ip{c}{\theta}+s)\ell(\theta)$ are
+$\pi$-integrable, $Z := \int\ell\,d\pi\in(0,\infty)$, and
+$\int\ip{a}{\theta}\ell(\theta)\,\pi(d\theta) = \ip{a}{\int\ell(\theta)\theta\,\pi(d\theta)}$.
 \end{lemma}
 
 \begin{proof}
-$V^{-1} = \sigma^{-2}I+S$ is positive definite (Loewner: $\sigma^{-2}I\preceq V^{-1}$), so $V$ exists
-and $V^{-1}m = b$. Expanding,
-$(\theta-m)^\top V^{-1}(\theta-m) = \theta^\top V^{-1}\theta-2\ip{V^{-1}m}{\theta}+m^\top V^{-1}m
-= \theta^\top S\theta+\sigma^{-2}\norm\theta^2-2\ip{b}{\theta}+b^\top Vb$; multiply by $-\tfrac12$.
+\leanok
+\uses{lem:gauss_ibp_exp, lem:pb_complete_square_identity}
+Lemma~\ref{lem:gauss_ibp_exp} for $\Normal(0,\sigma^2I)$ applied to
+$F = (\ip{c}{\cdot}+r)\ell$, whose derivative is computed in
+Lemma~\ref{lem:pb_complete_square_identity}; $Sa = \sigma^2a$ here.
 \end{proof}
 
-\begin{lemma}[Gaussian integrals with a general covariance]\label{lem:pb_gaussian_integrals}
-\uses{lem:gauss_norm_moments}
-Let $V\in\PD$, $m\in\R^d$ and $q(\theta) := \exp\big(-\tfrac12(\theta-m)^\top V^{-1}(\theta-m)\big)$.
-Then, with respect to the Lebesgue measure on $\R^d$,
-\[
-  \int q(\theta)\,d\theta = (2\pi)^{d/2}(\det V)^{1/2},\qquad
-  \int(\theta-m)\,q(\theta)\,d\theta = 0,\qquad
-  \int\norm{\theta-m}^2q(\theta)\,d\theta = (2\pi)^{d/2}(\det V)^{1/2}\,\tr V .
-\]
-\end{lemma}
-
-\begin{proof}
-\uses{lem:gauss_norm_moments}
-Change variables $\theta = m+V^{1/2}u$: the affine map $u\mapsto m+V^{1/2}u$ has Jacobian
-$\det V^{1/2} = (\det V)^{1/2}$ (Mathlib \texttt{Measure.map\_linearMap\_addHaar\_eq\_smul\_addHaar},
-translation invariance), and $(\theta-m)^\top V^{-1}(\theta-m) = u^\top V^{1/2}V^{-1}V^{1/2}u = \norm u^2$.
-Hence the three integrals equal $(\det V)^{1/2}$ times
-$\int e^{-\norm u^2/2}du$, $\int V^{1/2}u\,e^{-\norm u^2/2}du$ and $\int\norm{V^{1/2}u}^2e^{-\norm u^2/2}du$.
-The first is $(2\pi)^{d/2}$ (product of $d$ one-dimensional integrals, Mathlib
-\texttt{integral\_gaussian}); the second vanishes by the symmetry $u\mapsto-u$; the third is
-$(2\pi)^{d/2}\,\E\norm{V^{1/2}g}^2 = (2\pi)^{d/2}\tr V$ for $g\sim\Normal(0,I_d)$
-(Lemma~\ref{lem:gauss_norm_moments} with $S = V$).
-\end{proof}
-
-\begin{lemma}[Gaussian completion of the square under the prior]\label{lem:gaussian_complete_square}
-\uses{lem:pb_prior_density, lem:pb_complete_square_identity, lem:pb_gaussian_integrals}
+\begin{lemma}[Gaussian posterior identities]\label{lem:gaussian_complete_square}
+\lean{ProbabilityTheory.integral_gaussTilt_smul_eq, ProbabilityTheory.integral_inner_sub_postMean_mul_gaussTilt, ProbabilityTheory.integral_inner_sub_mul_inner_sub_mul_gaussTilt_add, ProbabilityTheory.integral_inner_single_sub_mul_inner_sub_mul_gaussTilt, ProbabilityTheory.integral_norm_sq_sub_postMean_mul_gaussTilt, ProbabilityTheory.integral_norm_sq_mul_gaussTilt, ProbabilityTheory.integrable_inner_sub_mul_inner_sub_mul_gaussTilt, ProbabilityTheory.integrable_inner_sub_mul_gaussTilt}\leanok
+\uses{lem:pb_gaussian_integrals, def:bayes_joint}
 Let $\sigma>0$, $S\in\PSD$, $b\in\R^d$, $V := (\sigma^{-2}I_d+S)^{-1}$, $m := Vb$,
-$\pi := \Normal(0,\sigma^2I_d)$ and $\ell(\theta) := \exp(\ip{b}{\theta}-\tfrac12\theta^\top S\theta)$.
-Then
+$\pi := \Normal(0,\sigma^2I_d)$, $\ell(\theta) := \exp(\ip{b}{\theta}-\tfrac12\theta^\top S\theta)$
+and $Z := \int\ell\,d\pi > 0$. Then
 \[
-  Z(S,b) := \int\ell\,d\pi = \sigma^{-d}(\det V)^{1/2}\exp\big(\tfrac12b^\top Vb\big)\in(0,\infty),
-  \qquad
-  \int(\theta-m)\,\ell(\theta)\,\pi(d\theta) = 0,
-  \qquad
-  \int\norm{\theta-m}^2\ell(\theta)\,\pi(d\theta) = \tr(V)\,Z(S,b).
+  \int\ell(\theta)\,\theta\,\pi(d\theta) = Z\,m,\qquad
+  \int\ip{c}{\theta-m}\,\ell(\theta)\,\pi(d\theta) = 0\ \ (c\in\R^d),
 \]
-Equivalently, $\ell\cdot\frac{d\pi}{d\theta}$ is $Z(S,b)$ times the density of $\Normal(m,V)$.
+\[
+  \int\norm{\theta-m}^2\ell(\theta)\,\pi(d\theta) = \tr(V)\,Z,\qquad
+  \int\norm{\theta}^2\ell(\theta)\,\pi(d\theta) = (\tr V + \norm m^2)\,Z .
+\]
+(Equivalently, $\ell\,d\pi/Z$ is the Gaussian $\Normal(m,V)$; we only need these moments.)
 \end{lemma}
 
 \begin{proof}
-\uses{lem:pb_prior_density, lem:pb_complete_square_identity, lem:pb_gaussian_integrals}
-By Lemma~\ref{lem:pb_prior_density} and Lemma~\ref{lem:pb_complete_square_identity}, for every
-$\theta$,
-\[
-  \ell(\theta)\,(2\pi\sigma^2)^{-d/2}e^{-\norm\theta^2/(2\sigma^2)}
-  = (2\pi\sigma^2)^{-d/2}\,e^{\frac12b^\top Vb}\,q(\theta),
-  \qquad q(\theta) = e^{-\frac12(\theta-m)^\top V^{-1}(\theta-m)} .
-\]
-Integrating against the Lebesgue measure and using Lemma~\ref{lem:pb_gaussian_integrals}:
-$\int\ell\,d\pi = (2\pi\sigma^2)^{-d/2}e^{\frac12b^\top Vb}(2\pi)^{d/2}(\det V)^{1/2} = \sigma^{-d}(\det V)^{1/2}e^{\frac12b^\top Vb}$;
-the vector integral is $(2\pi\sigma^2)^{-d/2}e^{\frac12b^\top Vb}\cdot0 = 0$; and the last one is
-$(2\pi\sigma^2)^{-d/2}e^{\frac12b^\top Vb}(2\pi)^{d/2}(\det V)^{1/2}\tr V = \tr(V)Z(S,b)$. The
-constant is positive and finite since $\det V>0$.
+\leanok
+\uses{lem:pb_gaussian_integrals, def:bayes_joint}
+\emph{Mean.} Lemma~\ref{lem:pb_gaussian_integrals} with $c = 0$, $r = 1$: writing
+$u := \int\ell(\theta)\theta\,d\pi$, for every $a$,
+$\ip{a}{u} = \sigma^2(\ip{b}{a}Z - \ip{a}{Su})$ (using $\ip{S\theta}{a} = \ip{\theta}{Sa}$).
+Hence $u + \sigma^2Su = \sigma^2Zb$, i.e.\ $(\sigma^{-2}I+S)u = Zb$ and $u = Zm$. The second
+identity is $\ip{c}{u} - \ip{c}{m}Z = 0$.
+
+\emph{Second moment.} Let $\Phi(a,c) := \int\ip{a}{\theta-m}\ip{c}{\theta-m}\ell\,d\pi$.
+Lemma~\ref{lem:pb_gaussian_integrals} with $r = -\ip{c}{m}$ (so that
+$\ip{c}{\theta}+r = \ip{c}{\theta-m}$), together with
+$b - S\theta = \sigma^{-2}m - S(\theta-m)$ (Definition~\ref{def:bayes_joint}) and the mean
+identity, gives $\Phi(a,c) + \sigma^2\Phi(Sa,c) = \sigma^2\ip{c}{a}Z$ for all $a, c$. With
+$a := \sigma^{-2}Ve_i$ one has $a + \sigma^2Sa = \sigma^2(\sigma^{-2}I+S)a = e_i$, so
+$\Phi(e_i,c) = \ip{c}{Ve_i}Z$; taking $c = e_i$ and summing over $i$ gives
+$\int\norm{\theta-m}^2\ell\,d\pi = \tr(V)Z$. Finally
+$\norm\theta^2 = \norm{\theta-m}^2 + 2\ip{m}{\theta-m} + \norm m^2$ and the cross term
+integrates to $0$.
 \end{proof}
 
-\begin{lemma}[Integrability under the joint law]\label{lem:pb_integrability}
-\uses{def:bayes_joint, lem:pb_joint_fubini, lem:noise_representation, lem:gauss_norm_moments}
-Under $Q$, with $R := \sup_{x\in\Xs}\norm x<\infty$: $\E\norm\theta^2 = \sigma^2d$,
-$\E\norm{b_T}^2\le R^2T^2(R^2\sigma^2d+1)$, $\E\norm{m_T}^2\le\sigma^4\E\norm{b_T}^2<\infty$ and
-$\E\norm{\theta-m_T}^2<\infty$.
-\end{lemma}
-
-\begin{proof}
-\uses{lem:pb_joint_fubini, lem:noise_representation, lem:gauss_norm_moments}
-$\E\norm\theta^2 = \tr(\sigma^2I_d) = \sigma^2d$ by Lemma~\ref{lem:gauss_norm_moments} (the marginal
-of $\theta$ is $\pi$). For fixed $\theta$, Lemma~\ref{lem:noise_representation} gives
-$y_t = \ip{x_t}{\theta}+\eta_t$ with $\eta_t\sim\Normal(0,1)$ independent of $x_t$, so
-$\E_\theta[y_t^2] = \E_\theta\ip{x_t}{\theta}^2+1\le R^2\norm\theta^2+1$. Then
-$\norm{b_T}\le\sum_t\abs{y_t}\norm{x_t}\le R\sum_t\abs{y_t}$, so
-$\norm{b_T}^2\le R^2T\sum_ty_t^2$ (Cauchy--Schwarz) and, integrating in $\theta$
-(Lemma~\ref{lem:pb_joint_fubini}), $\E\norm{b_T}^2\le R^2T^2(R^2\sigma^2d+1)$. The bound on $m_T$
-is $\norm{m_T}\le\sigma^2\norm{b_T}$ (Definition~\ref{def:bayes_joint}), and
-$\norm{\theta-m_T}^2\le2\norm\theta^2+2\norm{m_T}^2$.
-\end{proof}
+\textbf{Lean remark.} \texttt{PosteriorGaussian.lean} contains this section for the general tilt
+$(b, S)$ (\texttt{gaussTilt b S}, \texttt{postCov σ S}, \texttt{postMean σ b S}); it is applied
+to $b = b_T(h)$, $S = S_T(h)$ for each fixed history $h$ through
+\texttt{COLT83.likelihood\_eq\_gaussTilt}.
 
 \begin{lemma}[Posterior mean identity]\label{lem:posterior_mean}
-\uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square, lem:pb_integrability}
-Let $\varphi : \mathcal{H}_T\times\Xs\to\R^d$ be measurable with $\E\norm{\varphi(\hist_T,\rec)}^2<\infty$
-(for instance $\varphi$ bounded, or $\varphi = m_T$). Then
+\lean{COLT83.postU, COLT83.stronglyMeasurable_postU, COLT83.integrable_likelihood_mul_inner_prod, COLT83.integrable_norm_postU, COLT83.integral_inner_bayesJointLaw_le}\leanok
+\uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square}
+Let $\Xs \subseteq \ball_d$ and define, for a history $h$,
+$u_T(h) := \int\ell_\theta(h)\,\theta\,\pi(d\theta) = Z_T(h)\,m_T(h)$ with
+$Z_T(h) := \int\ell_\theta(h)\,\pi(d\theta)$; $u_T$ is a measurable function of $h$ with
+$\int\norm{u_T}\,dQ_0 < \infty$. Then
 \[
-  \E\big\langle\varphi(\hist_T,\rec),\,\theta-m_T(\hist_T)\big\rangle = 0 .
+  \E\ip{\rec}{\theta} = \int\ip{x}{u_T(h)}\,Q_0(dh,dx) \le \int\norm{u_T(h)}\,Q_0(dh,dx) .
 \]
 \end{lemma}
 
 \begin{proof}
-\uses{lem:pb_joint_fubini, lem:gaussian_complete_square, lem:pb_integrability}
-The integrand is $Q$-integrable by Cauchy--Schwarz and Lemma~\ref{lem:pb_integrability}. By
-Lemma~\ref{lem:pb_joint_fubini} (real version; all iterated integrals converge absolutely),
-\[
-  \E\ip{\varphi}{\theta-m_T} = \int\Prob_0^T(dh)\int\rho(h,dx)\,\Big\langle\varphi(h,x),\ \int\ell_\theta(h)\,(\theta-m_T(h))\,\pi(d\theta)\Big\rangle ,
-\]
-where we used that $\varphi(h,x)$ does not depend on $\theta$ to pull it out of the inner
-integral (linearity of the Bochner integral, \texttt{integral\_inner} / \texttt{integral\_smul\_const}).
-For each fixed $h$, $\ell_\theta(h) = \exp(\ip{b_T(h)}{\theta}-\tfrac12\theta^\top S_T(h)\theta)$ and
-$m_T(h) = V_T(h)b_T(h)$ with $V_T(h) = (\sigma^{-2}I+S_T(h))^{-1}$, so
-Lemma~\ref{lem:gaussian_complete_square} with $S = S_T(h)$, $b = b_T(h)$ gives
-$\int\ell_\theta(h)(\theta-m_T(h))\,\pi(d\theta) = 0$. Hence the whole expression vanishes.
+\leanok
+\uses{lem:pb_joint_fubini, lem:gaussian_complete_square}
+By Lemma~\ref{lem:pb_joint_fubini} with the $\theta$-integral innermost (the integrand
+$\ell_\theta(h)\ip{x}{\theta}$ is $\pi\times Q_0$-integrable, being dominated by
+$\ell_\theta(h)\norm\theta$ whose integral is $\E_\pi\norm\theta$),
+$\E\ip{\rec}{\theta} = \int\int\ell_\theta(h)\ip{x}{\theta}\,\pi(d\theta)\,Q_0(dh,dx)
+= \int\ip{x}{u_T(h)}\,Q_0(dh,dx)$ (Lemma~\ref{lem:pb_gaussian_integrals}), and
+$\ip{x}{u_T(h)} \le \norm{u_T(h)}$ since $\norm x\le1$. Measurability of $u_T$ is that of a
+parametric integral (Mathlib \texttt{StronglyMeasurable.integral\_prod\_right'}).
 \end{proof}
 
 \begin{lemma}[Posterior second moment]\label{lem:posterior_second_moment}
-\uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square, lem:posterior_mean, lem:pb_integrability}
-$\E\norm{\theta-m_T}^2 = \E[\tr V_T]$ and $\E\norm{m_T}^2 = \sigma^2d-\E[\tr V_T]$.
+\lean{COLT83.postZ, COLT83.postN, COLT83.stronglyMeasurable_postZ, COLT83.stronglyMeasurable_postN, COLT83.postZ_pos, COLT83.norm_postU_sq_le, COLT83.norm_postU_le, COLT83.integrable_postZ, COLT83.integral_postZ, COLT83.integrable_postN, COLT83.integral_postN, COLT83.integral_norm_postU_le}\leanok
+\uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square, lem:trace_inv_lower}
+Let $\Xs \subseteq \ball_d$ and $N_T(h) := \int\norm\theta^2\ell_\theta(h)\,\pi(d\theta)$. For
+every history $h$, with $c := d^2/(d\sigma^{-2}+T)$,
+\[
+  \norm{u_T(h)}^2 = Z_T(h)^2\norm{m_T(h)}^2 \le Z_T(h)\big(N_T(h) - c\,Z_T(h)\big),
+\]
+and $\int Z_T\,dQ_0 = 1$, $\int N_T\,dQ_0 = \E_\pi\norm\theta^2 = \sigma^2d$. Consequently
+\[
+  \int\norm{u_T(h)}\,Q_0(dh,dx)\ \le\ \sqrt{\sigma^2d - \frac{d^2}{d\sigma^{-2}+T}} .
+\]
 \end{lemma}
 
 \begin{proof}
-\uses{lem:pb_joint_fubini, lem:gaussian_complete_square, lem:posterior_mean, lem:pb_integrability}
-By Lemma~\ref{lem:pb_joint_fubini} (nonnegative integrands) and
-Lemma~\ref{lem:gaussian_complete_square} for each fixed $h$,
-\[
-  \E\norm{\theta-m_T}^2 = \int\Prob_0^T(dh)\int\ell_\theta(h)\norm{\theta-m_T(h)}^2\pi(d\theta)
-  = \int\Prob_0^T(dh)\,\tr V_T(h)\,Z(S_T(h),b_T(h)),
-\]
-and likewise, since $\tr V_T(h)$ does not depend on $\theta$,
-$\E[\tr V_T] = \int\Prob_0^T(dh)\,\tr V_T(h)\int\ell_\theta(h)\,\pi(d\theta) = \int\Prob_0^T(dh)\,\tr V_T(h)\,Z(S_T(h),b_T(h))$.
-For the second identity, expand $\norm\theta^2 = \norm{\theta-m_T}^2+2\ip{m_T}{\theta-m_T}+\norm{m_T}^2$;
-the cross term has expectation $0$ by Lemma~\ref{lem:posterior_mean} with $\varphi = m_T$
-(square-integrable by Lemma~\ref{lem:pb_integrability}), and $\E\norm\theta^2 = \sigma^2d$.
+\leanok
+\uses{lem:pb_joint_fubini, lem:gaussian_complete_square, lem:trace_inv_lower}
+By Lemma~\ref{lem:gaussian_complete_square} for the fixed history $h$,
+$u_T = Z_Tm_T$ and $N_T = (\tr V_T + \norm{m_T}^2)Z_T$, so
+$Z_T\norm{m_T}^2 = N_T - \tr(V_T)Z_T \le N_T - cZ_T$ by Lemma~\ref{lem:trace_inv_lower}; multiply
+by $Z_T$. The integrals of $Z_T$ and $N_T$ are Lemma~\ref{lem:pb_joint_fubini} (Fubini, the
+$\theta$-integral outermost). Finally, by the Cauchy--Schwarz inequality in $L^2(Q_0)$ applied
+to $\sqrt{Z_T}$ and $\sqrt{N_T - cZ_T}$,
+$\int\norm{u_T}\,dQ_0 \le \int\sqrt{Z_T}\sqrt{N_T-cZ_T}\,dQ_0
+\le \big(\int Z_T\,dQ_0\big)^{1/2}\big(\int(N_T - cZ_T)\,dQ_0\big)^{1/2} = \sqrt{\sigma^2d - c}$.
 \end{proof}
+
+\textbf{Lean remark.} This route never integrates $m_T$ or $\tr V_T$ over histories, only
+$Z_T$, $N_T$ and $u_T$, which are parametric integrals in $h$ (measurable by
+\texttt{StronglyMeasurable.integral\_prod\_right'}); the outline's integrability lemma
+$\E\norm{b_T}^2 < \infty$ and the measurability of $h\mapsto V_T(h)$ (matrix inversion) are
+not needed.
 
 \section{The unit-ball lower bound}
 \label{sec:pre_bayes_ball}
 
 \begin{lemma}[Lower bound on the posterior trace]\label{lem:trace_inv_lower}
+\lean{COLT83.le_trace_postCov_histS, COLT83.trace_histS_le, COLT83.posSemidef_histS}\leanok
 \uses{def:bayes_joint, lem:trace_inv_amhm}
 If $\Xs\subseteq\ball_d$, then for every history $h$, $\tr V_T(h)\ge\frac{d^2}{d\sigma^{-2}+T}$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:trace_inv_amhm}
 $\tr S_T(h) = \sum_{t<T}\norm{x_t}^2\le T$, so $\tr(\sigma^{-2}I+S_T(h))\le d\sigma^{-2}+T$, and
 Lemma~\ref{lem:trace_inv_amhm} applied to the positive definite matrix $\sigma^{-2}I+S_T(h)$
@@ -471,44 +502,44 @@ gives $\tr V_T(h)\ge d^2/\tr(\sigma^{-2}I+S_T(h))\ge d^2/(d\sigma^{-2}+T)$.
 \end{proof}
 
 \begin{lemma}[Expected norm of a Gaussian vector, lower bound]\label{lem:pb_norm_lower}
-\uses{lem:gauss_norm_moments}
-If $\theta\sim\Normal(0,\sigma^2I_d)$ then $\E\norm\theta\ge\frac{\sigma d}{\sqrt{d+2}}$, and for
-$d\ge2$, $\E\norm\theta\ge\sigma\sqrt{d/2}$.
+\lean{COLT83.le_integral_norm_gaussPrior, COLT83.integral_norm_sq_gaussPrior, COLT83.integrable_norm_gaussPrior, COLT83.integrable_norm_sq_gaussPrior}\leanok
+\uses{lem:gauss_norm_lower, lem:gauss_norm_moments}
+If $\theta\sim\Normal(0,\sigma^2I_d)$ then $\E\norm\theta^2 = \sigma^2d$ and
+$\E\norm\theta\ge\sqrt{2/\pi}\,\sigma\sqrt d$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:gauss_norm_moments}
-By Lemma~\ref{lem:gauss_norm_moments} with $S = \sigma^2I_d$: $\E\norm\theta^2 = \sigma^2d$ and
-$\E\norm\theta^4 = (\tr S)^2+2\tr(S^2) = \sigma^4(d^2+2d)$. Hölder's inequality
-$\E\norm\theta^2 = \E[\norm\theta^{2/3}\norm\theta^{4/3}]\le(\E\norm\theta)^{2/3}(\E\norm\theta^4)^{1/3}$
-gives $\E\norm\theta\ge(\E\norm\theta^2)^{3/2}/(\E\norm\theta^4)^{1/2} = \sigma^3d^{3/2}/(\sigma^2\sqrt{d(d+2)}) = \sigma d/\sqrt{d+2}$.
-For $d\ge2$, $d^2/(d+2)\ge d/2$ since $2d\ge d+2$.
+\leanok
+\uses{lem:gauss_norm_lower, lem:gauss_norm_moments}
+Lemma~\ref{lem:gauss_norm_moments}(i) and Lemma~\ref{lem:gauss_norm_lower} with the weights
+$c_i = 1/\sqrt d$ and $S = \sigma^2I_d$.
 \end{proof}
 
 \begin{lemma}[Bayesian simple regret on the ball]\label{lem:bayes_regret_ball}
-\uses{def:bayes_joint, def:regret, lem:posterior_mean, lem:posterior_second_moment, lem:trace_inv_lower, lem:pb_norm_lower}
+\lean{COLT83.integral_simpleRegret_bayesJointLaw_ge}\leanok
+\uses{def:bayes_joint, def:regret, lem:posterior_mean, lem:posterior_second_moment, lem:pb_norm_lower}
 Let $\Xs = \ball_d$. Under the joint law $Q$ of Definition~\ref{def:bayes_joint},
 \[
-  \E[r(\rec,\theta)] = \E\norm\theta-\E\ip{\rec}{\theta}\ \ge\ \E\norm\theta-\E\norm{m_T}
-  \ \ge\ \frac{\sigma d}{\sqrt{d+2}}-\sqrt{\sigma^2d-\frac{d^2}{d\sigma^{-2}+T}} .
+  \E[r(\rec,\theta)] = \E\norm\theta-\E\ip{\rec}{\theta}
+  \ \ge\ \sqrt{2/\pi}\,\sigma\sqrt d-\sqrt{\sigma^2d-\frac{d^2}{d\sigma^{-2}+T}} .
 \]
 \end{lemma}
 
 \begin{proof}
-\uses{lem:posterior_mean, lem:posterior_second_moment, lem:trace_inv_lower, lem:pb_norm_lower}
-On the unit ball, $\max_{x\in\ball_d}\ip{x}{\theta} = \norm\theta$ (Cauchy--Schwarz; attained at
-$\theta/\norm\theta$, or at any $x$ if $\theta = 0$), so $r(\rec,\theta) = \norm\theta-\ip{\rec}{\theta}$.
-By Lemma~\ref{lem:posterior_mean} with the bounded function $\varphi(h,x) := x$,
-$\E\ip{\rec}{\theta} = \E\ip{\rec}{m_T}\le\E\norm{m_T}$ since $\norm\rec\le1$. By Jensen
-(or Cauchy--Schwarz), $\E\norm{m_T}\le\sqrt{\E\norm{m_T}^2} = \sqrt{\sigma^2d-\E[\tr V_T]}$
-(Lemma~\ref{lem:posterior_second_moment}), and $\E[\tr V_T]\ge d^2/(d\sigma^{-2}+T)$ by
-Lemma~\ref{lem:trace_inv_lower}. Finally $\E\norm\theta\ge\sigma d/\sqrt{d+2}$ by
-Lemma~\ref{lem:pb_norm_lower}.
+\leanok
+\uses{lem:posterior_mean, lem:posterior_second_moment, lem:pb_norm_lower}
+On the unit ball, $\max_{x\in\ball_d}\ip{x}{\theta} = \norm\theta$, so
+$r(\rec,\theta) = \norm\theta-\ip{\rec}{\theta}$ (Lemma~\ref{lem:block_ball_basic}). The marginal
+of $\theta$ is $\pi$, so $\E\norm\theta \ge \sqrt{2/\pi}\sigma\sqrt d$
+(Lemma~\ref{lem:pb_norm_lower}), and
+$\E\ip{\rec}{\theta} \le \int\norm{u_T}\,dQ_0 \le \sqrt{\sigma^2d - d^2/(d\sigma^{-2}+T)}$
+by Lemmas~\ref{lem:posterior_mean} and~\ref{lem:posterior_second_moment}.
 \end{proof}
 
 \begin{theorem}[Simple-regret lower bound on the unit ball]\label{thm:ball_simple_regret_lower}
+\lean{COLT83.simpleRegret_unitBall_nonneg, COLT83.simpleRegret_unitBall_le, COLT83.expRegret_nonneg, COLT83.expRegret_le, COLT83.integrable_expRegret, COLT83.integrable_simpleRegret_bayesJointLaw, COLT83.integral_norm_sq_bayesJointLaw, COLT83.integral_indicator_mul_simpleRegret_bayesJointLaw_ge, COLT83.le_measureReal_norm_le_gaussPrior, COLT83.exists_norm_le_and_le_expRegret, COLT83.exists_norm_le_and_le_expRegret_unitBall}\leanok
 \uses{def:bayes_joint, def:regret, lem:bayes_regret_ball, lem:pb_joint_fubini, lem:gauss_norm_moments}
-Let $d\ge2$, $T\ge1$ and $\mathsf{Alg}$ be any identification algorithm with budget $T$ on
+Let $d\ge1$, $T\ge1$ and $\mathsf{Alg}$ be any identification algorithm with budget $T$ on
 $\Xs = \ball_d$. With the prior $\pi = \Normal(0,\sigma^2I_d)$, $\sigma^2 := d/(4T)$:
 \begin{enumerate}
   \item[(i)] $\E[r(\rec,\theta)]\ge\dfrac{d}{8\sqrt T}$ under the joint law $Q$;
@@ -518,45 +549,51 @@ $\Xs = \ball_d$. With the prior $\pi = \Normal(0,\sigma^2I_d)$, $\sigma^2 := d/(
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:bayes_regret_ball, lem:pb_joint_fubini, lem:gauss_norm_moments, lem:pb_kernel_of_likelihood}
 (i) With $\sigma^2 = d/(4T)$ we have $d\sigma^{-2} = 4T$, hence
 $\frac{d^2}{d\sigma^{-2}+T} = \frac{d^2}{5T}$ and $\sigma^2d-\frac{d^2}{5T} = \frac{d^2}{4T}-\frac{d^2}{5T} = \frac{d^2}{20T}$,
-while $\frac{\sigma d}{\sqrt{d+2}} = \frac{d}{2\sqrt T}\sqrt{\frac{d}{d+2}}\ge\frac{d}{2\sqrt T}\cdot\frac{1}{\sqrt2}$
-for $d\ge2$. Lemma~\ref{lem:bayes_regret_ball} gives
+while $\sqrt{2/\pi}\,\sigma\sqrt d = \sqrt{2/\pi}\,\frac{d}{2\sqrt T} \ge 0.79\cdot\frac{d}{2\sqrt T}$
+(as $\pi < 3.15$). Lemma~\ref{lem:bayes_regret_ball} gives
 \[
-  \E[r(\rec,\theta)]\ge\frac{d}{\sqrt T}\Big(\frac{1}{2\sqrt2}-\frac{1}{\sqrt{20}}\Big)
-  \ge\frac{d}{\sqrt T}\,(0.3535-0.2237) = 0.1298\,\frac{d}{\sqrt T}\ge\frac{d}{8\sqrt T} .
+  \E[r(\rec,\theta)]\ge\frac{d}{\sqrt T}\Big(\frac{0.79}{2}-\frac{1}{4.47}\Big)
+  \ge\frac{d}{\sqrt T}\,(0.395-0.2238) \ge \frac{d}{8\sqrt T} ,
 \]
-(ii) Let $R := 20\sigma\sqrt d = 20\cdot\frac{\sqrt d}{2\sqrt T}\cdot\sqrt d = \frac{10d}{\sqrt T}$.
-Since $r(\rec,\theta)\le2\norm\theta$ on the ball, Cauchy--Schwarz, $\E\norm\theta^2 = \sigma^2d$
-(Lemma~\ref{lem:gauss_norm_moments}) and Markov's inequality give
+using $4.47^2 \le 20$.
+
+(ii) Let $R := \frac{10d}{\sqrt T} = 20\sigma\sqrt d$.
+Since $0 \le r(\rec,\theta)\le2\norm\theta$ on the ball and
+$\norm\theta\indic\{\norm\theta>R\}\le\norm\theta^2/R$,
 \[
-  \E\big[r(\rec,\theta)\indic\{\norm\theta>R\}\big]\le2\sqrt{\E\norm\theta^2}\sqrt{\Prob(\norm\theta^2>R^2)}
-  \le2\sigma\sqrt d\sqrt{\frac{\sigma^2d}{400\,\sigma^2d}} = \frac{2\sigma\sqrt d}{20} = \frac{\sigma\sqrt d}{10} = \frac{d}{20\sqrt T} .
+  \E\big[r(\rec,\theta)\indic\{\norm\theta>R\}\big]\le\frac{2\,\E\norm\theta^2}{R}
+  = \frac{2\sigma^2d}{R} = \frac{d}{20\sqrt T} ,
 \]
+so $\E[r\indic\{\norm\theta\le R\}] \ge \frac{d}{8\sqrt T}-\frac{d}{20\sqrt T} = \frac{3d}{40\sqrt T}$.
 By Lemma~\ref{lem:pb_joint_fubini}, $\E[r\indic\{\norm\theta\le R\}] = \int_{\norm\theta\le R}\E_\theta[r(\rec,\theta)]\,\pi(d\theta)$,
-and by (i) this is at least $\frac{d}{8\sqrt T}-\frac{d}{20\sqrt T} = \frac{3d}{40\sqrt T}$.
-If every $\theta$ with $\norm\theta\le R$ had $\E_\theta[r]<\frac{3d}{40\sqrt T}$, then, as
-$\pi(\norm\theta\le R)>0$ and $\theta\mapsto\E_\theta[r(\rec,\theta)]$ is measurable
-(Lemma~\ref{lem:pb_kernel_of_likelihood}, $r$ being bounded on the ball), the integral
-would be strictly less than $\frac{3d}{40\sqrt T}\pi(\norm\theta\le R)\le\frac{3d}{40\sqrt T}$
-(Mathlib \texttt{integral\_lt\_integral\_of\_...} / strict monotonicity of the integral on a set
-of positive measure), a contradiction. Hence some $\theta$ with $\norm\theta\le R$ satisfies
+where $\theta\mapsto\E_\theta[r(\rec,\theta)]$ is measurable
+(Lemma~\ref{lem:pb_kernel_of_likelihood}, $r$ being bounded by $2\norm\theta$).
+If every $\theta$ with $\norm\theta\le R$ had $\E_\theta[r]<\frac{3d}{40\sqrt T}$, the
+nonnegative function $g := \indic\{\norm\theta\le R\}\,(\frac{3d}{40\sqrt T} - \E_\theta[r])$
+would be positive on $\{\norm\theta\le R\}$, a set of positive $\pi$-measure (by Markov's
+inequality $\pi(\norm\theta>R)\le\sigma^2d/R^2 = 1/400$), so $\int g\,d\pi > 0$; but
+$\int g\,d\pi = \frac{3d}{40\sqrt T}\pi(\norm\theta\le R) - \E[r\indic\{\norm\theta\le R\}] \le 0$,
+a contradiction. Hence some $\theta$ with $\norm\theta\le R$ satisfies
 $\E_\theta[r(\rec,\theta)]\ge\frac{3d}{40\sqrt T}$.
 \end{proof}
 
 \begin{remark}[Constants]\label{rem:pb_constants}
 The outline claimed the constant $0.13$ in (i), from
 $\frac{1}{2\sqrt2}-\frac{1}{\sqrt{20}} = 0.12995\ldots$, which is slightly \emph{below} $0.13$; we
-use $1/8$ instead. The truncation radius was changed from $16\sigma\sqrt d$ to $20\sigma\sqrt d$
+use $1/8$ instead (the sharper Lemma~\ref{lem:pb_norm_lower} would even give $0.17$). The
+truncation radius was changed from $16\sigma\sqrt d$ to $20\sigma\sqrt d$
 so that Corollary~\ref{cor:ball_pac_lower} keeps the outline's headline constants
 ($\delta\le1/500$, $T\ge d^2/(1000\eps^2)$): with $R = k\sigma\sqrt d$ the final coefficient is
 $\frac18-\frac1k-k\delta$, which for $\delta = 1/500$ is maximized near $k = 22$; $k = 20$ gives
-$7/200$. The choice $\sigma^2 = d/(4T)$ is not optimal either ($\sigma^2\approx0.17d/T$ gives
-$0.134$ instead of $0.13$) but keeps the arithmetic simple.
+$7/200$. The choice $\sigma^2 = d/(4T)$ is not optimal either but keeps the arithmetic simple.
 \end{remark}
 
 \begin{corollary}[PAC lower bound on the unit ball]\label{cor:ball_pac_lower}
+\lean{COLT83.unitBall_le_budget_of_isPAC, COLT83.pairKernel_zero_eq, COLT83.not_isPAC_unitBall_of_isFixedBudget_zero}\leanok
 \uses{def:pac, lem:pac_expected_regret, lem:pb_kernel_of_likelihood, thm:ball_simple_regret_lower}
 Let $d\ge2$, $\eps>0$ and $\delta\le1/500$. Every $(\eps,\delta)$-PAC identification algorithm
 on $\ball_d$ with budget $T$ satisfies
@@ -566,15 +603,16 @@ on $\ball_d$ with budget $T$ satisfies
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{lem:pac_expected_regret, lem:pb_kernel_of_likelihood, thm:ball_simple_regret_lower}
-Let $\theta$ be given by Theorem~\ref{thm:ball_simple_regret_lower}(ii). On the ball,
-$Z(\theta') = \max_{x,y\in\ball_d}\ip{x-y}{\theta'} = 2\norm{\theta'}$ for every $\theta'$, so
-Lemma~\ref{lem:pac_expected_regret} with the prior $\pi := \delta_\theta$ (a Dirac mass, for
-which $\int Z\,d\pi = 2\norm\theta<\infty$) and the Markov kernel $\kappa$ of
-Lemma~\ref{lem:pb_kernel_of_likelihood} (which satisfies $\kappa(\theta') = \Prob_{\theta'}$
-for every $\theta'$, in particular $\pi$-a.e.; under $\pi\otimes\kappa$ the pair
-$(\hist_T,\rec)$ has law $\Prob_\theta$) gives
-$\E_\theta[r(\rec,\theta)]\le\eps+2\delta\norm\theta\le\eps+\frac{20\delta d}{\sqrt T}$. Combining
+If $T = 0$ the law of the recommendation does not depend on $\theta$, and the two instances
+$\pm2\eps e_1$ have regrets summing to $4\eps$ at every arm, so the algorithm cannot be
+$(\eps,\delta)$-PAC for $\delta<1/2$ (as in Lemma~\ref{lem:singular_design_fails}).
+Let $T\ge1$ and let $\theta$ be given by Theorem~\ref{thm:ball_simple_regret_lower}(ii). On
+the ball the regret lies in $[0, 2\norm\theta]$, so Lemma~\ref{lem:pac_expected_regret}
+applied to the law $\Prob_\theta = \kappa(\theta)$ of Lemma~\ref{lem:pb_kernel_of_likelihood}
+gives $\E_\theta[r(\rec,\theta)]\le\eps+2\delta\norm\theta\le\eps+\frac{20\delta d}{\sqrt T}$
+(if $2\norm\theta < \eps$ this is trivial). Combining
 with $\E_\theta[r]\ge\frac{3d}{40\sqrt T}$,
 \[
   \Big(\frac{3}{40}-20\delta\Big)\frac{d}{\sqrt T}\le\eps,\qquad
@@ -584,11 +622,8 @@ hence $\sqrt T\ge\frac{7d}{200\,\eps}$ and $T\ge\frac{49d^2}{40000\eps^2}$; fina
 $40000/49<1000$.
 \end{proof}
 
-\textbf{Lean remark.} The unit ball is the subtype \texttt{Metric.closedBall (0 : EuclideanSpace ℝ (Fin d)) 1}
-with its Borel $\sigma$-algebra; it is compact and spans $\R^d$, hence an action set. The
-functions $S_T$, $b_T$, $V_T$, $m_T$ of the history are compositions of finite sums of
-continuous functions with matrix inversion on the open set of invertible matrices
-(\texttt{Matrix.inv} is continuous there, \texttt{continuousAt\_matrix\_inv}), so they are
-measurable. The expectation $\E_\theta[r(\rec,\theta)]$ is the integral of a bounded function
-under $\Prob_\theta^T\otimes\rho = \kappa(\theta)$, and its measurability in $\theta$ is
-Lemma~\ref{lem:pb_kernel_of_likelihood} (\texttt{Measurable.lintegral\_kernel\_prod\_right}).
+\textbf{Lean remark.} The unit ball is \texttt{unitBall ι = Metric.closedBall 0 1} in
+\texttt{EuclideanSpace ℝ ι}; it is compact and spans $\R^d$, hence an action set. The
+expectation $\E_\theta[r(\rec,\theta)]$ is \texttt{expRegret T A θ}, the integral of a bounded
+function under $\Prob_\theta^T\otimes\rho = \kappa(\theta)$ (\texttt{pairKernel A T θ}), and its
+measurability in $\theta$ is Mathlib's \texttt{StronglyMeasurable.integral\_kernel\_prod\_right'}.

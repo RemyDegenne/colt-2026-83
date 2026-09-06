@@ -7,15 +7,43 @@ import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Convex.Hull
-import Mathlib.LinearAlgebra.Matrix.PosDef
-import Mathlib.Topology.Instances.Matrix
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.Comp
+import Mathlib.InformationTheory.KullbackLeibler.Basic
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.MeasureTheory.Integral.MeanInequalities
+import Mathlib.InformationTheory.KullbackLeibler.ChainRule
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
+import Mathlib.Probability.Kernel.Composition.RadonNikodym
+import Mathlib.Probability.Kernel.MeasurableLIntegral
+import Mathlib.Probability.Kernel.RadonNikodym
+import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+import Mathlib.Probability.Independence.Basic
+import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Probability.Distributions.Gaussian.Fernique
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import Mathlib.Analysis.Convex.Jensen
+import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
+import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Analysis.Convex.Hull
 import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Matrix.Order
-import Mathlib.Probability.Distributions.Gaussian.Fernique
-import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import Mathlib.MeasureTheory.Group.Convolution
 import Mathlib.MeasureTheory.Group.IntegralConvolution
 import Mathlib.Analysis.InnerProductSpace.Basic
@@ -24,6 +52,51 @@ import Mathlib.Data.Fintype.Order
 import Mathlib.Analysis.Convex.Function
 import Mathlib.Analysis.Normed.Group.Pointwise
 import Mathlib.Topology.Order.Compact
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.Calculus.ContDiff.Operations
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.Calculus.FDeriv.Prod
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Algebra.Order.Ring.Abs
+import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
+import Mathlib.MeasureTheory.Function.L2Space
+import Mathlib.Probability.Kernel.Composition.IntegralCompProd
+import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Basic
+import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Independence
+import Mathlib.Probability.Moments.CovarianceBilin
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Analysis.Matrix.PosDef
+import Mathlib.Data.Real.Basic
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
+import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.MeasureTheory.Integral.Pi
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Fintype.Lattice
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Order.ConditionallyCompleteLattice.Finset
+import Mathlib.Data.Matrix.ColumnRowPartitioned
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.Calculus.ParametricIntegral
+import Mathlib.Analysis.SpecialFunctions.Sqrt
+import Mathlib.Analysis.Calculus.FDeriv.Equiv
+import Mathlib.Analysis.Calculus.FDeriv.CompCLM
+import Mathlib.Analysis.Calculus.Deriv.Prod
+import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Logic.Equiv.Prod
+import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Algebra.BigOperators.Ring.Finset
 
 /-! # Standalone extraction for `COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.
@@ -48,6 +121,8 @@ namespace COLT83
 end COLT83
 namespace Real
 end Real
+namespace Finset
+end Finset
 
 -- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,
@@ -330,7 +405,8 @@ end
 
 -- ═══ MXJ2026.Separation ═══
 section
-open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit
+open MeasureTheory ProbabilityTheory Real Learning Learning.LinearBandit Finset
+open scoped RealInnerProductSpace
 namespace COLT83
 
 /-- **Theorem 7, non-adaptive lower bound**: a fixed-design (non-adaptive) identification

@@ -12,20 +12,23 @@ available (Section~\ref{sec:norm_additive}); an adaptive multi-scale test which 
 such an $r_0$, or detects that $r$ is either at most $\eps$ or at least $\sqrt d$
 (Section~\ref{sec:norm_test}); and a direct estimator for the large-norm regime
 $r \ge \sqrt d$ (Section~\ref{sec:norm_large}). The three are composed into a
-meta-algorithm in Section~\ref{sec:norm_meta}.
+meta-algorithm in Section~\ref{sec:norm_meta}. The chapter is fully formalized.
 
 From Chapter~\ref{chap:pre_subexp} we use the sub-exponential calculus: the definition
 \ref{def:subexp}, the tail bound for averages (Corollary~\ref{cor:subexp_average_tail}), the
 sub-exponential parameters of squared Gaussians (Lemma~\ref{lem:gaussian_square_subexp}), of
 chi-square variables (Lemma~\ref{lem:chi_square_subexp}) and of squared Rademacher linear
-forms (Lemma~\ref{lem:rademacher_square_subexp}). From the model chapter we use the noise
-representation (Lemma~\ref{lem:noise_representation}) and the sequential composition of
-algorithms (Lemma~\ref{lem:composition}). Compared with the paper, the constants are all
-explicit (no attempt was made to optimize them), the Hanson--Wright inequality is replaced by
-Lemma~\ref{lem:rademacher_square_subexp}, the conditional argument for the noise term is a
-Fubini argument over the directions, and the large-norm regime uses a deterministic basis
-design instead of random Rademacher rows, which removes the random-matrix concentration
-step of the paper. Throughout the chapter $\eps \in (0,1]$, $\delta \in (0,1)$, $d \ge 1$,
+forms (Lemma~\ref{lem:rademacher_square_subexp}). From the model chapter we use the seed
+representation of the runs of a seeded algorithm (Lemma~\ref{lem:seeded}): the internal
+randomness of the algorithm (the Rademacher directions) and the Gaussian noises are the
+coordinates of an i.i.d.\ sequence, and every statistic of the run is a measurable
+function of finitely many of these coordinates. Compared with the paper, the constants are
+all explicit (no attempt was made to optimize them), the Hanson--Wright inequality is
+replaced by Lemma~\ref{lem:rademacher_square_subexp}, the conditional argument for the noise
+term is a Fubini argument over the directions, the large-norm regime uses a deterministic
+basis design instead of random Rademacher rows, which removes the random-matrix
+concentration step of the paper, and the sequential composition of the phases is replaced
+by a deterministic round schedule on the seed space. Throughout the chapter $\eps \in (0,1]$, $\delta \in (0,1)$, $d \ge 1$,
 $\Xs = \ball_d$ and $r := \norm{\theta}$.
 
 \section{Estimation algorithms and the Rademacher statistic}
@@ -52,6 +55,7 @@ All the estimators below are deterministic functions of the history, so $\rho$ i
 \texttt{Kernel.deterministic}.
 
 \begin{definition}[Rademacher direction]\label{def:rademacher_direction}
+\lean{COLT83.radDir, COLT83.radDir_mem_unitBall, COLT83.measurable_radDir}\leanok
 \uses{def:arm_set}
 A \emph{Rademacher direction} is the random vector $x := \sigma/\sqrt d \in \R^d$ where
 $\sigma = (\sigma_1, \dots, \sigma_d)$ has i.i.d.\ coordinates uniform on $\{-1, +1\}$. We
@@ -59,14 +63,20 @@ write $\mathrm{Rad}_d$ for its law (the image of the uniform measure on $\{-1,+1
 $\sigma \mapsto \sigma/\sqrt d$). Since $\norm{x} = 1$, $x \in \sphere^{d-1} \subset \ball_d$.
 \end{definition}
 
-\begin{lemma}[Second moments of a Rademacher direction]\label{lem:direction_second_moment}
+\textbf{Lean remark.} The sign vector is encoded by a Boolean vector $u \in \{0,1\}^d$ with
+the uniform law (\texttt{uniformBoolVec}, the seed of the meta-algorithm), through
+$\sigma_i := \mathrm{signOf}(u_i) \in \{-1,+1\}$; $\mathrm{radDir}(u) := \sigma/\sqrt d$.
+
+\begin{lemma}[Inner products with a Rademacher direction]\label{lem:direction_second_moment}
+\lean{COLT83.inner_radDir, COLT83.card_mul_inner_radDir_sq, COLT83.norm_radDir_le_one}\leanok
 \uses{def:rademacher_direction}
 Let $x = \sigma/\sqrt d$ be a Rademacher direction and $\theta \in \R^d$. Then
-$\E[xx^\top] = I_d/d$ and $\E\big[\ip{x}{\theta}^2\big] = \norm{\theta}^2/d$. Moreover
-$d\,\ip{x}{\theta}^2 = \ip{\sigma}{\theta}^2$.
+$\ip{x}{\theta} = \ip{\sigma}{\theta}/\sqrt d$ and $d\,\ip{x}{\theta}^2 = \ip{\sigma}{\theta}^2$;
+in particular $\E\big[\ip{x}{\theta}^2\big] = \norm{\theta}^2/d$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:rademacher_fourth_moment}
 $\E[\sigma_i\sigma_j] = \indic\{i = j\}$ by independence and $\E\sigma_i = 0$,
 $\sigma_i^2 = 1$, so $\E[\sigma\sigma^\top] = I_d$ and $\E[xx^\top] = I_d/d$. Then
@@ -76,22 +86,30 @@ identity is $\ip{x}{\theta} = \ip{\sigma}{\theta}/\sqrt d$.
 \end{proof}
 
 \begin{definition}[Rademacher block sampling and the squared statistic]\label{def:squared_statistic}
+\lean{COLT83.rbMeasure, COLT83.rbMean, COLT83.rbStat, COLT83.rbX, COLT83.rbW, COLT83.rbStat_sub_sq_eq}\leanok
 \uses{def:rademacher_direction, def:env, def:regret}
 Let $s \ge 1$ and $K \ge 1$ be integers. The \emph{Rademacher block sampling rule}
-$\mathrm{RB}(s, K)$ is the algorithm with actions in $\ball_d$ and budget $sK$ which, for
+$\mathrm{RB}(s, K)$ is the sampling rule with actions in $\ball_d$ and budget $sK$ which, for
 each $k < K$, draws at round $ks$ a fresh Rademacher direction $x^{(k)} = \sigma^{(k)}/\sqrt d$
-(its policy kernel at round $ks$ is the constant kernel $\mathrm{Rad}_d$) and plays the same
-action $x^{(k)}$ at rounds $ks + \ell$, $0 \le \ell < s$ (its policy at round $ks + \ell$,
-$\ell \ge 1$, is the Dirac mass at the previous action). Given the history, define for
-$k < K$
+and plays the same action $x^{(k)}$ at rounds $ks + \ell$, $0 \le \ell < s$. Its
+\emph{block space} is the product space
 \[
-  \bar y_k := \frac1s \sum_{\ell < s} y_{ks+\ell}, \qquad
+  \Omega_{s,K} := \big(\{-1,+1\}^d\big)^K \times \big(\R^s\big)^K
+  \quad\text{with the product law}\quad
+  \Prob_{s,K} := \mathrm{Unif}\big(\{-1,+1\}^d\big)^{\otimes K} \otimes
+    \big(\Normal(0,1)^{\otimes s}\big)^{\otimes K}
+\]
+(the directions of the $K$ blocks and the noises of the $sK$ rounds). For
+$(\sigma, \eta) \in \Omega_{s,K}$ and a reward vector $\theta$ with $r = \norm{\theta}$, define
+for $k < K$
+\[
+  x^{(k)} := \frac{\sigma^{(k)}}{\sqrt d}, \qquad
+  \mu_k := \ip{x^{(k)}}{\theta}, \qquad
+  \bar y_k := \mu_k + \frac1s \sum_{\ell < s} \eta_{k,\ell}, \qquad
   Z_k := d\Big( \bar y_k^2 - \frac1s \Big), \qquad
   \bar Z := \frac1K \sum_{k<K} Z_k ,
 \]
-and, for a reward vector $\theta$ with $r = \norm{\theta}$,
 \[
-  \mu_k := \ip{x^{(k)}}{\theta}, \qquad
   X_k := d\mu_k^2 - r^2, \qquad
   W_k := Z_k - d\mu_k^2 .
 \]
@@ -99,7 +117,20 @@ Then, as an algebraic identity,
 \[
   \bar Z - r^2 = \frac1K \sum_{k<K} X_k + \frac1K \sum_{k<K} W_k .
 \]
+When $\mathrm{RB}(s,K)$ is run against $\nu_\theta$, the observations of block $k$ are
+$y_{ks+\ell} = \mu_k + \eta_{k,\ell}$ (Lemma~\ref{lem:seeded}), so that $\bar y_k$ is the
+average of the observations of block $k$ and $\bar Z$ is a statistic of the history.
 \end{definition}
+
+\textbf{Lean remark.} $\mathrm{RB}(s,K)$ is not a standalone algorithm in Lean: it appears as
+the \emph{windows} of the meta-algorithm of Definition~\ref{def:meta_algorithm}, whose seeds
+at the block starts are the sign vectors $\sigma^{(k)}$ and whose noises are the
+$\eta_{k,\ell}$ (Lemma~\ref{lem:statistic_structure}). All the probabilistic statements of
+this chapter about $\bar Z$ are statements about the block space
+$(\Omega_{s,K}, \Prob_{s,K})$ (\texttt{rbMeasure}), and are transported to the run through the
+window projections of Lemma~\ref{lem:statistic_structure}. The identity
+$\bar Z - r^2 = \frac1K\sum X_k + \frac1K\sum W_k$ is a rearrangement of
+$Z_k = X_k + W_k + r^2$.
 
 \textbf{Lean remark.} The directions are the algorithm's internal randomness: in LML the
 policy of $\mathrm{RB}(s,K)$ is the kernel which, at rounds $t$ with $s \mid t$, ignores the
@@ -109,18 +140,55 @@ quantities $\bar y_k$, $Z_k$, $\bar Z$ are measurable functions of the history o
 $sK$. The identity $\bar Z - r^2 = \frac1K\sum X_k + \frac1K\sum W_k$ is a rearrangement of
 $Z_k = X_k + W_k + r^2$.
 
-\begin{lemma}[Structure of the statistic]\label{lem:statistic_structure}
-\uses{def:squared_statistic, lem:noise_representation}
-Run $\mathrm{RB}(s,K)$ against $\nu_\theta$. Then the directions $x^{(0)}, \dots, x^{(K-1)}$
-are i.i.d.\ with law $\mathrm{Rad}_d$ and, with
-$\zeta_k := \frac1s\sum_{\ell<s}\eta_{ks+\ell}$ (where $\eta_t := y_t - \ip{x_t}{\theta}$),
-\[
-  \bar y_k = \mu_k + \zeta_k, \qquad k < K,
-\]
-where $\zeta_0, \dots, \zeta_{K-1}$ are i.i.d.\ $\Normal(0, 1/s)$ and the vector
-$(\zeta_k)_{k<K}$ is independent of the vector $(x^{(k)})_{k<K}$. Consequently, the joint law
-of $\big((x^{(k)}, \zeta_k)\big)_{k<K}$ is $\big(\mathrm{Rad}_d \otimes \Normal(0,1/s)\big)^{\otimes K}$.
+\begin{lemma}[Window projections of the seed space]\label{lem:statistic_structure}
+\lean{COLT83.nsMeasure, COLT83.rbProj, COLT83.nsMeasure_map_rbProj, COLT83.indepFun_prefix_rbProj, COLT83.lnProj, COLT83.nsMeasure_map_lnProj, COLT83.indepFun_prefix_lnProj, ProbabilityTheory.indepFun_prefix_window, MeasureTheory.Measure.infinitePi_map_eval_comp, MeasureTheory.Measure.infinitePi_map_eval_comp', COLT83.shiftSeq, COLT83.nsMeasure_map_shiftSeq, COLT83.winStat, COLT83.winStat_eq_rbStat}\leanok
+\uses{def:squared_statistic, lem:seeded}
+Let $\Omega_{\mathrm{seed}} := \big(\{-1,+1\}^d \times \R\big)^{\N}$ with the product law
+$\Prob_{\mathrm{seed}} := \big(\mathrm{Unif}(\{-1,+1\}^d) \otimes \Normal(0,1)\big)^{\otimes\N}$
+(the seed space of Lemma~\ref{lem:seeded} for seeds which are uniform sign vectors and
+standard Gaussian noises), and write $\omega_t = (\sigma_t, \eta_t)$ for its coordinates.
+\begin{enumerate}
+  \item[(i)] For $a \in \N$, $s, K \ge 1$, the \emph{Rademacher window projection}
+    $\pi_{a,s,K}(\omega) := \big( (\sigma_{a+ks})_{k<K}, (\eta_{a+ks+\ell})_{k<K,\ell<s} \big)
+    \in \Omega_{s,K}$ has law $\Prob_{s,K}$ (Definition~\ref{def:squared_statistic}), and it
+    is independent of the prefix $(\omega_t)_{t<T}$ whenever $T \le a$.
+  \item[(ii)] For $a, n \in \N$, the \emph{basis window projection}
+    $\pi'_{a,n}(\omega) := (\eta_{a+in+\ell})_{i<d,\ell<n} \in (\R^n)^d$ has law
+    $\Normal(0,1)^{\otimes dn}$, and it is independent of the prefix $(\omega_t)_{t<T}$
+    whenever $T \le a$.
+  \item[(iii)] For an observation sequence $y : \N \to \R$, let
+    $\bar Z_{a,s,K}(y) := \frac1K\sum_{k<K} d\big( (\frac1s\sum_{\ell<s} y_{a+ks+\ell})^2 - \frac1s \big)$
+    be the squared statistic of the window of rounds $[a, a + sK)$. If
+    $y_{a+ks+\ell} = \ip{\sigma_{a+ks}/\sqrt d}{\theta} + \eta_{a+ks+\ell}$ for all $k < K$,
+    $\ell < s$, then $\bar Z_{a,s,K}(y) = \bar Z\big(\pi_{a,s,K}(\omega)\big)$, the statistic of
+    Definition~\ref{def:squared_statistic} evaluated at the window projection.
+  \item[(iv)] For $a \in \N$, the shifted sequence $(\omega_{a+t})_{t\in\N}$ has law
+    $\Prob_{\mathrm{seed}}$.
+\end{enumerate}
 \end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:seeded, def:squared_statistic}
+The coordinates of an i.i.d.\ sequence indexed by an injective family of indices are
+i.i.d.\ with the same law: the image of $\mu^{\otimes\N}$ by
+$\omega \mapsto (\omega_{f(p)})_{p \in J}$ is $\mu^{\otimes J}$ for injective $f : J \to \N$
+(\texttt{Measure.infinitePi\_map\_eval\_comp}, from the restriction and reindexing lemmas of
+infinite product measures; for an infinite index set, as in (iv), the image measure is
+identified through its finite-dimensional cylinders, \texttt{Measure.eq\_infinitePi}). The window projections are of this form (the indices
+$a + ks + \ell$, resp.\ $a + in + \ell$, are pairwise distinct), which gives the laws after
+splitting the pairs $(\sigma, \eta)$ and currying the index $(k, \ell)$. The prefix and a
+window with $T \le a$ use disjoint sets of coordinates, and disjoint families of
+coordinates of an i.i.d.\ sequence are independent (\texttt{iIndepFun\_infinitePi} and
+\texttt{indepFun\_finset}). Part (iii) is a rewriting: the block average of the
+observations is $\mu_k + \frac1s\sum_\ell \eta_{k,\ell}$.
+\end{proof}
+
+\textbf{Lean remark.} The lemma replaces the sequential composition and the conditional
+independence arguments of the paper: on the seed space, every event of the multi-scale
+phase (rounds $t < T_1$) is a function of the prefix $(\omega_t)_{t<T_1}$, and every
+statistic of the second phase is a function of a window projection with $a = T_1$; the two
+are independent by (i)--(ii).
 
 \begin{proof}
 \uses{lem:noise_representation, lem:gauss_pi, lem:gauss_linear_image}
@@ -153,14 +221,16 @@ $\bar Z - r^2 = \frac1K\sum_k X_k + \frac1K\sum_k W_k$ separates the fluctuation
 directions (Term~1, the $X_k$) from the fluctuations of the noise (Term~2, the $W_k$).
 
 \begin{lemma}[Term 1 is sub-exponential]\label{lem:term1_subexp}
+\lean{COLT83.hasSubexponentialMGF_rbX, COLT83.iIndepFun_rbX, COLT83.rbX_eq_zero_of_eq_zero}\leanok
 \uses{def:squared_statistic, lem:statistic_structure, def:subexp}
-Assume $r = \norm{\theta} > 0$. The variables $X_k = d\mu_k^2 - r^2$, $k < K$, are i.i.d.\ and
-each has $\mathrm{HasSubexponentialMGF}\ X_k\ (16 r^4)\ (4r^2)$. If $r = 0$ then $X_k = 0$
-for all $k$.
+On the block space $(\Omega_{s,K}, \Prob_{s,K})$, the variables $X_k = d\mu_k^2 - r^2$,
+$k < K$, are independent and each has $\mathrm{HasSubexponentialMGF}\ X_k\ (16 r^4)\ (4r^2)$.
+If $r = 0$ then $X_k = 0$ for all $k$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:rademacher_square_subexp, lem:direction_second_moment, lem:statistic_structure}
+\leanok
+\uses{lem:rademacher_square_subexp, lem:direction_second_moment, def:squared_statistic}
 By Lemma~\ref{lem:direction_second_moment}, $d\mu_k^2 = \ip{\sigma^{(k)}}{\theta}^2$ where
 $\sigma^{(k)}$ is a uniform sign vector, so $X_k = \ip{\sigma^{(k)}}{\theta}^2 - \norm{\theta}^2$,
 which has the sub-exponential parameters $(16r^4, 4r^2)$ by
@@ -170,16 +240,18 @@ $\mu_k = 0 = r$.
 \end{proof}
 
 \begin{lemma}[Tail bound for Term 1]\label{lem:term1_bound}
+\lean{COLT83.rbMeasure_real_avg_rbX_gt_le}\leanok
 \uses{lem:term1_subexp}
-Assume $r > 0$. For every $t > 0$,
+Assume $r > 0$. For every $t \ge 0$,
 \[
-  \Prob_\theta\Big( \Big| \frac1K\sum_{k<K} X_k \Big| > t \Big)
+  \Prob_{s,K}\Big( \Big| \frac1K\sum_{k<K} X_k \Big| > t \Big)
   \le 2\exp\Big( -K \min\Big( \frac{t^2}{32 r^4}, \frac{t}{8 r^2} \Big) \Big).
 \]
 If $r = 0$ the left-hand side is $0$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{cor:subexp_average_tail, lem:term1_subexp}
 Corollary~\ref{cor:subexp_average_tail} applied to the independent variables $X_k$ with the
 common parameters $(V, b) = (16r^4, 4r^2)$ (Lemma~\ref{lem:term1_subexp}) gives the bound
@@ -188,11 +260,14 @@ $X_k = 0$.
 \end{proof}
 
 \begin{lemma}[Term 2 is conditionally sub-exponential]\label{lem:term2_conditional}
+\lean{COLT83.rbNoise, COLT83.hasLaw_sqrt_mul_rbMean, COLT83.hasSubexponentialMGF_rbW, COLT83.iIndepFun_rbW}\leanok
 \uses{def:squared_statistic, lem:statistic_structure, def:subexp}
-Fix deterministic directions $x^{(0)}, \dots, x^{(K-1)} \in \sphere^{d-1}$, let
-$\mu_k := \ip{x^{(k)}}{\theta}$, and let $\zeta_0, \dots, \zeta_{K-1}$ be i.i.d.\
-$\Normal(0,1/s)$. Define $\bar y_k := \mu_k + \zeta_k$, $Z_k := d(\bar y_k^2 - 1/s)$ and
-$W_k := Z_k - d\mu_k^2$. Then the $W_k$ are independent and
+Fix deterministic sign vectors $\sigma^{(0)}, \dots, \sigma^{(K-1)}$, let
+$x^{(k)} := \sigma^{(k)}/\sqrt d$, $\mu_k := \ip{x^{(k)}}{\theta}$, and let the noises
+$(\eta_{k,\ell})_{k<K,\ell<s}$ be i.i.d.\ $\Normal(0,1)$ (the noise marginal
+$\Prob^{\eta}_{s,K} := (\Normal(0,1)^{\otimes s})^{\otimes K}$ of the block space). Define
+$\bar y_k$, $Z_k$ and $W_k := Z_k - d\mu_k^2$ as in Definition~\ref{def:squared_statistic}.
+Then $\sqrt d\,\bar y_k \sim \Normal(\sqrt d\,\mu_k, d/s)$, the $W_k$ are independent and
 $\mathrm{HasSubexponentialMGF}\ W_k\ V_k\ b$ with
 \[
   V_k := 8\Big( \frac{d^2}{s^2} + \mu_k^2\,\frac{d^2}{s} \Big), \qquad b := \frac{4d}{s} .
@@ -200,6 +275,7 @@ $\mathrm{HasSubexponentialMGF}\ W_k\ V_k\ b$ with
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:gaussian_square_subexp, lem:gauss_linear_image}
 $\sqrt d\,\bar y_k \sim \Normal(\sqrt d\,\mu_k, d/s)$ (Lemma~\ref{lem:gauss_linear_image}),
 and
@@ -215,22 +291,24 @@ of $\zeta_k$ alone.
 \end{proof}
 
 \begin{lemma}[Tail bound for Term 2]\label{lem:term2_bound}
+\lean{COLT83.rbVbar, COLT83.sum_rbVbar_eq, COLT83.rbNoise_real_avg_rbW_ge_le, COLT83.rbMeasure_real_avg_rbW_gt_le}\leanok
 \uses{lem:term2_conditional, lem:statistic_structure}
-Run $\mathrm{RB}(s,K)$ against $\nu_\theta$ and let
+On the block space, let
 \[
   \bar V := \frac1K\sum_{k<K} V_k
   = 8\Big( \frac{d^2}{s^2} + \frac{d^2}{s}\cdot\frac1K\sum_{k<K}\mu_k^2 \Big),
   \qquad b := \frac{4d}{s} ,
 \]
-a function of the directions. Then for every $\tau > 0$ and $t > 0$,
+a function of the directions. Then for every $\tau \in \R$ and $t \ge 0$,
 \[
-  \Prob_\theta\Big( \Big| \frac1K\sum_{k<K} W_k \Big| > t \Big)
-  \le \Prob_\theta(\bar V > \tau)
+  \Prob_{s,K}\Big( \Big| \frac1K\sum_{k<K} W_k \Big| > t \Big)
+  \le \Prob_{s,K}(\bar V > \tau)
     + 2\exp\Big( -K\min\Big( \frac{t^2}{2\tau}, \frac{t}{2b} \Big) \Big).
 \]
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:term2_conditional, lem:statistic_structure, cor:subexp_average_tail}
 By Lemma~\ref{lem:statistic_structure} the joint law of the directions and the noise
 averages is the product $\mathrm{Rad}_d^{\otimes K} \otimes \Normal(0,1/s)^{\otimes K}$, and
@@ -249,24 +327,25 @@ $2\exp(-K\min(t^2/(2\tau), t/(2b)))$ when $\bar V(x) \le \tau$. Adding
 $\Prob_\theta(\bar V > \tau)$ for the complementary event gives the claim.
 \end{proof}
 
-\textbf{Lean remark.} The statement is about a product measure: the natural formalization
-is to prove the bound for the product measure
-$\mathrm{Rad}_d^{\otimes K} \otimes \Normal(0,1/s)^{\otimes K}$ on
-$(\R^d)^K \times \R^K$ (Fubini, \texttt{MeasureTheory.Measure.prod}), and to transport it
-to $\Prob_\theta$ through the law identity of Lemma~\ref{lem:statistic_structure}. No
+\textbf{Lean remark.} The block space is the product
+$\mathrm{Unif}(\{-1,+1\}^d)^{\otimes K} \otimes (\Normal(0,1)^{\otimes s})^{\otimes K}$ and the
+bound is proved by Fubini (\texttt{MeasureTheory.Measure.prod}) over the directions, with
+the inner bound of Lemma~\ref{lem:term2_conditional} for each fixed direction vector. No
 conditional expectation is needed.
 
 \begin{lemma}[Bound on the conditional variance proxy]\label{lem:vbar_bound}
+\lean{COLT83.rbMeasure_real_rbVbar_gt_le}\leanok
 \uses{lem:term2_bound, lem:term1_bound}
 With $\bar V$ as in Lemma~\ref{lem:term2_bound} and
 \[
   \tau := 8\Big( \frac{d^2}{s^2} + \frac{3 d r^2}{2 s} \Big),
   \qquad\text{one has}\qquad
-  \Prob_\theta(\bar V > \tau) \le 2\exp(-K/128) .
+  \Prob_{s,K}(\bar V > \tau) \le 2\exp(-K/128) .
 \]
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:term1_bound, def:squared_statistic}
 Since $\frac1K\sum_k d\mu_k^2 = r^2 + \frac1K\sum_k X_k$, on the event
 $\{|\frac1K\sum_k X_k| \le r^2/2\}$ we have $\frac1K\sum_k\mu_k^2 \le 3r^2/(2d)$ and hence
@@ -277,6 +356,7 @@ probability at most $2\exp(-K/128)$.
 \end{proof}
 
 \begin{definition}[Additive estimation algorithm; Algorithm~1]\label{def:additive_algorithm}
+\lean{COLT83.addS, COLT83.addK}\leanok
 \uses{def:squared_statistic, def:norm_estimator}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $r_0 > 0$ (a scale parameter), and set
 \[
@@ -297,31 +377,40 @@ where $\bar Z$ is the squared statistic of Definition~\ref{def:squared_statistic
 $\eps$ and $\delta$ are fixed we write $s := s(r_0)$ and $K := K(r_0)$.
 \end{definition}
 
+\textbf{Lean remark.} Only the parameters $s(r_0), K(r_0)$ (natural numbers computed by
+\texttt{Nat.ceil}) are defined on their own; the algorithm itself is the second phase of the
+meta-algorithm of Definition~\ref{def:meta_algorithm} for the data-dependent scale
+$r_0 = t_{j_*}$, and its estimate is a case of \texttt{NormEstParam.estimate}. The guarantee
+below is stated on the block space.
+
 \textbf{Lean remark.} The algorithm is a pair (LML algorithm, deterministic recommendation
 kernel); its parameters $s, K$ are natural numbers computed from $(\eps,\delta,r_0)$ by
 \texttt{Nat.ceil}. The meta-algorithm of Definition~\ref{def:meta_algorithm} instantiates it
 with a data-dependent $r_0$ taking finitely many values.
 
 \begin{theorem}[Additive estimation with a constant-factor estimate; Algorithm~1]\label{thm:additive_estimation}
-\uses{def:additive_algorithm, def:norm_estimator}
+\lean{COLT83.rbMeasure_real_addEst_gt_le, COLT83.rbMeasure_real_sqrt_addEst_gt_le, COLT83.NormEstParam.s'_mul_K'_le}\leanok
+\uses{def:additive_algorithm, def:norm_estimator, def:multiscale_algorithm}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$, $r_0 \ge \eps$, and let $s = s(r_0)$, $K = K(r_0)$
 be the parameters of Algorithm~1 (Definition~\ref{def:additive_algorithm}, with
 $c_0 = 4$, $c_1 = 4096$). Then for every
-$\theta$ with $r/2 < r_0 \le 2r$, the estimate $\hat r$ of $\mathrm{AddEst}(\eps,\delta,r_0)$
-satisfies
+$\theta$ with $r/2 < r_0 \le 2r$, on the block space $(\Omega_{s,K}, \Prob_{s,K})$,
 \[
-  \Prob_\theta\Big( \abs{\bar Z - r^2} \le \frac{r\eps}{2} \Big) \ge 1 - \frac{3\delta}{8},
+  \Prob_{s,K}\Big( \abs{\bar Z - r^2} \le \frac{r\eps}{2} \Big) \ge 1 - \frac{3\delta}{8},
   \qquad\text{hence}\qquad
-  \Prob_\theta\Big( \abs{\hat r - r} \le \frac{\eps}{2} \Big) \ge 1 - \frac{\delta}{2} .
+  \Prob_{s,K}\Big( \abs{\hat r - r} \le \frac{\eps}{2} \Big) \ge 1 - \frac{3\delta}{8}
+  \ge 1 - \frac{\delta}{2} .
 \]
-Moreover, if $r_0 \le 2\sqrt d$ then the budget satisfies
+Moreover, for the scales $r_0 = t_j = 2^j\eps$ with $t_j < 2\sqrt d$ (the scales $j < J$ of
+Definition~\ref{def:multiscale_algorithm}), the budget satisfies
 \[
   sK \le C\,\frac{d\log(4/\delta)}{\eps^2}, \qquad C := 32776 .
 \]
 \end{theorem}
 
 \begin{proof}
-\uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic, def:additive_algorithm}
+\leanok
+\uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic, def:additive_algorithm, def:multiscale_algorithm}
 Write $L := \log(4/\delta) \ge \log 4 > 1$ and note $\log(16/\delta) = \log 4 + L \le 2L$.
 Since $\eps \le r_0 \le 2r$ we have $r > 0$; the hypotheses also give $r_0/2 < r < 2r_0$. By
 Definition~\ref{def:squared_statistic}, $\{|\bar Z - r^2| > r\eps/2\}$ is contained in the
@@ -360,9 +449,11 @@ $\bar Z \ge r(r - \eps/2) > 0$, so $\hat r = \sqrt{\bar Z}$ and
   \abs{\hat r - r} = \frac{\abs{\bar Z - r^2}}{\sqrt{\bar Z} + r} \le \frac{r\eps/2}{r} = \frac{\eps}{2}.
 \]
 
-\emph{Budget.} If $r_0 \le 2\sqrt d$ then $4d/r_0^2 \ge 1$, so $s \le 4d/r_0^2 + 1 \le 8d/r_0^2$;
-and $K \le 4096\,r_0^2L/\eps^2 + 1 \le 4097\,r_0^2L/\eps^2$ because $r_0^2L/\eps^2 \ge 1$.
-Hence $sK \le 8\cdot 4097\, dL/\eps^2 = 32776\, dL/\eps^2$.
+\emph{Budget.} For $r_0 = t_j < 2\sqrt d$, $4d/r_0^2 > 1$, so
+$s \le 4d/r_0^2 + 1 \le 8d/r_0^2 = (8d/\eps^2)\,4^{-j}$; and
+$K \le 4096\,r_0^2L/\eps^2 + 1 = 4096\cdot 4^j L + 1$. Hence
+$sK \le (8d/\eps^2)(4096\,L + 4^{-j}) \le (8d/\eps^2)(4096\,L + 1) \le 8\cdot 4097\, dL/\eps^2
+= 32776\, dL/\eps^2$, using $L \ge 1$.
 \end{proof}
 
 \begin{remark}[On the constants of Algorithm 1]\label{rem:norm_additive_constants}
@@ -379,6 +470,7 @@ $\delta/2$ claimed by the paper; the extra room is not used.
 \label{sec:norm_test}
 
 \begin{definition}[Scale test]\label{def:scale_test}
+\lean{COLT83.testS, COLT83.testK}\leanok
 \uses{def:squared_statistic}
 For a scale $t > 0$ and a confidence level $\delta' \in (0,1)$, the test
 $\mathrm{Test}(t,\delta')$ is the algorithm $\mathrm{RB}(s,K)$ with
@@ -393,13 +485,21 @@ The hypothesis $H_0$ is ``$r \le t$'' and $H_1$ is ``$r \ge 2t$''; when $t < r <
 output counts as an error. Its budget is $sK$.
 \end{definition}
 
+\textbf{Lean remark.} As for Algorithm~1, only the parameters are defined on their own; the
+tests are the windows of the first phase of the meta-algorithm
+(Definition~\ref{def:multiscale_algorithm}), and the error bounds below are stated on the
+block space.
+
 \begin{lemma}[Error of the test under $H_0$]\label{lem:test_error_h0}
+\lean{COLT83.testS_facts, COLT83.testK_facts, COLT83.six_mul_exp_neg_le, COLT83.rbMeasure_real_test_h0_le}\leanok
 \uses{def:scale_test}
-Let $\delta' \in (0,1/4]$ and $\theta$ with $r \le t$. Then
-$\Prob_\theta(\mathrm{Test}(t,\delta') \text{ returns } H_1) \le 3\delta'/4$.
+Let $\delta' \in (0,1/4]$ and $\theta$ with $r \le t$. Then, on the block space of
+$\mathrm{RB}(s,K)$, $\Prob_{s,K}(U \ge \tfrac32 t^2) \le 3\delta'/4$: the test returns $H_1$
+with probability at most $3\delta'/4$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic}
 Write $T_1 := \frac1K\sum_k X_k$, $T_2 := \frac1K\sum_k W_k$, so $U = r^2 + T_1 + T_2$. If
 $|T_1| \le t^2/8$ and $|T_2| \le t^2/8$ then $U \le r^2 + t^2/4 \le 5t^2/4 < 3t^2/2$ and the
@@ -425,12 +525,15 @@ $6e^{-K/2048} \le 6\delta'/8 = 3\delta'/4$.
 \end{proof}
 
 \begin{lemma}[Error of the test under $H_1$]\label{lem:test_error_h1}
+\lean{COLT83.rbMeasure_real_test_h1_le}\leanok
 \uses{def:scale_test}
 Let $\delta' \in (0,1/4]$ and $\theta$ with $r \ge 2t$. Then
-$\Prob_\theta(\mathrm{Test}(t,\delta') \text{ returns } H_0) \le 3\delta'/4$.
+$\Prob_{s,K}(U < \tfrac32 t^2) \le 3\delta'/4$: the test returns $H_0$ with probability at
+most $3\delta'/4$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:term1_bound, lem:term2_bound, lem:vbar_bound, def:squared_statistic}
 With $T_1, T_2$ as above, if $|T_1| \le r^2/8$ and $|T_2| \le r^2/8$ then
 $U \ge r^2 - r^2/4 = 3r^2/4 \ge 3t^2$ (as $r^2 \ge 4t^2$) and the output is $H_1$. Hence the
@@ -451,7 +554,8 @@ Lemma~\ref{lem:test_error_h0}.
 \end{proof}
 
 \begin{definition}[Multi-scale algorithm; Algorithm~2]\label{def:multiscale_algorithm}
-\uses{def:scale_test, lem:composition}
+\lean{COLT83.nsScale, COLT83.nsDelta, COLT83.nsS, COLT83.nsK, COLT83.nsJ, COLT83.nsStart, COLT83.one_le_nsJ, COLT83.nsScale_nsJ_lt, COLT83.NormEstParam.testStat, COLT83.NormEstParam.testH1, COLT83.NormEstParam.jStar}\leanok
+\uses{def:scale_test}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and set, for $j \in \N$,
 \[
   t_j := 2^j\eps, \qquad \delta_j := \frac{\delta}{2^{j+2}}, \qquad
@@ -460,14 +564,25 @@ Let $\eps \in (0,1]$, $\delta \in (0,1)$ and set, for $j \in \N$,
   J := \min\{ j \in \N : t_j \ge 2\sqrt d \} .
 \]
 Since $\eps \le 1 < 2\sqrt d$, $J \ge 1$; and $t_J < 4\sqrt d$ by minimality. The
-\emph{multi-scale algorithm} runs, for $j = 0, 1, \dots$ in this order and as long as
-$j < J$, the test $\mathrm{Test}(t_j, \delta_j)$ (using $s_jK_j$ fresh rounds), and stops at
-the first $j$ whose test returns $H_0$, with output $r_0 := t_j$; if all $J$ tests return
-$H_1$ the output is $r_0 := t_J$. Its budget is the deterministic number
-$N_{\mathrm{ms}} := \sum_{j<J} s_jK_j$: after stopping, the remaining rounds are filled with the
-action $0 \in \ball_d$ (the observations of these rounds are ignored). The output satisfies
+\emph{multi-scale algorithm} runs the tests $\mathrm{Test}(t_j, \delta_j)$, $j = 0, \dots, J-1$,
+one after the other: test $j$ occupies the rounds $[\mathrm{start}_j, \mathrm{start}_{j+1})$
+with $\mathrm{start}_j := \sum_{i<j} s_iK_i$, and its budget is the deterministic number
+$N_{\mathrm{ms}} := \mathrm{start}_J = \sum_{j<J} s_jK_j$. Its output is the index
+\[
+  j_* := \min\big( \{ j < J : \mathrm{Test}(t_j,\delta_j) \text{ returns } H_0 \} \cup \{J\} \big),
+\]
+i.e.\ the first scale at which the test returns $H_0$, or $J$ if all $J$ tests return $H_1$,
+and the constant-factor estimate is $r_0 := t_{j_*}$. It satisfies
 $\eps \le r_0 \le t_J < 4\sqrt d$ and $r_0 \in \{t_0, \dots, t_J\}$.
 \end{definition}
+
+\textbf{Lean remark.} The paper stops the loop at $j_*$ and idles afterwards; since the
+budget is deterministic anyway, the formalization runs all $J$ tests (the tests after $j_*$
+are simply not used by the output), which makes the sampling rule of the first phase
+non-adaptive. The output $j_*$ is a measurable function of the observations of the rounds
+$t < N_{\mathrm{ms}}$ (\texttt{NormEstParam.jStar}, defined by \texttt{Nat.find} from the
+test outcomes \texttt{testH1}), with finitely many values; the multi-scale algorithm is the
+first phase of the meta-algorithm of Definition~\ref{def:meta_algorithm}.
 
 \textbf{Lean remark.} The loop is a sequential composition of $J$ fixed-length phases
 (Lemma~\ref{lem:composition}) whose parameters depend on the past: phase $j$ is
@@ -479,82 +594,74 @@ in a very restricted sense: only the choice between ``continue'' and ``idle'' de
 data.
 
 \begin{lemma}[Good event of the multi-scale algorithm]\label{lem:norm_multiscale_good_event}
-\uses{def:multiscale_algorithm, lem:test_error_h0, lem:test_error_h1}
-For $j < J$ let $E_j$ be the event that the test $j$ is run (no earlier test returned $H_0$)
-and its outcome is wrong: it returns $H_1$ while $r \le t_j$, or $H_0$ while $r \ge 2t_j$.
-Then $\Prob_\theta(E_j) \le 3\delta_j/4$ and
-$\Prob_\theta\big( \bigcup_{j<J} E_j \big) \le 3\delta/8$.
+\lean{COLT83.NormEstParam.testOK, COLT83.NormEstParam.badTest, COLT83.NormEstParam.nsMeasure_real_badTest_le, COLT83.NormEstParam.bad, COLT83.NormEstParam.nsMeasure_real_bad_le, COLT83.sum_nsDelta_le}\leanok
+\uses{def:multiscale_algorithm, lem:test_error_h0, lem:test_error_h1, lem:statistic_structure}
+Run the multi-scale algorithm against $\nu_\theta$ on the seed space of
+Lemma~\ref{lem:statistic_structure}. For $j < J$ let $E_j$ be the event that the outcome of
+test $j$ is wrong: it returns $H_1$ while $r \le t_j$, or $H_0$ while $r \ge 2t_j$.
+Then $\Prob_{\mathrm{seed}}(E_j) \le 3\delta_j/4$ and
+$\Prob_{\mathrm{seed}}\big( \bigcup_{j<J} E_j \big) \le 3\delta/8$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:composition, lem:test_error_h0, lem:test_error_h1, def:multiscale_algorithm}
-Whether test $j$ is run is determined by the history $h$ before phase $j$. By
-Lemma~\ref{lem:composition}, conditionally on this history the phase $j$ is an
-algorithm-environment sequence for $\mathrm{Test}(t_j,\delta_j)$ against $\nu_\theta$, so on
-the set of histories for which the test is run, the conditional probability of a wrong
-outcome is at most $3\delta_j/4$ by Lemma~\ref{lem:test_error_h0} (if $r \le t_j$) or
-Lemma~\ref{lem:test_error_h1} (if $r \ge 2t_j$); when $t_j < r < 2t_j$ no outcome is wrong.
-Here $\delta_j \le \delta/4 < 1/4$. Integrating over the history gives
-$\Prob_\theta(E_j) \le 3\delta_j/4$, and the union bound gives
-$\sum_{j\ge0} 3\delta_j/4 = \frac{3\delta}{4}\sum_{j\ge0}2^{-j-2} = \frac{3\delta}{8}$.
+\leanok
+\uses{lem:statistic_structure, lem:norm_meta_plan, lem:test_error_h0, lem:test_error_h1, def:multiscale_algorithm}
+By Lemma~\ref{lem:norm_meta_plan}, the observations of the window of test $j$ are
+$y_{\mathrm{start}_j + ks + \ell} = \ip{\sigma_{\mathrm{start}_j+ks}/\sqrt d}{\theta}
++ \eta_{\mathrm{start}_j+ks+\ell}$, so by Lemma~\ref{lem:statistic_structure}(iii) the
+statistic $U_j$ of test $j$ is $\bar Z$ evaluated at the window projection
+$\pi_{\mathrm{start}_j, s_j, K_j}$, whose law is the block law $\Prob_{s_j,K_j}$
+(Lemma~\ref{lem:statistic_structure}(i)). Hence $E_j$ is the preimage under this
+projection of the error event of the test on the block space, and its probability is at
+most $3\delta_j/4$ by Lemma~\ref{lem:test_error_h0} (if $r \le t_j$) or
+Lemma~\ref{lem:test_error_h1} (if $r \ge 2t_j$); when $t_j < r < 2t_j$, $E_j = \emptyset$.
+Here $\delta_j \le \delta/4 < 1/4$. The union bound gives
+$\sum_{j<J} 3\delta_j/4 \le \frac{3\delta}{4}\sum_{j\ge0}2^{-j-2} = \frac{3\delta}{8}$.
 \end{proof}
 
 \begin{theorem}[Guarantee of the multi-scale algorithm]\label{thm:multiscale_guarantee}
+\lean{COLT83.NormEstParam.jStar_bounds}\leanok
 \uses{def:multiscale_algorithm, lem:norm_multiscale_good_event}
 Let $E_j$, $j < J$, be the events of Lemma~\ref{lem:norm_multiscale_good_event} and let $G$
-be the complement of $\bigcup_{j<J}E_j$, so $\Prob_\theta(G) \ge 1 - 3\delta/8$ for
-every $\theta$. On $G$ the output $r_0$ satisfies:
+be the complement of $\bigcup_{j<J}E_j$ (all tests are correct), so
+$\Prob_{\mathrm{seed}}(G) \ge 1 - 3\delta/8$ for every $\theta$. On $G$ the output $j_*$
+satisfies one of the following:
 \begin{enumerate}
-  \item[(i)] if $r \le \eps$, then $r_0 = \eps$;
-  \item[(ii)] if $\eps < r < \sqrt d$, then $r/2 < r_0 \le 2r$ and $r_0 < 2\sqrt d$;
-  \item[(iii)] if $\sqrt d \le r < 4\sqrt d$, then $r/2 < r_0 \le 2r$ or $r_0 \ge 2\sqrt d$;
-  \item[(iv)] if $r \ge 4\sqrt d$, then $r_0 \ge 2\sqrt d$.
+  \item[(a)] $j_* = 0$ (that is, $r_0 = \eps$) and $r < 2\eps$;
+  \item[(b)] $0 < j_* < J$, $r/2 < t_{j_*} \le 2r$, and $\eps \le t_{j_*} < 2\sqrt d$;
+  \item[(c)] $j_* = J$ (that is, $r_0 = t_J \ge 2\sqrt d$) and $r \ge \sqrt d$.
 \end{enumerate}
-In particular, on $G$, for every $\theta$ one of the following holds: $r_0 = \eps$ and
-$r < 2\eps$; or $\eps < r_0 < 2\sqrt d$ and $r/2 < r_0 \le 2r$; or $r_0 \ge 2\sqrt d$ and
-$r \ge \sqrt d$.
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:norm_multiscale_good_event, def:multiscale_algorithm}
-The probability bound is Lemma~\ref{lem:norm_multiscale_good_event}. Fix an outcome in $G$;
-then every test $j < J$ that is run returns $H_1$ if $r \ge 2t_j$ and $H_0$ if $r \le t_j$.
-Recall $t_{j+1} = 2t_j$.
+The probability bound is Lemma~\ref{lem:norm_multiscale_good_event}. Fix an outcome in $G$:
+every test $j < J$ returns $H_1$ if $r \ge 2t_j$ and $H_0$ if $r \le t_j$. Recall
+$t_{j+1} = 2t_j$, $J \ge 1$ and $t_J \ge 2\sqrt d$.
 
-(i) $r \le \eps = t_0$: test $0$ is run ($J \ge 1$) and returns $H_0$, so $r_0 = t_0 = \eps$.
+If $j_* = 0$: test $0$ returned $H_0$, which is correct only if $r < 2t_0 = 2\eps$.
 
-(ii) and (iii), $\eps < r < 4\sqrt d$: let $j_* := \max\{j : t_j \le r\} \ge 0$, so
-$t_{j_*} \le r < 2t_{j_*}$. For $j < \min(j_*, J)$, $2t_j \le t_{j_*} \le r$, so test $j$
-returns $H_1$ and the algorithm continues. If $j_* \ge J$ then all $J$ tests return $H_1$ and
-$r_0 = t_J \ge 2\sqrt d$; this is impossible in case (ii) since then
-$t_{j_*+1} = 2t_{j_*} \le 2r < 2\sqrt d$ forces $j_* + 1 < J$. If $j_* < J$, test $j_*$ is
-run; if it returns $H_0$ then $r_0 = t_{j_*} \in (r/2, r]$; if it returns $H_1$ then either
-$j_* + 1 < J$ and test $j_*+1$ returns $H_0$ because $r < t_{j_*+1}$, giving
-$r_0 = t_{j_*+1} = 2t_{j_*} \in (r, 2r]$, or $j_* + 1 = J$ and $r_0 = t_J = 2t_{j_*} \in (r,2r]$.
-In all cases $r/2 < r_0 \le 2r$ or $r_0 \ge 2\sqrt d$, which is (iii); in case (ii) the second
-alternative was excluded and $r_0 \le 2r < 2\sqrt d$.
-
-(iv) $r \ge 4\sqrt d$: for all $j < J$, $2t_j \le t_J < 4\sqrt d \le r$, so all tests return
-$H_1$ and $r_0 = t_J \ge 2\sqrt d$.
-
-The final trichotomy: if $r_0 = \eps$ then, in case (i), $r \le \eps < 2\eps$, and in the
-other cases $r_0 = \eps < 2\sqrt d$ forces $r/2 < r_0 = \eps$; if $\eps < r_0 < 2\sqrt d$ then
-we are in case (ii) or (iii) with $r/2 < r_0 \le 2r$; if $r_0 \ge 2\sqrt d$ then
-$r_0 \ne \eps$ and we are in cases (iii) or (iv), so $r \ge \sqrt d$ (in case (ii),
-$r_0 < 2\sqrt d$).
+If $j_* > 0$: test $j_* - 1$ returned $H_1$, which is correct only if $r > t_{j_*-1} = t_{j_*}/2$,
+so $t_{j_*} < 2r$. If moreover $j_* < J$, test $j_*$ returned $H_0$, so $r < 2t_{j_*}$, i.e.\
+$r/2 < t_{j_*}$; and $\eps \le t_{j_*} < 2\sqrt d$ by the definition of $J$: this is (b). If
+$j_* = J$ then $\sqrt d \le t_J/2 = t_{J-1} < r$: this is (c).
 \end{proof}
 
 \begin{lemma}[Budget of the multi-scale algorithm]\label{lem:multiscale_samples}
+\lean{COLT83.sum_pow_le, COLT83.sum_mul_pow_le, COLT83.NormEstParam.s_le, COLT83.NormEstParam.K_le, COLT83.NormEstParam.T₁_le}\leanok
 \uses{def:multiscale_algorithm}
 With $L := \log(4/\delta)$, the budget of the multi-scale algorithm satisfies
 \[
   N_{\mathrm{ms}} = \sum_{j<J} s_jK_j
   \le \frac{8d}{\eps^2}\Big( 6828\,L + 1578 \Big)
+  \le 63736\,\frac{d\log(4/\delta)}{\eps^2}
   \le C'\,\frac{d\log(4/\delta)}{\eps^2}, \qquad C' := 64000 .
 \]
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:multiscale_algorithm}
 For $j < J$, $t_j < 2\sqrt d$, so $4d/t_j^2 > 1$ and
 $s_j \le 4d/t_j^2 + 1 \le 8d/t_j^2 = 8d\,4^{-j}/\eps^2$. Next,
@@ -574,6 +681,7 @@ $N_{\mathrm{ms}} \le 8\cdot 7967\,dL/\eps^2 \le 64000\,dL/\eps^2$.
 \label{sec:norm_large}
 
 \begin{definition}[Large-norm estimator; Algorithm~3]\label{def:large_norm_algorithm}
+\lean{COLT83.lnN, COLT83.lnNoise, COLT83.lnDelta, COLT83.lnR, COLT83.lnEst}\leanok
 \uses{def:fixed_design, def:norm_estimator}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $n := \lceil 48\log(4/\delta)/\eps^2 \rceil$. The
 \emph{large-norm estimator} is the fixed-design estimation algorithm with budget $dn$ which
@@ -584,11 +692,21 @@ outputs
   \hat R := \norm{\hat\theta}^2 - \frac dn, \qquad
   \hat r := \sqrt{\max(\hat R, 0)} .
 \]
+On the \emph{noise space} $(\R^n)^d$ with the law $\Normal(0,1)^{\otimes dn}$ of the noises
+$\eta = (\eta_{i,\ell})_{i<d,\ell<n}$ of these rounds, $\hat\theta = \theta + \Delta$ with
+$\Delta_i := \frac1n\sum_{\ell<n}\eta_{i,\ell}$, and $\hat R$, $\hat r$ are functions of
+$(\theta, \eta)$.
 \end{definition}
 
+\textbf{Lean remark.} The basis design is the second phase of the meta-algorithm of
+Definition~\ref{def:meta_algorithm} when $j_* = J$ (rounds $T_1 + in + \ell$ play $e_i$);
+the guarantee below is stated on the noise space, and transported through the basis window
+projection of Lemma~\ref{lem:statistic_structure}(ii).
+
 \begin{lemma}[Decomposition of the large-norm estimator]\label{lem:large_norm_decomposition}
+\lean{COLT83.lnR_sub_eq, COLT83.hasLaw_two_mul_inner_lnDelta, COLT83.lnG, COLT83.hasLaw_lnG, COLT83.norm_lnDelta_sq_sub_eq, COLT83.hasSubexponentialMGF_lnQ}\leanok
 \uses{def:large_norm_algorithm, def:subexp}
-Under $\nu_\theta$, $\hat\theta = \theta + \Delta$ with $\Delta \sim \Normal(0, I_d/n)$, and
+On the noise space, $\Delta \sim \Normal(0, I_d/n)$ and
 \[
   \hat R - r^2 = L + Q, \qquad
   L := 2\ip{\theta}{\Delta} \sim \Normal\big(0, 4r^2/n\big), \qquad
@@ -599,11 +717,12 @@ $\mathrm{HasSubexponentialMGF}\ Q\ (8d/n^2)\ (4/n)$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:fixed_design_law, lem:gauss_pi, lem:gauss_linear_image, lem:chi_square_subexp, lem:subexp_const_mul}
-By Lemma~\ref{lem:fixed_design_law}, $y = X\theta + \eta$ with $\eta \sim \Normal(0, I_{dn})$;
-the coordinate $\hat\theta_i$ is $\theta_i$ plus the average of the $n$ noise variables of
+\leanok
+\uses{lem:gauss_pi, lem:gauss_linear_image, lem:chi_square_subexp, lem:subexp_const_mul}
+The coordinate $\hat\theta_i$ is $\theta_i$ plus the average of the $n$ noise variables of
 the rounds where $e_i$ is played. These $d$ averages are independent
-$\Normal(0,1/n)$ (Lemmas~\ref{lem:gauss_pi} and~\ref{lem:gauss_linear_image}), so
+$\Normal(0,1/n)$ (a sum of independent Gaussians is Gaussian,
+Lemmas~\ref{lem:gauss_pi} and~\ref{lem:gauss_linear_image}), so
 $\Delta \sim \Normal(0, I_d/n)$. Expanding
 $\norm{\theta + \Delta}^2 = r^2 + 2\ip{\theta}{\Delta} + \norm{\Delta}^2$ gives the
 decomposition; $L$ is a linear image of $\Delta$ with variance $4\theta^\top(I/n)\theta$
@@ -613,17 +732,21 @@ Lemma~\ref{lem:subexp_const_mul}.
 \end{proof}
 
 \begin{theorem}[Guarantee in the large-norm regime]\label{thm:large_norm_guarantee}
+\lean{COLT83.lnNoise_real_lnEst_gt_le, COLT83.NormEstParam.n_le}\leanok
 \uses{def:large_norm_algorithm}
-Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $\theta$ with $r \ge \sqrt d$. Then
+Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $\theta$ with $r \ge \sqrt d$. Then, on the noise
+space,
 \[
-  \Prob_\theta\big( \abs{\hat R - r^2} \ge \eps r \big) \le \frac{\delta}{2},
+  \Prob\big( \abs{\hat R - r^2} \ge \eps r \big) \le \frac{\delta}{2},
   \qquad\text{hence}\qquad
-  \Prob_\theta\big( \abs{\hat r - r} \le \eps \big) \ge 1 - \frac{\delta}{2},
+  \Prob\big( \abs{\hat r - r} \le \eps \big) \ge 1 - \frac{\delta}{2},
 \]
-and the budget satisfies $dn \le 48\,d\log(4/\delta)/\eps^2 + d \le 49\,d\log(4/\delta)/\eps^2$.
+and the budget satisfies $n \le 48\log(4/\delta)/\eps^2 + 1 \le 49\log(4/\delta)/\eps^2$,
+so $dn \le 49\,d\log(4/\delta)/\eps^2$.
 \end{theorem}
 
 \begin{proof}
+\leanok
 \uses{lem:large_norm_decomposition, lem:gauss_tail, lem:subexp_tail, lem:gauss_law_of_cov}
 Write $L_\delta := \log(4/\delta) > 1$; then $n \ge 48L_\delta/\eps^2 \ge 48$ and
 $n\eps^2 \ge 48L_\delta$. By Lemma~\ref{lem:large_norm_decomposition},
@@ -674,27 +797,91 @@ for the final step; with $\eps \le 1 \le \sqrt d \le r$ the weaker $\eps \le r$ 
 \label{sec:norm_meta}
 
 \begin{definition}[Meta-algorithm for norm estimation; Algorithm~4]\label{def:meta_algorithm}
-\uses{def:multiscale_algorithm, def:additive_algorithm, def:large_norm_algorithm, lem:composition, def:norm_estimator}
-Let $\eps \in (0,1]$, $\delta \in (0,1)$. The \emph{meta-algorithm} $\mathrm{NormEst}(\eps,\delta)$
-is the sequential composition (Lemma~\ref{lem:composition}) of the multi-scale algorithm of
-Definition~\ref{def:multiscale_algorithm}, with output $r_0$, followed by the phase
-determined by $r_0$:
-\begin{enumerate}
-  \item[(a)] if $r_0 = \eps$: no further sampling; the estimate is $\hat r := \eps$;
-  \item[(b)] if $r_0 \ge 2\sqrt d$: run the large-norm estimator
-        (Definition~\ref{def:large_norm_algorithm}) with parameters $(\eps,\delta)$ and
-        return its estimate $\hat r$;
-  \item[(c)] if $\eps < r_0 < 2\sqrt d$: run Algorithm~1, $\mathrm{AddEst}(\eps,\delta,r_0)$
-        (Definition~\ref{def:additive_algorithm}), with parameters $(\eps, \delta, r_0)$ and
-        return its estimate $\hat r$.
-\end{enumerate}
-The second phase is padded with the action $0$ to the deterministic length
-$N_2 := \max\big( dn,\ \max\{ s(t_j)K(t_j) : j < J \} \big)$, where
-$s(t) = \lceil 4d/t^2\rceil$, $K(t) = \lceil 4096\,t^2\log(4/\delta)/\eps^2\rceil$ are the
+\lean{COLT83.NormEstParam, COLT83.nsN2, COLT83.nsBudget, COLT83.NormEstParam.T, COLT83.NormEstParam.phaseOf, COLT83.NormEstParam.rbBlock, COLT83.NormEstParam.basisRound, COLT83.NormEstParam.planAction, COLT83.NormEstParam.nextAction, COLT83.NormEstParam.alg, COLT83.NormEstParam.addStat, COLT83.NormEstParam.lnRStat, COLT83.NormEstParam.estimate, COLT83.NormEstParam.output}\leanok
+\uses{def:multiscale_algorithm, def:additive_algorithm, def:large_norm_algorithm, lem:seeded, def:norm_estimator}
+Let $\eps \in (0,1]$, $\delta \in (0,1)$, let $T_1 := N_{\mathrm{ms}}$ be the budget of the
+multi-scale algorithm and
+\[
+  N_2 := \max\big( dn,\ \max\{ s(t_j)K(t_j) : j < J \} \big),
+\]
+where $s(t) = \lceil 4d/t^2\rceil$, $K(t) = \lceil 4096\,t^2\log(4/\delta)/\eps^2\rceil$ are the
 parameters of Algorithm~1 with $r_0 = t$ (Definition~\ref{def:additive_algorithm}) and $n$
-is that of Definition~\ref{def:large_norm_algorithm}. The total budget is
-$N_{\mathrm{norm}}(\eps,\delta) := N_{\mathrm{ms}} + N_2$.
+is that of Definition~\ref{def:large_norm_algorithm}. The \emph{meta-algorithm}
+$\mathrm{NormEst}(\eps,\delta)$ is the seeded algorithm (Lemma~\ref{lem:seeded}) with budget
+$N_{\mathrm{norm}}(\eps,\delta) := T_1 + N_2$ and seeds uniform on $\{-1,+1\}^d$, defined by the
+following \emph{round schedule}. The first phase is the multi-scale algorithm of
+Definition~\ref{def:multiscale_algorithm}: for $t < T_1$, if $t = \mathrm{start}_j + ks + \ell$
+with $j < J$, $k < K_j$, $\ell < s_j$, the round $t$ belongs to the \emph{Rademacher block}
+starting at $b := \mathrm{start}_j + ks$, and the action is $x_t := \sigma_b/\sqrt d$ where
+$\sigma_b$ is the seed of round $b$ (the action of round $b$, repeated). The second phase,
+rounds $T_1 \le t < T_1 + N_2$, depends on the output $j_*$ of the first phase:
+\begin{enumerate}
+  \item[(a)] if $j_* = 0$: the action is $0$ and the estimate is $\hat r := \eps$;
+  \item[(b)] if $j_* = J$: the rounds $T_1 + in + \ell$ ($i < d$, $\ell < n$) are
+        \emph{basis rounds} playing $e_i$, and the estimate is the large-norm estimate
+        $\hat r = \sqrt{\max(\hat R, 0)}$ of Definition~\ref{def:large_norm_algorithm} computed
+        from their observations;
+  \item[(c)] if $0 < j_* < J$: the rounds $T_1 + ks + \ell$ ($k < K(t_{j_*})$,
+        $\ell < s(t_{j_*})$) form the Rademacher blocks of Algorithm~1 with $r_0 = t_{j_*}$
+        (Definition~\ref{def:additive_algorithm}), and the estimate is
+        $\hat r = \sqrt{\max(\bar Z, 0)}$ computed from their observations.
+\end{enumerate}
+The remaining rounds of the second phase play the action $0$ (their observations are not
+used). The \emph{plan} $\mathrm{plan}(j_*, t, \sigma)$ is the action of round $t$ as a
+function of $j_*$ and of the seeds $\sigma$ at the block starts; as a seeded algorithm, the
+action of round $t$ is computed from the past actions and observations (which determine
+$j_*$ once $t \ge T_1$, and the action of the current block start) and the fresh seed of
+round $t$.
 \end{definition}
+
+\textbf{Lean remark.} The parameters are gathered in a structure \texttt{NormEstParam}
+(\texttt{ε}, \texttt{δ} and their ranges). The schedule is encoded by two functions of
+$(j_*, t)$: \texttt{rbBlock} returns the start of the Rademacher block of round $t$ (if any)
+and \texttt{basisRound} the basis vector of round $t$ (if any); \texttt{planAction} is the
+plan and \texttt{nextAction} its computation from the past, so that the seeded algorithm
+\texttt{alg} has \texttt{next}$_n(h, u) = \mathrm{nextAction}(n+1, \mathrm{past}(h), j_*(h), u)$.
+The estimate is the measurable function \texttt{estimate} of the observation sequence
+(\texttt{output} on histories of length $N_{\mathrm{norm}}$), and the identification
+algorithm is the fixed-budget algorithm with this deterministic output. The paper composes
+the phases sequentially; here the composition is replaced by the deterministic schedule,
+and the data-dependence is entirely in $j_*$.
+
+\begin{lemma}[The run of the meta-algorithm follows its plan]\label{lem:norm_meta_plan}
+\lean{COLT83.NormEstParam.seedAction_eq_planAction, COLT83.NormEstParam.yω_eq, COLT83.NormEstParam.testStat_eq_rbStat, COLT83.NormEstParam.addStat_eq_rbStat, COLT83.NormEstParam.lnRStat_eq_lnR, COLT83.NormEstParam.estimate_congr, COLT83.NormEstParam.estimate_yOf_seedFinHist, COLT83.NormEstParam.jsω_prefixExtend}\leanok
+\uses{def:meta_algorithm, lem:seeded, lem:statistic_structure}
+Run $\mathrm{NormEst}(\eps,\delta)$ against $\nu_\theta$ on the seed space
+$(\Omega_{\mathrm{seed}}, \Prob_{\mathrm{seed}})$ of Lemma~\ref{lem:statistic_structure}, with
+seeds $\sigma_t$ and noises $\eta_t$, and let $j_* = j_*(\omega)$ be the output of the first
+phase. Then for every round $t$ the action is the plan action,
+$x_t = \mathrm{plan}(j_*, t, \sigma)$, and $y_t = \ip{x_t}{\theta} + \eta_t$. Consequently:
+\begin{enumerate}
+  \item[(i)] for $j < J$, the statistic $U_j$ of test $j$ is $\bar Z$ evaluated at the window
+    projection $\pi_{\mathrm{start}_j, s_j, K_j}(\omega)$;
+  \item[(ii)] on $\{0 < j_* < J\}$, the statistic $\bar Z$ of the second phase is $\bar Z$
+    evaluated at $\pi_{T_1, s(t_{j_*}), K(t_{j_*})}(\omega)$;
+  \item[(iii)] on $\{j_* = J\}$, the statistic $\hat R$ of the second phase is the large-norm
+    statistic evaluated at the basis window projection $\pi'_{T_1, n}(\omega)$;
+  \item[(iv)] $j_*$ is a function of the prefix $(\omega_t)_{t<T_1}$, and the estimate is a
+    function of the observations of the rounds $t < N_{\mathrm{norm}}$ only (so the estimate
+    of the run is the estimate computed from the history $\hist_{N_{\mathrm{norm}}}$).
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:meta_algorithm, lem:seeded, lem:statistic_structure}
+Strong induction on $t$. For $t < T_1$ the schedule does not depend on $j_*$, and the
+action computed from the past is the plan action because the action of the block start
+$b \le t$ is, by the induction hypothesis, $\sigma_b/\sqrt d$ (or $t = b$ and the fresh seed is
+used). For $t \ge T_1$, the value of $j_*$ computed from the past observations
+$(y_r)_{r<T_1}$ is the true $j_*$ (the first phase is complete), and the same argument
+applies. The observation identity is the definition of the noise environment.
+Parts (i)--(iii) follow from Lemma~\ref{lem:statistic_structure}(iii) and the
+corresponding identities for the basis rounds ($\ip{e_i}{\theta} = \theta_i$); part (iv) from
+the fact that $j_*$ only reads the rounds $t < T_1$, each of which only depends on the
+coordinates $\omega_r$, $r \le t$, and that each statistic of the second phase only reads
+rounds $t < T_1 + N_2$.
+\end{proof}
 
 \textbf{Lean remark.} The second phase is ``$\mathrm{alg}_2(h)$'' in the notation of
 Lemma~\ref{lem:composition}, a measurable function of the first-phase history $h$ through
@@ -706,7 +893,8 @@ deterministic, as required by Definition~\ref{def:bai_alg}; the padded rounds ar
 not used by the estimate.
 
 \begin{theorem}[Norm estimation; Theorem~8 of the paper]\label{thm:norm_estimation}
-\uses{def:meta_algorithm, def:norm_estimator}
+\lean{COLT83.NormEstParam.fail2, COLT83.NormEstParam.fail_subset, COLT83.NormEstParam.nsMeasure_real_jsω_inter_preimage_eq_mul, COLT83.NormEstParam.nsMeasure_real_fail2_le, COLT83.NormEstParam.nsMeasure_real_estimate_fail_le, COLT83.NormEstParam.one_sub_le_seedMeasure_real_output, COLT83.NormEstParam.N₂_le, COLT83.NormEstParam.T_le}\leanok
+\uses{def:meta_algorithm, def:norm_estimator, lem:seeded}
 Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The meta-algorithm $\mathrm{NormEst}(\eps,\delta)$
 is an $(\eps,\delta)$-accurate estimation algorithm on $\ball_d$: for every
 $\theta \in \R^d$, $\Prob_\theta(|\hat r - \norm{\theta}| \le \eps) \ge 1 - 7\delta/8$. Its
@@ -725,46 +913,57 @@ $T \le C_{\mathrm{norm}}\, d\log(4/\delta)/\eps^2$ and an $(\eps,\delta)$-accura
 algorithm on $\ball_d$ with budget $T$.
 \end{corollary}
 \begin{proof}
-\uses{thm:norm_estimation}
+\leanok
+\uses{thm:norm_estimation, lem:seeded}
 Take $\mathrm{NormEst}(\eps,\delta)$ of Theorem~\ref{thm:norm_estimation}; it is
-$(\eps, 7\delta/8)$-accurate, hence $(\eps,\delta)$-accurate.
+$(\eps, 7\delta/8)$-accurate, hence $(\eps,\delta)$-accurate. (For $d = 0$ every reward
+vector is $0$ and the constant estimate $\eps$ with budget $0$ is accurate.)
 \end{proof}
 
 \begin{proof}
-\uses{thm:multiscale_guarantee, thm:additive_estimation, thm:large_norm_guarantee, lem:multiscale_samples, lem:composition}
-\emph{Correctness.} Let $G$ be the good event of Theorem~\ref{thm:multiscale_guarantee},
-$\Prob_\theta(G) \ge 1 - 3\delta/8$; $G$ is an event of the first-phase history. Fix a
-first-phase history $h \in G$ with output $r_0 = r_0(h)$; by
-Theorem~\ref{thm:multiscale_guarantee} one of three situations occurs.
-\begin{enumerate}
-  \item[(a)] $r_0 = \eps$ and $r < 2\eps$: then $\hat r = \eps$ and, since
-        $0 \le r < 2\eps$, $|\hat r - r| = |\eps - r| \le \eps$ deterministically (with
-        equality possible, at $r = 0$).
-  \item[(b)] $r_0 \ge 2\sqrt d$ and $r \ge \sqrt d$: the large-norm estimator is run and, by
-        Lemma~\ref{lem:composition} and Theorem~\ref{thm:large_norm_guarantee},
-        conditionally on $h$ it returns $|\hat r - r| \le \eps$ with probability at least
-        $1 - \delta/2$.
-  \item[(c)] $\eps < r_0 < 2\sqrt d$ and $r/2 < r_0 \le 2r$: Algorithm~1 is run with an
-        $r_0$ satisfying the hypotheses of Theorem~\ref{thm:additive_estimation}
-        ($\eps \le r_0$, $r/2 < r_0 \le 2r$), so conditionally on $h$ it returns
-        $|\hat r - r| \le \eps/2$ with probability at least $1 - \delta/2$.
-\end{enumerate}
-The padding rounds do not affect the estimates. By the last clause of
-Lemma~\ref{lem:composition} with $\delta' = 3\delta/8$ and the conditional bound $\delta/2$,
-$\Prob_\theta(|\hat r - r| \le \eps) \ge 1 - 3\delta/8 - \delta/2 = 1 - 7\delta/8$.
+\leanok
+\uses{thm:multiscale_guarantee, thm:additive_estimation, thm:large_norm_guarantee, lem:multiscale_samples, lem:norm_meta_plan, lem:statistic_structure, lem:norm_multiscale_good_event, lem:seeded}
+\emph{Correctness.} By Lemma~\ref{lem:seeded} it suffices to prove the bound on the seed
+space, where, by Lemma~\ref{lem:norm_meta_plan}(iv), the estimate of the run is the
+estimate $\hat r(\omega)$ computed from the observation sequence. Let $G$ be the good event
+of Theorem~\ref{thm:multiscale_guarantee}, $\Prob_{\mathrm{seed}}(G^c) \le 3\delta/8$. For
+$1 \le j \le J$ let $F_j$ be the failure event of the second phase at outcome $j$: for
+$j = J$, $F_J := \{ \eps < |\hat r' - r| \}$ where $\hat r'$ is the large-norm estimate
+evaluated at the basis window projection $\pi'_{T_1,n}$; for $j < J$,
+$F_j := \{ \eps/2 < |\hat r_j - r| \}$ where $\hat r_j$ is the estimate of Algorithm~1 with
+$r_0 = t_j$ evaluated at $\pi_{T_1, s(t_j), K(t_j)}$. By Lemma~\ref{lem:norm_meta_plan}(ii)--(iii),
+\[
+  \{ \eps < |\hat r - r| \} \subseteq G^c \cup \bigcup_{1 \le j \le J}
+    \big( G^c{}^c \cap \{j_* = j\} \cap F_j \big):
+\]
+on $G \cap \{j_* = 0\}$, $r < 2\eps$ by Theorem~\ref{thm:multiscale_guarantee}(a) and
+$\hat r = \eps$, so $|\hat r - r| \le \eps$; on $\{j_* = j\}$ with $j \ge 1$ the estimate is
+$\hat r_j$ or $\hat r'$. For each $j \ge 1$: if $G \cap \{j_* = j\} = \emptyset$ the term
+vanishes; otherwise Theorem~\ref{thm:multiscale_guarantee}(b)--(c) gives the hypotheses of
+Theorem~\ref{thm:additive_estimation} ($\eps \le t_j$, $r/2 < t_j \le 2r$) or of
+Theorem~\ref{thm:large_norm_guarantee} ($r \ge \sqrt d$), and
+$\Prob_{\mathrm{seed}}(F_j) \le 3\delta/8 \le \delta/2$ (resp.\ $\le \delta/2$) by
+Lemma~\ref{lem:statistic_structure}(i)--(ii) (the law of the window projection is the
+block, resp.\ noise, law). Since $\{j_* = j\}$ is a function of the prefix
+$(\omega_t)_{t<T_1}$ (Lemma~\ref{lem:norm_meta_plan}(iv)) and $F_j$ is a function of a window
+projection with $a = T_1$, they are independent (Lemma~\ref{lem:statistic_structure}), so
+$\Prob_{\mathrm{seed}}(\{j_* = j\} \cap F_j) = \Prob_{\mathrm{seed}}(j_* = j)\,\Prob_{\mathrm{seed}}(F_j)
+\le \Prob_{\mathrm{seed}}(j_* = j)\,\delta/2$. Summing over $j$ (the events $\{j_* = j\}$ are
+disjoint, so their probabilities add up to at most $1$),
+$\Prob_{\mathrm{seed}}(\eps < |\hat r - r|) \le 3\delta/8 + \delta/2 = 7\delta/8$.
 
-\emph{Budget.} Lemma~\ref{lem:multiscale_samples} gives $N_{\mathrm{ms}} \le 64000\,dL/\eps^2$
+\emph{Budget.} Lemma~\ref{lem:multiscale_samples} gives $N_{\mathrm{ms}} \le 63736\,dL/\eps^2$
 with $L = \log(4/\delta)$. For $j < J$, $t_j \in [\eps, 2\sqrt d)$, so
 Theorem~\ref{thm:additive_estimation} (budget clause with $r_0 = t_j$) gives
 $s(t_j)K(t_j) \le 32776\,dL/\eps^2$, and Theorem~\ref{thm:large_norm_guarantee} gives
 $dn \le 49\,dL/\eps^2$; hence $N_2 \le 32776\,dL/\eps^2$ and
-$N_{\mathrm{norm}} \le (64000 + 32776)\,dL/\eps^2 \le 10^5\,dL/\eps^2$.
+$N_{\mathrm{norm}} \le (63736 + 32776)\,dL/\eps^2 \le 10^5\,dL/\eps^2$.
 \end{proof}
 
 \begin{remark}[Reading of the constants]\label{rem:norm_constants}
 The budget is $O(d\log(1/\delta)/\eps^2)$ as in the paper: for $\delta \le 1/4$,
 $\log(4/\delta) \le 2\log(1/\delta)$. The constant $C_{\mathrm{norm}} = 10^5$ is dominated by the
-multi-scale phase ($64000$), itself driven by the test constant $c_1' = 5120$; the
+multi-scale phase ($63736$), itself driven by the test constant $c_1' = 5120$; the
 constants are what the union bounds produce and were not optimized. In the paper the
 sample complexity of the multi-scale phase is written $\sum_j s_jt_j$, a typo for
 $\sum_j s_jK_j$. The paper's failure probabilities are $\delta/2$ for the multi-scale phase

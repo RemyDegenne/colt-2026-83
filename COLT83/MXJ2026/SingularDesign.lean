@@ -49,22 +49,22 @@ lemma exists_ne_zero_inner_eq_zero_of_not_posDef {x : Fin T → EuclideanSpace �
     ((Finset.sum_eq_zero_iff_of_nonneg fun t _ ↦ sq_nonneg _).1
       (le_antisymm hsum (Finset.sum_nonneg fun t _ ↦ sq_nonneg _)) t (Finset.mem_univ _))
 
-/-- On a spanning compact set, a nonzero direction orthogonal to a nonempty design (`T ≥ 1`)
-is not constant on `𝒳`: `diffSup 𝒳 v > 0`. -/
+/-- On a spanning compact set, a nonzero direction `v` which is orthogonal to some point of `𝒳`
+(for instance to a design point, or to `0 ∈ 𝒳`) is not constant on `𝒳`: `diffSup 𝒳 v > 0`. -/
 lemma diffSup_pos_of_inner_eq_zero (h𝒳 : IsCompact 𝒳) (hspan : Submodule.span ℝ 𝒳 = ⊤)
-    {x : Fin T → EuclideanSpace ℝ ι} (hx : ∀ t, x t ∈ 𝒳) (hT : 1 ≤ T)
-    {v : EuclideanSpace ℝ ι} (hv : v ≠ 0) (h0 : ∀ t, ⟪x t, v⟫ = 0) :
+    {v : EuclideanSpace ℝ ι} (hv : v ≠ 0) (h0 : ∃ y ∈ 𝒳, ⟪y, v⟫ = 0) :
     0 < diffSup 𝒳 v := by
   obtain ⟨R, hR⟩ : ∃ R, ∀ y ∈ 𝒳, ‖y‖ ≤ R := by
     obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
     exact ⟨r, fun y hy ↦ mem_closedBall_zero_iff.1 (hr hy)⟩
+  obtain ⟨y₀, hy₀, h0⟩ := h0
   by_contra hle
   rw [not_lt, diffSup] at hle
   have h1 : 0 ≤ supportFn 𝒳 v := by
-    have := inner_le_supportFn hR (hx ⟨0, hT⟩) v
+    have := inner_le_supportFn hR hy₀ v
     rwa [h0] at this
   have h2 : 0 ≤ supportFn 𝒳 (-v) := by
-    have := inner_le_supportFn hR (hx ⟨0, hT⟩) (-v)
+    have := inner_le_supportFn hR hy₀ (-v)
     rwa [inner_neg_right, h0, neg_zero] at this
   have h3 : ∀ y ∈ 𝒳, ⟪v, y⟫ = 0 := fun y hy ↦ by
     have hy1 := inner_le_supportFn hR hy v
@@ -87,19 +87,39 @@ lemma simpleRegret_smul_add_simpleRegret_neg_smul {α : ℝ} (hα : 0 ≤ α)
   ring
 
 /-- **Singular designs fail** (geometric part, blueprint `lem:singular_design_fails`): for a
-singular design of length `T ≥ 1` on a spanning compact set and `ε > 0`, there are two reward
-vectors `θ θ'` giving the same observation means `⟪x t, θ⟫ = ⟪x t, θ'⟫` (in fact `0`) and
-whose simple regrets sum to `4 ε` at every arm. -/
+singular design on a spanning compact set such that every direction orthogonal to the design is
+orthogonal to some point of `𝒳`, and `ε > 0`, there are two reward vectors `θ θ'` giving the same
+observation means `⟪x t, θ⟫ = ⟪x t, θ'⟫` (in fact `0`) and whose simple regrets sum to `4 ε` at
+every arm. -/
+lemma exists_singular_instances_of_forall (h𝒳 : IsCompact 𝒳) (hspan : Submodule.span ℝ 𝒳 = ⊤)
+    {x : Fin T → EuclideanSpace ℝ ι} (hS : ¬ (∑ t, outerSelf (x t)).PosDef)
+    (h0 : ∀ v : EuclideanSpace ℝ ι, (∀ t, ⟪x t, v⟫ = 0) → ∃ y ∈ 𝒳, ⟪y, v⟫ = 0) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∃ θ θ' : EuclideanSpace ℝ ι, (∀ t, ⟪x t, θ⟫ = 0) ∧ (∀ t, ⟪x t, θ'⟫ = 0) ∧
+      ∀ y, simpleRegret 𝒳 θ y + simpleRegret 𝒳 θ' y = 4 * ε := by
+  obtain ⟨v, hv, hv0⟩ := exists_ne_zero_inner_eq_zero_of_not_posDef hS
+  have hD := diffSup_pos_of_inner_eq_zero h𝒳 hspan hv (h0 v hv0)
+  have hα : 0 ≤ 4 * ε / diffSup 𝒳 v := by positivity
+  refine ⟨(4 * ε / diffSup 𝒳 v) • v, -((4 * ε / diffSup 𝒳 v) • v),
+    fun t ↦ by simp [inner_smul_right, hv0], fun t ↦ by simp [inner_smul_right, hv0], fun y ↦ ?_⟩
+  rw [simpleRegret_smul_add_simpleRegret_neg_smul hα, div_mul_cancel₀ _ hD.ne']
+
+/-- **Singular designs fail**, for a design of length `T ≥ 1` with points in `𝒳`. -/
 lemma exists_singular_instances (h𝒳 : IsCompact 𝒳) (hspan : Submodule.span ℝ 𝒳 = ⊤)
     {x : Fin T → EuclideanSpace ℝ ι} (hx : ∀ t, x t ∈ 𝒳) (hT : 1 ≤ T)
     (hS : ¬ (∑ t, outerSelf (x t)).PosDef) {ε : ℝ} (hε : 0 < ε) :
     ∃ θ θ' : EuclideanSpace ℝ ι, (∀ t, ⟪x t, θ⟫ = 0) ∧ (∀ t, ⟪x t, θ'⟫ = 0) ∧
-      ∀ y, simpleRegret 𝒳 θ y + simpleRegret 𝒳 θ' y = 4 * ε := by
-  obtain ⟨v, hv, h0⟩ := exists_ne_zero_inner_eq_zero_of_not_posDef hS
-  have hD := diffSup_pos_of_inner_eq_zero h𝒳 hspan hx hT hv h0
-  have hα : 0 ≤ 4 * ε / diffSup 𝒳 v := by positivity
-  refine ⟨(4 * ε / diffSup 𝒳 v) • v, -((4 * ε / diffSup 𝒳 v) • v),
-    fun t ↦ by simp [inner_smul_right, h0], fun t ↦ by simp [inner_smul_right, h0], fun y ↦ ?_⟩
-  rw [simpleRegret_smul_add_simpleRegret_neg_smul hα, div_mul_cancel₀ _ hD.ne']
+      ∀ y, simpleRegret 𝒳 θ y + simpleRegret 𝒳 θ' y = 4 * ε :=
+  exists_singular_instances_of_forall h𝒳 hspan hS (fun _ hv ↦ ⟨x ⟨0, hT⟩, hx _, hv _⟩) hε
+
+/-- **Singular designs fail**, for a design of any length (possibly `0`) on a set containing
+`0`. -/
+lemma exists_singular_instances_of_zero_mem (h𝒳 : IsCompact 𝒳)
+    (hspan : Submodule.span ℝ 𝒳 = ⊤) (h0 : (0 : EuclideanSpace ℝ ι) ∈ 𝒳)
+    {x : Fin T → EuclideanSpace ℝ ι} (hS : ¬ (∑ t, outerSelf (x t)).PosDef) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∃ θ θ' : EuclideanSpace ℝ ι, (∀ t, ⟪x t, θ⟫ = 0) ∧ (∀ t, ⟪x t, θ'⟫ = 0) ∧
+      ∀ y, simpleRegret 𝒳 θ y + simpleRegret 𝒳 θ' y = 4 * ε :=
+  exists_singular_instances_of_forall h𝒳 hspan hS (fun v _ ↦ ⟨0, h0, inner_zero_left v⟩) hε
 
 end COLT83

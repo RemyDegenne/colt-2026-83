@@ -368,6 +368,7 @@ $360$ to $600$. The dependence on $\eps$, $\delta$, $d$ and $\gw(\Xs)$ is unchan
 \label{sec:upper_ball}
 
 \begin{lemma}[Identification on the unit ball by a basis design]\label{lem:ball_identification}
+\lean{COLT83.lnNoise_real_norm_lnDelta_gt_le, COLT83.norm_sub_inner_normalizeBall_le}
 \uses{def:pac, def:fixed_design, def:least_squares}
 Let $\Xs = \ball_d$, $\eps > 0$, $\delta \in (0,1)$, and
 \[
@@ -418,6 +419,17 @@ $\Prob_\theta(r(\rec,\theta) \le \eps) \ge 1-\delta$ for every $\theta$.
 
 \emph{Budget.} $T = dn \le d\big((8d + 48\log(1/\delta))/\eps^2 + 1\big)$.
 \end{proof}
+
+\textbf{Lean remark.} The two steps of the proof are formalized on the noise space
+$(\R^n)^d$ with the law $\Normal(0,1)^{\otimes dn}$ of the noises of the basis rounds: the
+chi-square tail bound $\Prob(\norm{\Delta} > c) \le \delta$ whenever
+$2d + 12\log(1/\delta) \le nc^2$ (\texttt{lnNoise\_real\_norm\_lnDelta\_gt\_le}, with
+$\Delta$ the vector of noise averages) and the deterministic regret bound
+$\norm{\vartheta} - \ip{v/\norm v}{\vartheta} \le 2\norm{v - \vartheta}$
+(\texttt{norm\_sub\_inner\_normalizeBall\_le}, with $v/\norm v := 0$ when $v = 0$). The
+fixed-design algorithm itself is not formalized on its own: it is the second phase of the
+block algorithm of Definition~\ref{def:block_algorithm}, where the above bounds are used
+with $(\eps/2, \delta/2)$.
 
 \begin{remark}
 Lemma~\ref{lem:ball_identification} is a special case of Theorem~\ref{thm:upper} ($\ball_d$ is

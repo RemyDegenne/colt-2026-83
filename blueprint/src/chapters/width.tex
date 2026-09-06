@@ -138,29 +138,34 @@ maximum over $i$.
 \label{sec:width_lower}
 
 \begin{proposition}[Width of the unit ball]\label{prop:width_ball}
+\lean{COLT83.gwMat_unitBall, COLT83.one_le_sqrt_diag_mul_sqrt_diag_inv, COLT83.le_gwMat_unitBall, COLT83.le_gw_unitBall, COLT83.div_sqrt_three_le_gw_unitBall, COLT83.gw_unitBall_le_card}\leanok
 \uses{def:width}
 The unit ball $\Xs = \ball_d$ is a spanning action set (it is compact and contains the
 standard basis $e_1,\dots,e_d$), so its Gaussian width $\gw(\ball_d)$ of
 Definition~\ref{def:width} is defined, and
 \[
-  \frac{d}{\sqrt 3} \le \gw(\ball_d) \le d .
+  \frac{d}{\sqrt 3} \le \sqrt{\frac{2}{\pi}}\,d \le \gw(\ball_d) \le d .
 \]
+More precisely, for every $A \in \PD$, $\gwidth{\ball_d}{A} \ge \sqrt{2/\pi}\,d/\sqrt{\tr A}$.
 \end{proposition}
 
 \begin{proof}
-\uses{prop:width_le_d, lem:designset_basic, lem:gauss_norm_moments, lem:trace_inv_amhm, lem:gauss_linear_image, lem:width_matrix_wd}
-The upper bound is Proposition~\ref{prop:width_le_d} ($\ball_d$ being spanning). For the
-lower bound, fix
-$A \in \designset(\ball_d)\cap\PD$. By Lemma~\ref{lem:designset_basic},
-$\tr A \le \sup_{x\in\ball_d}\norm{x}^2 = 1$. For every $v \in \R^d$,
-$\sup_{x\in\ball_d}\ip{x}{v} = \norm{v}$ (Cauchy--Schwarz, with equality at
-$x = v/\norm{v}$ when $v \ne 0$), so
-$\gwidth{\ball_d}{A} = \E\norm{A^{-1/2}g}$. The vector $Y := A^{-1/2}g$ has law
-$\Normal(0, A^{-1})$ (Lemma~\ref{lem:gauss_linear_image}), and
-Lemma~\ref{lem:gauss_norm_moments} gives $\E\norm{Y} \ge \sqrt{\tr(A^{-1})}/\sqrt 3$.
-Finally $\tr(A^{-1}) \ge d^2/\tr(A) \ge d^2$ by Lemma~\ref{lem:trace_inv_amhm}. Hence
-$\gwidth{\ball_d}{A} \ge d/\sqrt3$ for every admissible $A$, and the infimum
-$\gw(\ball_d)$ is at least $d/\sqrt 3$.
+\leanok
+\uses{prop:width_le_d, lem:designset_basic, lem:gauss_norm_lower, lem:gauss_linear_image, lem:width_matrix_wd}
+The upper bound is Proposition~\ref{prop:width_le_d} ($\ball_d$ being spanning). For every
+$v \in \R^d$, $\sup_{x\in\ball_d}\ip{x}{v} = \norm{v}$ (Cauchy--Schwarz, with equality at
+$x = v/\norm{v}$ when $v \ne 0$), so $\gwidth{\ball_d}{A} = \E\norm{Y}$ with
+$Y := A^{-1/2}g \sim \Normal(0, A^{-1})$ (Lemma~\ref{lem:gauss_linear_image}). Fix $A \in \PD$
+and apply Lemma~\ref{lem:gauss_norm_lower} with the weights $c_i := \sqrt{A_{ii}/\tr A}$
+($\sum_i c_i^2 = 1$):
+$\E\norm Y \ge \sqrt{2/\pi}\sum_i \sqrt{A_{ii}}\sqrt{(A^{-1})_{ii}}/\sqrt{\tr A}$. Now
+$\sqrt{A_{ii}}\sqrt{(A^{-1})_{ii}} \ge 1$ for every $i$: by Cauchy--Schwarz,
+$1 = \ip{e_i}{e_i} = \ip{A^{1/2}e_i}{A^{-1/2}e_i} \le \norm{A^{1/2}e_i}\norm{A^{-1/2}e_i}
+= \sqrt{A_{ii}}\sqrt{(A^{-1})_{ii}}$. Hence
+$\gwidth{\ball_d}{A} \ge \sqrt{2/\pi}\,d/\sqrt{\tr A}$. For $A \in \designset(\ball_d)$,
+Lemma~\ref{lem:designset_basic} gives $\tr A \le \sup_{x\in\ball_d}\norm{x}^2 = 1$, so
+$\gwidth{\ball_d}{A} \ge \sqrt{2/\pi}\,d$ for every admissible $A$, and the infimum
+$\gw(\ball_d)$ is at least $\sqrt{2/\pi}\,d \ge d/\sqrt 3$ (as $\pi \le 6$).
 \end{proof}
 
 \begin{lemma}[Well-separated points in the whitened set]\label{lem:whitened_separated_points}

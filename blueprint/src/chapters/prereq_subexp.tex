@@ -7,13 +7,14 @@ of Chapter~\ref{chap:norm} and by the unit-ball identification algorithm
 explicit parameters $(V, b)$ (Appendix~D.1 of the paper), its stability under scaling and
 independent sums, the corresponding tail bound with the explicit constant $c = 1/2$, and the
 sub-exponential parameters of the centered squares of Gaussian variables (the paper's
-Lemma~1 in Appendix~A, with its complete-the-square proof), of chi-square variables and
-Gaussian quadratic forms, and of Rademacher linear forms $\ip{\eps}{\theta}$. For the last
-one the paper invokes the Hanson--Wright inequality with unspecified constants; we replace it
-by a direct argument (a Gaussian trick for positive $\lambda$, a fourth-moment bound for
-negative $\lambda$) which gives explicit parameters $(16\norm\theta^4, 4\norm\theta^2)$. All
-constants are explicit and tracked. References: \cite[Section~2.7]{vershynin2018high},
-\cite[Section~2.4]{boucheron2013concentration}.
+Lemma~1 in Appendix~A, with its complete-the-square proof), of chi-square variables and of
+Rademacher linear forms $\ip{\eps}{\theta}$. For the last one the paper invokes the
+Hanson--Wright inequality with unspecified constants; we replace it by a direct argument valid
+for every sub-Gaussian variable $Z$ with $\E Z^2$ equal to its sub-Gaussian constant (a Gaussian
+trick for positive $\lambda$, a fourth-moment bound for negative $\lambda$, the fourth moment
+being itself controlled by the Gaussian trick), which gives explicit parameters
+$(16\norm\theta^4, 4\norm\theta^2)$. All constants are explicit and tracked. References:
+\cite[Section~2.7]{vershynin2018high}, \cite[Section~2.4]{boucheron2013concentration}.
 
 \textbf{What Mathlib provides.} The sub-Gaussian structure
 \texttt{ProbabilityTheory.HasSubgaussianMGF X c μ} (\texttt{Mathlib/Probability/Moments/SubGaussian.lean})
@@ -21,15 +22,20 @@ with \texttt{measure\_ge\_le}, \texttt{neg}, \texttt{add\_of\_indepFun},
 \texttt{sum\_of\_iIndepFun}, \texttt{of\_map}, \texttt{congr\_identDistrib}, Hoeffding's lemma
 \texttt{hasSubgaussianMGF\_of\_mem\_Icc\_of\_integral\_eq\_zero}, and LML's
 \texttt{measure\_le\_le}. Moment generating functions: \texttt{ProbabilityTheory.mgf},
-\texttt{iIndepFun.mgf\_sum}, \texttt{iIndepFun.integrable\_exp\_mul\_sum}
-(\texttt{Mathlib/Probability/Moments/Basic.lean}), \texttt{mgf\_gaussianReal}. The Gaussian
-integral \texttt{integral\_gaussian} ($\int e^{-bx^2}dx = \sqrt{\pi/b}$,
-\texttt{Mathlib/Analysis/SpecialFunctions/Gaussian/GaussianIntegral.lean}) and its complex
-shifted form \texttt{integral\_cexp\_neg\_mul\_sq\_add\_real\_mul\_I}
-(\texttt{FourierTransform.lean}); the real logarithm series bound
-\texttt{Real.abs\_log\_sub\_add\_sum\_range\_le} (\texttt{Mathlib/Analysis/SpecialFunctions/Log/Deriv.lean});
-\texttt{Real.add\_one\_le\_exp}; the spectral theorem
-\texttt{Matrix.IsHermitian.spectral\_theorem} (\texttt{Mathlib/Analysis/Matrix/Spectrum.lean}).
+\texttt{iIndepFun.mgf\_sum}, \texttt{iIndepFun.integrable\_exp\_mul\_sum}, the Chernoff bound
+\texttt{measure\_ge\_le\_exp\_mul\_mgf} (\texttt{Mathlib/Probability/Moments/Basic.lean}),
+the derivative of the MGF \texttt{hasDerivAt\_mgf} (\texttt{MGFAnalytic.lean}), integrability
+of all moments from the integrability of $e^{\lambda X}$ near $\lambda = 0$
+(\texttt{integrable\_pow\_of\_mem\_interior\_integrableExpSet}, \texttt{IntegrableExpMul.lean}),
+\texttt{mgf\_gaussianReal}. The Gaussian integral \texttt{integral\_gaussian}
+($\int e^{-bx^2}dx = \sqrt{\pi/b}$,
+\texttt{Mathlib/Analysis/SpecialFunctions/Gaussian/GaussianIntegral.lean}); the real logarithm
+series bound \texttt{Real.abs\_log\_sub\_add\_sum\_range\_le}
+(\texttt{Mathlib/Analysis/SpecialFunctions/Log/Deriv.lean}); \texttt{Real.add\_one\_le\_exp} and
+\texttt{Real.quadratic\_le\_exp\_of\_nonneg}; independence of the coordinates of a product
+measure \texttt{ProbabilityTheory.iIndepFun\_pi}; the standard Gaussian vector
+\texttt{ProbabilityTheory.stdGaussian} as the image of a product of \texttt{gaussianReal 0 1}
+(\texttt{map\_pi\_eq\_stdGaussian}).
 
 \textbf{What is missing.} The sub-exponential structure itself and all its properties
 (Section~\ref{sec:pre_subexp_def}), the MGF of the square of a real Gaussian
@@ -37,82 +43,96 @@ shifted form \texttt{integral\_cexp\_neg\_mul\_sq\_add\_real\_mul\_I}
 Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}.
 
 \textbf{Lean remark.} The definition below mirrors \texttt{HasSubgaussianMGF}: a structure
-\texttt{HasSubexponentialMGF (X : Ω → ℝ) (V b : ℝ≥0) (μ : Measure Ω) : Prop} with fields
+\texttt{HasSubexponentialMGF (X : Ω → ℝ) (V b : ℝ) (μ : Measure Ω) : Prop} with fields
 \texttt{integrable\_exp\_mul : ∀ t : ℝ, b * |t| ≤ 1 → Integrable (fun ω ↦ exp (t * X ω)) μ} and
-\texttt{mgf\_le : ∀ t : ℝ, b * |t| ≤ 1 → mgf X μ t ≤ exp (V * t² / 2)}. The range of $t$ is
+\texttt{mgf\_le : ∀ t : ℝ, b * |t| ≤ 1 → mgf X μ t ≤ exp (V * t\^{}2 / 2)}
+(\texttt{COLT83/Mathlib/Probability/Moments/SubExponential.lean}). The range of $t$ is
 written as $b\abs t\le1$ rather than $\abs t\le1/b$ so that \texttt{b = 0} imposes no
 restriction on $t$ (the hypothesis $0\cdot\abs t\le1$ is always true):
 \texttt{HasSubexponentialMGF X V 0 μ} is then equivalent to \texttt{HasSubgaussianMGF X V μ}
 (same two fields, quantified over all \texttt{t}), and Mathlib's sub-Gaussian API is the
-$b = 0$ case of the statements below (Lemma~\ref{lem:subexp_of_subgaussian}). A kernel
-version, as for \texttt{Kernel.HasSubgaussianMGF}, is not needed.
+$b = 0$ case of the statements below (Lemma~\ref{lem:subexp_of_subgaussian}). Unlike
+Mathlib's sub-Gaussian constant, the parameters are real numbers (not \texttt{ℝ≥0}), which
+avoids coercions in the arithmetic of Chapter~\ref{chap:norm}; the lemmas that need $V > 0$
+or $b > 0$ assume it explicitly. A kernel version, as for \texttt{Kernel.HasSubgaussianMGF}, is
+not needed.
 
 \section{Definition and basic properties}
 \label{sec:pre_subexp_def}
 
 \begin{definition}[Sub-exponential moment generating function]\label{def:subexp}
-Let $X : \Omega \to \R$ be a random variable on $(\Omega,\Prob)$, $V \ge 0$ and $b \ge 0$. We say
+\lean{ProbabilityTheory.HasSubexponentialMGF}\leanok
+Let $X : \Omega \to \R$ be a random variable on $(\Omega,\Prob)$ and $V, b \in \R$. We say
 that $X$ \emph{has a sub-exponential MGF with parameters $(V,b)$}, written
 $\mathrm{HasSubexponentialMGF}(X, V, b)$, if for every $\lambda \in \R$ with
 $b\abs{\lambda} \le 1$ (i.e.\ $\abs\lambda\le1/b$ when $b>0$, and every $\lambda\in\R$ when
-$b = 0$), the variable $e^{\lambda X}$ is integrable and
+$b \le 0$), the variable $e^{\lambda X}$ is integrable and
 \[
   \E e^{\lambda X} \le \exp\Big(\frac{\lambda^2V}{2}\Big).
 \]
 The case $b = 0$ is exactly Mathlib's \texttt{HasSubgaussianMGF X V}
 (Lemma~\ref{lem:subexp_of_subgaussian}). No centering is assumed; it is a consequence
-(Lemma~\ref{lem:ps_subexp_integral_zero}).
+(Lemma~\ref{lem:ps_subexp_integral_zero}). In practice $V \ge 0$ and $b \ge 0$.
 \end{definition}
 
 \begin{lemma}[Sub-exponential variables are integrable and centered]\label{lem:ps_subexp_integral_zero}
+\lean{ProbabilityTheory.HasSubexponentialMGF.zero_mem_interior_integrableExpSet, ProbabilityTheory.HasSubexponentialMGF.integrable, ProbabilityTheory.HasSubexponentialMGF.memLp, ProbabilityTheory.HasSubexponentialMGF.integrable_pow, ProbabilityTheory.HasSubexponentialMGF.integral_eq_zero}\leanok
 \uses{def:subexp}
-If $\mathrm{HasSubexponentialMGF}(X,V,b)$ then $X$ is integrable and $\E X = 0$.
+If $\mathrm{HasSubexponentialMGF}(X,V,b)$ then $X$ is integrable, all its moments are finite,
+and, when $\Prob$ is a probability measure, $\E X = 0$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp}
-Fix $\lambda_0 > 0$ with $b\lambda_0 \le 1$ ($\lambda_0 := 1/b$ if $b > 0$, $\lambda_0 := 1$ if
-$b = 0$). Integrability: for $y \in \R$, $\abs{y} \le e^{\abs y} \le e^{y} + e^{-y}$, so
-$\abs{X} \le \lambda_0^{-1}(e^{\lambda_0X} + e^{-\lambda_0X})$, a sum of two integrable
-variables ($\lambda = \pm\lambda_0$).
-Centering: by $1 + y \le e^y$ (Mathlib \texttt{Real.add\_one\_le\_exp}), for
-$0 < \abs\lambda \le \lambda_0$, $1 + \lambda\E X \le \E e^{\lambda X} \le e^{\lambda^2V/2}$, i.e.\
-$\lambda\,\E X \le e^{\lambda^2V/2} - 1$. Using $e^{y} - 1 \le y e^{y}$ for $y \ge 0$, the
-right-hand side is at most $\frac{\lambda^2V}{2}e^{\lambda^2V/2}$. For $\lambda > 0$ this gives
-$\E X \le \frac{\lambda V}{2}e^{\lambda^2V/2} \to 0$ as $\lambda \downarrow 0$, so $\E X \le 0$;
-for $\lambda < 0$, dividing by $\lambda < 0$ reverses the inequality:
-$\E X \ge \frac{\lambda V}{2}e^{\lambda^2V/2} \to 0$ as $\lambda \uparrow 0$, so $\E X \ge 0$.
+The set $\{\lambda : b\abs\lambda \le 1\}$ is a neighbourhood of $0$ (for every $b$, since
+$\lambda \mapsto b\abs\lambda$ is continuous and vanishes at $0$), so $0$ lies in the interior
+of the set of $\lambda$ such that $e^{\lambda X}$ is integrable. Mathlib then provides the
+integrability of $\abs X^p$ for every $p$
+(\texttt{integrable\_pow\_of\_mem\_interior\_integrableExpSet}) and the differentiability of
+$\lambda \mapsto \E e^{\lambda X}$ at $0$ with derivative $\E X$ (\texttt{hasDerivAt\_mgf}).
+Centering: the function $\varphi(\lambda) := \E e^{\lambda X} - e^{\lambda^2V/2}$ is
+nonpositive on a neighbourhood of $0$ and vanishes at $0$ (as $\E e^{0} = 1$ for a probability
+measure), so it has a local maximum at $0$; it is differentiable there with derivative
+$\E X - 0$, which must vanish (Fermat's rule, Mathlib \texttt{IsLocalMax.hasDerivAt\_eq\_zero}).
+Hence $\E X = 0$.
 \end{proof}
 
 \begin{lemma}[Monotonicity in the parameters]\label{lem:ps_subexp_mono}
+\lean{ProbabilityTheory.HasSubexponentialMGF.mono}\leanok
 \uses{def:subexp}
-If $\mathrm{HasSubexponentialMGF}(X,V,b)$, $V \le V'$ and $0 \le b \le b'$, then
+If $\mathrm{HasSubexponentialMGF}(X,V,b)$, $V \le V'$ and $b \le b'$, then
 $\mathrm{HasSubexponentialMGF}(X,V',b')$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp}
-$b'\abs\lambda \le 1$ implies $b\abs\lambda \le 1$, and $e^{\lambda^2V/2} \le e^{\lambda^2V'/2}$.
+$b'\abs\lambda \le 1$ implies $b\abs\lambda \le b'\abs\lambda \le 1$, and
+$e^{\lambda^2V/2} \le e^{\lambda^2V'/2}$.
 \end{proof}
 
 \begin{lemma}[Sub-Gaussian is sub-exponential with $b = 0$]\label{lem:subexp_of_subgaussian}
+\lean{ProbabilityTheory.HasSubexponentialMGF.of_hasSubgaussianMGF, ProbabilityTheory.HasSubexponentialMGF.hasSubgaussianMGF}\leanok
 \uses{def:subexp, lem:ps_subexp_mono}
 $X$ has a sub-Gaussian MGF with constant $c \ge 0$ (Mathlib
 \texttt{HasSubgaussianMGF X c}: $e^{\lambda X}$ integrable and $\E e^{\lambda X} \le e^{c\lambda^2/2}$
 for all $\lambda\in\R$) if and only if $\mathrm{HasSubexponentialMGF}(X, c, 0)$. Consequently,
 if $X$ has a sub-Gaussian MGF with constant $c$, then $\mathrm{HasSubexponentialMGF}(X, c, b)$
-for every $b \ge 0$.
+for every $b \in \R$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp, lem:ps_subexp_mono}
 For $b = 0$ the condition $b\abs\lambda\le1$ holds for every $\lambda\in\R$, so the two
 requirements of Definition~\ref{def:subexp} are literally the two fields of
-\texttt{HasSubgaussianMGF}. The second claim is Lemma~\ref{lem:ps_subexp_mono} from $b = 0$ to
-$b' = b \ge 0$.
+\texttt{HasSubgaussianMGF}. The second claim is the same argument: the condition
+$b\abs\lambda \le 1$ only restricts the set of $\lambda$ for which the two fields are required.
 \end{proof}
 
 \begin{lemma}[Scaling]\label{lem:subexp_const_mul}
+\lean{ProbabilityTheory.HasSubexponentialMGF.const_mul, ProbabilityTheory.HasSubexponentialMGF.neg}\leanok
 \uses{def:subexp}
 If $\mathrm{HasSubexponentialMGF}(X,V,b)$ and $a \in \R$, then
 $\mathrm{HasSubexponentialMGF}(aX,\ a^2V,\ \abs{a}\,b)$. In particular ($a = -1$),
@@ -120,51 +140,73 @@ $\mathrm{HasSubexponentialMGF}(-X, V, b)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp}
 Let $(\abs ab)\abs\lambda \le 1$, i.e.\ $b\abs{\lambda a} \le 1$; then $e^{\lambda(aX)} = e^{(\lambda a)X}$
 is integrable and $\E e^{(\lambda a)X} \le e^{(\lambda a)^2V/2} = e^{\lambda^2(a^2V)/2}$
 (for $a = 0$ this reads $\E e^{0} = 1 \le 1$).
 \end{proof}
 
-\begin{lemma}[Bernstein-type tail bound]\label{lem:subexp_tail}
+\begin{lemma}[Transport]\label{lem:ps_subexp_map}
+\lean{ProbabilityTheory.HasSubexponentialMGF.congr, ProbabilityTheory.HasSubexponentialMGF.of_map, ProbabilityTheory.HasSubexponentialMGF.map_iff, ProbabilityTheory.HasSubexponentialMGF.id_map_iff, ProbabilityTheory.HasSubexponentialMGF.congr_identDistrib}\leanok
 \uses{def:subexp}
-Let $\mathrm{HasSubexponentialMGF}(X,V,b)$ with $b > 0$, and $t \ge 0$. Then
+The property $\mathrm{HasSubexponentialMGF}(X,V,b)$ depends only on the law of $X$: if
+$X = Y$ almost surely, or if $X$ and $Y$ have the same law (on possibly different probability
+spaces), then $X$ has parameters $(V,b)$ if and only if $Y$ does. If $Y : \Omega' \to \Omega$ is
+measurable and $X : \Omega \to \R$ has parameters $(V,b)$ under the image measure
+$\Prob' \circ Y^{-1}$, then $X \circ Y$ has parameters $(V,b)$ under $\Prob'$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp}
+Both fields of Definition~\ref{def:subexp} are expressed through integrals of functions of
+$X$, which are unchanged by these operations (change of variables
+\texttt{integrable\_map\_measure}, \texttt{mgf\_map}). This is the same proof as for Mathlib's
+\texttt{HasSubgaussianMGF.of\_map} and \texttt{congr\_identDistrib}.
+\end{proof}
+
+\begin{lemma}[Bernstein-type tail bound]\label{lem:subexp_tail}
+\lean{ProbabilityTheory.HasSubexponentialMGF.measure_ge_le_exp_neg_sq, ProbabilityTheory.HasSubexponentialMGF.measure_ge_le_exp_neg_div, ProbabilityTheory.HasSubexponentialMGF.measure_ge_le, ProbabilityTheory.HasSubexponentialMGF.measure_le_le, ProbabilityTheory.HasSubexponentialMGF.measure_abs_ge_le, ProbabilityTheory.HasSubexponentialMGF.measure_abs_gt_le}\leanok
+\uses{def:subexp}
+Let $\mathrm{HasSubexponentialMGF}(X,V,b)$ and $t \ge 0$. Then
 \[
   \Prob(X \ge t) \le
   \begin{cases}
-    \exp\big(-\frac{t^2}{2V}\big) & \text{if } t \le V/b \ (\text{and } V > 0),\\[2pt]
-    \exp\big(-\frac{t}{2b}\big) & \text{if } t \ge V/b ,
+    \exp\big(-\frac{t^2}{2V}\big) & \text{if } tb \le V \text{ and } V > 0,\\[2pt]
+    \exp\big(-\frac{t}{2b}\big) & \text{if } tb \ge V \text{ and } b > 0 ,
   \end{cases}
 \]
-and consequently, when $V > 0$,
+and consequently, when $V > 0$ and $b > 0$,
 \[
   \Prob(X \ge t) \le \exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big), \quad
   \Prob(X \le -t) \le \exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big), \quad
   \Prob(\abs X \ge t) \le 2\exp\Big(-\min\Big(\frac{t^2}{2V}, \frac{t}{2b}\Big)\Big).
 \]
-If $b = 0$ (the sub-Gaussian case) and $V > 0$, then $\Prob(X\ge t)\le\exp(-t^2/(2V))$ and
-$\Prob(X\le-t)\le\exp(-t^2/(2V))$ for every $t\ge0$ (Mathlib
-\texttt{HasSubgaussianMGF.measure\_ge\_le}, LML \texttt{measure\_le\_le}), which is the
-$\min$ form with the convention $t/(2b) = +\infty$.
+If $b = 0$ (the sub-Gaussian case) and $V > 0$, the first bound applies for every $t \ge 0$
+(the condition $tb \le V$ is automatic): this is Mathlib
+\texttt{HasSubgaussianMGF.measure\_ge\_le} (and LML \texttt{measure\_le\_le} for the lower tail),
+i.e.\ the $\min$ form with the convention $t/(2b) = +\infty$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp, lem:subexp_const_mul}
-For $\lambda \ge 0$ with $b\lambda \le 1$ (i.e.\ $\lambda\in[0,1/b]$ for $b>0$, any $\lambda\ge0$
-for $b = 0$), Markov's inequality applied to the nonnegative integrable variable
-$e^{\lambda X}$ gives (Chernoff, Mathlib \texttt{measure\_ge\_le\_exp\_mul\_mgf})
+For $\lambda \ge 0$ with $b\lambda \le 1$, Markov's inequality applied to the nonnegative
+integrable variable $e^{\lambda X}$ gives (Chernoff, Mathlib
+\texttt{measure\_ge\_le\_exp\_mul\_mgf})
 \[
   \Prob(X \ge t) = \Prob(e^{\lambda X} \ge e^{\lambda t}) \le e^{-\lambda t}\,\E e^{\lambda X}
   \le \exp\Big(-\lambda t + \frac{\lambda^2V}{2}\Big).
 \]
-\emph{Case $t \le V/b$, $V > 0$:} take $\lambda := t/V \in [0,1/b]$; the exponent is
-$-t^2/V + t^2/(2V) = -t^2/(2V)$. \emph{Case $t \ge V/b$:} take $\lambda := 1/b$; the exponent is
-$-t/b + V/(2b^2) \le -t/b + t/(2b) = -t/(2b)$ since $V/b \le t$. For the $\min$ form observe
-that $t \le V/b$ implies $t^2/(2V) \le t/(2b)$ and $t \ge V/b$ implies $t/(2b) \le t^2/(2V)$, so
-in each case the bound obtained equals $\exp(-\min(t^2/(2V), t/(2b)))$. The lower tail is the
-upper tail of $-X$, which has the same parameters (Lemma~\ref{lem:subexp_const_mul} with
-$a = -1$); the two-sided bound is a union bound. For $b = 0$ every $\lambda\ge0$ is allowed and
-$\lambda := t/V$ gives $\exp(-t^2/(2V))$ (this is Mathlib's proof of \texttt{measure\_ge\_le}).
+\emph{Case $tb \le V$, $V > 0$:} take $\lambda := t/V \ge 0$, which satisfies $b\lambda \le 1$;
+the exponent is $-t^2/V + t^2/(2V) = -t^2/(2V)$. \emph{Case $tb \ge V$, $b > 0$:} take
+$\lambda := 1/b$; the exponent is $-t/b + V/(2b^2) \le -t/b + t/(2b) = -t/(2b)$ since
+$V \le tb$. For the $\min$ form it is not necessary to identify which term realizes the
+minimum: in each case the bound obtained is $\exp(-u)$ for one of the two terms $u$ of the
+minimum, and $\exp(-u) \le \exp(-\min(\cdot,\cdot))$. The lower tail is the upper tail of
+$-X$, which has the same parameters (Lemma~\ref{lem:subexp_const_mul} with $a = -1$); the
+two-sided bound is a union bound over $\{X \ge t\} \cup \{X \le -t\}$.
 \end{proof}
 
 \begin{remark}[The constant $c$ of the paper]\label{rem:ps_tail_constant}
@@ -174,12 +216,14 @@ value is used in Chapter~\ref{chap:norm} to make all sample-complexity constants
 \end{remark}
 
 \begin{lemma}[Independent sums]\label{lem:subexp_sum}
+\lean{ProbabilityTheory.HasSubexponentialMGF.add_of_indepFun, ProbabilityTheory.HasSubexponentialMGF.sum_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.fun_sum_of_iIndepFun}\leanok
 \uses{def:subexp}
 Let $X_1,\dots,X_K$ be independent with $\mathrm{HasSubexponentialMGF}(X_i,V_i,b)$ for every
 $i \le K$ (the same $b$). Then $\mathrm{HasSubexponentialMGF}\big(\sum_{i\le K}X_i,\ \sum_{i\le K}V_i,\ b\big)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:subexp}
 Let $b\abs\lambda \le 1$. Each $e^{\lambda X_i}$ is integrable and they are independent, so
 $e^{\lambda\sum_iX_i} = \prod_ie^{\lambda X_i}$ is integrable (Mathlib
@@ -189,19 +233,21 @@ $\le \prod_ie^{\lambda^2V_i/2} = e^{\lambda^2\sum_iV_i/2}$.
 \end{proof}
 
 \begin{corollary}[Tail of an average]\label{cor:subexp_average_tail}
+\lean{ProbabilityTheory.HasSubexponentialMGF.average_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.measure_abs_average_ge_le, ProbabilityTheory.HasSubexponentialMGF.measure_abs_average_ge_le_of_forall}\leanok
 \uses{def:subexp}
 Let $K \ge 1$ and $X_1,\dots,X_K$ be independent with $\mathrm{HasSubexponentialMGF}(X_i,V_i,b)$,
-$b > 0$, and let $\bar V := \frac1K\sum_{i\le K}V_i > 0$. Then
-$\mathrm{HasSubexponentialMGF}\big(\frac1K\sum_{i\le K}X_i,\ \bar V/K,\ b/K\big)$ (this part
-also holds for $b = 0$) and, for every $t \ge 0$,
+and let $\bar V := \frac1K\sum_{i\le K}V_i$. Then
+$\mathrm{HasSubexponentialMGF}\big(\frac1K\sum_{i\le K}X_i,\ \bar V/K,\ b/K\big)$ and, if
+$\bar V > 0$ and $b > 0$, for every $t \ge 0$,
 \[
-  \Prob\Big(\Big|\frac1K\sum_{i\le K}X_i\Big| > t\Big)
-  \le \Prob\Big(\Big|\frac1K\sum_{i\le K}X_i\Big| \ge t\Big)
+  \Prob\Big(\Big|\frac1K\sum_{i\le K}X_i\Big| \ge t\Big)
   \le 2\exp\Big(-K\min\Big(\frac{t^2}{2\bar V}, \frac{t}{2b}\Big)\Big).
 \]
+When all the $V_i$ are equal to $V$, $\bar V = V$.
 \end{corollary}
 
 \begin{proof}
+\leanok
 \uses{lem:subexp_sum, lem:subexp_const_mul, lem:subexp_tail}
 Lemma~\ref{lem:subexp_sum} gives parameters $(\sum_iV_i, b) = (K\bar V, b)$ for the sum, and
 Lemma~\ref{lem:subexp_const_mul} with $a = 1/K$ gives $(K\bar V/K^2, b/K) = (\bar V/K, b/K)$ for
@@ -216,113 +262,113 @@ $2\exp(-Kt^2/(2\bar V))$, Mathlib's \texttt{measure\_sum\_ge\_le\_of\_iIndepFun}
 \label{sec:pre_subexp_gaussian}
 
 \begin{lemma}[MGF of the square of a real Gaussian]\label{lem:gaussian_square_mgf}
+\lean{integral_exp_quadratic, integrable_exp_quadratic, ProbabilityTheory.integral_exp_mul_sq_gaussianReal, ProbabilityTheory.integrable_exp_mul_sq_gaussianReal}\leanok
 \uses{def:pg_gaussian_vector}
-Let $\mu \in \R$, $\sigma \ge 0$, $X \sim \Normal(\mu,\sigma^2)$ and $\lambda \in \R$ with
-$2\sigma^2\lambda < 1$. Then $e^{\lambda X^2}$ is integrable and
+For $b < 0$ and $c, d \in \R$,
+\[
+  \int_{\R} \exp(bx^2 + cx + d)\,dx = \sqrt{\frac{\pi}{-b}}\,\exp\Big(d - \frac{c^2}{4b}\Big),
+\]
+the integrand being integrable. Consequently, let $\mu \in \R$, $\sigma \ge 0$,
+$X \sim \Normal(\mu,\sigma^2)$ and $\lambda \in \R$ with $2\sigma^2\lambda < 1$. Then
+$e^{\lambda X^2}$ is integrable and
 \[
   \E e^{\lambda X^2} = (1 - 2\sigma^2\lambda)^{-1/2}\exp\Big(\frac{\mu^2\lambda}{1 - 2\sigma^2\lambda}\Big).
 \]
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:pg_gaussian_vector}
-If $\sigma = 0$ then $X = \mu$ a.s.\ and both sides equal $e^{\lambda\mu^2}$. Let $\sigma > 0$
-and $\nu := 2\sigma^2\lambda < 1$. With the density
+Complete the square: $bx^2 + cx + d = b\,(x + \frac{c}{2b})^2 + d - \frac{c^2}{4b}$, so by the
+translation invariance of Lebesgue measure (\texttt{integral\_add\_right\_eq\_self}) and
+Mathlib \texttt{integral\_gaussian} ($\int e^{-\beta y^2}dy = \sqrt{\pi/\beta}$ with
+$\beta = -b > 0$), the first identity follows; integrability is
+\texttt{integrable\_exp\_neg\_mul\_sq} after the same translation.
+If $\sigma = 0$ then $X = \mu$ a.s.\ and both sides of the second identity equal
+$e^{\lambda\mu^2}$. Let $\sigma > 0$. With the density
 $\frac{1}{\sqrt{2\pi\sigma^2}}e^{-(x-\mu)^2/(2\sigma^2)}$ (Mathlib \texttt{gaussianReal},
 \texttt{gaussianPDFReal}, \texttt{integral\_gaussianReal\_eq\_integral\_smul}),
 \[
-  \E e^{\lambda X^2} = \frac{1}{\sqrt{2\pi\sigma^2}}\int_{\R}\exp\Big(\lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2}\Big)dx .
+  \E e^{\lambda X^2} = \frac{1}{\sqrt{2\pi\sigma^2}}\int_{\R}\exp\Big(\lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2}\Big)dx ,
 \]
-Complete the square: for all $x$,
-\[
-  \lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2}
-  = -\frac{1}{2\sigma^2}\big[(1-\nu)x^2 - 2\mu x + \mu^2\big]
-  = -\frac{1-\nu}{2\sigma^2}\Big(x - \frac{\mu}{1-\nu}\Big)^2 + \frac{\mu^2\lambda}{1-\nu},
-\]
-as one checks by expanding: $(1-\nu)(x - \frac{\mu}{1-\nu})^2 = (1-\nu)x^2 - 2\mu x +
-\frac{\mu^2}{1-\nu}$, and $\mu^2 - \frac{\mu^2}{1-\nu} = -\frac{\mu^2\nu}{1-\nu}$ with
-$\frac{\nu}{2\sigma^2} = \lambda$. Hence, with $\beta := \frac{1-\nu}{2\sigma^2} > 0$ and the
-translation invariance of Lebesgue measure (\texttt{integral\_sub\_right\_eq\_self}),
-\[
-  \E e^{\lambda X^2} = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\int_{\R} e^{-\beta y^2}dy
-  = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\sqrt{\frac{\pi}{\beta}}
-  = \frac{e^{\mu^2\lambda/(1-\nu)}}{\sqrt{2\pi\sigma^2}}\sqrt{\frac{2\pi\sigma^2}{1-\nu}}
-  = (1-\nu)^{-1/2}e^{\mu^2\lambda/(1-\nu)},
-\]
-by Mathlib \texttt{integral\_gaussian}. Integrability of $e^{\lambda X^2}$ is the
-integrability of $y\mapsto e^{-\beta y^2}$ (\texttt{integrable\_exp\_neg\_mul\_sq}) read through
-the same identity (\texttt{integrable\_exp\_neg\_mul\_sq} and the change of variables).
+and $\lambda x^2 - \frac{(x-\mu)^2}{2\sigma^2} = bx^2 + cx + d$ with
+$b = \lambda - \frac{1}{2\sigma^2} = -\frac{1-2\sigma^2\lambda}{2\sigma^2} < 0$,
+$c = \frac{\mu}{\sigma^2}$, $d = -\frac{\mu^2}{2\sigma^2}$. The first identity gives
+$\frac{1}{\sqrt{2\pi\sigma^2}}\sqrt{\frac{2\pi\sigma^2}{1-2\sigma^2\lambda}}
+= (1-2\sigma^2\lambda)^{-1/2}$ and the exponent
+$d - \frac{c^2}{4b} = -\frac{\mu^2}{2\sigma^2} + \frac{\mu^2}{2\sigma^2(1-2\sigma^2\lambda)}
+= \frac{\mu^2\lambda}{1-2\sigma^2\lambda}$.
 \end{proof}
 
 \begin{lemma}[Two elementary inequalities]\label{lem:log_ineq_nu}
+\lean{ProbabilityTheory.neg_log_one_sub_div_two_sub_le_sq, ProbabilityTheory.one_div_one_sub_le_two}\leanok
 For every $\nu \in \R$ with $\abs{\nu} \le 1/2$:
 \begin{enumerate}
   \item[(i)] $-\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2$;
-  \item[(ii)] $\Big|\frac{1}{1-\nu} - 1\Big| \le 2\abs{\nu}$.
+  \item[(ii)] $\frac{1}{1-\nu} \le 2$.
 \end{enumerate}
 \end{lemma}
 
 \begin{proof}
+\leanok
 (i) Mathlib's \texttt{Real.abs\_log\_sub\_add\_sum\_range\_le}, for $\abs x < 1$ and $n = 1$,
 reads $\abs{x + \log(1-x)} \le \abs{x}^2/(1 - \abs x)$. With $x = \nu$ and $\abs\nu \le 1/2$,
 $1 - \abs\nu \ge 1/2$, so $\abs{\nu + \log(1-\nu)} \le 2\nu^2$, hence
-$-\log(1-\nu) - \nu \le 2\nu^2$ and dividing by $2$ gives (i). (A calculus proof: the function
-$\varphi(\nu) := \nu^2 + \frac12\log(1-\nu) + \frac\nu2$ satisfies $\varphi(0) = 0$ and
-$\varphi'(\nu) = 2\nu - \frac{1}{2(1-\nu)} + \frac12 = \frac{\nu(3 - 4\nu)}{2(1-\nu)}$, which has
-the sign of $\nu$ on $[-1/2, 1/2]$ because $3 - 4\nu \ge 1 > 0$ and $1 - \nu \ge 1/2 > 0$ there;
-so $\varphi$ is nonincreasing on $[-1/2,0]$ and nondecreasing on $[0,1/2]$, and
-$\varphi \ge \varphi(0) = 0$. A power series proof: $-\log(1-\nu) - \nu = \sum_{k\ge2}\nu^k/k$
-and $\sum_{k\ge2}\abs\nu^k/k \le \frac12\sum_{k\ge2}\abs\nu^k = \frac{\nu^2}{2(1-\abs\nu)} \le \nu^2$.)
-(ii) $\frac{1}{1-\nu} - 1 = \frac{\nu}{1-\nu}$ and $\abs{1-\nu} \ge 1 - \abs\nu \ge \frac12$, so
-$\abs{\frac{\nu}{1-\nu}} \le 2\abs\nu$.
+$-\log(1-\nu) - \nu \le 2\nu^2$ and dividing by $2$ gives (i).
+(ii) $1 - \nu \ge 1 - \abs\nu \ge \frac12$.
 \end{proof}
 
 \begin{lemma}[Centered square of a Gaussian is sub-exponential]\label{lem:gaussian_square_subexp}
+\lean{ProbabilityTheory.hasSubexponentialMGF_sq_sub_gaussianReal}\leanok
 \uses{def:subexp, def:pg_gaussian_vector}
-Let $\mu\in\R$, $\sigma > 0$ and $X \sim \Normal(\mu,\sigma^2)$. Then $\E X^2 = \mu^2 + \sigma^2$
-and
+Let $\mu\in\R$, $\sigma \ge 0$ and $X \sim \Normal(\mu,\sigma^2)$. Then
 \[
   \mathrm{HasSubexponentialMGF}\big(X^2 - (\mu^2 + \sigma^2),\ 8(\sigma^4 + \mu^2\sigma^2),\ 4\sigma^2\big),
 \]
 i.e.\ for all $\abs\lambda \le \frac{1}{4\sigma^2}$,
-$\log\E e^{\lambda(X^2 - \E X^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2$.
+$\log\E e^{\lambda(X^2 - (\mu^2+\sigma^2))} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2$
+(and $\E X^2 = \mu^2 + \sigma^2$ by Lemma~\ref{lem:ps_subexp_integral_zero}).
 \end{lemma}
 
 \begin{proof}
-\uses{lem:gaussian_square_mgf, lem:log_ineq_nu, lem:gauss_1d_moments}
-$\E X^2 = \Var X + (\E X)^2 = \sigma^2 + \mu^2$ (Lemma~\ref{lem:gauss_1d_moments} applied to
-$X - \mu$, or \texttt{variance\_id\_gaussianReal}, \texttt{integral\_id\_gaussianReal}). Let
-$\abs\lambda \le 1/(4\sigma^2)$ and $\nu := 2\sigma^2\lambda$, so that $\abs\nu \le 1/2$ and in
+\leanok
+\uses{lem:gaussian_square_mgf, lem:log_ineq_nu}
+Let $4\sigma^2\abs\lambda \le 1$ and $\nu := 2\sigma^2\lambda$, so that $\abs\nu \le 1/2$ and in
 particular $2\sigma^2\lambda < 1$: Lemma~\ref{lem:gaussian_square_mgf} applies, $e^{\lambda X^2}$
-is integrable (hence so is $e^{\lambda(X^2 - \E X^2)}$), and
+is integrable (hence so is $e^{\lambda(X^2 - \mu^2 - \sigma^2)}$), and
 \[
-  \log\E e^{\lambda(X^2 - \E X^2)}
+  \log\E e^{\lambda(X^2 - \mu^2 - \sigma^2)}
   = -\frac12\log(1-\nu) + \frac{\mu^2\lambda}{1-\nu} - \lambda(\mu^2 + \sigma^2)
   = \Big(-\frac12\log(1-\nu) - \frac\nu2\Big) + \mu^2\lambda\Big(\frac{1}{1-\nu} - 1\Big),
 \]
-using $\lambda\sigma^2 = \nu/2$. By Lemma~\ref{lem:log_ineq_nu}, the first bracket is at most
-$\nu^2 = 4\sigma^4\lambda^2$ and the second term is at most
-$\mu^2\abs\lambda\cdot2\abs\nu = 4\mu^2\sigma^2\lambda^2$. Hence
-$\log\E e^{\lambda(X^2-\E X^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2 = \frac{\lambda^2}{2}\cdot8(\sigma^4 + \mu^2\sigma^2)$,
+using $\lambda\sigma^2 = \nu/2$. By Lemma~\ref{lem:log_ineq_nu}(i), the first bracket is at most
+$\nu^2 = 4\sigma^4\lambda^2$. The second term equals
+$\mu^2\lambda\nu/(1-\nu) = 2\mu^2\sigma^2\lambda^2\cdot\frac{1}{1-\nu} \le 4\mu^2\sigma^2\lambda^2$
+by Lemma~\ref{lem:log_ineq_nu}(ii), since $\lambda\nu = 2\sigma^2\lambda^2 \ge 0$. Hence
+$\log\E e^{\lambda(X^2-\mu^2-\sigma^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2 = \frac{\lambda^2}{2}\cdot8(\sigma^4 + \mu^2\sigma^2)$,
 which is the claim with $V = 8(\sigma^4 + \mu^2\sigma^2)$ and $b = 4\sigma^2$.
 \end{proof}
 
 \begin{lemma}[Chi-square variables are sub-exponential]\label{lem:chi_square_subexp}
+\lean{ProbabilityTheory.hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal, ProbabilityTheory.hasSubexponentialMGF_norm_sq_sub_stdGaussian}\leanok
 \uses{def:subexp, def:pg_gaussian_vector}
 Let $g \sim \Normal(0, I_d)$. Then
 $\mathrm{HasSubexponentialMGF}\big(\norm{g}^2 - d,\ 8d,\ 4\big)$.
 \end{lemma}
 
 \begin{proof}
-\uses{lem:gauss_pi, lem:gaussian_square_subexp, lem:subexp_sum}
+\leanok
+\uses{lem:gauss_pi, lem:gaussian_square_subexp, lem:subexp_sum, lem:ps_subexp_map}
 $\norm{g}^2 - d = \sum_{i<d}(g_i^2 - 1)$ with $g_0,\dots,g_{d-1}$ i.i.d.\ $\Normal(0,1)$
-(Lemma~\ref{lem:gauss_pi}). Each $g_i^2 - 1$ has parameters $(8, 4)$ by
+(Lemma~\ref{lem:gauss_pi}; in Lean, $\Normal(0,I_d)$ is the image of the product measure
+$\Normal(0,1)^{\otimes d}$ on $\R^d$, \texttt{map\_pi\_eq\_stdGaussian}, and the statement is
+transported by Lemma~\ref{lem:ps_subexp_map}). Each $g_i^2 - 1$ has parameters $(8, 4)$ by
 Lemma~\ref{lem:gaussian_square_subexp} with $\mu = 0$, $\sigma = 1$; the summands are
-independent (measurable functions of independent variables), so Lemma~\ref{lem:subexp_sum}
-gives $(8d, 4)$.
+independent (\texttt{iIndepFun\_pi}), so Lemma~\ref{lem:subexp_sum} gives $(8d, 4)$.
 \end{proof}
 
 \begin{lemma}[Chi-square tail]\label{lem:chi_square_tail}
+\lean{ProbabilityTheory.measureReal_norm_sq_sub_ge_le_stdGaussian, ProbabilityTheory.measureReal_norm_sq_ge_le_stdGaussian}\leanok
 \uses{def:pg_gaussian_vector}
 Let $g \sim \Normal(0,I_d)$ with $d \ge 1$. For every $t \ge 0$,
 \[
@@ -333,6 +379,7 @@ $\Prob\big(\norm{g}^2 \ge 2d + 12\log(1/\delta)\big) \le \delta$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:chi_square_subexp, lem:subexp_tail}
 The first bound is Lemma~\ref{lem:subexp_tail} with $(V,b) = (8d,4)$ from
 Lemma~\ref{lem:chi_square_subexp}: $t^2/(2V) = t^2/(16d)$ and $t/(2b) = t/8$. For the second,
@@ -369,19 +416,147 @@ which has parameters $(0, 4s_{\max})$. The summands are independent, so
 Lemma~\ref{lem:subexp_sum} gives $(8\sum_is_i^2, 4s_{\max}) = (8\tr(S^2), 4\norm{S}_{\mathrm{op}})$.
 \end{proof}
 
-\section{Squares of Rademacher linear forms}
+\begin{remark}[Not used]\label{rem:ps_quadratic_form_unused}
+Lemma~\ref{lem:gauss_quadratic_form_subexp} is recorded for completeness (it is the general
+form of Lemma~\ref{lem:chi_square_subexp}, which is the case $S = I_d$) but none of the main
+results uses it: the large-norm regime of the norm estimation uses a deterministic basis
+design, for which only the chi-square case is needed. It is not formalized.
+\end{remark}
+
+\section{Squares of sub-Gaussian variables and of Rademacher linear forms}
 \label{sec:pre_subexp_rademacher}
 
+\begin{lemma}[MGF of the square of a sub-Gaussian variable, positive parameter]
+\label{lem:subgaussian_square_mgf_pos}
+\lean{ProbabilityTheory.HasSubgaussianMGF.lintegral_exp_mul_sq_le, ProbabilityTheory.HasSubgaussianMGF.integrable_exp_mul_sq, ProbabilityTheory.HasSubgaussianMGF.integral_exp_mul_sq_le}\leanok
+\uses{def:pg_gaussian_vector}
+Let $Z$ be a real random variable with a sub-Gaussian MGF with constant $c \ge 0$
+(Mathlib \texttt{HasSubgaussianMGF Z c}), and let $0 \le \lambda$ with $2c\lambda < 1$
+(any $\lambda \ge 0$ if $c = 0$). Then $e^{\lambda Z^2}$ is integrable and
+\[
+  \E e^{\lambda Z^2} \le (1 - 2c\lambda)^{-1/2}.
+\]
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:gaussian_square_mgf, lem:gauss_1d_moments}
+\emph{Gaussian trick:} for every real $z$, by the MGF of $g' \sim \Normal(0,1)$ at
+$s = \sqrt{2\lambda}\,z$ (Mathlib \texttt{mgf\_gaussianReal}),
+\[
+  e^{\lambda z^2} = e^{(\sqrt{2\lambda}\,z)^2/2} = \E_{g'}\exp\big(\sqrt{2\lambda}\,z\,g'\big).
+\]
+Hence, by Tonelli's theorem for the nonnegative measurable function
+$(\omega, v) \mapsto \exp(\sqrt{2\lambda}\,Z(\omega)\,v)$ on the product of $(\Omega,\Prob)$
+with $(\R, \Normal(0,1))$ (\texttt{MeasureTheory.lintegral\_lintegral\_swap}),
+\[
+  \E e^{\lambda Z^2} = \int\Big(\int\exp\big(\sqrt{2\lambda}\,Z(\omega)\,v\big)\,\Normal(0,1)(dv)\Big)\Prob(d\omega)
+  = \int\Big(\int\exp\big((\sqrt{2\lambda}\,v)\,Z(\omega)\big)\Prob(d\omega)\Big)\Normal(0,1)(dv).
+\]
+For fixed $v$, the inner integral is the MGF of $Z$ at $s := \sqrt{2\lambda}\,v$, which is at
+most $e^{cs^2/2} = e^{c\lambda v^2}$ by sub-Gaussianity. Therefore
+\[
+  \E e^{\lambda Z^2} \le \int e^{c\lambda v^2}\,\Normal(0,1)(dv) = (1 - 2c\lambda)^{-1/2}
+\]
+by Lemma~\ref{lem:gaussian_square_mgf} with $\mu = 0$, $\sigma = 1$ and the parameter
+$c\lambda < 1/2$. Since the right-hand side is finite, $e^{\lambda Z^2}$ is integrable: all
+integrals above are Lebesgue integrals in $[0,\infty]$ of nonnegative functions, and
+\texttt{Integrable} is the conjunction of \texttt{AEStronglyMeasurable} (clear) and
+\texttt{HasFiniteIntegral}, which for a nonnegative function $f$ is
+$\int^-\mathrm{ENNReal.ofReal}(f)\,d\Prob < \infty$ (Mathlib \texttt{hasFiniteIntegral\_iff\_ofReal}).
+\end{proof}
+
+\begin{lemma}[Fourth moment of a sub-Gaussian variable]\label{lem:subgaussian_fourth_moment}
+\lean{ProbabilityTheory.HasSubgaussianMGF.integral_pow_four_le}\leanok
+Let $Z$ have a sub-Gaussian MGF with constant $c \ge 0$ under a probability measure. Then
+$\E Z^4 \le 14c^2$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:subgaussian_square_mgf_pos}
+If $c = 0$ then $Z = 0$ a.s.\ (Mathlib \texttt{ae\_eq\_zero\_of\_hasSubgaussianMGF\_zero}). Let
+$c > 0$ and $\lambda := 1/(4c)$, so that $2c\lambda = 1/2$ and
+Lemma~\ref{lem:subgaussian_square_mgf_pos} gives $\E e^{\lambda Z^2} \le \sqrt2$. For $x \ge 0$,
+$1 + x + x^2/2 \le e^x$ (Mathlib \texttt{Real.quadratic\_le\_exp\_of\_nonneg}), so with
+$x = \lambda Z^2 \ge 0$, pointwise $\frac{\lambda^2}{2}Z^4 \le e^{\lambda Z^2} - 1$. Taking
+expectations, $\frac{\lambda^2}{2}\E Z^4 \le \sqrt2 - 1$, i.e.\
+$\E Z^4 \le 32c^2(\sqrt2 - 1) \le 14c^2$ since $\sqrt2 \le 23/16$.
+\end{proof}
+
+\begin{lemma}[A quadratic upper bound for the exponential on the negative half-line]
+\label{lem:ps_exp_le_quadratic}
+\lean{Real.exp_le_one_add_add_sq_div_two_of_nonpos}\leanok
+For every $x \le 0$, $e^x \le 1 + x + \frac{x^2}{2}$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+Let $y := -x \ge 0$. By Mathlib \texttt{Real.quadratic\_le\_exp\_of\_nonneg},
+$e^{y} \ge 1 + y + y^2/2 > 0$, so $e^x = 1/e^y \le 1/(1 + y + y^2/2)$. Finally
+$1/(1 + y + y^2/2) \le 1 - y + y^2/2$, because
+$(1 + y + y^2/2)(1 - y + y^2/2) = (1 + y^2/2)^2 - y^2 = 1 + y^4/4 \ge 1$ and
+$1 - y + y^2/2 = ((1-y)^2 + 1)/2 > 0$. Since $1 - y + y^2/2 = 1 + x + x^2/2$, this is the claim.
+\end{proof}
+
+\begin{lemma}[Centered square of a sub-Gaussian variable is sub-exponential]
+\label{lem:subgaussian_square_subexp}
+\lean{ProbabilityTheory.HasSubgaussianMGF.hasSubexponentialMGF_sq_sub}\leanok
+\uses{def:subexp}
+Let $Z$ have a sub-Gaussian MGF with constant $c \ge 0$ under a probability measure, and
+assume $\E Z^2 = c$. Then
+\[
+  \mathrm{HasSubexponentialMGF}\big(Z^2 - c,\ 16c^2,\ 4c\big).
+\]
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:subgaussian_square_mgf_pos, lem:subgaussian_fourth_moment, lem:log_ineq_nu, lem:ps_exp_le_quadratic}
+$Z$ has all moments (Mathlib \texttt{integrable\_pow\_of\_mem\_interior\_integrableExpSet}).
+Let $\abs\lambda \le 1/(4c)$; we show that $e^{\lambda(Z^2 - c)}$ is integrable and
+$\E e^{\lambda(Z^2 - c)} \le e^{8c^2\lambda^2} = e^{\lambda^2\cdot16c^2/2}$.
+
+\emph{Case $0 \le \lambda \le 1/(4c)$.} Let $\nu := 2c\lambda \in [0, 1/2]$, so that
+$2c\lambda < 1$ and Lemma~\ref{lem:subgaussian_square_mgf_pos} gives the integrability of
+$e^{\lambda Z^2}$ (hence of $e^{\lambda(Z^2-c)} = e^{-\lambda c}e^{\lambda Z^2}$) and
+$\E e^{\lambda Z^2} \le (1-\nu)^{-1/2}$. Hence, using $\lambda c = \nu/2$ and
+Lemma~\ref{lem:log_ineq_nu}(i),
+\[
+  \log\E e^{\lambda(Z^2 - c)} \le -\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2 = 4c^2\lambda^2 \le 8c^2\lambda^2 .
+\]
+
+\emph{Case $-1/(4c) \le \lambda < 0$.} Pointwise $\lambda Z^2 \le 0$, so
+$e^{\lambda(Z^2-c)} \le e^{-\lambda c}$ is bounded, hence integrable, and
+Lemma~\ref{lem:ps_exp_le_quadratic} gives $e^{\lambda Z^2} \le 1 + \lambda Z^2 + \frac{\lambda^2Z^4}{2}$.
+Taking expectations and using $\E Z^2 = c$ and Lemma~\ref{lem:subgaussian_fourth_moment}
+($\E Z^4 \le 14c^2$),
+\[
+  \E e^{\lambda Z^2} \le 1 + \lambda c + 7c^2\lambda^2
+  \le \exp\big(\lambda c + 7c^2\lambda^2\big),
+\]
+by $1 + y \le e^y$. Multiplying by $e^{-\lambda c}$:
+$\E e^{\lambda(Z^2 - c)} \le e^{7c^2\lambda^2} \le e^{8c^2\lambda^2}$.
+
+In both cases $\E e^{\lambda(Z^2-c)} \le \exp(\lambda^2\cdot16c^2/2)$, which is the claim with
+$V = 16c^2$ and $b = 4c$.
+\end{proof}
+
 \begin{definition}[Rademacher vector]\label{def:ps_rademacher}
+\lean{ProbabilityTheory.signMeasure, ProbabilityTheory.rademacherMeasure, ProbabilityTheory.integral_signMeasure, ProbabilityTheory.iIndepFun_eval_rademacherMeasure, ProbabilityTheory.map_eval_rademacherMeasure, ProbabilityTheory.ae_rademacherMeasure_mem_Icc, ProbabilityTheory.integral_eval_rademacherMeasure, ProbabilityTheory.integral_eval_sq_rademacherMeasure, ProbabilityTheory.inner_toLp_eq_sum}\leanok
 A \emph{Rademacher vector} in $\R^d$ is a random vector $\eps = (\eps_1,\dots,\eps_d)$ whose
 coordinates are independent with $\Prob(\eps_i = 1) = \Prob(\eps_i = -1) = 1/2$; its law is the
 product $\big(\frac12\delta_{1} + \frac12\delta_{-1}\big)^{\otimes d}$
-(Mathlib \texttt{Measure.pi} of \texttt{(dirac 1 + dirac (-1)) / 2}, or \texttt{PMF} versions).
+(Lean: \texttt{signMeasure := 2⁻¹ • (dirac 1 + dirac (-1))} and
+\texttt{rademacherMeasure ι := Measure.pi (fun \_ ↦ signMeasure)} on \texttt{ι → ℝ}; the
+coordinates are independent by \texttt{iIndepFun\_pi}, each with law \texttt{signMeasure},
+$\E\eps_i = 0$, $\E\eps_i^2 = 1$ and $\abs{\eps_i} \le 1$ a.s.).
 For $\theta \in \R^d$ we consider the linear form $Z := \ip{\eps}{\theta} = \sum_i\eps_i\theta_i$,
 which satisfies $\abs Z \le \sum_i\abs{\theta_i}$.
 \end{definition}
 
 \begin{lemma}[Rademacher linear forms are sub-Gaussian]\label{lem:rademacher_linear_subgaussian}
+\lean{ProbabilityTheory.hasSubgaussianMGF_sum_mul_rademacherMeasure, ProbabilityTheory.hasSubgaussianMGF_sum_mul_rademacherMeasure'}\leanok
 \uses{def:ps_rademacher}
 Let $\eps$ be a Rademacher vector in $\R^d$ and $\theta \in \R^d$. Then $\ip{\eps}{\theta}$ has a
 sub-Gaussian MGF with constant $\norm{\theta}^2$ (Mathlib
@@ -390,147 +565,67 @@ for all $\lambda\in\R$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:ps_rademacher}
 Each $\theta_i\eps_i$ takes values in $[-\abs{\theta_i}, \abs{\theta_i}]$ and has mean zero, so
 by Hoeffding's lemma (Mathlib \texttt{hasSubgaussianMGF\_of\_mem\_Icc\_of\_integral\_eq\_zero})
 it has a sub-Gaussian MGF with constant $((2\abs{\theta_i})/2)^2 = \theta_i^2$. The
 $\theta_i\eps_i$ are independent, so \texttt{HasSubgaussianMGF.sum\_of\_iIndepFun} gives the
-constant $\sum_i\theta_i^2 = \norm\theta^2$ for the sum. (Directly:
-$\E e^{\lambda\theta_i\eps_i} = \cosh(\lambda\theta_i) \le e^{\lambda^2\theta_i^2/2}$ by comparing
-the power series termwise, $(2k)! \ge 2^kk!$.)
+constant $\sum_i\theta_i^2 = \norm\theta^2$ for the sum.
 \end{proof}
 
-\begin{lemma}[Second and fourth moments of a Rademacher linear form]\label{lem:rademacher_fourth_moment}
+\begin{lemma}[First and second moments of a Rademacher linear form]\label{lem:rademacher_fourth_moment}
+\lean{ProbabilityTheory.integral_eval_mul_eval_rademacherMeasure, ProbabilityTheory.integral_sum_mul_rademacherMeasure, ProbabilityTheory.integral_sq_sum_mul_rademacherMeasure}\leanok
 \uses{def:ps_rademacher}
 Let $\eps$ be a Rademacher vector in $\R^d$, $\theta\in\R^d$ and $Z := \ip{\eps}{\theta}$. Then
-\[
-  \E Z = 0, \qquad \E Z^2 = \norm{\theta}^2, \qquad
-  \E Z^4 = 3\norm{\theta}^4 - 2\sum_{i\le d}\theta_i^4 \le 3\norm{\theta}^4 .
-\]
+$\E[\eps_i\eps_j] = \indic\{i = j\}$, $\E Z = 0$ and $\E Z^2 = \norm{\theta}^2$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{def:ps_rademacher}
-$Z$ is bounded so all moments exist. Induction on $d$ (or on the number of coordinates
-included): write $Z = Z' + \theta_d\eps_d$ with $Z' := \sum_{i<d}\theta_i\eps_i$ independent of
-$\eps_d$, $\E\eps_d = \E\eps_d^3 = 0$, $\E\eps_d^2 = \E\eps_d^4 = 1$. Then
-$\E Z = \E Z' + \theta_d\E\eps_d = 0$; $\E Z^2 = \E Z'^2 + 2\theta_d\E Z'\E\eps_d + \theta_d^2 =
-\E Z'^2 + \theta_d^2$; and, expanding $(Z' + \theta_d\eps_d)^4$ and using independence, the odd
-powers of $\eps_d$ vanish and
-$\E Z^4 = \E Z'^4 + 6\theta_d^2\E Z'^2 + \theta_d^4$. With the induction hypotheses
-$\E Z'^2 = r'^2 := \sum_{i<d}\theta_i^2$ and $\E Z'^4 = 3r'^4 - 2\sum_{i<d}\theta_i^4$,
-\[
-  \E Z^4 = 3r'^4 - 2\sum_{i<d}\theta_i^4 + 6\theta_d^2r'^2 + \theta_d^4
-  = 3(r'^2 + \theta_d^2)^2 - 2\Big(\sum_{i<d}\theta_i^4 + \theta_d^4\Big),
-\]
-since $3(r'^2+\theta_d^2)^2 = 3r'^4 + 6\theta_d^2r'^2 + 3\theta_d^4$ and $3\theta_d^4 - 2\theta_d^4 = \theta_d^4$.
-The base case $d = 0$ is $Z = 0$. The final inequality is $\sum_i\theta_i^4 \ge 0$.
-\end{proof}
-
-\begin{lemma}[MGF of the square of a sub-Gaussian variable, positive parameter]
-\label{lem:subgaussian_square_mgf_pos}
-\uses{def:pg_gaussian_vector}
-Let $Z$ be a real random variable with a sub-Gaussian MGF with constant $K^2$, $K \ge 0$
-(Mathlib \texttt{HasSubgaussianMGF Z K²}), and let $0 \le \lambda < \frac{1}{2K^2}$
-(any $\lambda \ge 0$ if $K = 0$). Then $e^{\lambda Z^2}$ is integrable and
-\[
-  \E e^{\lambda Z^2} \le (1 - 2K^2\lambda)^{-1/2}.
-\]
-\end{lemma}
-
-\begin{proof}
-\uses{lem:gaussian_square_mgf, lem:gauss_1d_moments}
-Work on the product of the given probability space with $(\R, \Normal(0,1))$, on which $Z$
-and the second coordinate $g' \sim \Normal(0,1)$ are independent. \emph{Gaussian trick:} for
-every real $z$, by Lemma~\ref{lem:gauss_1d_moments} (the MGF of $g'$ at $s = \sqrt{2\lambda}\,z$),
-\[
-  e^{\lambda z^2} = e^{(\sqrt{2\lambda}\,z)^2/2} = \E_{g'}\exp\big(\sqrt{2\lambda}\,z\,g'\big).
-\]
-Hence, by Tonelli's theorem for the nonnegative measurable function
-$(\omega, v) \mapsto \exp(\sqrt{2\lambda}\,Z(\omega)\,v)$ on the product
-(\texttt{MeasureTheory.lintegral\_prod} / \texttt{lintegral\_lintegral\_swap}),
-\[
-  \E e^{\lambda Z^2} = \int\Big(\int\exp\big(\sqrt{2\lambda}\,Z(\omega)\,v\big)\,\Normal(0,1)(dv)\Big)\Prob(d\omega)
-  = \int\Big(\int\exp\big((\sqrt{2\lambda}\,v)\,Z(\omega)\big)\Prob(d\omega)\Big)\Normal(0,1)(dv).
-\]
-For fixed $v$, the inner integral is the MGF of $Z$ at $s := \sqrt{2\lambda}\,v$, which is at
-most $e^{K^2s^2/2} = e^{K^2\lambda v^2}$ by sub-Gaussianity. Therefore
-\[
-  \E e^{\lambda Z^2} \le \int e^{K^2\lambda v^2}\,\Normal(0,1)(dv) = (1 - 2K^2\lambda)^{-1/2}
-\]
-by Lemma~\ref{lem:gaussian_square_mgf} with $\mu = 0$, $\sigma = 1$ and the parameter
-$K^2\lambda < 1/2$. Since the right-hand side is finite, $e^{\lambda Z^2}$ is integrable: all
-integrals above are Lebesgue integrals in $[0,\infty]$ of nonnegative functions, and
-\texttt{Integrable} is the conjunction of \texttt{AEStronglyMeasurable} (clear) and
-\texttt{HasFiniteIntegral}, which for a nonnegative function $f$ is
-$\int^-\mathrm{ENNReal.ofReal}(f)\,d\Prob < \infty$ (Mathlib \texttt{hasFiniteIntegral\_iff\_ofReal}).
-\end{proof}
-
-\begin{lemma}[A quadratic upper bound for the exponential on the negative half-line]
-\label{lem:ps_exp_le_quadratic}
-For every $x \le 0$, $e^x \le 1 + x + \frac{x^2}{2}$.
-\end{lemma}
-
-\begin{proof}
-Let $\psi(x) := 1 + x + \frac{x^2}{2} - e^x$. Then $\psi(0) = 0$ and
-$\psi'(x) = 1 + x - e^x \le 0$ for every $x$ (Mathlib \texttt{Real.add\_one\_le\_exp}). Hence
-$\psi$ is nonincreasing on $\R$ (\texttt{antitone\_of\_deriv\_nonpos}), and for $x \le 0$,
-$\psi(x) \ge \psi(0) = 0$.
+All the variables involved are bounded, hence integrable. $\E[\eps_i^2] = 1$ and, for
+$i \ne j$, $\E[\eps_i\eps_j] = \E\eps_i\,\E\eps_j = 0$ by independence. Then
+$\E Z = \sum_i\theta_i\E\eps_i = 0$ and, expanding the square,
+$\E Z^2 = \sum_{i,j}\theta_i\theta_j\E[\eps_i\eps_j] = \sum_i\theta_i^2$.
 \end{proof}
 
 \begin{lemma}[Centered square of a Rademacher linear form is sub-exponential]
 \label{lem:rademacher_square_subexp}
+\lean{ProbabilityTheory.hasSubexponentialMGF_sq_sum_mul_sub_rademacherMeasure}\leanok
 \uses{def:subexp, def:ps_rademacher}
-Let $\eps$ be a Rademacher vector in $\R^d$, $\theta \in \R^d$ with $r := \norm{\theta} > 0$, and
-$Z := \ip{\eps}{\theta}$. Then $\E Z^2 = r^2$ and
+Let $\eps$ be a Rademacher vector in $\R^d$, $\theta \in \R^d$ with $r := \norm{\theta}$, and
+$Z := \ip{\eps}{\theta}$. Then
 \[
   \mathrm{HasSubexponentialMGF}\big(Z^2 - r^2,\ 16r^4,\ 4r^2\big).
 \]
 \end{lemma}
 
 \begin{proof}
-\uses{lem:rademacher_linear_subgaussian, lem:rademacher_fourth_moment, lem:subgaussian_square_mgf_pos, lem:log_ineq_nu, lem:ps_exp_le_quadratic}
-$\E Z^2 = r^2$ is Lemma~\ref{lem:rademacher_fourth_moment}. $Z$ is bounded, so
-$e^{\lambda(Z^2 - r^2)}$ is integrable for every $\lambda$. Let $\abs\lambda \le 1/(4r^2)$; we
-show $\E e^{\lambda(Z^2 - r^2)} \le e^{8r^4\lambda^2} = e^{\lambda^2\cdot16r^4/2}$.
-
-\emph{Case $0 \le \lambda \le 1/(4r^2)$.} By Lemma~\ref{lem:rademacher_linear_subgaussian},
-$Z$ is sub-Gaussian with constant $K^2 = r^2$, and $\nu := 2r^2\lambda \in [0, 1/2]$, so
-$\lambda < 1/(2K^2)$ and Lemma~\ref{lem:subgaussian_square_mgf_pos} gives
-$\E e^{\lambda Z^2} \le (1-\nu)^{-1/2}$. Hence, using $\lambda r^2 = \nu/2$ and
-Lemma~\ref{lem:log_ineq_nu}(i),
-\[
-  \log\E e^{\lambda(Z^2 - r^2)} \le -\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2 = 4r^4\lambda^2 \le 8r^4\lambda^2 .
-\]
-
-\emph{Case $-1/(4r^2) \le \lambda < 0$.} Pointwise $\lambda Z^2 \le 0$, so
-Lemma~\ref{lem:ps_exp_le_quadratic} gives $e^{\lambda Z^2} \le 1 + \lambda Z^2 + \frac{\lambda^2Z^4}{2}$.
-Taking expectations and using Lemma~\ref{lem:rademacher_fourth_moment}
-($\E Z^2 = r^2$, $\E Z^4 \le 3r^4$),
-\[
-  \E e^{\lambda Z^2} \le 1 + \lambda r^2 + \frac{3r^4\lambda^2}{2}
-  \le \exp\Big(\lambda r^2 + \frac{3r^4\lambda^2}{2}\Big),
-\]
-by $1 + y \le e^y$. Multiplying by $e^{-\lambda r^2}$:
-$\E e^{\lambda(Z^2 - r^2)} \le e^{3r^4\lambda^2/2} \le e^{8r^4\lambda^2}$.
-
-In both cases $\E e^{\lambda(Z^2-r^2)} \le \exp(\lambda^2\cdot16r^4/2)$, which is the claim with
-$V = 16r^4$ and $b = 4r^2$.
+\leanok
+\uses{lem:rademacher_linear_subgaussian, lem:rademacher_fourth_moment, lem:subgaussian_square_subexp}
+By Lemma~\ref{lem:rademacher_linear_subgaussian}, $Z$ is sub-Gaussian with constant
+$c = r^2$, and $\E Z^2 = r^2 = c$ by Lemma~\ref{lem:rademacher_fourth_moment}. This is exactly
+the hypothesis of Lemma~\ref{lem:subgaussian_square_subexp}, which gives the parameters
+$(16c^2, 4c) = (16r^4, 4r^2)$.
 \end{proof}
 
 \begin{remark}[Constants, and the case $r = 0$]\label{rem:ps_rademacher_constants}
-The proof shows the stronger parameters $(8r^4, 4r^2)$; the value $V = 16r^4$ is kept because
-it is the one used by Chapter~\ref{chap:norm} (Lemma~\ref{lem:term1_subexp}). The paper
-obtains parameters $(Cr^4, Cr^2)$ with an unspecified $C$ from the Hanson--Wright inequality
-(its Lemma \emph{lem:hanson-wright}, Appendix~A) and a tail-to-MGF conversion; the argument
-above is self-contained and explicit. If $r = 0$ then $Z = 0$ a.s.\ and $Z^2 - r^2 = 0$, which
-has parameters $(0, b)$ for every $b \ge 0$; the norm-estimation chapter treats this case
-separately.
+The proof of Lemma~\ref{lem:subgaussian_square_subexp} shows the stronger parameters
+$(8c^2, 4c)$ (the bound $e^{7c^2\lambda^2}$ for negative $\lambda$ could be improved by using
+the exact fourth moment $\E Z^4 = 3r^4 - 2\sum_i\theta_i^4$ of a Rademacher form instead of
+the general bound $14c^2$, but this is not needed); the value $V = 16r^4$ is kept because it is
+the one used by Chapter~\ref{chap:norm} (Lemma~\ref{lem:term1_subexp}). The paper obtains
+parameters $(Cr^4, Cr^2)$ with an unspecified $C$ from the Hanson--Wright inequality (its
+Lemma \emph{lem:hanson-wright}, Appendix~A) and a tail-to-MGF conversion; the argument above
+is self-contained and explicit. If $r = 0$ then $Z = 0$ a.s.\ and $Z^2 - r^2 = 0$, which has
+parameters $(0, 0)$, consistent with the statement; the norm-estimation chapter treats this
+case separately anyway.
 \end{remark}
 
 \textbf{Lean remark.} The Gaussian trick of Lemma~\ref{lem:subgaussian_square_mgf_pos} needs an
-auxiliary standard Gaussian independent of $Z$; the cleanest encoding is to state the lemma
-for the product measure \texttt{P.prod (gaussianReal 0 1)} and the variable
-\texttt{fun p ↦ Z p.1}, whose sub-Gaussianity transfers by \texttt{HasSubgaussianMGF.of\_map}
-along \texttt{Prod.fst} (a measure-preserving map). Lemma~\ref{lem:rademacher_square_subexp} is
-then a statement about \texttt{P} alone, since $\E e^{\lambda Z^2}$ is unchanged by the product.
+auxiliary standard Gaussian independent of $Z$; it is encoded by Tonelli's theorem on the
+product measure \texttt{μ.prod (gaussianReal 0 1)}, without introducing a new random variable.
+The Rademacher results are stated for the product measure \texttt{rademacherMeasure ι} on
+\texttt{ι → ℝ} and the coordinate sum \texttt{∑ i, ε i * θ i}; the identification with the
+inner product on \texttt{EuclideanSpace ℝ ι} is \texttt{inner\_toLp\_eq\_sum}.

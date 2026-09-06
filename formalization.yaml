@@ -97,7 +97,9 @@ status:
     The upper bounds (Theorems 1, 6, 7, 8) are stated in the paper's existential form ("there
     exists an algorithm with budget ≤ …"); the blueprint additionally states them for the explicit
     algorithms of the paper, whose definitions (rounding, G-optimal designs, Median Elimination,
-    the norm-estimation meta-algorithm) belong to phase 2 together with the proofs.
+    the norm-estimation meta-algorithm) belong to phase 2 together with the proofs (the
+    rounding, the G-optimal designs, Median Elimination and the norm-estimation meta-algorithm
+    are now defined and proved correct).
 
     Phase 2 (proofs) has started with the Gaussian-width area: the support function and the
     Gaussian width of a set for a measure (`COLT83/Mathlib/Analysis/InnerProductSpace/SupportFn.lean`
@@ -314,20 +316,162 @@ status:
     barrier rounding, `T₁ = ⌈640 (w_𝓡² + d log(4/δ))/ε²⌉`, and the budget arithmetic
     `COLT83/MXJ2026/LogGainsArith.lean` giving the constant `97281 = 1281 + 6·16000`).
 
-    Not yet formalized: the other headline proofs (unit-ball bound of Table 1, Theorems 7 and
-    8) and the remaining prerequisites of Part II of the blueprint (sub-exponential variables,
-    continuity/attainment of the width, Gaussian posteriors, the sub-Gaussian generality of
-    Median Elimination).
-  # Phase 1 stated all headline results with `sorry`; phase 2 proves them (Theorems 1, 2, 3, 5,
-  # 6, Proposition 4 and four of the five Table 1 lower bounds done).
-  sorry_count: 5
+    Sixteenth area: **the two lower bounds of Theorem 7 are proved**
+    (`blockBallSet_le_budget_of_isFixedDesign_of_isPAC`, `blockBallSet_le_budget_of_isPAC`, no
+    `sorry`). The adaptive bound is Theorem 2 on the block-ball set, which is compact and
+    spanning (`COLT83/MXJ2026/BlockBall.lean`: block embeddings and projections, support
+    function `max_i ‖θ⁽ⁱ⁾‖`, regret identity for reward vectors supported on one block). The
+    non-adaptive bound follows the blueprint's block restriction, in the form of a **transport
+    lemma** (`COLT83/LeanMachineLearning/FixedDesignTransport.lean`: a fixed-design PAC
+    algorithm on `𝒳 ⊆ E` transported through a linear map `L : F → E` to a design on `𝒴 ⊆ F`
+    with the same observation laws and a regret-non-increasing recommendation map is PAC on
+    `𝒴`, `isPAC_fixedDesignTransport`, proved on the explicit laws `fixedDesignPairLaw`):
+    the design projected on the block receiving the fewest rounds (pigeonhole) is PAC on the
+    unit ball of `ℝ^d`. Theorem 3's proof was split into reusable lemmas (positive definiteness
+    of a PAC design, `posDef_of_isFixedDesign_of_isPAC*`, now also for budget `0` on sets
+    containing `0`; the Bayesian step `gwMat_le_of_isFixedDesign_of_isPAC`, `0.12 w(𝒳, Σ_T) ≤ ε`),
+    and the width of the unit ball for a matrix is bounded below
+    (`COLT83/MXJ2026/WidthBall.lean`: `gwMat (unitBall) A ≥ √(2/π) d / √(tr A)`, from
+    `E‖Y‖ ≥ √(2/π) ∑ cᵢ √(Sᵢᵢ)` for `Y ~ N(0, S)` and unit weights `c`,
+    `COLT83/Mathlib/Probability/GaussianAbsMoment.lean`, with `E|Z| = √(2v/π)` for
+    `Z ~ N(0, v)`; blueprint `prop:width_ball`, sharpened from `d/√3` to `√(2/π) d`), with
+    `tr Σ' ≤ T/k`.
+
+    Seventeenth area: **the unit-ball lower bound of Table 1 is proved**
+    (`unitBall_le_budget_of_isPAC`, no `sorry`), completing Table 1, through the Bayesian
+    analysis of adaptive algorithms of the blueprint chapter `prereq_bayes`. Library:
+    `COLT83/LeanMachineLearning/EnvDensity.lean` (the **environment likelihood ratio**: for
+    reward kernels `κ = κ₀.withDensity ρ`, the law of the history of any algorithm under `κ` is
+    the law under `κ₀` with density `∏ ρ (x t) (y t)`, `IsAlgEnvSeq.map_finHistory_eq_withDensity_env`,
+    the environment analogue of LML's `Algorithm.density`, with the kernel-level identity
+    `Kernel.compProd_withDensity_right`), `COLT83/Mathlib/Probability/GaussianDensityRatio.lean`
+    (`N(m,1) = N(0,1).withDensity (exp (y m - m²/2))`),
+    `COLT83/Mathlib/Probability/SteinExpGrowth.lean` (**Stein's identity for `C¹` functions of
+    exponential growth**, one-dimensional, standard Gaussian and `N(0, S)`),
+    `COLT83/Mathlib/Matrix/TraceInv.lean` (AM–HM: `d² ≤ tr A · tr A⁻¹`). Project:
+    `GaussianLikelihood.lean` (the likelihood ratio `exp (∑ (yₜ ⟪xₜ, θ⟫ - ⟪xₜ, θ⟫²/2))` of a
+    linear Gaussian history, jointly measurable), `BayesKernel.lean` (the law of the history
+    under `θ` as a Markov kernel `histKernel` built from the pure-noise law and the likelihood,
+    the pair kernel with the recommendation, and the PAC property on it — this sidesteps the
+    measurability of `θ ↦ trajMeasure`), `PosteriorGaussian.lean` (**Gaussian posterior
+    identities via Stein**: for the tilt `ℓ(θ) = exp(⟪b,θ⟫ - θᵀSθ/2)` of `N(0, σ²I)`,
+    `∫ (θ - m) ℓ dπ = 0` and `∫ ‖θ - m‖² ℓ dπ = tr V ∫ ℓ dπ` with `V = (σ⁻²I + S)⁻¹`, `m = V b`;
+    no Lebesgue density or completion of the square), `LowerBall.lean` (the joint law
+    `(π ⊗ Q₀).withDensity ℓ`, Fubini, the Cauchy–Schwarz bound
+    `E⟪rec, θ⟫ ≤ √(σ²d - d²/(dσ⁻² + T))`, `E‖θ‖ ≥ √(2/π) σ √d`, the Bayesian regret bound,
+    truncation of the prior, existence of a hard instance with `‖θ‖ ≤ 10d/√T` and
+    `E_θ[r] ≥ 3d/(40√T)`, the budget-0 case). The headline proof in `LogGains.lean` is the
+    final arithmetic with `δ ≤ 1/500`.
+
+    Eighteenth area (2026-09-06): **sub-exponential random variables**, the blueprint chapter
+    `prereq_subexp`, first prerequisite of Theorem 8 (all its statements are now formalized
+    except the unused Gaussian quadratic-form lemma). Library:
+    `COLT83/Mathlib/Probability/Moments/SubExponential.lean` (the structure
+    `HasSubexponentialMGF X V b μ` with real parameters and the range `b * |t| ≤ 1` of `t`, so
+    that `b = 0` is Mathlib's `HasSubgaussianMGF`; integrability of all moments and centering
+    via the derivative of the MGF at `0` and Fermat's rule; scaling, transport along maps,
+    independent sums; the **Bernstein tail bounds** `exp (-min (t²/(2V)) (t/(2b)))`, one- and
+    two-sided, and for averages of independent variables),
+    `COLT83/Mathlib/Probability/GaussianSquareMGF.lean` (the Gaussian integral of a quadratic
+    exponent, `E[exp (a X²)] = (1 - 2va)^(-1/2) exp (m² a / (1 - 2va))` for `X ~ N(m, v)`, the
+    centered square of a Gaussian has parameters `(8 (v² + m² v), 4v)`, **chi-square**:
+    `‖g‖² - d` has parameters `(8d, 4)` under `stdGaussian`, with the tails
+    `P(‖g‖² - d ≥ t) ≤ exp (-min (t²/(16d)) (t/8))` and `P(‖g‖² ≥ 2d + 12 log(1/δ)) ≤ δ`;
+    `exp x ≤ 1 + x + x²/2` for `x ≤ 0`), `COLT83/Mathlib/Probability/SubgaussianSquare.lean`
+    (the **Gaussian trick** `E[exp (a Z²)] ≤ (1 - 2ca)^(-1/2)` for a sub-Gaussian `Z` by Tonelli
+    on `μ.prod N(0,1)`, the fourth moment `E[Z⁴] ≤ 14 c²`, and the general statement: if `Z` is
+    sub-Gaussian with constant `c` and `E[Z²] = c` then `Z² - c` has parameters `(16c², 4c)`),
+    `COLT83/Mathlib/Probability/Rademacher.lean` (`signMeasure`, `rademacherMeasure ι` as a
+    product measure, independence and moments of the coordinates, Hoeffding coordinatewise so
+    that `∑ εᵢ θᵢ` is sub-Gaussian with constant `‖θ‖²`, its second moment `‖θ‖²`, and the
+    centered square with parameters `(16‖θ‖⁴, 4‖θ‖²)`, which replaces the paper's
+    Hanson–Wright step). The exact Rademacher fourth moment of the blueprint was replaced by
+    the sub-Gaussian bound `14c²`, which suffices.
+
+    Nineteenth area (2026-09-06): **seeded algorithms and the seed representation of runs**
+    (blueprint `lem:seeded` in the model chapter), the LML-side tool used to prove PAC
+    guarantees of adaptive algorithms without conditional-expectation arguments.
+    `COLT83/Mathlib/Probability/CondDistribConst.lean` (the kernel `Kernel.mapOfConst Q G`
+    mapping `x` to the law of `G x e`, `e ~ Q`; conditional distributions of functions of a
+    variable and an independent noise) and `COLT83/LeanMachineLearning/Seeded.lean` (the
+    structure `SeededAlg` — a seed law, a first action and measurable next-action maps —, its
+    `Algorithm`, noise environments `noiseEnv μe F` with `linearGaussianEnv = noiseEnv`,
+    the recursively defined run `seedStep` on the product space `seedMeasure = (seed ⊗ μe)^ℕ`,
+    which is an `IsAlgEnvSeq`; uniqueness of the law of the history of an `IsAlgEnvSeq`
+    (`IsAlgEnvSeq.map_history_eq`), hence every run of a seeded algorithm in a noise
+    environment has the law of the seed run; the PAC guarantee
+    `linearBandit_isPAC_fixedBudget_deterministic` of a fixed-budget seeded algorithm with a
+    deterministic output from a bound on the seed space, universe-polymorphic in the sample
+    space).
+
+    Twentieth area (2026-09-06): **Theorem 8 is proved** (`exists_isAccurateNormEst`, no
+    `sorry`), the whole norm-estimation chapter (`norm_estimation.tex`) being formalized and
+    tagged. Statistics on product spaces: `RademacherStat.lean` (Rademacher directions
+    `radDir` from Boolean seeds, the block space `rbMeasure ι s K`, the squared statistic
+    `rbStat` and its decomposition into Term 1 `rbX` (sub-exponential `(16‖θ‖⁴, 4‖θ‖²)`,
+    independent) and Term 2 `rbW` (conditionally sub-exponential given the directions, Fubini
+    over the directions), the variance-proxy bound `rbMeasure_real_rbVbar_gt_le`),
+    `RademacherEst.lean` (Algorithm 1: `rbMeasure_real_sqrt_addEst_gt_le`, accuracy `ε/2`
+    with failure `3δ/8` when `‖θ‖/2 < r₀ ≤ 2‖θ‖`), `RademacherTest.lean` (the scale tests
+    `rbMeasure_real_test_h0_le`/`h1_le`, error `3δ'/4`), `LargeNormStat.lean` (the basis-design
+    estimator `lnEst` on the noise space `lnNoise`, `lnNoise_real_lnEst_gt_le`, failure `δ/2`
+    when `√d ≤ ‖θ‖`, using `GaussianSum.lean`: sums of independent Gaussians are Gaussian).
+    The meta-algorithm: `NormEstParams.lean`/`NormEstSchedule.lean` (scales `t_j = 2^j ε`,
+    `δ_j = δ/2^(j+2)`, `J`, the phase starts, the round schedule `rbBlock`/`basisRound`
+    of the two phases), `NormEstStat.lean` (window statistics of an observation sequence, the
+    first-phase outcome `jStar` and the estimate, all measurable), `NormEstAlg.lean` (the
+    seeded algorithm `NormEstParam.alg` with uniform Boolean seeds and its deterministic
+    output), `NormEstWindows.lean` + `COLT83/Mathlib/Probability/InfinitePiWindow.lean` (the
+    seed space `nsMeasure`, the window projections `rbProj`/`lnProj` whose laws are the block
+    and noise laws, and their independence from the prefix of the seed sequence — coordinates
+    of an i.i.d. sequence indexed by an injective family are i.i.d.), `NormEstPlan.lean` (the
+    run follows the plan: `seedAction_eq_planAction` by strong induction on the rounds, and
+    the identification of the window statistics of the run with `rbStat`/`lnR` of the window
+    projections), `NormEstProof.lean` (the good event of the multi-scale phase, `3δ/8`; the
+    trichotomy `jStar_bounds` on the outcome; the failure of the second phase at outcome `j`
+    is independent of `{jStar = j}`, total failure `7δ/8`), `NormEstBudget.lean` (the budget
+    `T ≤ 10⁵ d log(4/δ)/ε²` with `T₁ ≤ 63736 dL/ε²` and `N₂ ≤ 32776 dL/ε²`). Deviations from
+    the paper are recorded in the blueprint chapter: all tests of the multi-scale phase are
+    run (the ones after the stopping scale are ignored), the phases are composed by a
+    deterministic round schedule on the seed space instead of sequential composition, and
+    the large-norm regime uses the basis design.
+
+    Twenty-first area (2026-09-06): **Theorem 7's adaptive upper bound is proved**
+    (`exists_isPAC_blockBallSet`, no `sorry`), which completes phase 2: every headline
+    statement of the paper is now proved. The block algorithm (`BlockAlg.lean`) is a seeded
+    algorithm with the seeds of the meta-algorithm: in phase 1 the rounds `[iN, (i+1)N)`
+    run the norm estimator `NormEst(ε/4, δ/(2k))` embedded on block `i` (the next-action map
+    applies the block embedding to the next-action map of the meta-algorithm evaluated on the
+    projected history of the block); in phase 2 the basis vectors of the block `î`
+    maximizing the estimates are played `n₂` times each and the normalized empirical mean
+    vector is recommended. `BlockPlan.lean` proves by strong induction that the run on each
+    block is the run of the meta-algorithm against `θ^(i)` on the shifted seed sequence
+    (`seedStep_block`), that the phase-2 actions are the basis vectors of `î`
+    (`seedAction_of_T₂_le`) and that the empirical mean vector is `θ^(î) + Δ` with `Δ` the
+    noise average of the basis window (`thetaHat_eq`); the seed measure is shift-invariant
+    (`nsMeasure_map_shiftSeq`, from the identification of `infinitePi` through its cylinders,
+    `InfinitePiWindow.lean`). `BlockProof.lean`: the deterministic regret bound
+    `regret_le` (support function of the block-ball set, `‖ϑ‖ - ⟪v/‖v‖, ϑ⟫ ≤ 2‖v - ϑ‖`), the
+    chi-square tail for `‖Δ‖` on the noise space, the union bound over the blocks
+    (`7δ/16`) plus the phase-2 failure (`δ/2`) — no conditioning on the first phase is
+    needed since the phase-2 failure event only involves the noises of the basis window —
+    and the budget `k N + d n₂ ≤ 2·10⁶ (kd log(8k/δ) + d²)/ε²`.
+
+    Not yet formalized: the remaining prerequisites of Part II of the blueprint
+    (continuity/attainment of the width, the sub-Gaussian generality of Median Elimination,
+    Gaussian quadratic forms, the sequential composition lemma `lem:composition`, which is no
+    longer used, and the standalone fixed-design algorithm of `lem:ball_identification`,
+    whose two estimates are formalized as the second phase of the block algorithm).
+  # Phase 1 stated all headline results with `sorry`; phase 2 proved all of them (Theorems 1,
+  # 2, 3, 5, 6, 7, 8, Proposition 4 and the five Table 1 lower bounds).
+  sorry_count: 0
   sorry_in_definitions: 0
   axioms: []               # to be filled when the proofs are in (phase 2)
   size:
-    lean_lines: 18519      # COLT83/ and COLT83.lean
-    theorems_and_lemmas: 926
-    definitions: 171
-    blueprint_tagged_declarations: 555  # blueprint/lean_decls, autogenerated
+    lean_lines: 28232      # COLT83/ and COLT83.lean
+    theorems_and_lemmas: 1458  # lines starting with theorem/lemma (possibly protected/private)
+    definitions: 336       # lines starting with (noncomputable) def/abbrev/structure/inductive/instance/class
+    blueprint_tagged_declarations: 969  # blueprint/lean_decls, autogenerated
   main_results:
     - declaration: "COLT83.exists_isFixedDesign_isPAC"
       file: "COLT83/MXJ2026/Upper.lean"
@@ -405,9 +549,10 @@ status:
         Companions in the same file: `hypercubePM_lt_budget_of_isPAC`,
         `hypercube01_lt_budget_of_isPAC` (Ω(d²/ε²) on the hypercubes), `mSet_lt_budget_of_isPAC`
         (Ω(m(d-m+1)/ε²) on m-sets) and `unitBall_le_budget_of_isPAC` (Ω(d²/ε²) on the unit ball).
-        All proved (no `sorry`) except the unit ball, which needs the Gaussian-prior chapter
-        `prereq_bayes`: the multi-task, hypercube and m-set bounds follow from the two- and
-        three-point Pinsker toolkit of `COLT83/LeanMachineLearning/TwoPoint.lean`.
+        All five are proved (no `sorry`): the multi-task, hypercube and m-set bounds follow from
+        the two- and three-point Pinsker toolkit of `COLT83/LeanMachineLearning/TwoPoint.lean`;
+        the unit-ball bound is the Bayesian argument of the blueprint chapter `prereq_bayes`
+        (`COLT83/MXJ2026/LowerBall.lean`, Gaussian posterior identities via Stein's identity).
       sorry_count: 0
       axioms: []
       comparator_config: "comparator/multitaskSet_lt_budget_of_isPAC.json"
@@ -419,15 +564,27 @@ status:
         With `blockBallSet_le_budget_of_isFixedDesign_of_isPAC` (non-adaptive lower bound
         Ω(kd²/ε²)) and `blockBallSet_le_budget_of_isPAC` (Ω(kd log(1/δ)/ε²)) in the same file.
         Non-adaptive means a deterministic fixed design with an arbitrary recommendation kernel.
-      sorry_count: 1
+        The two lower bounds are proved (no `sorry`): the adaptive one from Theorem 2 on the
+        block-ball set, the non-adaptive one by projecting the design on the block receiving the
+        fewest rounds (`isPAC_fixedDesignTransport_blockProjBall`) and applying the Bayesian step
+        of Theorem 3 with the width of the unit ball (`le_gwMat_unitBall`). Only the adaptive
+        upper bound `exists_isPAC_blockBallSet` is proved through the seeded block algorithm
+        `COLT83.BlockParam.alg` (`COLT83.BlockParam.one_sub_le_seedMeasure_real_output`,
+        `COLT83.BlockParam.T_le`).
+      sorry_count: 0
       axioms: []
       comparator_config: "comparator/exists_isPAC_blockBallSet.json"
       literature_dependencies: []
     - declaration: "COLT83.exists_isAccurateNormEst"
       file: "COLT83/MXJ2026/NormEstimation.lean"
       source_statement: "Theorem 8 — ℓ₂-norm estimation with O(d log(1/δ)/ε²) samples"
-      note: "Existential form; explicit constant 10⁵ and log(4/δ)."
-      sorry_count: 1
+      note: >-
+        Existential form; explicit constant 10⁵ and log(4/δ). Proved (no `sorry`): the
+        algorithm is the seeded meta-algorithm `COLT83.NormEstParam.alg` with the deterministic
+        output `COLT83.NormEstParam.output` and budget `COLT83.NormEstParam.T`; its accuracy
+        `1 - 7δ/8` is `COLT83.NormEstParam.one_sub_le_seedMeasure_real_output` and its budget
+        bound `COLT83.NormEstParam.T_le`.
+      sorry_count: 0
       axioms: []
       comparator_config: "comparator/exists_isAccurateNormEst.json"
       literature_dependencies: []
@@ -498,12 +655,15 @@ review:
   reviewers:
     - "Rémy Degenne"
   notes: >-
-    Phase 1: the statements were written against the blueprint and the paper. Phase 2 (in
-    progress): Theorems 1, 2, 3 and 5, Proposition 4 and the multi-task, hypercube and m-set
-    lower bounds of Table 1 are proved; the other headline statements are still `sorry`.
-    Each headline statement is to be verified with leanprover/comparator once proved: the
-    `comparator/` challenge files restate the theorems with their definitional dependencies
-    inlined over a Mathlib-only import closure (configs listed as `comparator_config` above).
+    Phase 1: the statements were written against the blueprint and the paper. Phase 2
+    (complete): all headline statements — Theorems 1, 2, 3, 5, 6, 7 and 8, Proposition 4 and
+    the five lower bounds of Table 1 — are proved, with no `sorry` in the repository.
+    Every headline statement is verified with leanprover/comparator (all 17 configs pass,
+    2026-09-06, run with `scripts/comparator-verify.sh --insecure`, i.e. without a landrun
+    sandbox): the `comparator/` challenge files restate the theorems with their definitional
+    dependencies inlined over a Mathlib-only import closure (configs listed as
+    `comparator_config` above), and comparator checks that the project proves exactly the
+    challenged statements with no axioms beyond `propext`, `Classical.choice` and `Quot.sound`.
     The library layers (`COLT83/Mathlib/`, `COLT83/LeanMachineLearning/`) were reviewed for
     generality and placement: the Gaussian integrability lemmas hold on separable Banach spaces,
     the CFC and orthonormal-basis lemmas over `RCLike`; the remaining known restrictions are
@@ -550,8 +710,8 @@ alignment:
     - source: "thm:log_gains / cor:log_gains_exists — Theorem 6"
       lean: "COLT83.exists_isPAC_of_finite"
       module: "COLT83.MXJ2026.LogGains"
-      status: "stated"
-      note: "Existential form; the region algorithm of `thm:log_gains` is phase 2."
+      status: "proved"
+      note: "Existential form; proved through the phased Median-Elimination algorithm of `thm:log_gains`."
     - source: "thm:lower_multitask, thm:lower_hypercube_pm, thm:lower_hypercube_01, thm:lower_msets — Table 1 lower bounds (multi-task, hypercubes, m-sets)"
       lean: "COLT83.multitaskSet_lt_budget_of_isPAC, COLT83.hypercubePM_lt_budget_of_isPAC, COLT83.hypercube01_lt_budget_of_isPAC, COLT83.mSet_lt_budget_of_isPAC"
       module: "COLT83.MXJ2026.LogGains"
@@ -563,18 +723,18 @@ alignment:
     - source: "cor:lower_ball_adaptive — Table 1 lower bound for the unit ball"
       lean: "COLT83.unitBall_le_budget_of_isPAC"
       module: "COLT83.MXJ2026.LogGains"
-      status: "stated"
-      note: "Waits for the Gaussian-prior chapter `prereq_bayes`."
+      status: "proved"
+      note: "Proved through the Gaussian-prior chapter `prereq_bayes` and the Bayesian regret bound of `LowerBall.lean`."
     - source: "thm:separation_lower_nonadaptive, thm:separation / cor:separation_exists — Theorem 7"
       lean: "COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, COLT83.blockBallSet_le_budget_of_isPAC, COLT83.exists_isPAC_blockBallSet"
       module: "COLT83.MXJ2026.Separation"
-      status: "stated"
-      note: "Existential form for the upper bound; the block algorithm of `thm:separation` is phase 2."
+      status: "proved"
+      note: "The two lower bounds and the existential upper bound are proved; the block algorithm of `thm:separation` is the seeded algorithm `COLT83.BlockParam.alg`, proved PAC with failure probability 15δ/16."
     - source: "thm:norm_estimation / cor:norm_estimation_exists — Theorem 8"
       lean: "COLT83.exists_isAccurateNormEst"
       module: "COLT83.MXJ2026.NormEstimation"
-      status: "stated"
-      note: "Existential form; the meta-algorithm of `thm:norm_estimation` is phase 2."
+      status: "proved"
+      note: "Existential form; the meta-algorithm of `thm:norm_estimation` is `COLT83.NormEstParam.alg` (a seeded algorithm), proved accurate with failure probability 7δ/8."
     - source: "Part II — prerequisites (Gaussian concentration, sub-exponential variables, divergence decomposition, Sudakov–Fernique, Median Elimination, Gaussian posteriors)"
       lean: ""
       module: ""

@@ -259,11 +259,13 @@ Lemma~\ref{lem:loewner_quadratic}.
 \end{proof}
 
 \begin{lemma}[Trace of the inverse: AM--HM]\label{lem:trace_inv_amhm}
+\lean{Matrix.PosDef.trace_inv_eq_sum_inv_eigenvalues, Matrix.PosDef.card_sq_le_trace_mul_trace_inv, Matrix.PosDef.card_sq_div_trace_le_trace_inv}\leanok
 \uses{lem:eigen_quadratic_bounds}
 For $A \in \PD$, $\tr(A^{-1}) \ge d^2/\tr(A)$.
 \end{lemma}
 
 \begin{proof}
+\leanok
 \uses{lem:eigen_quadratic_bounds}
 By Lemma~\ref{lem:eigen_quadratic_bounds}(iv)--(v), $\tr A = \sum_j \lambda_j$ and $\tr(A^{-1}) =
 \sum_j 1/\lambda_j$ with all $\lambda_j > 0$. By the Cauchy--Schwarz inequality,
