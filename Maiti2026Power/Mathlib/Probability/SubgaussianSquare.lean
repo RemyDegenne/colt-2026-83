@@ -16,8 +16,10 @@ whenever `0 ≤ a` and `2 c a < 1`.
 
 * `HasSubgaussianMGF.integral_exp_mul_sq_le`: the bound above.
 * `HasSubgaussianMGF.integral_pow_four_le`: `E[Z⁴] ≤ 14 c²`.
-* `HasSubgaussianMGF.hasSubexponentialMGF_sq_sub`: if moreover `E[Z²] = c`, then `Z² - c` is
-  sub-exponential with parameters `(16 c², 4 c)`.
+* `HasSubgaussianMGF.integral_pow_four_le_of_integral_sq_eq`: if moreover `E[Z²] = c`, then
+  `E[Z⁴] ≤ 4 c²`.
+* `HasSubgaussianMGF.hasSubexponentialMGF_sq_sub`: under the same hypothesis, `Z² - c` is
+  sub-exponential with parameters `(4 c², 4 c)`.
 -/
 
 @[expose] public section
@@ -145,11 +147,84 @@ lemma integral_pow_four_le [IsProbabilityMeasure μ] (h : HasSubgaussianMGF Z c 
     linarith
   nlinarith [mul_nonneg (sq_nonneg (c : ℝ)) (by linarith : (0 : ℝ) ≤ 23 / 16 - √2)]
 
+/-- If `Z` is sub-Gaussian with constant `c` and `E[Z²] = c`, then `E[Z⁴] ≤ 4 c²`.
+
+Keeping the linear term of `1 + x + x²/2 ≤ exp x` (which `integral_pow_four_le` throws away) pays
+for a factor of more than three. The sharp constant is `3 c²`, the Gaussian value: letting `a → 0`
+in the proof below gives `E[Z⁴] ≤ 3 c²`, which is also what matching the `t⁴` coefficients of
+`E[exp (t Z)] ≤ exp (c t²/2)` at `t = 0` gives, so `E[Z²] = c` forces a kurtosis of at most 3. -/
+lemma integral_pow_four_le_of_integral_sq_eq [IsProbabilityMeasure μ] (h : HasSubgaussianMGF Z c μ)
+    (hZ2 : ∫ ω, Z ω ^ 2 ∂μ = c) :
+    ∫ ω, Z ω ^ 4 ∂μ ≤ 4 * c ^ 2 := by
+  have hint4 : Integrable (fun ω ↦ Z ω ^ 4) μ :=
+    integrable_pow_of_mem_interior_integrableExpSet (by simp [h.integrableExpSet_eq_univ]) 4
+  have hint2 : Integrable (fun ω ↦ Z ω ^ 2) μ :=
+    integrable_pow_of_mem_interior_integrableExpSet (by simp [h.integrableExpSet_eq_univ]) 2
+  by_cases hc : c = 0
+  · -- `E[Z²] = 0` forces `Z = 0` almost everywhere
+    have hZ0 : ∀ᵐ ω ∂μ, Z ω ^ 2 = 0 := by
+      have := (integral_eq_zero_iff_of_nonneg (fun ω ↦ sq_nonneg (Z ω)) hint2).1 (by simp [hZ2, hc])
+      filter_upwards [this] with ω hω using hω
+    rw [integral_congr_ae (g := fun _ ↦ (0 : ℝ)) ?_]
+    · simp [hc]
+    · filter_upwards [hZ0] with ω hω
+      nlinarith [hω]
+  have hc0 : (0 : ℝ) < c := NNReal.coe_pos.2 (pos_iff_ne_zero.2 hc)
+  set a : ℝ := 1 / (8 * c) with ha_def
+  have ha0 : 0 ≤ a := by positivity
+  have ha1 : 2 * c * a = 1 / 4 := by
+    rw [ha_def]
+    field_simp
+    ring
+  have ha : 2 * c * a < 1 := by linarith
+  have hexp := h.integrable_exp_mul_sq ha0 ha
+  have h1 := h.integral_exp_mul_sq_le ha0 ha
+  -- `1 + a E[Z²] + a²/2 E[Z⁴] ≤ E[exp (a Z²)]`
+  have hi1 : Integrable (fun ω ↦ 1 + a * Z ω ^ 2) μ :=
+    (integrable_const 1).add (hint2.const_mul a)
+  have hi2 : Integrable (fun ω ↦ a ^ 2 / 2 * Z ω ^ 4) μ := hint4.const_mul _
+  have h3 : 1 + a * c + a ^ 2 / 2 * ∫ ω, Z ω ^ 4 ∂μ ≤ ∫ ω, exp (a * Z ω ^ 2) ∂μ := by
+    have hle : ∫ ω, (1 + a * Z ω ^ 2 + a ^ 2 / 2 * Z ω ^ 4) ∂μ ≤ ∫ ω, exp (a * Z ω ^ 2) ∂μ := by
+      refine integral_mono (hi1.add hi2) hexp fun ω ↦ ?_
+      have h5 := Real.quadratic_le_exp_of_nonneg (x := a * Z ω ^ 2) (by positivity)
+      simp only
+      nlinarith [h5]
+    rw [integral_add hi1 hi2, integral_add (integrable_const 1) (hint2.const_mul a),
+      integral_const, integral_const_mul, integral_const_mul, hZ2, probReal_univ, smul_eq_mul,
+      one_mul] at hle
+    exact hle
+  -- `(1 - 1/4)^(-1/2) = 2/√3 ≤ 500/433`
+  have hsqrt : (433 / 500 : ℝ) ≤ √(1 - 2 * c * a) := by
+    rw [ha1, show (1 : ℝ) - 1 / 4 = 3 / 4 by norm_num, show (433 / 500 : ℝ) = √((433 / 500) ^ 2) by
+      rw [Real.sqrt_sq (by norm_num)]]
+    exact Real.sqrt_le_sqrt (by norm_num)
+  have hinv : (√(1 - 2 * c * a))⁻¹ ≤ 500 / 433 := by
+    rw [inv_le_comm₀ (Real.sqrt_pos.2 (by linarith)) (by norm_num),
+      show ((500 : ℝ) / 433)⁻¹ = 433 / 500 by norm_num]
+    exact hsqrt
+  have ha2 : a ^ 2 = 1 / (64 * c ^ 2) := by
+    rw [ha_def]
+    field_simp
+    ring
+  have hac : a * c = 1 / 8 := by
+    rw [ha_def]
+    field_simp
+  have h4 : a ^ 2 / 2 * ∫ ω, Z ω ^ 4 ∂μ ≤ 500 / 433 - 9 / 8 := by
+    have h6 := h3.trans (h1.trans hinv)
+    rw [hac] at h6
+    linarith
+  rw [ha2, div_div, div_mul_eq_mul_div, one_mul, div_le_iff₀ (by positivity)] at h4
+  nlinarith [h4, sq_nonneg (c : ℝ)]
+
 /-- **The centered square of a sub-Gaussian variable is sub-exponential**: if `Z` is sub-Gaussian
-with constant `c` and `E[Z²] = c`, then `Z² - c` has sub-exponential parameters `(16 c², 4 c)`. -/
+with constant `c` and `E[Z²] = c`, then `Z² - c` has sub-exponential parameters `(4 c², 4 c)`.
+
+The parameters are close to optimal: `Z ~ N(0, c)` saturates the moment generating function bound,
+and for it the smallest `V` that works on `|t| ≤ 1/(4c)` is `(16 log 2 - 8) c² ≈ 3.09 c²`; no `V`
+works for `b ≤ 2 c`, and `V ≥ 2 c² = Var(Z²)` for every `b`. -/
 lemma hasSubexponentialMGF_sq_sub [IsProbabilityMeasure μ] (h : HasSubgaussianMGF Z c μ)
     (hZ2 : ∫ ω, Z ω ^ 2 ∂μ = c) :
-    HasSubexponentialMGF (fun ω ↦ Z ω ^ 2 - c) (16 * c ^ 2) (4 * c) μ := by
+    HasSubexponentialMGF (fun ω ↦ Z ω ^ 2 - c) (4 * c ^ 2) (4 * c) μ := by
   have hc := c.coe_nonneg
   have hZ := h.aemeasurable
   have hint2 : Integrable (fun ω ↦ Z ω ^ 2) μ :=
@@ -200,9 +275,9 @@ lemma hasSubexponentialMGF_sq_sub [IsProbabilityMeasure μ] (h : HasSubgaussianM
             gcongr
             exact h.integral_exp_mul_sq_le ha0 h2ca
         _ = exp (-(a * c) + -(log (1 - 2 * c * a) / 2)) := by rw [hsqrt, exp_add]
-        _ ≤ exp (16 * c ^ 2 * a ^ 2 / 2) := by
+        _ ≤ exp (4 * c ^ 2 * a ^ 2 / 2) := by
             rw [exp_le_exp]
-            have hi := neg_log_one_sub_div_two_sub_le_sq hν
+            have hi := neg_log_one_sub_le_add_sq hν
             nlinarith [hi, sq_nonneg (c * a)]
     · have hpt : ∀ ω, exp (a * Z ω ^ 2) ≤ 1 + a * Z ω ^ 2 + a ^ 2 / 2 * Z ω ^ 4 := by
         intro ω
@@ -218,7 +293,7 @@ lemma hasSubexponentialMGF_sq_sub [IsProbabilityMeasure μ] (h : HasSubgaussianM
       have hi1 : Integrable (fun ω ↦ 1 + a * Z ω ^ 2) μ :=
         (integrable_const 1).add (hint2.const_mul a)
       have hi2 : Integrable (fun ω ↦ a ^ 2 / 2 * Z ω ^ 4) μ := hint4.const_mul _
-      have hI : ∫ ω, exp (a * Z ω ^ 2) ∂μ ≤ 1 + a * c + 7 * c ^ 2 * a ^ 2 := by
+      have hI : ∫ ω, exp (a * Z ω ^ 2) ∂μ ≤ 1 + a * c + 2 * c ^ 2 * a ^ 2 := by
         calc ∫ ω, exp (a * Z ω ^ 2) ∂μ
             ≤ ∫ ω, (1 + a * Z ω ^ 2 + a ^ 2 / 2 * Z ω ^ 4) ∂μ :=
               integral_mono hexp (hi1.add hi2) hpt
@@ -226,22 +301,22 @@ lemma hasSubexponentialMGF_sq_sub [IsProbabilityMeasure μ] (h : HasSubgaussianM
               rw [integral_add hi1 hi2, integral_add (integrable_const 1) (hint2.const_mul a),
                 integral_const, integral_const_mul, integral_const_mul, hZ2, probReal_univ,
                 smul_eq_mul, one_mul]
-          _ ≤ 1 + a * c + a ^ 2 / 2 * (14 * c ^ 2) := by
+          _ ≤ 1 + a * c + a ^ 2 / 2 * (4 * c ^ 2) := by
               gcongr
-              exact h.integral_pow_four_le
-          _ = 1 + a * c + 7 * c ^ 2 * a ^ 2 := by ring
+              exact h.integral_pow_four_le_of_integral_sq_eq hZ2
+          _ = 1 + a * c + 2 * c ^ 2 * a ^ 2 := by ring
       calc exp (-(a * c)) * ∫ ω, exp (a * Z ω ^ 2) ∂μ
-          ≤ exp (-(a * c)) * exp (a * c + 7 * c ^ 2 * a ^ 2) := by
+          ≤ exp (-(a * c)) * exp (a * c + 2 * c ^ 2 * a ^ 2) := by
             gcongr
             refine hI.trans ?_
-            linarith [Real.add_one_le_exp (a * c + 7 * c ^ 2 * a ^ 2)]
-        _ = exp (7 * c ^ 2 * a ^ 2) := by
+            linarith [Real.add_one_le_exp (a * c + 2 * c ^ 2 * a ^ 2)]
+        _ = exp (2 * c ^ 2 * a ^ 2) := by
             rw [← exp_add]
             congr 1
             ring
-        _ ≤ exp (16 * c ^ 2 * a ^ 2 / 2) := by
-            rw [exp_le_exp]
-            nlinarith [sq_nonneg (c * a)]
+        _ = exp (4 * c ^ 2 * a ^ 2 / 2) := by
+            congr 1
+            ring
 
 end HasSubgaussianMGF
 

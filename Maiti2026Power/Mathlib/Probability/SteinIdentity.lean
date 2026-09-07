@@ -76,99 +76,76 @@ lemma IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le (hF : ContDiff ℝ 1 
 
 end integrabilityNormed
 
-section euclidean
+section basis
 
-variable {n : ℕ} {F : EuclideanSpace ℝ (Fin (n + 1)) → ℝ} {L : ℝ}
+variable {n : ℕ} {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] {F : E → ℝ} {L : ℝ}
 
-/-- The derivative of `t ↦ (y with `t` inserted at position `i`)`. -/
-lemma hasDerivAt_toLp_insertNth (i : Fin (n + 1)) (y : Fin n → ℝ) (t : ℝ) :
-    HasDerivAt (fun t : ℝ ↦ (WithLp.toLp 2 (Fin.insertNth i t y) : EuclideanSpace ℝ (Fin (n + 1))))
-      (EuclideanSpace.single i 1) t := by
-  have h : HasDerivAt (fun t : ℝ ↦ (Fin.insertNth i t y : Fin (n + 1) → ℝ)) (Pi.single i 1) t := by
-    refine hasDerivAt_pi.2 fun j ↦ ?_
-    rcases Fin.eq_self_or_eq_succAbove i j with rfl | ⟨k, rfl⟩
-    · simp only [Fin.insertNth_apply_same, Pi.single_eq_same]
-      exact hasDerivAt_id t
-    · simp only [Fin.insertNth_apply_succAbove, Pi.single_eq_of_ne (Fin.succAbove_ne i k)]
-      exact hasDerivAt_const t _
-  exact (PiLp.continuousLinearEquiv 2 ℝ _).symm.hasFDerivAt.comp_hasDerivAt t h
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
+/-- The curve `t ↦ ∑ j, (insertNth i t y) j • b j` obtained by moving along the `i`-th vector of an
+orthonormal basis has derivative `b i`. -/
+lemma hasDerivAt_sum_smul_insertNth (b : OrthonormalBasis (Fin (n + 1)) ℝ E) (i : Fin (n + 1))
+    (y : Fin n → ℝ) (t : ℝ) :
+    HasDerivAt (fun s : ℝ ↦ ∑ j, (Fin.insertNth i s y : Fin (n + 1) → ℝ) j • b j) (b i) t := by
+  have hsplit : ∀ s : ℝ, ∑ j, (Fin.insertNth i s y : Fin (n + 1) → ℝ) j • b j
+      = s • b i + ∑ j : Fin n, y j • b (i.succAbove j) := by
+    intro s
+    rw [Fin.sum_univ_succAbove (fun j ↦ (Fin.insertNth i s y : Fin (n + 1) → ℝ) j • b j) i]
+    simp
+  simp_rw [hsplit]
+  simpa using ((hasDerivAt_id t).smul_const (b i)).add_const
+    (∑ j : Fin n, y j • b (i.succAbove j))
 
-/-- Fubini for the standard Gaussian measure on `ℝ^{n+1}`: integrate first over the `i`-th
-coordinate. -/
-lemma integral_stdGaussian_eq_integral_insertNth {G : EuclideanSpace ℝ (Fin (n + 1)) → ℝ}
-    (hG : Integrable G (stdGaussian (EuclideanSpace ℝ (Fin (n + 1))))) (i : Fin (n + 1)) :
-    ∫ x, G x ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) =
-      ∫ y, ∫ t, G (WithLp.toLp 2 (Fin.insertNth i t y)) ∂gaussianReal 0 1
+/-- Fubini for the standard Gaussian measure along an orthonormal basis: integrate first along the
+`i`-th basis vector. -/
+lemma integral_stdGaussian_eq_integral_insertNth (b : OrthonormalBasis (Fin (n + 1)) ℝ E)
+    {G : E → ℝ} (hG : Integrable G (stdGaussian E)) (i : Fin (n + 1)) :
+    ∫ x, G x ∂stdGaussian E =
+      ∫ y, ∫ t, G (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j) ∂gaussianReal 0 1
         ∂(Measure.pi fun _ : Fin n ↦ gaussianReal 0 1) := by
+  have hmeasb : Measurable fun x : Fin (n + 1) → ℝ ↦ ∑ j, x j • b j :=
+    (continuous_finsetSum _ fun j _ ↦ (continuous_apply j).smul continuous_const).measurable
   have hmp := (measurePreserving_piFinSuccAbove (fun _ : Fin (n + 1) ↦ gaussianReal 0 1) i).symm
-  rw [← map_pi_eq_stdGaussian] at hG ⊢
-  rw [integral_map (by fun_prop) hG.1, ← hmp.integral_comp']
-  have hint : Integrable (fun z ↦ G (WithLp.toLp 2 ((MeasurableEquiv.piFinSuccAbove _ i).symm z)))
+  rw [stdGaussian_eq_map_pi_orthonormalBasis b] at hG ⊢
+  rw [integral_map hmeasb.aemeasurable hG.1, ← hmp.integral_comp']
+  have hint : Integrable
+      (fun z ↦ G (∑ j, ((MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) ↦ ℝ) i).symm z) j
+        • b j))
       ((gaussianReal 0 1).prod (Measure.pi fun _ : Fin n ↦ gaussianReal 0 1)) := by
-    rw [show (fun z ↦ G (WithLp.toLp 2 ((MeasurableEquiv.piFinSuccAbove _ i).symm z))) =
-      (G ∘ WithLp.toLp 2) ∘ (MeasurableEquiv.piFinSuccAbove _ i).symm from rfl,
+    rw [show (fun z ↦ G (∑ j,
+          ((MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) ↦ ℝ) i).symm z) j • b j))
+        = (G ∘ fun x : Fin (n + 1) → ℝ ↦ ∑ j, x j • b j) ∘
+          (MeasurableEquiv.piFinSuccAbove _ i).symm from rfl,
       hmp.integrable_comp_emb (MeasurableEquiv.measurableEmbedding _)]
-    exact (integrable_map_measure hG.1 (by fun_prop)).1 hG
+    exact (integrable_map_measure hG.1 hmeasb.aemeasurable).1 hG
   rw [integral_prod_symm _ hint]
   simp only [MeasurableEquiv.piFinSuccAbove_symm_apply, Fin.insertNthEquiv, Equiv.coe_fn_mk]
 
-/-- **Stein's identity** for the `i`-th coordinate of a standard Gaussian vector:
-`E[g_i F(g)] = E[∂_i F(g)]` for `C¹` functions with bounded derivative. -/
-lemma integral_apply_mul_stdGaussian (hF : ContDiff ℝ 1 F) (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ L)
-    (i : Fin (n + 1)) :
-    ∫ x, x i * F x ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) =
-      ∫ x, fderiv ℝ F x (EuclideanSpace.single i 1)
-        ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) := by
-  have hint1 : Integrable (fun x ↦ x i * F x) (stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) := by
-    have := IsGaussian.integrable_inner_mul_of_norm_fderiv_le
-      (μ := stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) hF hL (EuclideanSpace.single i 1)
-    simpa [EuclideanSpace.inner_single_left] using this
-  have hint2 : Integrable (fun x ↦ fderiv ℝ F x (EuclideanSpace.single i 1))
-      (stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) :=
+/-- **Stein's identity** along a vector of an orthonormal basis:
+`E[⟪b i, g⟫ F(g)] = E[DF(g) (b i)]` for `C¹` functions with bounded derivative. -/
+lemma integral_inner_mul_stdGaussian_basis (b : OrthonormalBasis (Fin (n + 1)) ℝ E)
+    (hF : ContDiff ℝ 1 F) (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ L) (i : Fin (n + 1)) :
+    ∫ x, ⟪b i, x⟫ * F x ∂stdGaussian E = ∫ x, fderiv ℝ F x (b i) ∂stdGaussian E := by
+  have hint1 : Integrable (fun x ↦ ⟪b i, x⟫ * F x) (stdGaussian E) :=
+    IsGaussian.integrable_inner_mul_of_norm_fderiv_le hF hL (b i)
+  have hint2 : Integrable (fun x ↦ fderiv ℝ F x (b i)) (stdGaussian E) :=
     IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le hF hL _
-  rw [integral_stdGaussian_eq_integral_insertNth hint1 i,
-    integral_stdGaussian_eq_integral_insertNth hint2 i]
+  rw [integral_stdGaussian_eq_integral_insertNth b hint1 i,
+    integral_stdGaussian_eq_integral_insertNth b hint2 i]
   congr 1
   ext y
-  simp only [Fin.insertNth_apply_same]
+  simp only [b.inner_sum_smul, Fin.insertNth_apply_same]
   refine integral_mul_gaussianReal_zero_one_of_hasDerivAt (L := L)
-    (f' := fun t ↦ fderiv ℝ F (WithLp.toLp 2 (Fin.insertNth i t y)) (EuclideanSpace.single i 1))
+    (f' := fun t ↦ fderiv ℝ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j) (b i))
     (fun t ↦ ((hF.differentiable one_ne_zero) _).hasFDerivAt.comp_hasDerivAt t
-      (hasDerivAt_toLp_insertNth i y t)) fun t ↦ ?_
+      (hasDerivAt_sum_smul_insertNth b i y t)) fun t ↦ ?_
   rw [← Real.norm_eq_abs]
-  calc ‖fderiv ℝ F (WithLp.toLp 2 (Fin.insertNth i t y)) (EuclideanSpace.single i 1)‖
-      ≤ ‖fderiv ℝ F (WithLp.toLp 2 (Fin.insertNth i t y))‖ * ‖(EuclideanSpace.single i 1 :
-          EuclideanSpace ℝ (Fin (n + 1)))‖ := ContinuousLinearMap.le_opNorm _ _
-    _ ≤ L := by rw [PiLp.norm_single, norm_one, mul_one]; exact hL _
+  calc ‖fderiv ℝ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j) (b i)‖
+      ≤ ‖fderiv ℝ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j)‖ * ‖b i‖ :=
+        ContinuousLinearMap.le_opNorm _ _
+    _ ≤ L := by rw [b.norm_eq_one, mul_one]; exact hL _
 
-/-- **Stein's identity** on `ℝ^{n+1}`: `E[⟪a, g⟫ F(g)] = E[DF(g) a]`. -/
-lemma integral_inner_mul_stdGaussian_euclidean (hF : ContDiff ℝ 1 F)
-    (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ L) (a : EuclideanSpace ℝ (Fin (n + 1))) :
-    ∫ x, ⟪a, x⟫ * F x ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) =
-      ∫ x, fderiv ℝ F x a ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) := by
-  have ha : a = ∑ j, a j • (EuclideanSpace.single j 1 : EuclideanSpace ℝ (Fin (n + 1))) := by
-    conv_lhs => rw [← (EuclideanSpace.basisFun (Fin (n + 1)) ℝ).sum_repr a]
-    simp [EuclideanSpace.basisFun_apply, EuclideanSpace.basisFun_repr]
-  have h1 : ∀ x : EuclideanSpace ℝ (Fin (n + 1)), ⟪a, x⟫ * F x = ∑ j, a j * (x j * F x) := by
-    intro x
-    conv_lhs => rw [ha]
-    simp [sum_inner, real_inner_smul_left, EuclideanSpace.inner_single_left, Finset.sum_mul,
-      mul_assoc]
-  have h2 : ∀ x : EuclideanSpace ℝ (Fin (n + 1)),
-      fderiv ℝ F x a = ∑ j, a j * fderiv ℝ F x (EuclideanSpace.single j 1) := by
-    intro x
-    conv_lhs => rw [ha]
-    simp [map_sum, map_smul]
-  simp_rw [h1, h2]
-  rw [integral_finsetSum _ fun j _ ↦ ?_, integral_finsetSum _ fun j _ ↦ ?_]
-  · refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [integral_const_mul, integral_const_mul, integral_apply_mul_stdGaussian hF hL j]
-  · exact (IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le hF hL _).const_mul _
-  · have := IsGaussian.integrable_inner_mul_of_norm_fderiv_le
-      (μ := stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) hF hL (EuclideanSpace.single j 1)
-    simpa [EuclideanSpace.inner_single_left] using this.const_mul (a j)
-
-end euclidean
+end basis
 
 section general
 
@@ -185,33 +162,23 @@ lemma integral_inner_mul_stdGaussian (hF : ContDiff ℝ 1 F) (hL : ∀ x, ‖fde
   rcases n with _ | n
   · have ha : a = 0 := finrank_zero_iff_forall_zero.1 hn a
     simp [ha]
-  have hL0 : 0 ≤ L := le_trans (norm_nonneg _) (hL 0)
+  -- expand `a` in an orthonormal basis and apply Stein's identity along each basis vector
   let b : OrthonormalBasis (Fin (n + 1)) ℝ E := (stdOrthonormalBasis ℝ E).reindex (finCongr hn)
-  let e : EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] E := b.repr.symm
-  have h1 : ∀ y, ⟪a, e y⟫ = ⟪b.repr a, y⟫ := fun y ↦ by
-    rw [← b.repr.inner_map_map, LinearIsometryEquiv.apply_symm_apply]
-  have h2 : ∀ y, fderiv ℝ F (e y) a = fderiv ℝ (F ∘ e) y (b.repr a) := fun y ↦ by
-    rw [show (F ∘ e) = F ∘ e.toContinuousLinearEquiv from rfl,
-      e.toContinuousLinearEquiv.comp_right_fderiv]
-    simp [e]
-  have hFe : ContDiff ℝ 1 (F ∘ e) := hF.comp e.contDiff
-  have hLe : ∀ y, ‖fderiv ℝ (F ∘ e) y‖ ≤ L := fun y ↦ by
-    rw [show (F ∘ e) = F ∘ e.toContinuousLinearEquiv from rfl,
-      e.toContinuousLinearEquiv.comp_right_fderiv]
-    refine ContinuousLinearMap.opNorm_le_bound _ hL0 fun w ↦ ?_
-    rw [ContinuousLinearMap.comp_apply]
-    calc ‖fderiv ℝ F (e.toContinuousLinearEquiv y) (e.toContinuousLinearEquiv w)‖
-        ≤ ‖fderiv ℝ F (e.toContinuousLinearEquiv y)‖ * ‖e.toContinuousLinearEquiv w‖ :=
-          ContinuousLinearMap.le_opNorm _ _
-      _ ≤ L * ‖w‖ := by
-          rw [show e.toContinuousLinearEquiv w = e w from rfl, e.norm_map]
-          gcongr
-          exact hL _
-  rw [← stdGaussian_map e, integral_map (by fun_prop) ?_, integral_map (by fun_prop) ?_]
-  · simp_rw [h1, h2]
-    exact integral_inner_mul_stdGaussian_euclidean hFe hLe (b.repr a)
-  · exact ((hF.continuous_fderiv one_ne_zero).clm_apply continuous_const).aestronglyMeasurable
-  · exact ((continuous_const.inner continuous_id).mul hF.continuous).aestronglyMeasurable
+  have ha : a = ∑ j, ⟪b j, a⟫ • b j := (b.sum_repr' a).symm
+  have h1 : ∀ x : E, ⟪a, x⟫ * F x = ∑ j, ⟪b j, a⟫ * (⟪b j, x⟫ * F x) := by
+    intro x
+    conv_lhs => rw [ha]
+    simp [sum_inner, real_inner_smul_left, Finset.sum_mul, mul_assoc]
+  have h2 : ∀ x : E, fderiv ℝ F x a = ∑ j, ⟪b j, a⟫ * fderiv ℝ F x (b j) := by
+    intro x
+    conv_lhs => rw [ha]
+    simp [map_sum, map_smul]
+  simp_rw [h1, h2]
+  rw [integral_finsetSum _ fun j _ ↦ ?_, integral_finsetSum _ fun j _ ↦ ?_]
+  · refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [integral_const_mul, integral_const_mul, integral_inner_mul_stdGaussian_basis b hF hL j]
+  · exact (IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le hF hL _).const_mul _
+  · exact (IsGaussian.integrable_inner_mul_of_norm_fderiv_le hF hL (b j)).const_mul _
 
 variable {E' : Type*} [NormedAddCommGroup E'] [InnerProductSpace ℝ E'] [FiniteDimensional ℝ E']
   [MeasurableSpace E'] [BorelSpace E'] {κ : Type*} [Fintype κ]

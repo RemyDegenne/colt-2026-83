@@ -258,7 +258,10 @@ $A_1B_1^* + A_2B_2^* = 0$
 (\texttt{indepFun\_add\_prod\_stdGaussian\_of\_comp\_adjoint\_eq\_zero}).
 
 \begin{lemma}[Joint law of two linear images]\label{lem:gauss_joint_linear}
-\lean{ProbabilityTheory.isGaussian_prod_stdGaussian, ProbabilityTheory.covariance_inner_add_prod_stdGaussian, ProbabilityTheory.stdGaussian_map_blocks}\leanok
+\lean{ProbabilityTheory.isGaussian_prod_stdGaussian, ProbabilityTheory.covariance_inner_add_prod_stdGaussian, ProbabilityTheory.map_toLp_prod_stdGaussian}\leanok
+In Lean this is stated for the standard Gaussian measures of two arbitrary
+finite-dimensional real inner product spaces $E$, $F$: their product is the standard Gaussian
+measure of $E \times F$ with the inner product $\ip{(a,b)}{(x,y)} = \ip a x + \ip b y$.
 \uses{def:pg_gaussian_vector}
 Let $V \sim \Normal(\mu,S)$ in $\R^n$ and $L_1 \in \R^{m_1\times n}$, $L_2 \in \R^{m_2\times n}$.
 Then $(L_1 V, L_2 V)$ is a Gaussian vector in $\R^{m_1}\times\R^{m_2}$ with

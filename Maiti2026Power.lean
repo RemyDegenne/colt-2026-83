@@ -110,6 +110,7 @@ public import Maiti2026Power.Mathlib.Probability.BorellTIS
 public import Maiti2026Power.Mathlib.Probability.CondDistrib
 public import Maiti2026Power.Mathlib.Probability.CondDistribConst
 public import Maiti2026Power.Mathlib.Probability.Distributions.Bernoulli
+public import Maiti2026Power.Mathlib.Probability.Distributions.ChiSquared
 public import Maiti2026Power.Mathlib.Probability.GaussianAbsMoment
 public import Maiti2026Power.Mathlib.Probability.GaussianDensityRatio
 public import Maiti2026Power.Mathlib.Probability.GaussianInterpolation
@@ -124,6 +125,7 @@ public import Maiti2026Power.Mathlib.Probability.InfinitePiWindow
 public import Maiti2026Power.Mathlib.Probability.KLGaussian
 public import Maiti2026Power.Mathlib.Probability.Kernel.PriorAverage
 public import Maiti2026Power.Mathlib.Probability.MaureyPisier
+public import Maiti2026Power.Mathlib.Probability.Moments.ExtOfMGF
 public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 public import Maiti2026Power.Mathlib.Probability.Rademacher
 public import Maiti2026Power.Mathlib.Probability.StdGaussianProd

@@ -152,8 +152,9 @@ lemma gwMat_le_mul_sqrt_card (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R
     exact hR' x hx
   refine (le_abs_self _).trans ((abs_gaussianWidth_le (hne.image _) hR''
     IsGaussian.integrable_id.norm).trans ?_)
-  exact mul_le_mul_of_nonneg_left integral_norm_stdGaussian_le
-    (nonneg_of_norm_le (hne.image _) hR'')
+  have hnorm : ∫ x, ‖x‖ ∂(stdGaussian (EuclideanSpace ℝ ι)) ≤ √(Fintype.card ι) := by
+    simpa [finrank_euclideanSpace] using integral_norm_stdGaussian_le (E := EuclideanSpace ℝ ι)
+  exact mul_le_mul_of_nonneg_left hnorm (nonneg_of_norm_le (hne.image _) hR'')
 
 /-- Invariance under invertible linear maps: `gwMat (M '' K) (M A Mᵀ) = gwMat K A`. -/
 lemma gwMat_image (hne : K.Nonempty) (hK : ∀ x ∈ K, ‖x‖ ≤ R) (hA : A.PosDef)

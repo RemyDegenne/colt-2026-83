@@ -17,7 +17,7 @@ public import Maiti2026Power.Mathlib.Probability.SubgaussianSquare
   with constant `‖θ‖²` (Hoeffding's lemma coordinatewise);
 * `integral_sq_sum_mul_rademacherMeasure`: its second moment is `‖θ‖²`;
 * `hasSubexponentialMGF_sq_sum_mul_sub_rademacherMeasure`: its centered square
-  `(∑ i, ε i * θ i)² - ‖θ‖²` is sub-exponential with parameters `(16 ‖θ‖⁴, 4 ‖θ‖²)`.
+  `(∑ i, ε i * θ i)² - ‖θ‖²` is sub-exponential with parameters `(4 ‖θ‖⁴, 4 ‖θ‖²)`.
 -/
 
 @[expose] public section
@@ -195,9 +195,9 @@ lemma hasSubgaussianMGF_sum_mul_rademacherMeasure' (θ : EuclideanSpace ℝ ι) 
   rwa [EuclideanSpace.nnnorm_eq, NNReal.sq_sqrt]
 
 /-- **The centered square of a Rademacher linear form is sub-exponential**: for `θ ∈ ℝ^d` with
-`r = ‖θ‖`, `(∑ i, ε i * θ i)² - r²` has sub-exponential parameters `(16 r⁴, 4 r²)`. -/
+`r = ‖θ‖`, `(∑ i, ε i * θ i)² - r²` has sub-exponential parameters `(4 r⁴, 4 r²)`. -/
 lemma hasSubexponentialMGF_sq_sum_mul_sub_rademacherMeasure (θ : EuclideanSpace ℝ ι) :
-    HasSubexponentialMGF (fun ε ↦ (∑ i, ε i * θ i) ^ 2 - ‖θ‖ ^ 2) (16 * ‖θ‖ ^ 4) (4 * ‖θ‖ ^ 2)
+    HasSubexponentialMGF (fun ε ↦ (∑ i, ε i * θ i) ^ 2 - ‖θ‖ ^ 2) (4 * ‖θ‖ ^ 4) (4 * ‖θ‖ ^ 2)
       (rademacherMeasure ι) := by
   have h := (hasSubgaussianMGF_sum_mul_rademacherMeasure' θ).hasSubexponentialMGF_sq_sub (by
     rw [integral_sq_sum_mul_rademacherMeasure (fun i ↦ θ i), ← EuclideanSpace.real_norm_sq_eq]
@@ -262,10 +262,10 @@ lemma uniformBoolVec_map_signVec : (uniformBoolVec ι).map signVec = rademacherM
 
 /-- **The centered square of a Rademacher linear form is sub-exponential**, Boolean-seed form:
 for `θ ∈ ℝ^d` with `r = ‖θ‖`, `(∑ i, signOf (u i) * θ i)² - r²` has sub-exponential parameters
-`(16 r⁴, 4 r²)` under `uniformBoolVec ι`. -/
+`(4 r⁴, 4 r²)` under `uniformBoolVec ι`. -/
 lemma hasSubexponentialMGF_sq_sum_signOf_mul_sub_uniformBoolVec (θ : EuclideanSpace ℝ ι) :
     HasSubexponentialMGF (fun u : ι → Bool ↦ (∑ i, signOf (u i) * θ i) ^ 2 - ‖θ‖ ^ 2)
-      (16 * ‖θ‖ ^ 4) (4 * ‖θ‖ ^ 2) (uniformBoolVec ι) := by
+      (4 * ‖θ‖ ^ 4) (4 * ‖θ‖ ^ 2) (uniformBoolVec ι) := by
   have h := hasSubexponentialMGF_sq_sum_mul_sub_rademacherMeasure θ
   rw [← uniformBoolVec_map_signVec] at h
   exact HasSubexponentialMGF.of_map (X := fun ε : ι → ℝ ↦ (∑ i, ε i * θ i) ^ 2 - ‖θ‖ ^ 2)

@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
+public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 
 /-!
 # Transformations of multivariate Gaussian measures
@@ -217,13 +218,68 @@ lemma integral_norm_le_sqrt_trace_multivariateGaussian (hS : S.PosSemidef) :
   simp only [Pi.pow_apply] at h
   linarith
 
-omit [DecidableEq ι] in
-/-- `E‖g‖ ≤ √d` for a standard Gaussian vector `g` in dimension `d`. -/
+section StdGaussian
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+
+/-- `E‖g‖² = d` for a standard Gaussian vector `g` of a `d`-dimensional inner product space: in an
+orthonormal basis the squared norm is the sum of `d` independent squared standard Gaussians. -/
+lemma integral_norm_sq_stdGaussian :
+    ∫ x, ‖x‖ ^ 2 ∂(stdGaussian E) = Module.finrank ℝ E := by
+  have hmeasb : Measurable fun x : Fin (Module.finrank ℝ E) → ℝ ↦
+      ∑ i, x i • (stdOrthonormalBasis ℝ E) i :=
+    (continuous_finsetSum _ fun i _ ↦ (continuous_apply i).smul continuous_const).measurable
+  have hmemLp : MemLp id 2 (gaussianReal 0 1) := memLp_id_gaussianReal (μ := 0) (v := 1) 2
+  have hsq : ∫ y : ℝ, y ^ 2 ∂gaussianReal 0 1 = 1 := by
+    have hvar := variance_id_gaussianReal (μ := 0) (v := 1)
+    rw [variance_eq_sub hmemLp] at hvar
+    simp only [Pi.pow_apply, id_eq, integral_id_gaussianReal] at hvar
+    simpa using hvar
+  have hint1 : Integrable (fun y : ℝ ↦ y ^ 2) (gaussianReal 0 1) := by
+    simpa [id, Function.comp_def] using hmemLp.integrable_sq
+  have heval : ∀ i : Fin (Module.finrank ℝ E),
+      (Measure.pi fun _ : Fin (Module.finrank ℝ E) ↦ gaussianReal 0 1).map (fun x ↦ x i)
+        = gaussianReal 0 1 := fun i ↦ (measurePreserving_eval _ i).map_eq
+  have hcoord : ∀ i : Fin (Module.finrank ℝ E),
+      ∫ x : Fin (Module.finrank ℝ E) → ℝ, x i ^ 2
+        ∂(Measure.pi fun _ ↦ gaussianReal 0 1) = 1 := by
+    intro i
+    have h : ∫ y : ℝ, y ^ 2
+          ∂((Measure.pi fun _ : Fin (Module.finrank ℝ E) ↦ gaussianReal 0 1).map fun x ↦ x i)
+        = ∫ x : Fin (Module.finrank ℝ E) → ℝ, x i ^ 2 ∂(Measure.pi fun _ ↦ gaussianReal 0 1) :=
+      integral_map (measurable_pi_apply i).aemeasurable (by fun_prop)
+    rw [heval i, hsq] at h
+    exact h.symm
+  have hcoordint : ∀ i : Fin (Module.finrank ℝ E),
+      Integrable (fun x : Fin (Module.finrank ℝ E) → ℝ ↦ x i ^ 2)
+        (Measure.pi fun _ ↦ gaussianReal 0 1) := by
+    intro i
+    have h := (integrable_map_measure (g := fun y : ℝ ↦ y ^ 2)
+      (f := fun x : Fin (Module.finrank ℝ E) → ℝ ↦ x i)
+      (μ := Measure.pi fun _ ↦ gaussianReal 0 1)
+      (by rw [heval i]; exact hint1.aestronglyMeasurable)
+      (measurable_pi_apply i).aemeasurable).1 (by rw [heval i]; exact hint1)
+    simpa [Function.comp_def] using h
+  rw [stdGaussian_eq_map_pi_orthonormalBasis (stdOrthonormalBasis ℝ E),
+    integral_map hmeasb.aemeasurable (by fun_prop)]
+  simp_rw [(stdOrthonormalBasis ℝ E).norm_sum_smul_sq]
+  rw [integral_finsetSum _ fun i _ ↦ hcoordint i]
+  simp [hcoord]
+
+/-- `E‖g‖ ≤ √d` for a standard Gaussian vector `g` of a `d`-dimensional inner product space. -/
 lemma integral_norm_stdGaussian_le :
-    ∫ x, ‖x‖ ∂(stdGaussian (EuclideanSpace ℝ ι)) ≤ √(Fintype.card ι) := by
-  classical
-  have h := integral_norm_le_sqrt_trace_multivariateGaussian (ι := ι) Matrix.PosSemidef.one
-  rwa [multivariateGaussian_zero_one, Matrix.trace_one] at h
+    ∫ x, ‖x‖ ∂(stdGaussian E) ≤ √(Module.finrank ℝ E) := by
+  rw [← integral_norm_sq_stdGaussian (E := E),
+    Real.le_sqrt (integral_nonneg fun _ ↦ norm_nonneg _) (integral_nonneg fun _ ↦ sq_nonneg _)]
+  have hL2 : MemLp (fun x : E ↦ ‖x‖) 2 (stdGaussian E) :=
+    (IsGaussian.memLp_two_id (μ := stdGaussian E)).norm
+  have h := variance_eq_sub hL2
+  have h0 := variance_nonneg (fun x : E ↦ ‖x‖) (stdGaussian E)
+  simp only [Pi.pow_apply] at h
+  linarith
+
+end StdGaussian
 
 end Moments
 

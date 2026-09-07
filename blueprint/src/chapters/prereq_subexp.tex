@@ -560,20 +560,22 @@ $d - \frac{c^2}{4b} = -\frac{\mu^2}{2\sigma^2} + \frac{\mu^2}{2\sigma^2(1-2\sigm
 \end{proof}
 
 \begin{lemma}[Two elementary inequalities]\label{lem:log_ineq_nu}
-\lean{ProbabilityTheory.neg_log_one_sub_div_two_sub_le_sq, ProbabilityTheory.one_div_one_sub_le_two}\leanok
+\lean{ProbabilityTheory.neg_log_one_sub_le_add_sq, ProbabilityTheory.one_div_one_sub_le_two}\leanok
 For every $\nu \in \R$ with $\abs{\nu} \le 1/2$:
 \begin{enumerate}
-  \item[(i)] $-\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2$;
+  \item[(i)] $-\log(1-\nu) \le \nu + \nu^2$, equivalently $-\frac12\log(1-\nu) - \frac{\nu}{2} \le \frac{\nu^2}{2}$;
   \item[(ii)] $\frac{1}{1-\nu} \le 2$.
 \end{enumerate}
 \end{lemma}
 
 \begin{proof}
 \leanok
-(i) Mathlib's \texttt{Real.abs\_log\_sub\_add\_sum\_range\_le}, for $\abs x < 1$ and $n = 1$,
-reads $\abs{x + \log(1-x)} \le \abs{x}^2/(1 - \abs x)$. With $x = \nu$ and $\abs\nu \le 1/2$,
-$1 - \abs\nu \ge 1/2$, so $\abs{\nu + \log(1-\nu)} \le 2\nu^2$, hence
-$-\log(1-\nu) - \nu \le 2\nu^2$ and dividing by $2$ gives (i).
+(i) It is enough to show $(1-\nu)e^{\nu+\nu^2} \ge 1$ and take logarithms. For $\nu \ge 0$ use
+$e^y \ge 1 + y + y^2/2$ (Mathlib \texttt{Real.quadratic\_le\_exp\_of\_nonneg}) with $y = \nu+\nu^2$:
+$(1-\nu)\big(1 + (\nu+\nu^2) + (\nu+\nu^2)^2/2\big) = 1 + \frac{\nu^2}{2}(1 - \nu - \nu^2 - \nu^3) \ge 1$,
+since $\nu + \nu^2 + \nu^3 \le \frac12+\frac14+\frac18 < 1$. For $\nu \le 0$ use $e^y \ge 1+y$:
+$(1-\nu)(1+\nu+\nu^2) = 1 - \nu^3 \ge 1$. The bound is the truncation of
+$-\log(1-\nu) - \nu = \sum_{k\ge2}\nu^k/k \le \frac{\nu^2}{2(1-\nu)} \le \nu^2$.
 (ii) $1 - \nu \ge 1 - \abs\nu \ge \frac12$.
 \end{proof}
 
@@ -582,10 +584,10 @@ $-\log(1-\nu) - \nu \le 2\nu^2$ and dividing by $2$ gives (i).
 \uses{def:subexp, def:pg_gaussian_vector}
 Let $\mu\in\R$, $\sigma \ge 0$ and $X \sim \Normal(\mu,\sigma^2)$. Then
 \[
-  \mathrm{HasSubexponentialMGF}\big(X^2 - (\mu^2 + \sigma^2),\ 8(\sigma^4 + \mu^2\sigma^2),\ 4\sigma^2\big),
+  \mathrm{HasSubexponentialMGF}\big(X^2 - (\mu^2 + \sigma^2),\ 4\sigma^4 + 8\mu^2\sigma^2,\ 4\sigma^2\big),
 \]
 i.e.\ for all $\abs\lambda \le \frac{1}{4\sigma^2}$,
-$\log\E e^{\lambda(X^2 - (\mu^2+\sigma^2))} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2$
+$\log\E e^{\lambda(X^2 - (\mu^2+\sigma^2))} \le (2\sigma^4 + 4\mu^2\sigma^2)\lambda^2$
 (and $\E X^2 = \mu^2 + \sigma^2$ by Lemma~\ref{lem:ps_subexp_integral_zero}).
 \end{lemma}
 
@@ -601,18 +603,117 @@ is integrable (hence so is $e^{\lambda(X^2 - \mu^2 - \sigma^2)}$), and
   = \Big(-\frac12\log(1-\nu) - \frac\nu2\Big) + \mu^2\lambda\Big(\frac{1}{1-\nu} - 1\Big),
 \]
 using $\lambda\sigma^2 = \nu/2$. By Lemma~\ref{lem:log_ineq_nu}(i), the first bracket is at most
-$\nu^2 = 4\sigma^4\lambda^2$. The second term equals
+$\frac{\nu^2}{2} = 2\sigma^4\lambda^2$. The second term equals
 $\mu^2\lambda\nu/(1-\nu) = 2\mu^2\sigma^2\lambda^2\cdot\frac{1}{1-\nu} \le 4\mu^2\sigma^2\lambda^2$
 by Lemma~\ref{lem:log_ineq_nu}(ii), since $\lambda\nu = 2\sigma^2\lambda^2 \ge 0$. Hence
-$\log\E e^{\lambda(X^2-\mu^2-\sigma^2)} \le 4(\sigma^4 + \mu^2\sigma^2)\lambda^2 = \frac{\lambda^2}{2}\cdot8(\sigma^4 + \mu^2\sigma^2)$,
-which is the claim with $V = 8(\sigma^4 + \mu^2\sigma^2)$ and $b = 4\sigma^2$.
+$\log\E e^{\lambda(X^2-\mu^2-\sigma^2)} \le (2\sigma^4 + 4\mu^2\sigma^2)\lambda^2 = \frac{\lambda^2}{2}(4\sigma^4 + 8\mu^2\sigma^2)$,
+which is the claim with $V = 4\sigma^4 + 8\mu^2\sigma^2$ and $b = 4\sigma^2$. Both constants are
+essentially optimal at $b = 4\sigma^2$, where the exact requirement is
+$V \ge (16\log2-8)\sigma^4 + 8\mu^2\sigma^2 \approx 3.09\,\sigma^4 + 8\mu^2\sigma^2$; and no finite
+$V$ works for $b \le 2\sigma^2$, where $\E e^{\lambda X^2} = \infty$ at $\lambda = 1/b$.
 \end{proof}
+
+\begin{definition}[Chi-squared distribution]\label{def:chi_squared}
+\lean{ProbabilityTheory.chiSqPDFReal, ProbabilityTheory.chiSqPDF, ProbabilityTheory.chiSqMeasure,
+ProbabilityTheory.chiSqPDFReal_of_nonneg, ProbabilityTheory.isProbabilityMeasure_chiSqMeasure,
+ProbabilityTheory.cdf_chiSqMeasure_eq_integral, ProbabilityTheory.cdf_chiSqMeasure_eq_lintegral}\leanok
+The \emph{chi-squared distribution with $d$ degrees of freedom} $\chi^2_d$ is the gamma
+distribution with shape $d/2$ and rate $1/2$, that is, the measure on $\R$ with density
+\[
+  x \mapsto \frac{x^{d/2-1}e^{-x/2}}{2^{d/2}\,\Gamma(d/2)} \quad (x \ge 0), \qquad 0 \quad (x < 0)
+\]
+with respect to the Lebesgue measure. It is a probability measure for $d \ge 1$.
+\end{definition}
+
+\begin{lemma}[Moment generating function of the gamma and chi-squared distributions]
+\label{lem:mgf_chi_squared}
+\lean{ProbabilityTheory.integral_exp_mul_gammaMeasure, ProbabilityTheory.mgf_chiSqMeasure}\leanok
+\uses{def:chi_squared}
+For the gamma distribution $\gamma(a,r)$ with $a, r > 0$ and every $t < r$,
+$\int e^{tx}\,d\gamma(a,r)(x) = \big(\frac{r}{r-t}\big)^a$. In particular, for $d \ge 1$ and
+$t < 1/2$, the moment generating function of $\chi^2_d$ is $(1-2t)^{-d/2}$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+The density of $\gamma(a,r)$ vanishes on $(-\infty,0)$, so
+$\int e^{tx}\,d\gamma(a,r) = \frac{r^a}{\Gamma(a)}\int_0^\infty x^{a-1}e^{-(r-t)x}\,dx
+= \frac{r^a}{\Gamma(a)}\cdot\frac{\Gamma(a)}{(r-t)^a}$, using Mathlib's
+\texttt{integral\_rpow\_mul\_exp\_neg\_mul\_Ioi} with the rate $r - t > 0$. The chi-squared case is
+$a = d/2$, $r = 1/2$. Mathlib has the gamma distribution but not its moment generating function.
+\end{proof}
+
+\begin{lemma}[The squared norm of a Gaussian vector is chi-squared]\label{lem:norm_sq_chi_squared}
+\lean{ProbabilityTheory.integral_exp_mul_norm_sq_stdGaussian,
+ProbabilityTheory.mgf_norm_sq_stdGaussian}\leanok
+\uses{def:chi_squared, lem:mgf_chi_squared, lem:gaussian_square_mgf, lem:gauss_pi}
+Let $g \sim \Normal(0,I_d)$ with $d \ge 1$. For every $t < 1/2$,
+$\E e^{t\norm g^2} = (1-2t)^{-d/2}$, which is the moment generating function of $\chi^2_d$
+(Lemma~\ref{lem:mgf_chi_squared}). This is what justifies calling $\norm g^2 - d$ a centered
+chi-square variable in Lemmas~\ref{lem:chi_square_subexp} and~\ref{lem:chi_square_tail}.
+\end{lemma}
+
+\begin{proof}
+\leanok
+Writing $\Normal(0,I_d)$ as the image of $\Normal(0,1)^{\otimes d}$
+(Lemma~\ref{lem:gauss_pi}) and $e^{t\norm g^2} = \prod_{i<d} e^{tg_i^2}$, the integral factorizes
+over the product measure, and each factor is $(1-2t)^{-1/2}$ by
+Lemma~\ref{lem:gaussian_square_mgf} with $\mu = 0$, $\sigma = 1$.
+\end{proof}
+
+\begin{theorem}[Moment generating functions determine distributions]\label{thm:ext_of_mgf}
+\lean{MeasureTheory.Measure.ext_of_eqOn_mgf, MeasureTheory.Measure.ext_of_mgf_eq}\leanok
+Let $X, Y$ be real random variables under a probability measure $\Prob$ and a finite measure
+$\Prob'$. Assume that $\lambda \mapsto \E e^{\lambda X}$ is finite in a neighbourhood of $0$, that
+the same holds for $Y$, and that $\E e^{\lambda X} = \E e^{\lambda Y}$ for $\lambda$ in a
+neighbourhood of $0$. Then $X$ and $Y$ have the same law: $\Prob\circ X^{-1} = \Prob'\circ Y^{-1}$.
+\end{theorem}
+
+\begin{proof}
+\leanok
+Mathlib's \texttt{eqOn\_complexMGF\_of\_mgf} extends the equality of the moment generating
+functions to the complex moment generating functions $z \mapsto \E e^{zX}$, which are holomorphic
+on the vertical strips over the interiors of their domains of definition; here we run the same
+analytic continuation on the common strip, whose base is the (convex, open) intersection of the
+two interiors and contains $0$. Equality of two functions analytic on a preconnected open set,
+knowing they agree along a real sequence tending to $0$, is Mathlib's
+\texttt{AnalyticOnNhd.eqOn\_of\_preconnected\_of\_frequently\_eq}. Since $0$ is in the base, the
+strip contains the whole imaginary axis, on which the complex moment generating function is the
+characteristic function ($\E e^{itX} = \E e^{zX}$ at $z = it$), so the characteristic functions
+coincide and \texttt{Measure.ext\_of\_charFun} concludes. No analytic continuation beyond the
+strip is needed, which is why agreeing near $0$ suffices.
+\end{proof}
+
+\begin{corollary}[The squared norm of a Gaussian vector is chi-squared, as laws]
+\label{cor:norm_sq_chi_squared_law}
+\lean{ProbabilityTheory.map_norm_sq_stdGaussian_eq_chiSqMeasure}\leanok
+\uses{thm:ext_of_mgf, lem:norm_sq_chi_squared, def:chi_squared}
+For $g \sim \Normal(0,I_d)$ with $d \ge 1$, the law of $\norm g^2$ is $\chi^2_d$.
+\end{corollary}
+
+\begin{proof}
+\leanok
+\uses{lem:mgf_chi_squared}
+By Lemma~\ref{lem:norm_sq_chi_squared} the two moment generating functions agree on
+$(-\infty,1/2)$, and both are infinite for $t \ge 1/2$, where $e^{tx}$ is not integrable: for
+$\chi^2_d$ because the density times $e^{tx}$ dominates $c\,x^{d/2-1}$ on $(1,\infty)$, whose
+integral diverges, and for $\norm g^2$ because $e^{t\norm g^2} \ge e^{tg_j^2}$ and the
+one-dimensional integrand $e^{tx^2}\varphi(x) \ge (2\pi)^{-1/2}$ is bounded below by a positive
+constant. Both moment generating functions are finite on $(-\infty,1/2)$, a neighbourhood of $0$,
+so Theorem~\ref{thm:ext_of_mgf} applies.
+\end{proof}
+
+\emph{Lean generality.} The Lean statements of this section are for a standard Gaussian vector of
+an arbitrary finite-dimensional real inner product space `E` (with $d = \operatorname{finrank}_\R E$
+in place of the number of coordinates), not just for $\R^d$: the proofs pick an orthonormal basis of
+$E$, which is what \texttt{stdGaussian} is defined from. They therefore apply verbatim to a subspace
+or to a product of such spaces.
 
 \begin{lemma}[Chi-square variables are sub-exponential]\label{lem:chi_square_subexp}
 \lean{ProbabilityTheory.hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal, ProbabilityTheory.hasSubexponentialMGF_norm_sq_sub_stdGaussian}\leanok
 \uses{def:subexp, def:pg_gaussian_vector}
 Let $g \sim \Normal(0, I_d)$. Then
-$\mathrm{HasSubexponentialMGF}\big(\norm{g}^2 - d,\ 8d,\ 4\big)$.
+$\mathrm{HasSubexponentialMGF}\big(\norm{g}^2 - d,\ 4d,\ 4\big)$.
 \end{lemma}
 
 \begin{proof}
@@ -621,9 +722,11 @@ $\mathrm{HasSubexponentialMGF}\big(\norm{g}^2 - d,\ 8d,\ 4\big)$.
 $\norm{g}^2 - d = \sum_{i<d}(g_i^2 - 1)$ with $g_0,\dots,g_{d-1}$ i.i.d.\ $\Normal(0,1)$
 (Lemma~\ref{lem:gauss_pi}; in Lean, $\Normal(0,I_d)$ is the image of the product measure
 $\Normal(0,1)^{\otimes d}$ on $\R^d$, \texttt{map\_pi\_eq\_stdGaussian}, and the statement is
-transported by Lemma~\ref{lem:ps_subexp_map}). Each $g_i^2 - 1$ has parameters $(8, 4)$ by
+transported by Lemma~\ref{lem:ps_subexp_map}). Each $g_i^2 - 1$ has parameters $(4, 4)$ by
 Lemma~\ref{lem:gaussian_square_subexp} with $\mu = 0$, $\sigma = 1$; the summands are
-independent (\texttt{iIndepFun\_pi}), so Lemma~\ref{lem:subexp_sum} gives $(8d, 4)$.
+independent (\texttt{iIndepFun\_pi}), so Lemma~\ref{lem:subexp_sum} gives $(4d, 4)$. These are the
+parameters behind the Laurent--Massart form of the chi-square tail: the optimal $V$ at $b = 4$ is
+$(16\log2-8)d \approx 3.09\,d$, and $V \ge 2d = \mathrm{Var}(\norm g^2)$ for every $b$.
 \end{proof}
 
 \begin{lemma}[Chi-square tail]\label{lem:chi_square_tail}
@@ -631,7 +734,7 @@ independent (\texttt{iIndepFun\_pi}), so Lemma~\ref{lem:subexp_sum} gives $(8d, 
 \uses{def:pg_gaussian_vector}
 Let $g \sim \Normal(0,I_d)$ with $d \ge 1$. For every $t \ge 0$,
 \[
-  \Prob\big(\norm{g}^2 - d \ge t\big) \le \exp\Big(-\min\Big(\frac{t^2}{16d}, \frac{t}{8}\Big)\Big),
+  \Prob\big(\norm{g}^2 - d \ge t\big) \le \exp\Big(-\min\Big(\frac{t^2}{8d}, \frac{t}{8}\Big)\Big),
 \]
 and for every $\delta \in (0,1)$,
 $\Prob\big(\norm{g}^2 \ge 2d + 12\log(1/\delta)\big) \le \delta$.
@@ -640,9 +743,9 @@ $\Prob\big(\norm{g}^2 \ge 2d + 12\log(1/\delta)\big) \le \delta$.
 \begin{proof}
 \leanok
 \uses{lem:chi_square_subexp, lem:subexp_tail}
-The first bound is Lemma~\ref{lem:subexp_tail} with $(V,b) = (8d,4)$ from
-Lemma~\ref{lem:chi_square_subexp}: $t^2/(2V) = t^2/(16d)$ and $t/(2b) = t/8$. For the second,
-let $L := \log(1/\delta) > 0$ and $t := \max(4\sqrt{dL}, 8L)$. Then $t^2/(16d) \ge 16dL/(16d) = L$
+The first bound is Lemma~\ref{lem:subexp_tail} with $(V,b) = (4d,4)$ from
+Lemma~\ref{lem:chi_square_subexp}: $t^2/(2V) = t^2/(8d)$ and $t/(2b) = t/8$. For the second,
+let $L := \log(1/\delta) > 0$ and $t := \max(4\sqrt{dL}, 8L)$. Then $t^2/(8d) \ge 16dL/(8d) = 2L \ge L$
 and $t/8 \ge L$, so $\Prob(\norm{g}^2 - d \ge t) \le e^{-L} = \delta$. Moreover, by AM--GM,
 $4\sqrt{dL} = 2\sqrt{d\cdot4L} \le d + 4L$, so $t \le \max(d + 4L, 8L) \le d + 8L \le d + 12L$.
 Hence $\{\norm{g}^2 \ge 2d + 12L\} = \{\norm{g}^2 - d \ge d + 12L\} \subseteq \{\norm{g}^2 - d \ge t\}$
@@ -758,6 +861,31 @@ $(1 + y + y^2/2)(1 - y + y^2/2) = (1 + y^2/2)^2 - y^2 = 1 + y^4/4 \ge 1$ and
 $1 - y + y^2/2 = ((1-y)^2 + 1)/2 > 0$. Since $1 - y + y^2/2 = 1 + x + x^2/2$, this is the claim.
 \end{proof}
 
+\begin{lemma}[Fourth moment when the variance saturates]\label{lem:subgaussian_fourth_moment_eq}
+\lean{ProbabilityTheory.HasSubgaussianMGF.integral_pow_four_le_of_integral_sq_eq}\leanok
+Let $Z$ have a sub-Gaussian MGF with constant $c \ge 0$ under a probability measure and assume
+$\E Z^2 = c$. Then $\E Z^4 \le 4c^2$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:subgaussian_square_mgf_pos}
+If $c = 0$ then $\E Z^2 = 0$ forces $Z = 0$ a.s. Let $c > 0$ and $\lambda := 1/(8c)$, so
+$2c\lambda = 1/4$. Keeping all three terms of $1 + x + x^2/2 \le e^x$ at $x = \lambda Z^2 \ge 0$
+and taking expectations,
+\[
+  1 + \lambda c + \frac{\lambda^2}{2}\E Z^4 \le \E e^{\lambda Z^2} \le (1 - 2c\lambda)^{-1/2}
+  = \tfrac{2}{\sqrt3} \le \tfrac{500}{433} ,
+\]
+by Lemma~\ref{lem:subgaussian_square_mgf_pos}. With $\lambda c = 1/8$ and
+$\lambda^2 = 1/(64c^2)$ this gives $\E Z^4 \le 128c^2(\frac{500}{433} - \frac98) \le 4c^2$.
+The sharp constant is $3c^2$, the Gaussian value: letting $\lambda \to 0$ above gives
+$\E Z^4 \le 3c^2$, which is also what matching the $\lambda^4$ coefficients of
+$\E e^{\lambda Z} \le e^{c\lambda^2/2}$ at $\lambda = 0$ gives, so $\E Z^2 = c$ forces a
+kurtosis of at most $3$. Discarding the linear term instead, as
+Lemma~\ref{lem:subgaussian_fourth_moment} does, loses a factor of more than three.
+\end{proof}
+
 \begin{lemma}[Centered square of a sub-Gaussian variable is sub-exponential]
 \label{lem:subgaussian_square_subexp}
 \lean{ProbabilityTheory.HasSubgaussianMGF.hasSubexponentialMGF_sq_sub}\leanok
@@ -765,16 +893,16 @@ $1 - y + y^2/2 = ((1-y)^2 + 1)/2 > 0$. Since $1 - y + y^2/2 = 1 + x + x^2/2$, th
 Let $Z$ have a sub-Gaussian MGF with constant $c \ge 0$ under a probability measure, and
 assume $\E Z^2 = c$. Then
 \[
-  \mathrm{HasSubexponentialMGF}\big(Z^2 - c,\ 16c^2,\ 4c\big).
+  \mathrm{HasSubexponentialMGF}\big(Z^2 - c,\ 4c^2,\ 4c\big).
 \]
 \end{lemma}
 
 \begin{proof}
 \leanok
-\uses{lem:subgaussian_square_mgf_pos, lem:subgaussian_fourth_moment, lem:log_ineq_nu, lem:ps_exp_le_quadratic}
+\uses{lem:subgaussian_square_mgf_pos, lem:subgaussian_fourth_moment_eq, lem:log_ineq_nu, lem:ps_exp_le_quadratic}
 $Z$ has all moments (Mathlib \texttt{integrable\_pow\_of\_mem\_interior\_integrableExpSet}).
 Let $\abs\lambda \le 1/(4c)$; we show that $e^{\lambda(Z^2 - c)}$ is integrable and
-$\E e^{\lambda(Z^2 - c)} \le e^{8c^2\lambda^2} = e^{\lambda^2\cdot16c^2/2}$.
+$\E e^{\lambda(Z^2 - c)} \le e^{2c^2\lambda^2} = e^{\lambda^2\cdot4c^2/2}$.
 
 \emph{Case $0 \le \lambda \le 1/(4c)$.} Let $\nu := 2c\lambda \in [0, 1/2]$, so that
 $2c\lambda < 1$ and Lemma~\ref{lem:subgaussian_square_mgf_pos} gives the integrability of
@@ -782,23 +910,26 @@ $e^{\lambda Z^2}$ (hence of $e^{\lambda(Z^2-c)} = e^{-\lambda c}e^{\lambda Z^2}$
 $\E e^{\lambda Z^2} \le (1-\nu)^{-1/2}$. Hence, using $\lambda c = \nu/2$ and
 Lemma~\ref{lem:log_ineq_nu}(i),
 \[
-  \log\E e^{\lambda(Z^2 - c)} \le -\frac12\log(1-\nu) - \frac{\nu}{2} \le \nu^2 = 4c^2\lambda^2 \le 8c^2\lambda^2 .
+  \log\E e^{\lambda(Z^2 - c)} \le -\frac12\log(1-\nu) - \frac{\nu}{2} \le \frac{\nu^2}{2} = 2c^2\lambda^2 .
 \]
 
 \emph{Case $-1/(4c) \le \lambda < 0$.} Pointwise $\lambda Z^2 \le 0$, so
 $e^{\lambda(Z^2-c)} \le e^{-\lambda c}$ is bounded, hence integrable, and
 Lemma~\ref{lem:ps_exp_le_quadratic} gives $e^{\lambda Z^2} \le 1 + \lambda Z^2 + \frac{\lambda^2Z^4}{2}$.
-Taking expectations and using $\E Z^2 = c$ and Lemma~\ref{lem:subgaussian_fourth_moment}
-($\E Z^4 \le 14c^2$),
+Taking expectations and using $\E Z^2 = c$ and Lemma~\ref{lem:subgaussian_fourth_moment_eq}
+($\E Z^4 \le 4c^2$),
 \[
-  \E e^{\lambda Z^2} \le 1 + \lambda c + 7c^2\lambda^2
-  \le \exp\big(\lambda c + 7c^2\lambda^2\big),
+  \E e^{\lambda Z^2} \le 1 + \lambda c + 2c^2\lambda^2
+  \le \exp\big(\lambda c + 2c^2\lambda^2\big),
 \]
 by $1 + y \le e^y$. Multiplying by $e^{-\lambda c}$:
-$\E e^{\lambda(Z^2 - c)} \le e^{7c^2\lambda^2} \le e^{8c^2\lambda^2}$.
+$\E e^{\lambda(Z^2 - c)} \le e^{2c^2\lambda^2}$.
 
-In both cases $\E e^{\lambda(Z^2-c)} \le \exp(\lambda^2\cdot16c^2/2)$, which is the claim with
-$V = 16c^2$ and $b = 4c$.
+In both cases $\E e^{\lambda(Z^2-c)} \le \exp(\lambda^2\cdot4c^2/2)$, which is the claim with
+$V = 4c^2$ and $b = 4c$. The parameters are close to optimal: $Z \sim \Normal(0,c)$ saturates
+Lemma~\ref{lem:subgaussian_square_mgf_pos}, and for it the smallest $V$ that works on
+$\abs\lambda \le 1/(4c)$ is $(16\log2-8)c^2 \approx 3.09\,c^2$; moreover $V \ge 2c^2 = \Var(Z^2)$
+for every $b$, and no $V$ works for $b \le 2c$.
 \end{proof}
 
 \begin{definition}[Rademacher vector]\label{def:ps_rademacher}
@@ -856,7 +987,7 @@ $\E Z^2 = \sum_{i,j}\theta_i\theta_j\E[\eps_i\eps_j] = \sum_i\theta_i^2$.
 Let $\eps$ be a Rademacher vector in $\R^d$, $\theta \in \R^d$ with $r := \norm{\theta}$, and
 $Z := \ip{\eps}{\theta}$. Then
 \[
-  \mathrm{HasSubexponentialMGF}\big(Z^2 - r^2,\ 16r^4,\ 4r^2\big).
+  \mathrm{HasSubexponentialMGF}\big(Z^2 - r^2,\ 4r^4,\ 4r^2\big).
 \]
 \end{lemma}
 

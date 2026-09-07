@@ -182,7 +182,9 @@ lemma hasSubexponentialMGF_rbX (k : Fin K) :
     (X := fun v : ι → Bool ↦ (∑ i, signOf (v i) * θ i) ^ 2 - ‖θ‖ ^ 2)
     (Y := fun u : Fin K → ι → Bool ↦ u k) (μ := Measure.pi fun _ : Fin K ↦ uniformBoolVec ι)
     (measurable_pi_apply k).aemeasurable (by rw [hmap]; exact h)
-  refine h2.congr (ae_of_all _ fun u ↦ ?_)
+  -- the library bound is sharper (`4 ‖θ‖⁴`); we keep the paper's constant here
+  refine (h2.congr (ae_of_all _ fun u ↦ ?_)).mono
+    (by nlinarith [pow_nonneg (norm_nonneg θ) 4]) le_rfl
   simp only [Function.comp_apply, rbX, card_mul_inner_radDir_sq]
 
 lemma iIndepFun_rbX :
@@ -286,7 +288,9 @@ lemma hasSubexponentialMGF_rbW (hs : 0 < s) (u : Fin K → ι → Bool) (k : Fin
     (Y := fun e : Fin K → Fin s → ℝ ↦ √(Fintype.card ι) * rbMean s K θ (u, e) k)
     (μ := rbNoise s K) hlaw.aemeasurable (by exact hbase)
   push_cast at h2
-  refine h2.congr (ae_of_all _ fun e ↦ ?_)
+  -- the library bound is sharper in the `(d/s)²` term; we keep the paper's constant here
+  refine (h2.congr (ae_of_all _ fun e ↦ ?_)).mono
+    (by nlinarith [sq_nonneg ((Fintype.card ι : ℝ) / s)]) le_rfl
   simp only [Function.comp_apply]
   rw [rbW_eq]
 

@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import LeanMachineLearning.ForMathlib.Probability.Moments.SubExponential
+public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 
 /-!
 # The moment generating function of the square of a Gaussian variable
@@ -15,10 +16,15 @@ public import LeanMachineLearning.ForMathlib.Probability.Moments.SubExponential
 * `integral_exp_mul_sq_gaussianReal`: for `X ~ N(m, v)` and `2 v a < 1`,
   `E[exp (a X²)] = (1 - 2 v a)^(-1/2) exp (m² a / (1 - 2 v a))`.
 * `hasSubexponentialMGF_sq_sub_gaussianReal`: `X² - (m² + v)` is sub-exponential with parameters
-  `(8 (v² + m² v), 4 v)`.
-* `hasSubexponentialMGF_norm_sq_sub_stdGaussian`: for a standard Gaussian vector `g` in `ℝ^d`,
-  `‖g‖² - d` is sub-exponential with parameters `(8 d, 4)`, and the chi-square tail bounds
+  `(4 v² + 8 m² v, 4 v)`.
+* `hasSubexponentialMGF_norm_sq_sub_stdGaussian`: for a standard Gaussian vector `g` of a
+  `d`-dimensional inner product space, `‖g‖² - d` is sub-exponential with parameters `(4 d, 4)`,
+  and the chi-square tail bounds
   `measureReal_norm_sq_sub_ge_le_stdGaussian`, `measureReal_norm_sq_ge_le_stdGaussian`.
+
+The law of `‖g‖²` is the chi-squared distribution with `d` degrees of freedom, defined in
+`Maiti2026Power/Mathlib/Probability/Distributions/ChiSquared.lean`; the identification of the two
+(at the level of moment generating functions) is `mgf_norm_sq_stdGaussian` there.
 * `Real.exp_le_one_add_add_sq_div_two_of_nonpos`: `exp x ≤ 1 + x + x² / 2` for `x ≤ 0`.
 -/
 
@@ -142,15 +148,31 @@ lemma integral_exp_mul_sq_gaussianReal (m : ℝ) (v : ℝ≥0) {a : ℝ} (ha : 2
     ring
   rw [← mul_assoc, h2, h3]
 
-/-- For `|ν| ≤ 1 / 2`, `-log (1 - ν) / 2 - ν / 2 ≤ ν ^ 2`. -/
-lemma neg_log_one_sub_div_two_sub_le_sq {ν : ℝ} (hν : |ν| ≤ 1 / 2) :
-    -log (1 - ν) / 2 - ν / 2 ≤ ν ^ 2 := by
-  have h := Real.abs_log_sub_add_sum_range_le (x := ν) (by linarith [abs_nonneg ν]) 1
-  simp only [Finset.sum_range_one, Nat.cast_zero, zero_add, pow_one, div_one, Nat.reduceAdd] at h
-  have h2 : |ν| ^ 2 / (1 - |ν|) ≤ 2 * ν ^ 2 := by
-    rw [div_le_iff₀ (by linarith)]
-    nlinarith [sq_abs ν, mul_nonneg (sq_nonneg ν) (by linarith : (0 : ℝ) ≤ 1 - 2 * |ν|)]
-  have h3 := (neg_le_abs _).trans (h.trans h2)
+/-- For `|ν| ≤ 1 / 2`, `-log (1 - ν) ≤ ν + ν ^ 2`.
+
+This is sharp enough to give the optimal order of the sub-exponential parameters below: the
+series `-log (1 - ν) = ν + ∑_{k ≥ 2} ν ^ k / k` has remainder `≤ ν ^ 2 / (2 (1 - ν)) ≤ ν ^ 2`
+on `[0, 1/2]`. -/
+lemma neg_log_one_sub_le_add_sq {ν : ℝ} (hν : |ν| ≤ 1 / 2) : -log (1 - ν) ≤ ν + ν ^ 2 := by
+  have hν1 : ν ≤ 1 / 2 := (le_abs_self ν).trans hν
+  have hν2 : -(1 / 2 : ℝ) ≤ ν := neg_le_of_abs_le hν
+  have hpos : (0 : ℝ) < 1 - ν := by linarith
+  have key : (1 : ℝ) ≤ (1 - ν) * exp (ν + ν ^ 2) := by
+    rcases le_or_gt 0 ν with hν0 | hν0
+    · have hq := Real.quadratic_le_exp_of_nonneg (x := ν + ν ^ 2) (by positivity)
+      have he : (1 - ν) * (1 + (ν + ν ^ 2) + (ν + ν ^ 2) ^ 2 / 2)
+          = 1 + ν ^ 2 / 2 * (1 - ν - ν ^ 2 - ν ^ 3) := by ring
+      have hcube : ν ^ 2 + ν ^ 3 ≤ 1 / 2 := by nlinarith
+      calc (1 : ℝ) ≤ 1 + ν ^ 2 / 2 * (1 - ν - ν ^ 2 - ν ^ 3) := by nlinarith
+        _ = (1 - ν) * (1 + (ν + ν ^ 2) + (ν + ν ^ 2) ^ 2 / 2) := he.symm
+        _ ≤ (1 - ν) * exp (ν + ν ^ 2) := by gcongr
+    · have hl := Real.add_one_le_exp (ν + ν ^ 2)
+      have he : (1 - ν) * (1 + (ν + ν ^ 2)) = 1 - ν ^ 3 := by ring
+      calc (1 : ℝ) ≤ 1 - ν ^ 3 := by nlinarith
+        _ = (1 - ν) * ((ν + ν ^ 2) + 1) := by rw [← he]; ring
+        _ ≤ (1 - ν) * exp (ν + ν ^ 2) := by gcongr
+  have hlog := Real.log_le_log (by norm_num) key
+  rw [Real.log_one, Real.log_mul hpos.ne' (exp_ne_zero _), Real.log_exp] at hlog
   linarith
 
 /-- For `|ν| ≤ 1 / 2`, `1 / (1 - ν) ≤ 2`. -/
@@ -160,9 +182,14 @@ lemma one_div_one_sub_le_two {ν : ℝ} (hν : |ν| ≤ 1 / 2) : 1 / (1 - ν) �
   linarith
 
 /-- **The centered square of a Gaussian variable is sub-exponential**: for `X ~ N(m, v)`,
-`X² - (m² + v)` has sub-exponential parameters `(8 (v² + m² v), 4 v)`. -/
+`X² - (m² + v)` has sub-exponential parameters `(4 v² + 8 m² v, 4 v)`.
+
+Both constants are essentially optimal for `b = 4 v`: the exact requirement at `a = 1/(4v)` is
+`V ≥ (16 log 2 - 8) v² + 8 m² v ≈ 3.09 v² + 8 m² v`, so the `m²` coefficient is sharp and the
+`v²` one is within 30% of the optimum. No `V` at all works for `b ≤ 2 v`, where the moment
+generating function of `X²` is infinite. -/
 lemma hasSubexponentialMGF_sq_sub_gaussianReal (m : ℝ) (v : ℝ≥0) :
-    HasSubexponentialMGF (fun x ↦ x ^ 2 - (m ^ 2 + v)) (8 * (v ^ 2 + m ^ 2 * v)) (4 * v)
+    HasSubexponentialMGF (fun x ↦ x ^ 2 - (m ^ 2 + v)) (4 * v ^ 2 + 8 * m ^ 2 * v) (4 * v)
       (gaussianReal m v) := by
   have hv := v.coe_nonneg
   have key : ∀ a : ℝ, 4 * v * |a| ≤ 1 → 2 * v * a < 1 := by
@@ -194,7 +221,7 @@ lemma hasSubexponentialMGF_sq_sub_gaussianReal (m : ℝ) (v : ℝ≥0) :
     have hsqrt : (√(1 - 2 * v * a))⁻¹ = exp (-(log (1 - 2 * v * a) / 2)) := by
       rw [exp_neg, ← Real.log_sqrt h1.le, exp_log (Real.sqrt_pos.2 h1)]
     rw [hmgf, hsqrt, ← exp_add, ← exp_add, exp_le_exp]
-    have hi := neg_log_one_sub_div_two_sub_le_sq hν
+    have hi := neg_log_one_sub_le_add_sq hν
     have h3 : m ^ 2 * a / (1 - 2 * v * a) - a * m ^ 2 ≤ 4 * m ^ 2 * v * a ^ 2 := by
       have e : m ^ 2 * a / (1 - 2 * v * a) - a * m ^ 2
           = 2 * m ^ 2 * v * a ^ 2 / (1 - 2 * v * a) := by
@@ -212,62 +239,80 @@ section ChiSquare
 variable {ι : Type*} [Fintype ι]
 
 /-- **Chi-square variables are sub-exponential**, coordinate form: for i.i.d. standard Gaussian
-coordinates `g i`, `∑ i, (g i ^ 2 - 1)` has sub-exponential parameters `(8 d, 4)`. -/
+coordinates `g i`, `∑ i, (g i ^ 2 - 1)` has sub-exponential parameters `(4 d, 4)`. -/
 lemma hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal :
-    HasSubexponentialMGF (fun g : ι → ℝ ↦ ∑ i, (g i ^ 2 - 1)) (8 * Fintype.card ι) 4
+    HasSubexponentialMGF (fun g : ι → ℝ ↦ ∑ i, (g i ^ 2 - 1)) (4 * Fintype.card ι) 4
       (Measure.pi fun _ : ι ↦ gaussianReal 0 1) := by
   have h_indep : iIndepFun (fun i (g : ι → ℝ) ↦ g i ^ 2 - 1)
       (Measure.pi fun _ : ι ↦ gaussianReal 0 1) :=
     iIndepFun_pi (X := fun _ x ↦ x ^ 2 - 1) fun i ↦ by fun_prop
   have h := HasSubexponentialMGF.fun_sum_of_iIndepFun h_indep
-    (V := fun _ ↦ 8) (b := 4) fun i ↦ ?_
+    (V := fun _ ↦ 4) (b := 4) fun i ↦ ?_
   · simpa only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_comm] using h
   · have := hasSubexponentialMGF_sq_sub_gaussianReal 0 1
     simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, NNReal.coe_one, zero_add,
-      one_pow, add_zero, mul_one] at this
+      one_pow, mul_one, mul_zero, add_zero] at this
     have hmap : (Measure.pi fun _ : ι ↦ gaussianReal 0 1).map (fun g : ι → ℝ ↦ g i)
         = gaussianReal 0 1 :=
       (measurePreserving_eval (fun _ : ι ↦ gaussianReal 0 1) i).map_eq
     have h8 := HasSubexponentialMGF.of_map (X := fun x : ℝ ↦ x ^ 2 - 1) (Y := fun g : ι → ℝ ↦ g i)
-      (μ := Measure.pi fun _ : ι ↦ gaussianReal 0 1) (V := 8) (b := 4)
+      (μ := Measure.pi fun _ : ι ↦ gaussianReal 0 1) (V := 4) (b := 4)
       (measurable_pi_apply i).aemeasurable (by rw [hmap]; exact this)
     exact h8
 
-/-- **Chi-square variables are sub-exponential**: for a standard Gaussian vector `g` in `ℝ^d`,
-`‖g‖ ^ 2 - d` has sub-exponential parameters `(8 d, 4)`. -/
-lemma hasSubexponentialMGF_norm_sq_sub_stdGaussian :
-    HasSubexponentialMGF (fun g : EuclideanSpace ℝ ι ↦ ‖g‖ ^ 2 - Fintype.card ι)
-      (8 * Fintype.card ι) 4 (stdGaussian (EuclideanSpace ℝ ι)) := by
-  rw [← map_pi_eq_stdGaussian, HasSubexponentialMGF.map_iff (by fun_prop) (by fun_prop)]
-  refine hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal.congr (ae_of_all _ fun g ↦ ?_)
-  simp [Function.comp, EuclideanSpace.real_norm_sq_eq, Finset.sum_sub_distrib]
+/-- The coordinate map `x ↦ ∑ i, x i • b i` of an orthonormal basis is measurable. -/
+@[fun_prop]
+lemma measurable_sum_smul_orthonormalBasis {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [MeasurableSpace E] [BorelSpace E] (b : OrthonormalBasis ι ℝ E) :
+    Measurable fun x : ι → ℝ ↦ ∑ i, x i • b i :=
+  (continuous_finsetSum _ fun i _ ↦ (continuous_apply i).smul continuous_const).measurable
 
-/-- **Chi-square tail bound**: for a standard Gaussian vector `g` in `ℝ^d` and `t ≥ 0`,
-`P(‖g‖² - d ≥ t) ≤ exp (-min (t² / (16 d)) (t / 8))`. -/
-lemma measureReal_norm_sq_sub_ge_le_stdGaussian [Nonempty ι] {t : ℝ} (ht : 0 ≤ t) :
-    (stdGaussian (EuclideanSpace ℝ ι)).real {g | t ≤ ‖g‖ ^ 2 - Fintype.card ι}
-      ≤ exp (-min (t ^ 2 / (16 * Fintype.card ι)) (t / 8)) := by
-  have hd : (0 : ℝ) < Fintype.card ι := by
-    have := Fintype.card_pos (α := ι)
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+
+/-- **Chi-square variables are sub-exponential**: for a standard Gaussian vector `g` of a
+`d`-dimensional inner product space, `‖g‖ ^ 2 - d` has sub-exponential parameters `(4 d, 4)`.
+
+These are the parameters behind the Laurent-Massart form of the chi-square tail: the exact
+requirement at `b = 4` is `V ≥ (16 log 2 - 8) d ≈ 3.09 d`, and `V ≥ 2 d = Var(‖g‖²)` for any `b`. -/
+lemma hasSubexponentialMGF_norm_sq_sub_stdGaussian :
+    HasSubexponentialMGF (fun g : E ↦ ‖g‖ ^ 2 - Module.finrank ℝ E)
+      (4 * Module.finrank ℝ E) 4 (stdGaussian E) := by
+  rw [stdGaussian_eq_map_pi_orthonormalBasis (stdOrthonormalBasis ℝ E),
+    HasSubexponentialMGF.map_iff
+      (measurable_sum_smul_orthonormalBasis _).aemeasurable (by fun_prop)]
+  have h := hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal (ι := Fin (Module.finrank ℝ E))
+  rw [Fintype.card_fin] at h
+  refine h.congr (ae_of_all _ fun x ↦ ?_)
+  rw [Function.comp_apply, OrthonormalBasis.norm_sum_smul_sq]
+  simp [Finset.sum_sub_distrib]
+
+/-- **Chi-square tail bound**: for a standard Gaussian vector `g` of a `d`-dimensional inner
+product space and `t ≥ 0`, `P(‖g‖² - d ≥ t) ≤ exp (-min (t² / (8 d)) (t / 8))`. -/
+lemma measureReal_norm_sq_sub_ge_le_stdGaussian [Nontrivial E] {t : ℝ} (ht : 0 ≤ t) :
+    (stdGaussian E).real {g | t ≤ ‖g‖ ^ 2 - Module.finrank ℝ E}
+      ≤ exp (-min (t ^ 2 / (8 * Module.finrank ℝ E)) (t / 8)) := by
+  have hd : (0 : ℝ) < Module.finrank ℝ E := by
+    have := Module.finrank_pos (R := ℝ) (M := E)
     positivity
-  have := hasSubexponentialMGF_norm_sq_sub_stdGaussian (ι := ι).measure_ge_le ht
+  have := (hasSubexponentialMGF_norm_sq_sub_stdGaussian (E := E)).measure_ge_le ht
   refine this.trans (le_of_eq ?_)
   congr 3 <;> ring
 
-/-- **Chi-square tail bound**, explicit form: for a standard Gaussian vector `g` in `ℝ^d` and
-`δ ∈ (0, 1)`, `P(‖g‖² ≥ 2 d + 12 log (1 / δ)) ≤ δ`. -/
-lemma measureReal_norm_sq_ge_le_stdGaussian [Nonempty ι] {δ : ℝ} (hδ : δ ∈ Set.Ioo 0 1) :
-    (stdGaussian (EuclideanSpace ℝ ι)).real
-      {g | 2 * Fintype.card ι + 12 * log (1 / δ) ≤ ‖g‖ ^ 2} ≤ δ := by
-  set d : ℝ := (Fintype.card ι : ℝ) with hd
+/-- **Chi-square tail bound**, explicit form: for a standard Gaussian vector `g` of a
+`d`-dimensional inner product space and `δ ∈ (0, 1)`,
+`P(‖g‖² ≥ 2 d + 12 log (1 / δ)) ≤ δ`. -/
+lemma measureReal_norm_sq_ge_le_stdGaussian [Nontrivial E] {δ : ℝ} (hδ : δ ∈ Set.Ioo 0 1) :
+    (stdGaussian E).real {g | 2 * Module.finrank ℝ E + 12 * log (1 / δ) ≤ ‖g‖ ^ 2} ≤ δ := by
+  set d : ℝ := (Module.finrank ℝ E : ℝ) with hd
   have hd0 : 0 < d := by
-    have := Fintype.card_pos (α := ι)
+    have := Module.finrank_pos (R := ℝ) (M := E)
     positivity
   set L := log (1 / δ) with hL
   have hL0 : 0 < L := Real.log_pos (one_lt_one_div hδ.1 hδ.2)
   set t := max (4 * √(d * L)) (8 * L) with ht
   have ht0 : 0 ≤ t := le_max_of_le_right (by positivity)
-  have hsub : {g : EuclideanSpace ℝ ι | 2 * d + 12 * L ≤ ‖g‖ ^ 2} ⊆ {g | t ≤ ‖g‖ ^ 2 - d} := by
+  have hsub : {g : E | 2 * d + 12 * L ≤ ‖g‖ ^ 2} ⊆ {g | t ≤ ‖g‖ ^ 2 - d} := by
     intro g hg
     simp only [Set.mem_ofPred_eq] at hg ⊢
     have h1 : 4 * √(d * L) ≤ d + 4 * L := by
@@ -276,17 +321,17 @@ lemma measureReal_norm_sq_ge_le_stdGaussian [Nonempty ι] {δ : ℝ} (hδ : δ �
         Real.sqrt_nonneg d, Real.sqrt_nonneg L]
     have : t ≤ d + 12 * L := max_le (by linarith) (by linarith)
     linarith
-  calc (stdGaussian (EuclideanSpace ℝ ι)).real {g | 2 * d + 12 * L ≤ ‖g‖ ^ 2}
-      ≤ (stdGaussian (EuclideanSpace ℝ ι)).real {g | t ≤ ‖g‖ ^ 2 - d} :=
+  calc (stdGaussian E).real {g | 2 * d + 12 * L ≤ ‖g‖ ^ 2}
+      ≤ (stdGaussian E).real {g | t ≤ ‖g‖ ^ 2 - d} :=
         measureReal_mono hsub (measure_ne_top _ _)
-    _ ≤ exp (-min (t ^ 2 / (16 * d)) (t / 8)) := measureReal_norm_sq_sub_ge_le_stdGaussian ht0
+    _ ≤ exp (-min (t ^ 2 / (8 * d)) (t / 8)) := measureReal_norm_sq_sub_ge_le_stdGaussian ht0
     _ ≤ exp (-L) := by
         gcongr
         refine le_min ?_ ?_
         · rw [le_div_iff₀ (mul_pos (by norm_num) hd0)]
-          calc L * (16 * d) = (4 * √(d * L)) ^ 2 := by
+          calc L * (8 * d) ≤ (4 * √(d * L)) ^ 2 := by
                 rw [mul_pow, Real.sq_sqrt (mul_nonneg hd0.le hL0.le)]
-                ring
+                nlinarith [mul_nonneg hd0.le hL0.le]
             _ ≤ t ^ 2 := by
                 gcongr
                 exact le_max_left _ _

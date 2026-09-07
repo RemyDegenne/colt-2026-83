@@ -16,6 +16,9 @@ For an orthonormal basis `b` of a subspace `V` of an inner product space `E` ove
 * `OrthonormalBasis.sum_conj_inner_coe_mul_inner_coe`: `∑ i, conj ⟪b i, x⟫ * ⟪b i, y⟫ = ⟪x, y⟫`
   for `x ∈ V` and any `y ∈ E` (Parseval), and its real form
   `OrthonormalBasis.sum_inner_coe_mul_inner_coe`.
+
+We also record `OrthonormalBasis.norm_sum_smul_sq`: `‖∑ i, c i • b i‖ ^ 2 = ∑ i, c i ^ 2` for an
+orthonormal basis `b` of a real inner product space.
 -/
 
 @[expose] public section
@@ -47,5 +50,24 @@ lemma sum_inner_coe_mul_inner_coe {E ι : Type*} [NormedAddCommGroup E] [InnerPr
     [Fintype ι] {V : Submodule ℝ E} {x : E} (b : OrthonormalBasis ι ℝ V) (hx : x ∈ V) (y : E) :
     ∑ i, ⟪(b i : E), x⟫_ℝ * ⟪(b i : E), y⟫_ℝ = ⟪x, y⟫_ℝ := by
   simpa using b.sum_conj_inner_coe_mul_inner_coe hx y
+
+/-- The coordinates of `∑ i, c i • b i` in an orthonormal basis `b` are the `c i`. -/
+lemma repr_sum_smul {F : Type*} [NormedAddCommGroup F] [InnerProductSpace 𝕜 F]
+    (b : OrthonormalBasis ι 𝕜 F) (c : ι → 𝕜) : b.repr (∑ i, c i • b i) = WithLp.toLp 2 c := by
+  classical
+  rw [map_sum]
+  ext j
+  simp [b.repr_self, Pi.single_apply]
+
+/-- Inner product of a basis vector with an expansion in that orthonormal basis. -/
+lemma inner_sum_smul {F : Type*} [NormedAddCommGroup F] [InnerProductSpace 𝕜 F]
+    (b : OrthonormalBasis ι 𝕜 F) (c : ι → 𝕜) (i : ι) : ⟪b i, ∑ j, c j • b j⟫_𝕜 = c i := by
+  rw [← b.repr_apply_apply, repr_sum_smul]
+
+/-- The squared norm of a vector expanded in an orthonormal basis is the sum of the squares of its
+coordinates. -/
+lemma norm_sum_smul_sq {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+    (b : OrthonormalBasis ι ℝ F) (c : ι → ℝ) : ‖∑ i, c i • b i‖ ^ 2 = ∑ i, c i ^ 2 := by
+  rw [← LinearIsometryEquiv.norm_map b.repr, repr_sum_smul, EuclideanSpace.real_norm_sq_eq]
 
 end OrthonormalBasis

@@ -170,119 +170,98 @@ lemma IsGaussian.integrable_inner_mul_of_abs_le_mul_exp (hF : AEStronglyMeasurab
 
 end innerProduct
 
-section euclidean
+section basis
 
-variable {n : ℕ} {F : EuclideanSpace ℝ (Fin (n + 1)) → ℝ} {A B : ℝ}
+variable {n : ℕ} {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+  [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] {F : E → ℝ} {A B : ℝ}
 
-/-- The norm of `y` with `t` inserted at position `i` is at most `|t| + ‖y‖`. -/
-lemma norm_toLp_insertNth_le (i : Fin (n + 1)) (t : ℝ) (y : Fin n → ℝ) :
-    ‖(WithLp.toLp 2 (Fin.insertNth i t y) : EuclideanSpace ℝ (Fin (n + 1)))‖ ≤
-      |t| + ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖ := by
-  rw [EuclideanSpace.norm_eq, EuclideanSpace.norm_eq, Fin.sum_univ_succAbove _ i]
-  simp only [Fin.insertNth_apply_same, Fin.insertNth_apply_succAbove, Real.norm_eq_abs, sq_abs]
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
+/-- Moving by `t` along the `i`-th vector of an orthonormal basis changes the norm by at most
+`|t|`. -/
+lemma norm_sum_smul_insertNth_le (b : OrthonormalBasis (Fin (n + 1)) ℝ E) (i : Fin (n + 1))
+    (t : ℝ) (y : Fin n → ℝ) :
+    ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖
+      ≤ |t| + ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖ := by
+  have hsum : ∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j ^ 2 = t ^ 2 + ∑ j, y j ^ 2 := by
+    rw [Fin.sum_univ_succAbove (fun j ↦ (Fin.insertNth i t y : Fin (n + 1) → ℝ) j ^ 2) i]
+    simp
+  have hnorm : ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖ ^ 2
+      = t ^ 2 + ∑ j, y j ^ 2 := by
+    rw [b.norm_sum_smul_sq, hsum]
   have hs : 0 ≤ ∑ j, y j ^ 2 := Finset.sum_nonneg fun j _ ↦ sq_nonneg _
-  calc √(t ^ 2 + ∑ j, y j ^ 2) ≤ √((|t| + √(∑ j, y j ^ 2)) ^ 2) := by
-        refine Real.sqrt_le_sqrt ?_
-        nlinarith [Real.sq_sqrt hs, Real.sqrt_nonneg (∑ j, y j ^ 2), abs_nonneg t, sq_abs t]
+  rw [EuclideanSpace.norm_eq]
+  simp only [Real.norm_eq_abs, sq_abs]
+  have key : ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖ ^ 2
+      ≤ (|t| + √(∑ j, y j ^ 2)) ^ 2 := by
+    rw [hnorm, add_sq, Real.sq_sqrt hs, sq_abs]
+    nlinarith [mul_nonneg (abs_nonneg t) (Real.sqrt_nonneg (∑ j, y j ^ 2))]
+  calc ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖
+      = √(‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖ ^ 2) :=
+        (Real.sqrt_sq (norm_nonneg _)).symm
+    _ ≤ √((|t| + √(∑ j, y j ^ 2)) ^ 2) := Real.sqrt_le_sqrt key
     _ = |t| + √(∑ j, y j ^ 2) := Real.sqrt_sq (by positivity)
 
-/-- Growth transfer to the section `t ↦ G (y with t inserted at i)`: if
-`|G x| ≤ A * exp (B * ‖x‖)`, then the section is bounded by a constant times `exp (|B| * |t|)`. -/
-lemma abs_apply_toLp_insertNth_le {G : EuclideanSpace ℝ (Fin (n + 1)) → ℝ} (hA : 0 ≤ A)
-    (hG : ∀ x, |G x| ≤ A * rexp (B * ‖x‖)) (i : Fin (n + 1)) (y : Fin n → ℝ) (t : ℝ) :
-    |G (WithLp.toLp 2 (Fin.insertNth i t y))| ≤
-      A * rexp (|B| * ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖) * rexp (|B| * |t|) := by
+omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
+/-- Growth transfer to the section along the `i`-th basis vector: if `|G x| ≤ A * exp (B * ‖x‖)`,
+then the section is bounded by a constant times `exp (|B| * |t|)`. -/
+lemma abs_apply_sum_smul_insertNth_le (b : OrthonormalBasis (Fin (n + 1)) ℝ E) {G : E → ℝ}
+    (hA : 0 ≤ A) (hG : ∀ x, |G x| ≤ A * rexp (B * ‖x‖)) (i : Fin (n + 1)) (y : Fin n → ℝ)
+    (t : ℝ) :
+    |G (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j)|
+      ≤ A * rexp (|B| * ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖) * rexp (|B| * |t|) := by
   rw [mul_assoc, ← Real.exp_add]
   refine (hG _).trans (mul_le_mul_of_nonneg_left (Real.exp_le_exp.2 ?_) hA)
-  calc B * ‖(WithLp.toLp 2 (Fin.insertNth i t y) : EuclideanSpace ℝ (Fin (n + 1)))‖
-      ≤ |B| * ‖(WithLp.toLp 2 (Fin.insertNth i t y) : EuclideanSpace ℝ (Fin (n + 1)))‖ :=
+  calc B * ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖
+      ≤ |B| * ‖∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j‖ :=
         mul_le_mul_of_nonneg_right (le_abs_self B) (norm_nonneg _)
     _ ≤ |B| * (|t| + ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖) :=
-        mul_le_mul_of_nonneg_left (norm_toLp_insertNth_le i t y) (abs_nonneg B)
+        mul_le_mul_of_nonneg_left (norm_sum_smul_insertNth_le b i t y) (abs_nonneg B)
     _ = |B| * ‖(WithLp.toLp 2 y : EuclideanSpace ℝ (Fin n))‖ + |B| * |t| := by ring
 
-/-- **Stein's identity** for the `i`-th coordinate of a standard Gaussian vector:
-`E[g_i F(g)] = E[∂_i F(g)]` for `C¹` functions of exponential growth. -/
-lemma integral_apply_mul_stdGaussian_of_le_exp (hF : ContDiff ℝ 1 F)
-    (hFb : ∀ x, |F x| ≤ A * rexp (B * ‖x‖)) (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ A * rexp (B * ‖x‖))
-    (i : Fin (n + 1)) :
-    ∫ x, x i * F x ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) =
-      ∫ x, fderiv ℝ F x (EuclideanSpace.single i 1)
-        ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) := by
+/-- **Stein's identity** along a vector of an orthonormal basis, for `C¹` functions of exponential
+growth: `E[⟪b i, g⟫ F(g)] = E[DF(g) (b i)]`. -/
+lemma integral_inner_mul_stdGaussian_basis_of_le_exp (b : OrthonormalBasis (Fin (n + 1)) ℝ E)
+    (hF : ContDiff ℝ 1 F) (hFb : ∀ x, |F x| ≤ A * rexp (B * ‖x‖))
+    (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ A * rexp (B * ‖x‖)) (i : Fin (n + 1)) :
+    ∫ x, ⟪b i, x⟫ * F x ∂stdGaussian E = ∫ x, fderiv ℝ F x (b i) ∂stdGaussian E := by
   have hA : 0 ≤ A := by simpa using (abs_nonneg _).trans (hFb 0)
-  have hL' : ∀ x, |fderiv ℝ F x (EuclideanSpace.single i 1)| ≤ A * rexp (B * ‖x‖) := fun x ↦ by
+  have hL' : ∀ x, |fderiv ℝ F x (b i)| ≤ A * rexp (B * ‖x‖) := fun x ↦ by
     rw [← Real.norm_eq_abs]
-    calc ‖fderiv ℝ F x (EuclideanSpace.single i 1)‖
-        ≤ ‖fderiv ℝ F x‖ * ‖(EuclideanSpace.single i 1 : EuclideanSpace ℝ (Fin (n + 1)))‖ :=
-          ContinuousLinearMap.le_opNorm _ _
-      _ ≤ A * rexp (B * ‖x‖) := by rw [PiLp.norm_single, norm_one, mul_one]; exact hL _
-  have hint1 : Integrable (fun x ↦ x i * F x) (stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) := by
-    have := IsGaussian.integrable_inner_mul_of_abs_le_mul_exp
-      (μ := stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) hF.continuous.aestronglyMeasurable hFb
-      (EuclideanSpace.single i 1)
-    simpa [EuclideanSpace.inner_single_left] using this
-  have hint2 : Integrable (fun x ↦ fderiv ℝ F x (EuclideanSpace.single i 1))
-      (stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) :=
+    calc ‖fderiv ℝ F x (b i)‖ ≤ ‖fderiv ℝ F x‖ * ‖b i‖ := ContinuousLinearMap.le_opNorm _ _
+      _ ≤ A * rexp (B * ‖x‖) := by rw [b.norm_eq_one, mul_one]; exact hL _
+  have hint1 : Integrable (fun x ↦ ⟪b i, x⟫ * F x) (stdGaussian E) :=
+    IsGaussian.integrable_inner_mul_of_abs_le_mul_exp hF.continuous.aestronglyMeasurable hFb (b i)
+  have hint2 : Integrable (fun x ↦ fderiv ℝ F x (b i)) (stdGaussian E) :=
     IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le_mul_exp hF hL _
-  rw [integral_stdGaussian_eq_integral_insertNth hint1 i,
-    integral_stdGaussian_eq_integral_insertNth hint2 i]
+  rw [integral_stdGaussian_eq_integral_insertNth b hint1 i,
+    integral_stdGaussian_eq_integral_insertNth b hint2 i]
   congr 1
   ext y
-  simp only [Fin.insertNth_apply_same]
-  have hd : ∀ t, HasDerivAt (fun t ↦ F (WithLp.toLp 2 (Fin.insertNth i t y)))
-      (fderiv ℝ F (WithLp.toLp 2 (Fin.insertNth i t y)) (EuclideanSpace.single i 1)) t := fun t ↦
+  simp only [b.inner_sum_smul, Fin.insertNth_apply_same]
+  have hd : ∀ t, HasDerivAt
+      (fun t ↦ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j))
+      (fderiv ℝ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j) (b i)) t := fun t ↦
     ((hF.differentiable one_ne_zero) _).hasFDerivAt.comp_hasDerivAt t
-      (hasDerivAt_toLp_insertNth i y t)
-  have hd' : deriv (fun t ↦ F (WithLp.toLp 2 (Fin.insertNth i t y))) =
-      fun t ↦ fderiv ℝ F (WithLp.toLp 2 (Fin.insertNth i t y)) (EuclideanSpace.single i 1) :=
+      (hasDerivAt_sum_smul_insertNth b i y t)
+  have hd' : deriv (fun t ↦ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j)) =
+      fun t ↦ fderiv ℝ F (∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j) (b i) :=
     funext fun t ↦ (hd t).deriv
-  have hc : Continuous fun t ↦
-      (WithLp.toLp 2 (Fin.insertNth i t y) : EuclideanSpace ℝ (Fin (n + 1))) :=
-    continuous_iff_continuousAt.2 fun t ↦ (hasDerivAt_toLp_insertNth i y t).continuousAt
+  have hc : Continuous fun t ↦ ∑ j, (Fin.insertNth i t y : Fin (n + 1) → ℝ) j • b j :=
+    continuous_iff_continuousAt.2 fun t ↦ (hasDerivAt_sum_smul_insertNth b i y t).continuousAt
   have h := integral_mul_gaussianReal_zero_one_of_integrable (fun t ↦ (hd t).differentiableAt)
     (integrable_gaussianReal_of_abs_le_mul_exp (hF.continuous.comp hc).aestronglyMeasurable
-      (abs_apply_toLp_insertNth_le hA hFb i y))
+      (abs_apply_sum_smul_insertNth_le b hA hFb i y))
     (integrable_mul_gaussianReal_of_abs_le_mul_exp (hF.continuous.comp hc).aestronglyMeasurable
-      (abs_apply_toLp_insertNth_le hA hFb i y)) (by
+      (abs_apply_sum_smul_insertNth_le b hA hFb i y)) (by
       rw [hd']
       exact integrable_gaussianReal_of_abs_le_mul_exp
         (((hF.continuous_fderiv one_ne_zero).comp hc).clm_apply
-          continuous_const).aestronglyMeasurable (abs_apply_toLp_insertNth_le hA hL' i y))
+          continuous_const).aestronglyMeasurable
+        (abs_apply_sum_smul_insertNth_le b hA hL' i y))
   rw [hd'] at h
   exact h
 
-/-- **Stein's identity** on `ℝ^{n+1}` for `C¹` functions of exponential growth:
-`E[⟪a, g⟫ F(g)] = E[DF(g) a]`. -/
-lemma integral_inner_mul_stdGaussian_euclidean_of_le_exp (hF : ContDiff ℝ 1 F)
-    (hFb : ∀ x, |F x| ≤ A * rexp (B * ‖x‖)) (hL : ∀ x, ‖fderiv ℝ F x‖ ≤ A * rexp (B * ‖x‖))
-    (a : EuclideanSpace ℝ (Fin (n + 1))) :
-    ∫ x, ⟪a, x⟫ * F x ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) =
-      ∫ x, fderiv ℝ F x a ∂stdGaussian (EuclideanSpace ℝ (Fin (n + 1))) := by
-  have ha : a = ∑ j, a j • (EuclideanSpace.single j 1 : EuclideanSpace ℝ (Fin (n + 1))) := by
-    conv_lhs => rw [← (EuclideanSpace.basisFun (Fin (n + 1)) ℝ).sum_repr a]
-    simp [EuclideanSpace.basisFun_apply, EuclideanSpace.basisFun_repr]
-  have h1 : ∀ x : EuclideanSpace ℝ (Fin (n + 1)), ⟪a, x⟫ * F x = ∑ j, a j * (x j * F x) := by
-    intro x
-    conv_lhs => rw [ha]
-    simp [sum_inner, real_inner_smul_left, EuclideanSpace.inner_single_left, Finset.sum_mul,
-      mul_assoc]
-  have h2 : ∀ x : EuclideanSpace ℝ (Fin (n + 1)),
-      fderiv ℝ F x a = ∑ j, a j * fderiv ℝ F x (EuclideanSpace.single j 1) := by
-    intro x
-    conv_lhs => rw [ha]
-    simp [map_sum, map_smul]
-  simp_rw [h1, h2]
-  rw [integral_finsetSum _ fun j _ ↦ ?_, integral_finsetSum _ fun j _ ↦ ?_]
-  · refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [integral_const_mul, integral_const_mul,
-      integral_apply_mul_stdGaussian_of_le_exp hF hFb hL j]
-  · exact (IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le_mul_exp hF hL _).const_mul _
-  · have := IsGaussian.integrable_inner_mul_of_abs_le_mul_exp
-      (μ := stdGaussian (EuclideanSpace ℝ (Fin (n + 1)))) hF.continuous.aestronglyMeasurable hFb
-      (EuclideanSpace.single j 1)
-    simpa [EuclideanSpace.inner_single_left] using this.const_mul (a j)
-
-end euclidean
+end basis
 
 section general
 
@@ -300,37 +279,25 @@ lemma integral_inner_mul_stdGaussian_of_le_exp (hF : ContDiff ℝ 1 F)
   rcases n with _ | n
   · have ha : a = 0 := finrank_zero_iff_forall_zero.1 hn a
     simp [ha]
-  have hA : 0 ≤ A := by simpa using (abs_nonneg _).trans (hFb 0)
+  -- expand `a` in an orthonormal basis and apply Stein's identity along each basis vector
   let b : OrthonormalBasis (Fin (n + 1)) ℝ E := (stdOrthonormalBasis ℝ E).reindex (finCongr hn)
-  let e : EuclideanSpace ℝ (Fin (n + 1)) ≃ₗᵢ[ℝ] E := b.repr.symm
-  have h1 : ∀ y, ⟪a, e y⟫ = ⟪b.repr a, y⟫ := fun y ↦ by
-    rw [← b.repr.inner_map_map, LinearIsometryEquiv.apply_symm_apply]
-  have h2 : ∀ y, fderiv ℝ F (e y) a = fderiv ℝ (F ∘ e) y (b.repr a) := fun y ↦ by
-    rw [show (F ∘ e) = F ∘ e.toContinuousLinearEquiv from rfl,
-      e.toContinuousLinearEquiv.comp_right_fderiv]
-    simp [e]
-  have hFe : ContDiff ℝ 1 (F ∘ e) := hF.comp e.contDiff
-  have hFeb : ∀ y, |(F ∘ e) y| ≤ A * rexp (B * ‖y‖) := fun y ↦ by
-    rw [Function.comp_apply, ← e.norm_map y]
-    exact hFb _
-  have hLe : ∀ y, ‖fderiv ℝ (F ∘ e) y‖ ≤ A * rexp (B * ‖y‖) := fun y ↦ by
-    rw [show (F ∘ e) = F ∘ e.toContinuousLinearEquiv from rfl,
-      e.toContinuousLinearEquiv.comp_right_fderiv]
-    refine ContinuousLinearMap.opNorm_le_bound _ (mul_nonneg hA (exp_pos _).le) fun w ↦ ?_
-    rw [ContinuousLinearMap.comp_apply]
-    calc ‖fderiv ℝ F (e.toContinuousLinearEquiv y) (e.toContinuousLinearEquiv w)‖
-        ≤ ‖fderiv ℝ F (e.toContinuousLinearEquiv y)‖ * ‖e.toContinuousLinearEquiv w‖ :=
-          ContinuousLinearMap.le_opNorm _ _
-      _ ≤ A * rexp (B * ‖y‖) * ‖w‖ := by
-          rw [show e.toContinuousLinearEquiv w = e w from rfl, e.norm_map]
-          gcongr
-          exact (hL _).trans_eq
-            (by rw [show e.toContinuousLinearEquiv y = e y from rfl, e.norm_map])
-  rw [← stdGaussian_map e, integral_map (by fun_prop) ?_, integral_map (by fun_prop) ?_]
-  · simp_rw [h1, h2]
-    exact integral_inner_mul_stdGaussian_euclidean_of_le_exp hFe hFeb hLe (b.repr a)
-  · exact ((hF.continuous_fderiv one_ne_zero).clm_apply continuous_const).aestronglyMeasurable
-  · exact ((continuous_const.inner continuous_id).mul hF.continuous).aestronglyMeasurable
+  have ha : a = ∑ j, ⟪b j, a⟫ • b j := (b.sum_repr' a).symm
+  have h1 : ∀ x : E, ⟪a, x⟫ * F x = ∑ j, ⟪b j, a⟫ * (⟪b j, x⟫ * F x) := by
+    intro x
+    conv_lhs => rw [ha]
+    simp [sum_inner, real_inner_smul_left, Finset.sum_mul, mul_assoc]
+  have h2 : ∀ x : E, fderiv ℝ F x a = ∑ j, ⟪b j, a⟫ * fderiv ℝ F x (b j) := by
+    intro x
+    conv_lhs => rw [ha]
+    simp [map_sum, map_smul]
+  simp_rw [h1, h2]
+  rw [integral_finsetSum _ fun j _ ↦ ?_, integral_finsetSum _ fun j _ ↦ ?_]
+  · refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [integral_const_mul, integral_const_mul,
+      integral_inner_mul_stdGaussian_basis_of_le_exp b hF hFb hL j]
+  · exact (IsGaussian.integrable_fderiv_apply_of_norm_fderiv_le_mul_exp hF hL _).const_mul _
+  · exact (IsGaussian.integrable_inner_mul_of_abs_le_mul_exp
+      hF.continuous.aestronglyMeasurable hFb (b j)).const_mul _
 
 end general
 

@@ -92,12 +92,13 @@ lemma lnNoise_real_norm_lnDelta_gt_le {d : ℕ} (hd : 0 < d) {n : ℕ} (hn : 0 <
       (Finset.measurable_sum _ fun i _ ↦ (measurable_pi_apply i).pow_const 2)
   rw [measureReal_def, ← Measure.map_apply_of_aemeasurable hlaw.aemeasurable hS, hlaw.map_eq,
     ← measureReal_def]
-  have hstd := measureReal_norm_sq_ge_le_stdGaussian (ι := Fin d) hδ
+  have hstd := measureReal_norm_sq_ge_le_stdGaussian (E := EuclideanSpace ℝ (Fin d)) hδ
+  rw [finrank_euclideanSpace_fin] at hstd
   rw [← map_pi_eq_stdGaussian, measureReal_def,
     Measure.map_apply (PiLp.continuous_toLp 2 _).measurable
       (measurableSet_le measurable_const (measurable_norm.pow_const 2)), ← measureReal_def] at hstd
   have hset : (WithLp.toLp 2 : (Fin d → ℝ) → EuclideanSpace ℝ (Fin d)) ⁻¹'
-      {v | 2 * (Fintype.card (Fin d)) + 12 * log (1 / δ') ≤ ‖v‖ ^ 2}
+      {v | 2 * (d : ℝ) + 12 * log (1 / δ') ≤ ‖v‖ ^ 2}
       = {g | 2 * d + 12 * log (1 / δ') ≤ ∑ i, g i ^ 2} := by
     ext g
     simp [EuclideanSpace.real_norm_sq_eq]

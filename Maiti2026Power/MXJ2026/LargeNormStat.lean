@@ -211,7 +211,10 @@ lemma hasSubexponentialMGF_lnQ (hn : 0 < n) :
   have h2 := HasSubexponentialMGF.of_map (X := fun g : ι → ℝ ↦ ∑ i, (g i ^ 2 - 1)) (Y := lnG n)
     (μ := lnNoise ι n) hlaw.aemeasurable (by exact h)
   have h3 := h2.const_mul (1 / n)
-  refine h3.congr (ae_of_all _ fun e ↦ ?_)
+  -- the library bound is sharper (`4 d` in place of `8 d`); we keep the paper's constant here
+  refine (h3.congr (ae_of_all _ fun e ↦ ?_)).mono
+    (by nlinarith [sq_nonneg (1 / (n : ℝ)), (Nat.cast_nonneg (Fintype.card ι) : (0:ℝ) ≤ _)])
+    le_rfl
   simp only [Function.comp_apply]
   rw [norm_lnDelta_sq_sub_eq hn]
 

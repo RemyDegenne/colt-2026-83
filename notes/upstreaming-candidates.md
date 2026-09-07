@@ -2,10 +2,12 @@
 
 Assessment of the library layers `Maiti2026Power/Mathlib/` and `Maiti2026Power/LeanMachineLearning/` as
 contributions to Mathlib and to LML (LeanMachineLearning), written on 2026-09-06 after phase 2
-was completed (every headline result proved, comparator green). Overlaps were checked against
-the Mathlib revision pinned in `lake-manifest.json` at that date
-(`3bdedf29bada13d8103e6c979001c51dcee210c8`, toolchain `v4.34.0-rc2`): none of the results
-listed below exist in Mathlib at that revision; the only near-miss is
+was completed (every headline result proved, comparator green), and updated on 2026-09-07 after
+the LML bump to `21d7e67`, which removed the entries that have since been upstreamed to LML
+(the sub-exponential file, the integrated chain rule for `klDiv`, `IndepFun.hasCondDistrib_const`,
+`Kernel.compProd_prodMkLeft_apply`). Overlaps were checked against the Mathlib revision pinned in
+`lake-manifest.json` (`cf65d43b4f5e1a79482e8c488d121853b9d7ca05`, toolchain `v4.34.0-rc2`): none of
+the results listed below exist in Mathlib at that revision; the only near-miss is
 `Set.Finite.isCompact_convexHull`, which covers finite sets only. Recheck before opening a PR,
 since the probability library moves quickly.
 
@@ -15,9 +17,8 @@ Classical results, self-contained, already stated in Mathlib namespaces and Math
 
 | File | Result | Notes |
 |---|---|---|
-| `Probability/Moments/SubExponential.lean` | `HasSubexponentialMGF` with its kernel version `Kernel.HasSubexponentialMGF` and conditional version `HasCondSubexponentialMGF`, Bernstein tail bounds, closure under sums (Hölder), independent sums and averages, Bernstein's inequality, Bernstein's condition for bounded variables, the Azuma–Bernstein inequality for martingale differences | Direct companion of Mathlib's `HasSubgaussianMGF` (`Mathlib/Probability/Moments/SubGaussian.lean`), with the same layering (kernel → conditional → measure) and lemma names; the case `b = 0` is that structure. Feature parity reached on 2026-09-07. |
-| `InformationTheory/Pinsker.lean`, `InformationTheory/BretagnolleHuber.lean` | Pinsker's inequality for one event (through the Bernoulli case), the Bretagnolle–Huber inequality | Absent from Mathlib although `klDiv` is there. |
-| `InformationTheory/KLMixture.lean`, `InformationTheory/KLCompProd.lean` | Convexity of `klDiv` in its second argument; measurability of `a ↦ klDiv (κ a) (η a)` and the chain rule `klDiv (μ ⊗ₘ κ) (μ ⊗ₘ η) = ∫⁻ a, klDiv (κ a) (η a) ∂μ` | Extend the existing `klDiv_compProd` API. Needs `Probability/Distributions/Bernoulli.lean` (Lebesgue integrals and densities of `bernoulliMeasure`) and `MeasureTheory/MixtureMeasure.lean` (Radon–Nikodym derivative of a finite mixture), both small and upstreamable. |
+| `InformationTheory/Pinsker.lean`, `InformationTheory/BretagnolleHuber.lean` | Pinsker's inequality for one event (through the Bernoulli case), the Bretagnolle–Huber inequality | Absent from Mathlib although `klDiv` is there. Needs `Probability/Distributions/Bernoulli.lean` (Lebesgue integrals and densities of `bernoulliMeasure`), small and upstreamable. |
+| `InformationTheory/KLMixture.lean` | Convexity of `klDiv` in its second argument | Extends the existing `klDiv` API. Needs `MeasureTheory/MixtureMeasure.lean` (Radon–Nikodym derivative of a finite mixture), small and upstreamable. |
 | `Probability/SudakovFernique.lean` with `Probability/GaussianInterpolation.lean`, `Probability/SteinIdentity.lean`, `Probability/SteinReal.lean`, `Probability/SteinExpGrowth.lean`, `Analysis/SpecialFunctions/LogSumExp.lean`, `Analysis/InnerProductSpace/LogSumExp.lean` | Sudakov–Fernique inequality; Gaussian interpolation formula; Stein's identity (real and vector); log-sum-exp and softmax as a smoothing of the maximum | A coherent package. Log-sum-exp/softmax and Stein's identity are independently useful and can go first. |
 | `Probability/MaureyPisier.lean`, `Probability/BorellTIS.lean`, `Analysis/Calculus/QuarterCircle.lean` | Gaussian concentration of smooth Lipschitz functions (Maurey–Pisier); Borell–TIS for finite maxima of linear forms and for compact sets | The compact-set version needs the support function (see below); the finite-max version is self-contained. |
 | `Analysis/Convex/CompactHull.lean` | The convex hull of a compact set of a finite-dimensional real space is compact (Carathéodory) | Mathlib only has the finite-set case. |
@@ -25,7 +26,7 @@ Classical results, self-contained, already stated in Mathlib namespaces and Math
 | `Probability/GaussianSquareMGF.lean`, `Probability/SubgaussianSquare.lean` | `∫ exp (b x² + c x + d)`; MGF of the square of a Gaussian; chi-square variables are sub-exponential with explicit constants and their tail bounds; the Gaussian trick `E exp (a Z²) ≤ (1 - 2ca)^(-1/2)` for sub-Gaussian `Z`, fourth moment `≤ 14 c²`, `Z² - c` sub-exponential | Standard toolbox results with explicit constants. |
 | `Probability/Rademacher.lean`, `Probability/GaussianSum.lean`, `Probability/GaussianAbsMoment.lean`, `Probability/SubgaussianMax.lean`, `Probability/GaussianMaxLower.lean`, `Probability/GaussianMGF.lean` | Rademacher vectors and Hoeffding's lemma coordinatewise; sums of independent Gaussians are Gaussian; `E|Z| = √(2v/π)`; expected maximum of finitely many sub-Gaussians; Mills-ratio lower bound and `E max ≥ √(log m)/4`; exponential moments under Gaussian measures (from Fernique) | Small, standard, low review cost. |
 | `Probability/InfinitePiWindow.lean`, `Probability/IidOfCondDistrib.lean`, `Probability/CondDistribConst.lean`, `Probability/CondDistrib.lean` | Coordinates of an i.i.d. sequence along an injective family are i.i.d. (finite and infinite index sets); independence of a prefix and a later window; a constant conditional law implies i.i.d.; `Kernel.mapOfConst`; transport and composition lemmas for `HasCondDistrib` | Extend the recent `HasCondDistrib` and `infinitePi` APIs of Mathlib, which are actively growing. |
-| `Analysis/Calculus/LocalExtr.lean`, `MeasureTheory/MeasurableSpace/Sigma.lean`, `Data/Fintype/PiSplitAt.lean`, `Algebra/Order/BigOperators/Covariance.lean` | One-sided Fermat's rule; measurability on sigma types from the fibers; sums over dependent products split at a coordinate; weighted covariance bound | Trivial to review. |
+| `Analysis/Calculus/LocalExtr.lean`, `MeasureTheory/MeasurableSpace/Sigma.lean`, `Data/Fintype/PiSplitAt.lean`, `Algebra/Order/BigOperators/Covariance.lean`, `Analysis/InnerProductSpace/OrthonormalBasisSubmodule.lean` | One-sided Fermat's rule; measurability on sigma types from the fibers; sums over dependent products split at a coordinate; weighted covariance bound; expansion and Parseval identities for an orthonormal basis of a submodule, seen in the ambient space | Trivial to review. |
 
 ## Candidates needing a design decision first
 
@@ -45,7 +46,7 @@ the natural next layer of LML.
 * `IdentAlg.lean`, `Run.lean`, `FixedBudget.lean`, `AlgorithmPrefix.lean`: identification algorithms with a stopping rule and an output rule, runs, transport and existence of runs, the PAC property, fixed budgets and fixed designs, the stopped history and data processing. This is the core abstraction of the project.
 * `Seeded.lean` with `Probability/CondDistribConst.lean`: seeded algorithms (internal randomness as fresh seeds), noise environments, the seed representation of every run through the uniqueness of the law of the history, and the PAC transfer lemma for fixed-budget seeded algorithms with a deterministic output. This was the workhorse for both adaptive upper bounds (Theorems 7 and 8).
 * `Phased.lean`, `MedianEliminationSchedule.lean`, `MedianEliminationRound.lean`, `MedianElimination.lean`: phased deterministic algorithms and a verified Median Elimination.
-* `DivergenceDecomposition.lean`, `EnvDensity.lean`, `TwoPoint.lean`, `RepeatTest.lean`, `RepeatTestGaussian.lean`: the divergence decomposition, environment densities along a history, the two- and three-point methods, the repeated-action test. The standard lower-bound toolkit for bandits.
+* `DivergenceDecomposition.lean` with `Mathlib/InformationTheory/KLCompProd.lean` (all that is left of that file: the one-step divergence of a policy/reward decomposition, on top of LML's integrated chain rule), `EnvDensity.lean`, `TwoPoint.lean`, `RepeatTest.lean`, `RepeatTestGaussian.lean`: the divergence decomposition, environment densities along a history, the two- and three-point methods, the repeated-action test. The standard lower-bound toolkit for bandits.
 * `LinearBandit.lean`, `GaussianNoise.lean`, `FixedDesignRun.lean`, `FixedDesignLaw.lean`, `FixedDesignTransport.lean`, `CondSubgaussian.lean`: the linear Gaussian environment, its noise structure (i.i.d. noise for any algorithm, conditionally sub-Gaussian), the law of fixed-design runs and their transport through linear maps.
 
 ## Not worth upstreaming
@@ -60,10 +61,12 @@ which is the paper itself.
 
 ## Suggested order
 
-A first PR with the best effort-to-value ratio: `SubExponential.lean`, then the two
-information-theory inequalities. Each is a single file, classical, and plugs into an existing
-Mathlib API. Then the KL convexity/chain-rule files and the Gaussian toolbox files
-(`GaussianSquareMGF`, `SubgaussianSquare`, `Rademacher`, `GaussianSum`). The Sudakov–Fernique
+A first PR with the best effort-to-value ratio: the two information-theory inequalities. Each is a
+single file, classical, and plugs into an existing Mathlib API. Then the KL convexity file and the
+Gaussian toolbox files (`GaussianSquareMGF`, `SubgaussianSquare`, `Rademacher`, `GaussianSum`).
+The sub-exponential file left this repository for LML on 2026-09-07 and is the strongest Mathlib
+candidate of all, but the PR now starts from
+`LeanMachineLearning/ForMathlib/Probability/Moments/SubExponential.lean`. The Sudakov–Fernique
 and Borell–TIS packages are the most valuable but also the largest, and the compact-set versions
 wait on the support-function design decision.
 

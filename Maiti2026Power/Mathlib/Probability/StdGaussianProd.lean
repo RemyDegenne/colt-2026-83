@@ -12,11 +12,10 @@ public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 /-!
 # Products of standard Gaussian measures and independence of uncorrelated linear images
 
-* `stdGaussian_map_blocks`: splitting the coordinates of a standard Gaussian vector on
-  `EuclideanSpace ℝ (ι ⊕ κ)` into the `ι`-block and the `κ`-block gives a pair of independent
-  standard Gaussian vectors, that is the product measure
-  `(stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ κ))`.
-* `isGaussian_prod_stdGaussian`: this product measure is a Gaussian measure on the product space.
+* `map_toLp_prod_stdGaussian`: a pair of independent standard Gaussian vectors of `E` and `F` is a
+  standard Gaussian vector of the product space `WithLp 2 (E × F)`.
+* `isGaussian_prod_stdGaussian`: the product of two standard Gaussian measures is a Gaussian
+  measure on the product space.
 * `covariance_inner_add_prod_stdGaussian`: the covariance of the linear forms
   `⟪a, A₁ p.1 + A₂ p.2⟫` and `⟪b, B₁ p.1 + B₂ p.2⟫` under the product of two standard Gaussian
   measures is `⟪a, (A₁ ∘L B₁† + A₂ ∘L B₂†) b⟫`.
@@ -34,44 +33,43 @@ belong next to `covariance_fst_snd_prod` in Mathlib rather than in this Gaussian
 @[expose] public section
 
 open MeasureTheory InnerProductSpace
-open scoped RealInnerProductSpace
+open scoped RealInnerProductSpace InnerProduct
 
 namespace ProbabilityTheory
 
-section Blocks
+section Prod
 
-variable {ι κ : Type*} [Fintype ι] [Fintype κ]
+variable {E F : Type*}
+  [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+  [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
+  [MeasurableSpace F] [BorelSpace F]
 
-/-- Splitting a standard Gaussian vector on `EuclideanSpace ℝ (ι ⊕ κ)` into its `ι`-block and its
-`κ`-block gives a pair of independent standard Gaussian vectors. -/
-lemma stdGaussian_map_blocks :
-    (stdGaussian (EuclideanSpace ℝ (ι ⊕ κ))).map
-        (fun g ↦ (WithLp.toLp 2 fun i ↦ g (Sum.inl i), WithLp.toLp 2 fun j ↦ g (Sum.inr j))) =
-      (stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ κ)) := by
-  rw [← map_pi_eq_stdGaussian, ← map_pi_eq_stdGaussian, ← map_pi_eq_stdGaussian,
-    Measure.map_prod_map _ _ (by fun_prop) (by fun_prop),
-    ← (measurePreserving_sumPiEquivProdPi (fun _ : ι ⊕ κ ↦ gaussianReal 0 1)).map_eq,
-    Measure.map_map (by fun_prop) (by fun_prop), Measure.map_map (by fun_prop) (by fun_prop)]
-  rfl
+/-- **A pair of independent standard Gaussian vectors is a standard Gaussian vector on the product
+space**: the product of the standard Gaussian measures of `E` and `F` is the standard Gaussian
+measure of `E × F` with the inner product `⟪(a, b), (x, y)⟫ = ⟪a, x⟫ + ⟪b, y⟫`, that is of
+`WithLp 2 (E × F)`. -/
+lemma map_toLp_prod_stdGaussian :
+    ((stdGaussian E).prod (stdGaussian F)).map (WithLp.toLp 2)
+      = stdGaussian (WithLp 2 (E × F)) := by
+  refine Measure.ext_of_charFun (funext fun t ↦ ?_)
+  rw [charFun_prod, charFun_stdGaussian, charFun_stdGaussian, charFun_stdGaussian,
+    ← Complex.exp_add]
+  congr 1
+  norm_cast
+  simp only [WithLp.ofLp_fst, WithLp.ofLp_snd]
+  linarith [WithLp.prod_norm_sq_eq_of_L2 t]
 
-/-- The product of two standard Gaussian measures on Euclidean spaces is a Gaussian measure on
-the product space. -/
-instance isGaussian_prod_stdGaussian :
-    IsGaussian ((stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ κ))) := by
-  rw [← stdGaussian_map_blocks]
-  -- the block map is a continuous linear map
-  have : (fun g : EuclideanSpace ℝ (ι ⊕ κ) ↦
-      ((WithLp.toLp 2 fun i ↦ g (Sum.inl i) : EuclideanSpace ℝ ι),
-        (WithLp.toLp 2 fun j ↦ g (Sum.inr j) : EuclideanSpace ℝ κ))) =
-      ((PiLp.continuousLinearEquiv 2 ℝ _).symm.toContinuousLinearMap ∘L
-          ContinuousLinearMap.pi fun i ↦ PiLp.proj 2 _ (Sum.inl i)).prod
-        ((PiLp.continuousLinearEquiv 2 ℝ _).symm.toContinuousLinearMap ∘L
-          ContinuousLinearMap.pi fun j ↦ PiLp.proj 2 _ (Sum.inr j)) := by
-    ext g <;> rfl
-  rw [this]
+/-- The product of two standard Gaussian measures is a Gaussian measure on the product space. -/
+instance isGaussian_prod_stdGaussian : IsGaussian ((stdGaussian E).prod (stdGaussian F)) := by
+  have h : (stdGaussian E).prod (stdGaussian F)
+      = (stdGaussian (WithLp 2 (E × F))).map (WithLp.prodContinuousLinearEquiv 2 ℝ E F) := by
+    rw [← map_toLp_prod_stdGaussian, Measure.map_map (by fun_prop) (by fun_prop)]
+    simp [Function.comp_def]
+  rw [h]
   infer_instance
 
-end Blocks
+end Prod
 
 section Covariance
 
@@ -138,16 +136,13 @@ lemma memLp_two_inner_snd_prod_stdGaussian (a : E₂) :
 lemma covariance_inner_add_prod_stdGaussian (a : F) (b : G) :
     cov[fun p ↦ ⟪a, A₁ p.1 + A₂ p.2⟫, fun p ↦ ⟪b, B₁ p.1 + B₂ p.2⟫;
         (stdGaussian E₁).prod (stdGaussian E₂)] =
-      ⟪a, (A₁ ∘L ContinuousLinearMap.adjoint B₁) b⟫
-        + ⟪a, (A₂ ∘L ContinuousLinearMap.adjoint B₂) b⟫ := by
+      ⟪a, (A₁ ∘L B₁†) b⟫ + ⟪a, (A₂ ∘L B₂†) b⟫ := by
   have h₁ : (fun p : E₁ × E₂ ↦ ⟪a, A₁ p.1 + A₂ p.2⟫) =
-      (fun p ↦ ⟪ContinuousLinearMap.adjoint A₁ a, p.1⟫)
-        + fun p ↦ ⟪ContinuousLinearMap.adjoint A₂ a, p.2⟫ := by
+      (fun p ↦ ⟪(A₁†) a, p.1⟫) + fun p ↦ ⟪(A₂†) a, p.2⟫ := by
     ext p
     simp [inner_add_right, ContinuousLinearMap.adjoint_inner_left]
   have h₂ : (fun p : E₁ × E₂ ↦ ⟪b, B₁ p.1 + B₂ p.2⟫) =
-      (fun p ↦ ⟪ContinuousLinearMap.adjoint B₁ b, p.1⟫)
-        + fun p ↦ ⟪ContinuousLinearMap.adjoint B₂ b, p.2⟫ := by
+      (fun p ↦ ⟪(B₁†) b, p.1⟫) + fun p ↦ ⟪(B₂†) b, p.2⟫ := by
     ext p
     simp [inner_add_right, ContinuousLinearMap.adjoint_inner_left]
   rw [h₁, h₂,
@@ -159,7 +154,7 @@ lemma covariance_inner_add_prod_stdGaussian (a : F) (b : G) :
     covariance_add_right (memLp_two_inner_snd_prod_stdGaussian _)
       (memLp_two_inner_fst_prod_stdGaussian _) (memLp_two_inner_snd_prod_stdGaussian _),
     covariance_fst_snd_prod (memLp_two_inner_stdGaussian _) (memLp_two_inner_stdGaussian _),
-    covariance_comm (fun p : E₁ × E₂ ↦ ⟪ContinuousLinearMap.adjoint A₂ a, p.2⟫),
+    covariance_comm (fun p : E₁ × E₂ ↦ ⟪(A₂†) a, p.2⟫),
     covariance_fst_snd_prod (memLp_two_inner_stdGaussian _) (memLp_two_inner_stdGaussian _),
     covariance_comp_fst_prod (by fun_prop) (by fun_prop),
     covariance_comp_snd_prod (by fun_prop) (by fun_prop),
@@ -169,16 +164,14 @@ lemma covariance_inner_add_prod_stdGaussian (a : F) (b : G) :
 /-- The linear images `A₁ p.1 + A₂ p.2` and `B₁ p.1 + B₂ p.2` of a pair of independent standard
 Gaussian vectors are independent as soon as they are uncorrelated, that is
 `A₁ ∘L B₁† + A₂ ∘L B₂† = 0`. -/
-lemma indepFun_add_prod_stdGaussian_of_comp_adjoint_eq_zero {ι κ : Type*} [Fintype ι] [Fintype κ]
-    {A₁ : EuclideanSpace ℝ ι →L[ℝ] F} {A₂ : EuclideanSpace ℝ κ →L[ℝ] F}
-    {B₁ : EuclideanSpace ℝ ι →L[ℝ] G} {B₂ : EuclideanSpace ℝ κ →L[ℝ] G}
+lemma indepFun_add_prod_stdGaussian_of_comp_adjoint_eq_zero
     [MeasurableSpace F] [BorelSpace F] [MeasurableSpace G] [BorelSpace G]
-    (h : A₁ ∘L ContinuousLinearMap.adjoint B₁ + A₂ ∘L ContinuousLinearMap.adjoint B₂ = 0) :
+    (h : A₁ ∘L B₁† + A₂ ∘L B₂† = 0) :
     IndepFun (fun p ↦ A₁ p.1 + A₂ p.2) (fun p ↦ B₁ p.1 + B₂ p.2)
-      ((stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ κ))) := by
+      ((stdGaussian E₁).prod (stdGaussian E₂)) := by
   refine HasGaussianLaw.indepFun_of_covariance_inner ?_ fun a b ↦ ?_
   · exact HasGaussianLaw.map_fun (IsGaussian.hasGaussianLaw_id
-      (μ := (stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ κ))))
+      (μ := (stdGaussian E₁).prod (stdGaussian E₂)))
       ((A₁ ∘L ContinuousLinearMap.fst ℝ _ _ + A₂ ∘L ContinuousLinearMap.snd ℝ _ _).prod
         (B₁ ∘L ContinuousLinearMap.fst ℝ _ _ + B₂ ∘L ContinuousLinearMap.snd ℝ _ _))
   · rw [covariance_inner_add_prod_stdGaussian, ← inner_add_right, ← add_apply, h]
