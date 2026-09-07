@@ -94,14 +94,14 @@ jobs:
         with:
           build: true
           lint: true
-          # Restricted to the COLT83 library below: the bare `mk_all --check` chokes on the
+          # Restricted to the Maiti2026Power library below: the bare `mk_all --check` chokes on the
           # Comparator library, whose modules are globs with no module directory.
           mk_all-check: false
 
-      - name: mk_all check (COLT83 library only)
+      - name: mk_all check (Maiti2026Power library only)
         run: |
           set -euo pipefail
-          lake exe mk_all --check --lib COLT83
+          lake exe mk_all --check --lib Maiti2026Power
 
       # The comparator challenge/solution modules (see comparator/README.md). Building them here
       # keeps them compiling against the current tree, and `checkdecls` (inside the blueprint
@@ -166,7 +166,7 @@ jobs:
         run: |
           set -euo pipefail
           /tmp/semantic_hash/.lake/build/bin/semantic_hash export \
-            --dir . --imports COLT83 --output "$REFEREE_HASHES"
+            --dir . --imports Maiti2026Power --output "$REFEREE_HASHES"
 
       # The phase split: everything needing a Lean environment produces data, and everything after
       # is a pure function of that data. Collection is its own step because `provenance` has to run
@@ -176,7 +176,7 @@ jobs:
         run: |
           set -euo pipefail
           lake env "$REFEREE_BIN" collect \
-            --root COLT83 \
+            --root Maiti2026Power \
             --hashes "$REFEREE_HASHES" \
             --data "$REFEREE_DATA"
 

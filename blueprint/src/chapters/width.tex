@@ -37,7 +37,7 @@ Section~\ref{sec:width_multitask}).
 \label{sec:width_upper}
 
 \begin{proposition}[The width is at most $d$]\label{prop:width_le_d}
-\lean{COLT83.gw_le_card, COLT83.IsGOptimalDesign.gwMat_le_card}\leanok
+\lean{Maiti2026Power.gw_le_card, Maiti2026Power.IsGOptimalDesign.gwMat_le_card}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs \subset \R^d$ be a spanning action set. Then $\gw(\Xs) \le d$. More precisely, the
 $G$-optimal design matrix $A_G$ of Theorem~\ref{thm:kiefer_wolfowitz} (which exists since
@@ -58,7 +58,7 @@ $S = I_d$) yields $\gwidth{\Xs}{A_G} \le \sqrt d \cdot \sqrt d = d$.
 \end{proof}
 
 \begin{proposition}[Width of a finite set]\label{prop:width_finite}
-\lean{COLT83.gw_le_sqrt_log_ncard, COLT83.IsGOptimalDesign.gwMat_le_sqrt_log_ncard}\leanok
+\lean{Maiti2026Power.gw_le_sqrt_log_ncard, Maiti2026Power.IsGOptimalDesign.gwMat_le_sqrt_log_ncard}\leanok
 \uses{def:width, thm:kiefer_wolfowitz}
 Let $\Xs$ be a finite spanning action set with $\abs{\Xs} = m$. Then
 $\gw(\Xs) \le \sqrt{2 d \log m}$; more precisely $\gwidth{\Xs}{A_G} \le \sqrt{2d\log m}$
@@ -80,7 +80,7 @@ Proposition~\ref{prop:width_le_d}.
 \end{proof}
 
 \begin{definition}[Regionalized width]\label{def:regionalized_width}
-\lean{COLT83.regionalizedGw, COLT83.gwMat_le_regionalizedGw, COLT83.regionalizedGw_le, COLT83.regionalizedGw_nonneg, COLT83.regionalizedGw_le_gwMat}\leanok
+\lean{Maiti2026Power.regionalizedGw, Maiti2026Power.gwMat_le_regionalizedGw, Maiti2026Power.regionalizedGw_le, Maiti2026Power.regionalizedGw_nonneg, Maiti2026Power.regionalizedGw_le_gwMat}\leanok
 \uses{def:width_matrix, lem:width_matrix_wd}
 Let $\Xs$ be an action set (spanning or not), $A \in \PD$ and let
 $\mathcal R = (R_1, \dots, R_K)$, $K \ge 1$, be a partition of
@@ -112,7 +112,7 @@ $\gwidth{R_i}{A}$ verbatim, and Chapter~\ref{chap:log_gains} cites them directly
 regions.
 
 \begin{proposition}[Regionalized width of a finite set]\label{prop:width_partition}
-\lean{COLT83.IsGOptimalDesign.regionalizedGw_le_sqrt_log}\leanok
+\lean{Maiti2026Power.IsGOptimalDesign.regionalizedGw_le_sqrt_log}\leanok
 \uses{def:regionalized_width, thm:kiefer_wolfowitz}
 Let $\Xs$ be a finite spanning action set and $\mathcal R = (R_1,\dots,R_K)$ a partition of
 $\Xs$ with $\abs{R_i} \le p$ for all $i$, where $p \ge 1$. Then, for the $G$-optimal design
@@ -138,7 +138,7 @@ maximum over $i$.
 \label{sec:width_lower}
 
 \begin{proposition}[Width of the unit ball]\label{prop:width_ball}
-\lean{COLT83.gwMat_unitBall, COLT83.one_le_sqrt_diag_mul_sqrt_diag_inv, COLT83.le_gwMat_unitBall, COLT83.le_gw_unitBall, COLT83.div_sqrt_three_le_gw_unitBall, COLT83.gw_unitBall_le_card}\leanok
+\lean{Maiti2026Power.gwMat_unitBall, Maiti2026Power.one_le_sqrt_diag_mul_sqrt_diag_inv, Maiti2026Power.le_gwMat_unitBall, Maiti2026Power.le_gw_unitBall, Maiti2026Power.div_sqrt_three_le_gw_unitBall, Maiti2026Power.gw_unitBall_le_card}\leanok
 \uses{def:width}
 The unit ball $\Xs = \ball_d$ is a spanning action set (it is compact and contains the
 standard basis $e_1,\dots,e_d$), so its Gaussian width $\gw(\ball_d)$ of
@@ -169,7 +169,7 @@ $\gw(\ball_d)$ is at least $\sqrt{2/\pi}\,d \ge d/\sqrt 3$ (as $\pi \le 6$).
 \end{proof}
 
 \begin{lemma}[Well-separated points in the whitened set]\label{lem:whitened_separated_points}
-\lean{exists_pos_weight_sq_dist_ge_of_isotropic, exists_separated_of_isotropic, COLT83.sum_mul_inner_sqrt_inv_sq}\leanok
+\lean{exists_pos_weight_sq_dist_ge_of_isotropic, exists_separated_of_isotropic, Maiti2026Power.sum_mul_inner_sqrt_inv_sq}\leanok
 \uses{def:design_matrix, lem:sqrt_props}
 Let $d \ge 2$, let $\Xs$ be an action set and $\lambda \in \simplex_{\Xs}$ with
 $\Sigma := A(\lambda) \succ 0$ (such a $\lambda$ exists if and only if $\Xs$ is spanning), and let
@@ -204,7 +204,7 @@ required pairwise separation.
 \end{proof}
 
 \textbf{Lean remark.} The lemma is formalized in library generality
-(\texttt{COLT83/Mathlib/Analysis/InnerProductSpace/IsotropicSeparated.lean}): for a weighted
+(\texttt{Maiti2026Power/Mathlib/Analysis/InnerProductSpace/IsotropicSeparated.lean}): for a weighted
 family $(w_i, u_i)$ of a $d$-dimensional inner product space in \emph{isotropic position},
 $\sum_i w_i\ip{u_i}{v}^2 = \norm v^2$ for all $v$ ($w_i \ge 0$, $\sum_i w_i = 1$), and every
 $m$, there are $m$ points $u_{i_1},\dots,u_{i_m}$ with positive weights and
@@ -215,7 +215,7 @@ instead of the projection $Q_k$. The isotropy of the whitened design,
 $\sum_x\lambda_x\ip{\Sigma^{-1/2}x}{v}^2 = \norm v^2$, is \texttt{sum\_mul\_inner\_sqrt\_inv\_sq}.
 
 \begin{proposition}[Lower bound $\sqrt{d\log d}$; secondary]\label{prop:width_lower_sqrt_dlogd}
-\lean{COLT83.sqrt_log_le_gw}\leanok
+\lean{Maiti2026Power.sqrt_log_le_gw}\leanok
 \uses{def:width}
 Let $\Xs \subset \R^d$ be a spanning action set with $d \ge 4$. Then
 \[
@@ -232,7 +232,7 @@ condition $d \ge 4$ ensures $m := \lfloor d/2\rfloor \ge 2$.
 Fix $\lambda \in \simplex_{\Xs}$ with $\Sigma := A(\lambda) \succ 0$ (it exists since $\Xs$ is
 spanning, Lemma~\ref{lem:exists_posdef_design}); it suffices to lower bound
 $\gwidth{\Xs}{\Sigma} = \E\sup_{t\in\mathcal T}\ip{t}{g}$, $\mathcal T = \Sigma^{-1/2}\Xs$
-(Lean: \texttt{COLT83.sqrt\_log\_le\_gwMat}, for every design $\lambda$ with $A(\lambda)\succ0$).
+(Lean: \texttt{Maiti2026Power.sqrt\_log\_le\_gwMat}, for every design $\lambda$ with $A(\lambda)\succ0$).
 Take $t_1,\dots,t_m \in \mathcal T$ from
 Lemma~\ref{lem:whitened_separated_points}. Set $Z_i := \ip{t_i}{g}$; $(Z_1,\dots,Z_m)$ is a
 centered Gaussian vector (Lemma~\ref{lem:gauss_linear_image}) with
@@ -373,7 +373,7 @@ of the right dimension; to avoid overloading the notation $\gw(\Xs)$, this secon
 called the \emph{intrinsic width} and written $\gw_{\mathrm{int}}(\Xs)$.
 
 \begin{definition}[Intrinsic width of a set spanning a subspace]\label{def:width_subspace}
-\lean{COLT83.intrinsicGw}\leanok
+\lean{Maiti2026Power.intrinsicGw}\leanok
 \uses{def:width, lem:width_iso}
 Let $\Xs \subset \R^d$ be an action set (nonempty compact, not necessarily spanning) and let
 $V := \Span(\Xs)$ have dimension $r \ge 1$. Let
@@ -407,7 +407,7 @@ spanning hypothesis as an argument), related by the identity
 $\gw_{\mathrm{int}}(\Xs) = \gw(\Xs)$ for spanning $\Xs$.
 
 \begin{definition}[Multi-task bandit action set]\label{def:multitask_set}
-\lean{COLT83.multitaskSet, COLT83.oneHot, COLT83.multitaskSet_eq_range, COLT83.ncard_multitaskSet, COLT83.supportFn_multitaskSet, COLT83.norm_le_of_mem_multitaskSet}\leanok
+\lean{Maiti2026Power.multitaskSet, Maiti2026Power.oneHot, Maiti2026Power.multitaskSet_eq_range, Maiti2026Power.ncard_multitaskSet, Maiti2026Power.supportFn_multitaskSet, Maiti2026Power.norm_le_of_mem_multitaskSet}\leanok
 \uses{def:arm_set, def:width_subspace}
 Let $m \ge 1$ and $d_1,\dots,d_m \ge 2$ be integers, $d := \sum_{j\le m} d_j$,
 $d_{1:j} := \sum_{s\le j}d_s$ (with $d_{1:0} = 0$), and let
@@ -483,7 +483,7 @@ is the last identity.
 \end{proof}
 
 \begin{lemma}[An orthonormal basis of the span of the multi-task set]\label{lem:multitask_basis}
-\lean{COLT83.mem_span_multitaskSet_iff, COLT83.finrank_span_multitaskSet_add, COLT83.single_sub_single_mem_span, COLT83.blockSum}\leanok
+\lean{Maiti2026Power.mem_span_multitaskSet_iff, Maiti2026Power.finrank_span_multitaskSet_add, Maiti2026Power.single_sub_single_mem_span, Maiti2026Power.blockSum}\leanok
 \uses{def:multitask_set, def:helmert}
 In the setting of Definition~\ref{def:multitask_set}, define $\mu \in \R^d$ by
 $\mu_i := 1/d_j$ for $i \in B_j$, $\kappa := \norm{\mu}^2 = \sum_{j\le m}1/d_j$,
@@ -523,7 +523,7 @@ of $U$.
 \end{proof}
 
 \begin{lemma}[Covariance of the uniform design in the intrinsic coordinates]\label{lem:multitask_design_cov}
-\lean{COLT83.unifDesignMatrix, COLT83.unifDesignMatrix_mem_designSet, COLT83.toEuclideanLin_unifDesignMatrix_muVec, COLT83.toEuclideanLin_unifDesignMatrix_blockCenter, COLT83.blockCenter, COLT83.muVec, COLT83.kappa}\leanok
+\lean{Maiti2026Power.unifDesignMatrix, Maiti2026Power.unifDesignMatrix_mem_designSet, Maiti2026Power.toEuclideanLin_unifDesignMatrix_muVec, Maiti2026Power.toEuclideanLin_unifDesignMatrix_blockCenter, Maiti2026Power.blockCenter, Maiti2026Power.muVec, Maiti2026Power.kappa}\leanok
 \uses{def:multitask_set, lem:multitask_basis, def:design_matrix}
 Let $\lambda_u$ be the uniform design on $\Xs$ ($\lambda_x = 1/\abs\Xs$ for every
 $x \in \Xs$) and $\Sigma := A(\lambda_u) = \frac{1}{\abs\Xs}\sum_{x\in\Xs}xx^\top \in \R^{d\times d}$.
@@ -566,7 +566,7 @@ are positive. The last claim is the identity $U^\top(\sum_x\lambda_x xx^\top)U =
 \end{proof}
 
 \begin{lemma}[Reduction of the multi-task width to block maxima]\label{lem:multitask_width_reduction}
-\lean{COLT83.intrinsicGw_le_gaussianWidth, COLT83.intrinsicGw_eq_gw_image, COLT83.spanBasisMatrix, COLT83.mtL, COLT83.mtS, COLT83.multivariateGaussian_mtS, COLT83.toEuclideanLin_unifDesignMatrix_mtL_mtL, COLT83.mtL_apply_mk}\leanok
+\lean{Maiti2026Power.intrinsicGw_le_gaussianWidth, Maiti2026Power.intrinsicGw_eq_gw_image, Maiti2026Power.spanBasisMatrix, Maiti2026Power.mtL, Maiti2026Power.mtS, Maiti2026Power.multivariateGaussian_mtS, Maiti2026Power.toEuclideanLin_unifDesignMatrix_mtL_mtL, Maiti2026Power.mtL_apply_mk}\leanok
 \uses{def:width_subspace, def:multitask_set, lem:multitask_basis, lem:multitask_design_cov}
 In the setting of Definition~\ref{def:multitask_set}, let $g^{(j)} \sim \Normal(0, I_{d_j-1})$,
 $j \le m$. Then the intrinsic width of Definition~\ref{def:width_subspace} satisfies
@@ -620,7 +620,7 @@ $\E g_0 = 0$ gives the claim (each maximum is integrable by Lemma~\ref{lem:width
 \end{proof}
 
 \begin{lemma}[Maximum of centered Gaussians]\label{lem:centered_gaussian_max}
-\lean{COLT83.integral_iSup_mtL_le, ciSup_const_add_const_mul}\leanok
+\lean{Maiti2026Power.integral_iSup_mtL_le, ciSup_const_add_const_mul}\leanok
 \uses{def:helmert, lem:helmert_props}
 Let $n \ge 2$, $Z \sim \Normal(0, I_n)$, $\bar Z := \frac1n\sum_{k\le n}Z_k$ and
 $g \sim \Normal(0, I_{n-1})$. Then
@@ -647,7 +647,7 @@ $\E\max_kZ_k \le \sqrt{2\log n}$ by Lemma~\ref{lem:gauss_max_upper} with $\sigma
 \end{proof}
 
 \begin{proposition}[Width of the multi-task set]\label{prop:width_multitask}
-\lean{COLT83.intrinsicGw_multitaskSet_le}\leanok
+\lean{Maiti2026Power.intrinsicGw_multitaskSet_le}\leanok
 \uses{def:multitask_set, def:width_subspace}
 In the setting of Definition~\ref{def:multitask_set}, the intrinsic width satisfies
 \[
@@ -666,7 +666,7 @@ $\sqrt{d_j}\,\E\max_k(H_{d_j}g^{(j)})_k \le \sqrt{d_j}\sqrt{2\log d_j}$.
 \end{proof}
 
 \begin{theorem}[A finite set with a small width; Theorem~5 of the paper]\label{thm:width_separation}
-\lean{COLT83.width_separation}\leanok
+\lean{Maiti2026Power.width_separation}\leanok
 \uses{def:multitask_set, def:width_subspace, prop:width_le_d, prop:width_finite}
 Let $m \ge 2$ and consider the multi-task action set $\Xs$ with $m-1$ blocks of size
 $d_j = 2$ ($j < m$) and one block of size $d_m = m^2$, so that $d = m^2 + 2m - 2$ and

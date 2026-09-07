@@ -2,7 +2,7 @@
 
 Machine-checkable verification, with [leanprover/comparator](https://github.com/leanprover/comparator),
 that this repository proves the headline results claimed in [`formalization.yaml`](../formalization.yaml)
-— without having to read (or trust) the Lean development in `COLT83/`.
+— without having to read (or trust) the Lean development in `Maiti2026Power/`.
 
 **Status (phase 2 complete, 2026-09-06).** Every headline statement is proved, and
 `scripts/comparator-verify.sh` passes on all 17 configs: each challenged statement is proved by
@@ -18,7 +18,7 @@ modules.
 
 ## The trust story
 
-For each headline theorem `COLT83.<name>` there is a challenge file
+For each headline theorem `Maiti2026Power.<name>` there is a challenge file
 `Challenge_<name>.lean` and a config `<name>.json`; the list is `targets.txt`:
 
 | paper result | challenge(s) |

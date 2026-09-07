@@ -2,7 +2,7 @@
     "challenge_module": "Challenge_gw_le_card",
     "solution_module": "Solution",
     "theorem_names": [
-        "COLT83.gw_le_card"
+        "Maiti2026Power.gw_le_card"
     ],
     "permitted_axioms": [
         "propext",

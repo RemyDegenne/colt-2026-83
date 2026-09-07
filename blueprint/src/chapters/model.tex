@@ -10,7 +10,7 @@ algorithms and environments (\texttt{Learning.Algorithm}, \texttt{Learning.Envir
 \label{sec:model_env}
 
 \begin{definition}[Action set]\label{def:arm_set}
-\lean{COLT83.unitBall}\leanok
+\lean{Maiti2026Power.unitBall}\leanok
 Let $d \ge 1$. An \emph{action set} (or arm set) is a nonempty compact subset $\Xs \subset \R^d$.
 It is \emph{spanning} if $\Span(\Xs) = \R^d$. The paper assumes spanning throughout; in this
 blueprint the spanning assumption is stated explicitly in every statement that needs it (the
@@ -333,7 +333,7 @@ deterministic kernel of $\pi$. The proof is a computation with the explicit laws
 \label{sec:model_width}
 
 \begin{definition}[Design distributions and design matrices]\label{def:design_matrix}
-\lean{COLT83.designSet, COLT83.outerSelf, COLT83.designMatrix, COLT83.IsDesign, COLT83.IsDesign.designMatrix_mem_designSet, COLT83.inv_smul_sum_outerSelf_mem_designSet}\leanok
+\lean{Maiti2026Power.designSet, Maiti2026Power.outerSelf, Maiti2026Power.designMatrix, Maiti2026Power.IsDesign, Maiti2026Power.IsDesign.designMatrix_mem_designSet, Maiti2026Power.inv_smul_sum_outerSelf_mem_designSet}\leanok
 \uses{def:arm_set}
 A \emph{design distribution} on $\Xs$ is a finitely supported probability vector
 $\lambda = (\lambda_x)_{x \in S}$, $S \subset \Xs$ finite, $\lambda_x \ge 0$,
@@ -358,7 +358,7 @@ $\lambda$ supported on at most $d(d+1)/2 + 1$ points. Finitely supported designs
 the fixed-design construction consumes.
 
 \begin{lemma}[Basic properties of the set of design matrices]\label{lem:designset_basic}
-\lean{COLT83.convex_designSet, COLT83.isCompact_designSet, COLT83.posSemidef_of_mem_designSet, COLT83.trace_le_of_mem_designSet}\leanok
+\lean{Maiti2026Power.convex_designSet, Maiti2026Power.isCompact_designSet, Maiti2026Power.posSemidef_of_mem_designSet, Maiti2026Power.trace_le_of_mem_designSet}\leanok
 \uses{def:design_matrix}
 $\designset(\Xs)$ is a convex compact subset of the symmetric matrices, contained in $\PSD$,
 and every $A \in \designset(\Xs)$ satisfies $\tr(A) \le \sup_{x\in\Xs}\norm{x}^2$.
@@ -374,7 +374,7 @@ Positive semidefiniteness and the trace bound are preserved by convex combinatio
 \end{proof}
 
 \begin{lemma}[Existence of a positive definite design]\label{lem:exists_posdef_design}
-\lean{COLT83.exists_posDef_mem_designSet}\leanok
+\lean{Maiti2026Power.exists_posDef_mem_designSet}\leanok
 \uses{def:design_matrix}
 If $\Xs$ is spanning, there exists $\lambda \in \simplex_{\Xs}$ with $A(\lambda)$ positive
 definite. More precisely, if $b_1, \dots, b_d \in \Xs$ is a basis of $\R^d$ (which exists since
@@ -390,7 +390,7 @@ $\ip{b_i}{v} \neq 0$ (the $b_i$ span $\R^d$).
 \end{proof}
 
 \begin{definition}[Gaussian width of a compact set for a matrix]\label{def:width_matrix}
-\lean{COLT83.gwMat, ProbabilityTheory.gaussianWidth}\leanok
+\lean{Maiti2026Power.gwMat, ProbabilityTheory.gaussianWidth}\leanok
 \uses{def:arm_set}
 For a nonempty compact set $K \subseteq \R^d$ (typically $K = \Xs$, or a region $K = R \subseteq \Xs$
 in Chapter~\ref{chap:log_gains}), a positive definite matrix $A \in \PD$ and
@@ -411,7 +411,7 @@ they are written with $K = \Xs$ for readability.
 \end{definition}
 
 \begin{lemma}[The width for a matrix is well defined]\label{lem:width_matrix_wd}
-\lean{ProbabilityTheory.integrable_supportFn_of_isGaussian, COLT83.integrable_supportFn_multivariateGaussian, COLT83.gwMat_nonneg, COLT83.gwMat_eq_gaussianWidth_stdGaussian, COLT83.gwMat_le_mul_sqrt_card, COLT83.gwMat_mono, COLT83.gwMat_of_isEmpty, COLT83.gw_of_isEmpty}\leanok
+\lean{ProbabilityTheory.integrable_supportFn_of_isGaussian, Maiti2026Power.integrable_supportFn_multivariateGaussian, Maiti2026Power.gwMat_nonneg, Maiti2026Power.gwMat_eq_gaussianWidth_stdGaussian, Maiti2026Power.gwMat_le_mul_sqrt_card, Maiti2026Power.gwMat_mono, Maiti2026Power.gwMat_of_isEmpty, Maiti2026Power.gw_of_isEmpty}\leanok
 \uses{def:width_matrix, lem:sup_countable_dense}
 (For an arbitrary nonempty compact index set $\Xs$.) The random variable $\sup_{x\in\Xs}\ip{A^{-1/2}x}{g}$ is measurable, integrable, and
 $0 \le \gwidth{\Xs}{A} \le \sup_{x\in\Xs}\norm{A^{-1/2}x}\cdot \sqrt d$.
@@ -434,7 +434,7 @@ depends on the law.
 \end{proof}
 
 \begin{definition}[Gaussian width of $\Xs$]\label{def:width}
-\lean{COLT83.gw}\leanok
+\lean{Maiti2026Power.gw}\leanok
 \uses{def:width_matrix, def:design_matrix, lem:exists_posdef_design}
 Let $\Xs$ be spanning. The \emph{Gaussian width term} of the action set is
 \[
@@ -447,7 +447,7 @@ so $0 \le \gw(\Xs) < \infty$.
 \end{definition}
 
 \begin{lemma}[Homogeneity]\label{lem:width_homog}
-\lean{COLT83.gwMat_smul}\leanok
+\lean{Maiti2026Power.gwMat_smul}\leanok
 \uses{def:width_matrix, lem:sqrt_props}
 (For an arbitrary nonempty compact index set $\Xs$.) For $A \in \PD$ and $c > 0$,
 $\gwidth{\Xs}{cA} = c^{-1/2}\,\gwidth{\Xs}{A}$.
@@ -460,7 +460,7 @@ $(cA)^{-1/2} = c^{-1/2}A^{-1/2}$ and the supremum is positively homogeneous.
 \end{proof}
 
 \begin{lemma}[Monotonicity in the Loewner order]\label{lem:width_mono}
-\lean{COLT83.gwMat_anti}\leanok
+\lean{Maiti2026Power.gwMat_anti}\leanok
 \uses{def:width_matrix, lem:gauss_comparison, lem:loewner_inv}
 (For an arbitrary nonempty compact index set $\Xs$.) If $A, B \in \PD$ and $A \preceq B$, then $\gwidth{\Xs}{B} \le \gwidth{\Xs}{A}$.
 \end{lemma}
@@ -476,7 +476,7 @@ $\E\sup_x\ip{x}{G_B} \le \E\sup_x\ip{x}{G_A}$; conclude with Lemma~\ref{lem:widt
 \end{proof}
 
 \begin{lemma}[Invariance under linear isomorphisms]\label{lem:width_iso}
-\lean{COLT83.gwMat_image, COLT83.gw_image, COLT83.designSet_image_toEuclideanCLM}\leanok
+\lean{Maiti2026Power.gwMat_image, Maiti2026Power.gw_image, Maiti2026Power.designSet_image_toEuclideanCLM}\leanok
 \uses{def:width, lem:width_matrix_wd, lem:gauss_linear_image, lem:loewner_congruence}
 Let $\Xs$ be spanning and let $M \in \R^{d\times d}$ be invertible and $\Xs' := M\Xs$. Then for every $A \in \PD$,
 $\gwidth{\Xs'}{MAM^\top} = \gwidth{\Xs}{A}$, the map $A \mapsto MAM^\top$ is a bijection
@@ -496,7 +496,7 @@ an invertible matrix preserves positive definiteness.
 \end{proof}
 
 \begin{lemma}[Width of an empirical design]\label{lem:width_empirical}
-\lean{COLT83.gw_le_sqrt_mul_gwMat_sum}\leanok
+\lean{Maiti2026Power.gw_le_sqrt_mul_gwMat_sum}\leanok
 \uses{def:width, def:design_matrix, lem:width_homog}
 Let $\Xs$ be spanning and let $x_0,\dots,x_{T-1} \in \Xs$ with $\Sigma_T = \sum_{t<T} x_tx_t^\top$ positive definite.
 Then $\gwidth{\Xs}{\Sigma_T} \ge \gw(\Xs)/\sqrt T$.
@@ -510,7 +510,7 @@ $\gwidth{\Xs}{\Sigma_T} = T^{-1/2}\gwidth{\Xs}{A(\lambda_T)} \ge T^{-1/2}\gw(\Xs
 \end{proof}
 
 \begin{lemma}[Symmetry of the width]\label{lem:width_symm}
-\lean{COLT83.gwMat_neg_set, COLT83.gwMat_sub_set}\leanok
+\lean{Maiti2026Power.gwMat_neg_set, Maiti2026Power.gwMat_sub_set}\leanok
 \uses{def:width_matrix}
 (For an arbitrary nonempty compact index set $\Xs$.) For $A \in \PD$ and $G \sim \Normal(0,A^{-1})$,
 $\E[\max_{x\in\Xs}\ip{x}{-G}] = \E[\max_{x\in\Xs}\ip{x}{G}] = \gwidth{\Xs}{A}$ and

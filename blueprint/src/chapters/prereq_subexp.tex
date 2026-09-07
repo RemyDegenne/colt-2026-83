@@ -50,7 +50,7 @@ Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}.
 \texttt{HasSubexponentialMGF (X : Ω → ℝ) (V b : ℝ) (μ : Measure Ω) : Prop} with fields
 \texttt{integrable\_exp\_mul : ∀ t : ℝ, b * |t| ≤ 1 → Integrable (fun ω ↦ exp (t * X ω)) μ} and
 \texttt{mgf\_le : ∀ t : ℝ, b * |t| ≤ 1 → mgf X μ t ≤ exp (V * t\^{}2 / 2)}
-(\texttt{COLT83/Mathlib/Probability/Moments/SubExponential.lean}). The range of $t$ is
+(\texttt{Maiti2026Power/Mathlib/Probability/Moments/SubExponential.lean}). The range of $t$ is
 written as $b\abs t\le1$ rather than $\abs t\le1/b$ so that \texttt{b = 0} imposes no
 restriction on $t$ (the hypothesis $0\cdot\abs t\le1$ is always true):
 \texttt{HasSubexponentialMGF X V 0 μ} is then equivalent to \texttt{HasSubgaussianMGF X V μ}

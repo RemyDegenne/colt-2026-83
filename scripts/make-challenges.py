@@ -88,13 +88,13 @@ def main():
     work = keep or tempfile.mkdtemp(prefix="colt83-referee-")
     data = os.path.join(work, "data.json")
     out = os.path.join(work, "out")
-    subprocess.run(["lake", "env", referee, "collect", "--root", "COLT83", "--data", data],
+    subprocess.run(["lake", "env", referee, "collect", "--root", "Maiti2026Power", "--data", data],
                    cwd=ROOT, check=True)
-    subprocess.run(["lake", "env", referee, "extract", "--root", "COLT83", "--data", data,
+    subprocess.run(["lake", "env", referee, "extract", "--root", "Maiti2026Power", "--data", data,
                     "--output", out], cwd=ROOT, check=True)
 
     for t in targets:
-        src = os.path.join(out, "html-multi", "extracted", f"COLT83___{t}.lean")
+        src = os.path.join(out, "html-multi", "extracted", f"Maiti2026Power___{t}.lean")
         lines = open(src).read().split("\n")
         imports = [l for l in lines if l.startswith("import ")]
         body_start = len(imports)
@@ -127,7 +127,7 @@ def main():
         # the *values* of the theorems in the statement's closure, so each sorry'd lemma must be
         # listed as a target too: comparator then verifies that the solution proves it instead of
         # requiring an identical proof term.
-        names = [f"COLT83.{t}"] + [n for n in sorried_theorems(text) if n != f"COLT83.{t}"]
+        names = [f"Maiti2026Power.{t}"] + [n for n in sorried_theorems(text) if n != f"Maiti2026Power.{t}"]
         cfg = {
             "challenge_module": f"Challenge_{t}",
             "solution_module": "Solution",

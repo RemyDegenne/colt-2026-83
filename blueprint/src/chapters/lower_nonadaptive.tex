@@ -43,7 +43,7 @@ $\R^T$ to $\Xs$. In Sections~\ref{sec:lower_nonadaptive_bayes}
 and~\ref{sec:lower_nonadaptive_regret} we assume $T \ge 1$ and $\Sigma_T \succ 0$.
 
 \begin{definition}[Gaussian prior on the reward vector]\label{def:bayes_prior}
-\lean{COLT83.bayesParam, COLT83.bayesObs, COLT83.bayesHist, COLT83.bayesKernel, COLT83.bayesJoint, COLT83.map_bayesParam_stdGaussian, COLT83.map_bayesHist_stdGaussian}\leanok
+\lean{Maiti2026Power.bayesParam, Maiti2026Power.bayesObs, Maiti2026Power.bayesHist, Maiti2026Power.bayesKernel, Maiti2026Power.bayesJoint, Maiti2026Power.map_bayesParam_stdGaussian, Maiti2026Power.map_bayesHist_stdGaussian}\leanok
 \uses{def:fixed_design, lem:fixed_design_law}
 Let $\tau > 0$. In the \emph{Bayesian model with parameter $\tau$}, the reward vector
 $\theta$ is a random vector with law $\pi := \Normal(0, \tau^2\Sigma_T^{-1})$, the noise
@@ -86,7 +86,7 @@ Lemma~\ref{lem:posterior_decomposition} needs. The law of $\theta$ is Mathlib's
 \texttt{multivariateGaussian} with mean $0$ and covariance $\tau^2\Sigma_T^{-1}$ by Lemma~\ref{lem:gauss_law_of_cov}.
 
 \begin{lemma}[Orthogonal decomposition of the reward vector]\label{lem:posterior_decomposition}
-\lean{COLT83.bayesW₁, COLT83.bayesW₂, COLT83.bayesY₁, COLT83.bayesParam_sub_smul_leastSquares, COLT83.bayesW₁_comp_adjoint_bayesY₁_add, COLT83.indepFun_bayesW_bayesY}\leanok
+\lean{Maiti2026Power.bayesW₁, Maiti2026Power.bayesW₂, Maiti2026Power.bayesY₁, Maiti2026Power.bayesParam_sub_smul_leastSquares, Maiti2026Power.bayesW₁_comp_adjoint_bayesY₁_add, Maiti2026Power.indepFun_bayesW_bayesY}\leanok
 \uses{def:bayes_prior}
 In the Bayesian model with parameter $\tau$, let
 \[
@@ -139,7 +139,7 @@ $\mathrm{Cov}(W,y) = \tau^2\Sigma_T^{-1}X^\top - c(1+\tau^2)\Sigma_T^{-1}X^\top 
 \end{proof}
 
 \begin{lemma}[Bayes identity for the value of the recommendation]\label{lem:bayes_regret_identity}
-\lean{COLT83.integral_inner_bayesParamClm_bayesJoint, COLT83.integral_inner_bayesW_bayesJoint}\leanok
+\lean{Maiti2026Power.integral_inner_bayesParamClm_bayesJoint, Maiti2026Power.integral_inner_bayesW_bayesJoint}\leanok
 \uses{def:bayes_prior, lem:posterior_decomposition}
 In the Bayesian model with parameter $\tau$ and with $c = \tau^2/(1+\tau^2)$, the random
 variables $\ip{\rec}{\theta}$ and $\ip{\rec}{\Sigma_T^{-1}X^\top y}$ are integrable and
@@ -180,7 +180,7 @@ this chapter.
 \label{sec:lower_nonadaptive_regret}
 
 \begin{lemma}[Bayesian lower bound on the expected simple regret]\label{lem:bayes_regret_lower}
-\lean{COLT83.le_integral_simpleRegret_bayesJoint, COLT83.integral_inner_bayesLSclm_le, COLT83.integral_supportFn_bayesParam, COLT83.integral_supportFn_toEuclideanLin_lsMatrix}\leanok
+\lean{Maiti2026Power.le_integral_simpleRegret_bayesJoint, Maiti2026Power.integral_inner_bayesLSclm_le, Maiti2026Power.integral_supportFn_bayesParam, Maiti2026Power.integral_supportFn_toEuclideanLin_lsMatrix}\leanok
 \uses{def:bayes_prior, def:regret, def:width_matrix}
 In the Bayesian model with parameter $\tau > 0$, for every recommendation kernel $\rho$,
 $r(\rec,\theta)$ is integrable and
@@ -229,7 +229,7 @@ Write $w_T := \gwidth{\Xs}{\Sigma_T}$ and $c := \tau^2/(1+\tau^2)$.
 \end{proof}
 
 \begin{lemma}[Optimized constant]\label{lem:bayes_regret_lower_opt}
-\lean{COLT83.bayesC_identity}\leanok
+\lean{Maiti2026Power.bayesC_identity}\leanok
 \uses{lem:bayes_regret_lower}
 With $\tau := \sqrt2 - 1$, for every recommendation kernel $\rho$,
 \[
@@ -262,7 +262,7 @@ this is the maximizer, as stated in the paper. Only the value at $\sqrt2 - 1$ is
 \label{sec:lower_nonadaptive_singular}
 
 \begin{lemma}[Singular designs fail]\label{lem:singular_design_fails}
-\lean{COLT83.exists_singular_instances, COLT83.exists_singular_instances_of_zero_mem, COLT83.exists_singular_instances_of_forall, COLT83.exists_ne_zero_inner_eq_zero_of_not_posDef, COLT83.diffSup_pos_of_inner_eq_zero, COLT83.simpleRegret_smul_add_simpleRegret_neg_smul}\leanok
+\lean{Maiti2026Power.exists_singular_instances, Maiti2026Power.exists_singular_instances_of_zero_mem, Maiti2026Power.exists_singular_instances_of_forall, Maiti2026Power.exists_ne_zero_inner_eq_zero_of_not_posDef, Maiti2026Power.diffSup_pos_of_inner_eq_zero, Maiti2026Power.simpleRegret_smul_add_simpleRegret_neg_smul}\leanok
 \uses{def:arm_set, def:fixed_design, lem:fixed_design_law, def:regret}
 Let $\Xs$ be spanning and let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design of length $T \ge 0$
 (Definition~\ref{def:fixed_design}) whose design matrix $\Sigma_T = \sum_{t<T}x_tx_t^\top$ is
@@ -332,7 +332,7 @@ $\delta \le 1/10$, or $\Xs = \{x_0\}$ and $\gw(\{x_0\}) = 0$ (as $\E\ip{x_0}{A^{
 \end{remark}
 
 \begin{lemma}[A PAC design is nonsingular]\label{lem:lower_nonadaptive_posdef}
-\lean{COLT83.posDef_of_isFixedDesign_of_isPAC_of_forall, COLT83.posDef_of_isFixedDesign_of_isPAC, COLT83.posDef_of_isFixedDesign_of_isPAC_of_zero_mem}\leanok
+\lean{Maiti2026Power.posDef_of_isFixedDesign_of_isPAC_of_forall, Maiti2026Power.posDef_of_isFixedDesign_of_isPAC, Maiti2026Power.posDef_of_isFixedDesign_of_isPAC_of_zero_mem}\leanok
 \uses{def:fixed_design, def:pac, def:arm_set}
 Let $\Xs$ be spanning, $\eps > 0$ and $\delta < 1/2$. If a fixed-design algorithm with design
 $x_0,\dots,x_{T-1} \in \Xs$ is $(\eps,\delta)$-PAC on $\Xs$, and either $T \ge 1$ or
@@ -350,7 +350,7 @@ gives $2(1-\delta) > 1$.
 \end{proof}
 
 \begin{lemma}[The Bayesian step]\label{lem:lower_nonadaptive_bayes_step}
-\lean{COLT83.gwMat_le_of_isFixedDesign_of_isPAC}\leanok
+\lean{Maiti2026Power.gwMat_le_of_isFixedDesign_of_isPAC}\leanok
 \uses{def:fixed_design, def:pac, def:width_matrix}
 Let $\Xs$ be compact and nonempty, $\eps \ge 0$ and $\delta \in (0, 1/10]$. If a fixed-design
 algorithm with design $x_0,\dots,x_{T-1} \in \Xs$ and $\Sigma_T \succ 0$ is $(\eps,\delta)$-PAC
@@ -392,7 +392,7 @@ $0.12\, w_T \le \eps$.
 \label{sec:lower_nonadaptive_theorem}
 
 \begin{theorem}[Lower bound for non-adaptive fixed designs]\label{thm:lower_nonadaptive}
-\lean{COLT83.le_budget_of_isFixedDesign_of_isPAC}\leanok
+\lean{Maiti2026Power.le_budget_of_isFixedDesign_of_isPAC}\leanok
 \uses{def:arm_set, def:fixed_design, def:pac, def:width}
 Let $\Xs$ be spanning, $\eps > 0$ and $\delta \in (0, 1/10]$. If a fixed-design algorithm with budget $T \ge 1$
 (design $x_0,\dots,x_{T-1} \in \Xs$ and any recommendation kernel $\rho$) is

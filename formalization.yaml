@@ -102,19 +102,19 @@ status:
     are now defined and proved correct).
 
     Phase 2 (proofs) has started with the Gaussian-width area: the support function and the
-    Gaussian width of a set for a measure (`COLT83/Mathlib/Analysis/InnerProductSpace/SupportFn.lean`
-    and `COLT83/Mathlib/Probability/GaussianWidth.lean`: Lipschitz,
+    Gaussian width of a set for a measure (`Maiti2026Power/Mathlib/Analysis/InnerProductSpace/SupportFn.lean`
+    and `Maiti2026Power/Mathlib/Probability/GaussianWidth.lean`: Lipschitz,
     convexity, images, Minkowski sums, integrability, comparison by convolution/covariance
     domination), transport lemmas and norm moments of `multivariateGaussian`
-    (`COLT83/Mathlib/Probability/MultivariateGaussian.lean`), Loewner antitonicity of the matrix
-    inverse (`COLT83/Mathlib/Matrix/LoewnerInv.lean`), and the width-for-a-matrix and design-set
-    lemmas of the model chapter (`COLT83/MXJ2026/{Width,DesignSet,WidthDesign}.lean`:
+    (`Maiti2026Power/Mathlib/Probability/MultivariateGaussian.lean`), Loewner antitonicity of the matrix
+    inverse (`Maiti2026Power/Mathlib/Matrix/LoewnerInv.lean`), and the width-for-a-matrix and design-set
+    lemmas of the model chapter (`Maiti2026Power/MXJ2026/{Width,DesignSet,WidthDesign}.lean`:
     `lem:width_matrix_wd`, `lem:width_homog`, `lem:width_mono`, `lem:width_iso`,
     `lem:width_symm`, `lem:width_empirical`, `lem:designset_basic`, `lem:exists_posdef_design`,
     `lem:gauss_comparison`), all proved.
 
-    Second phase-2 area: optimal experimental design (`COLT83/MXJ2026/OptimalDesign.lean`, with
-    `COLT83/Mathlib/Matrix/Loewner.lean` and `COLT83/Mathlib/Analysis/Calculus/LocalExtr.lean`):
+    Second phase-2 area: optimal experimental design (`Maiti2026Power/MXJ2026/OptimalDesign.lean`, with
+    `Maiti2026Power/Mathlib/Matrix/Loewner.lean` and `Maiti2026Power/Mathlib/Analysis/Calculus/LocalExtr.lean`):
     design distributions as finitely supported weights (`IsDesign`, `designMatrix`),
     Carathéodory for design matrices, the `G`-value and the identity `∑ λ_x xᵀA(λ)⁻¹x = d`,
     existence and positivity of `D`-optimal designs, and the Kiefer–Wolfowitz theorem
@@ -124,17 +124,17 @@ status:
     inverse, square-root identities and the matrix determinant lemma in rank-one form. The
     log-det derivative of the blueprint outline was replaced by this rank-one determinant
     formula (`lem:det_rank_one_mix`). Third area: the rounding theorem
-    (`COLT83/MXJ2026/Rounding.lean`, `exists_rounding`): for `T ≥ 4d`, every design distribution
+    (`Maiti2026Power/MXJ2026/Rounding.lean`, `exists_rounding`): for `T ≥ 4d`, every design distribution
     with positive definite design matrix `A` can be rounded to `T` points of its support with
     `∑ x xᵀ ⪰ (T/4) A`, by the one-sided barrier argument of Batson–Spielman–Srivastava (barrier
     potential `tr (B - l I)⁻¹`, Sherman–Morrison, an averaging inequality on eigenvalues), with the
     consequences on the inverse and on the width of the rounded design; on the library side,
     traces and inverses of functions of a symmetric matrix through the continuous functional
-    calculus (`COLT83/Mathlib/Matrix/HermitianCFC.lean`) and the Sherman–Morrison formula.
+    calculus (`Maiti2026Power/Mathlib/Matrix/HermitianCFC.lean`) and the Sherman–Morrison formula.
     Fourth area: the information-theoretic prerequisites
-    (`COLT83/Mathlib/InformationTheory/{KLCompProd,Pinsker,BretagnolleHuber}.lean`,
-    `COLT83/Mathlib/Probability/KLGaussian.lean`,
-    `COLT83/LeanMachineLearning/{DivergenceDecomposition,FixedBudget}.lean`): the integrated
+    (`Maiti2026Power/Mathlib/InformationTheory/{KLCompProd,Pinsker,BretagnolleHuber}.lean`,
+    `Maiti2026Power/Mathlib/Probability/KLGaussian.lean`,
+    `Maiti2026Power/LeanMachineLearning/{DivergenceDecomposition,FixedBudget}.lean`): the integrated
     chain rule `klDiv (μ ⊗ₘ κ) (ν ⊗ₘ η) = klDiv μ ν + ∫⁻ klDiv (κ a) (η a) ∂μ` (with the
     measurability of `a ↦ klDiv (κ a) (η a)`), the divergence of two Gaussians, Pinsker's and
     the Bretagnolle–Huber inequalities, the divergence decomposition for an algorithm run against
@@ -144,84 +144,84 @@ status:
     `T R² ‖θ - θ'‖² / 2`, and Bretagnolle–Huber bounds the sum of the error probabilities of any
     test on the output). The output kernels of an identification algorithm are now required to
     be s-finite (`IdentAlg.isSFiniteKernel_output`). Fifth area: existence and transport of runs
-    (`COLT83/LeanMachineLearning/Run.lean`: the canonical run of a fixed-budget algorithm on the
+    (`Maiti2026Power/LeanMachineLearning/Run.lean`: the canonical run of a fixed-budget algorithm on the
     space of (trajectory, output) pairs, `IsFixedBudget.isRun_fixedBudgetRunMeasure`; runs
     transported along maps of the sample space), the geometry of the normalized `G`-optimal
-    design (`COLT83/MXJ2026/NormalizedDesign.lean`: `∑ λ_x ⟪v₁, v_x⟫² = 1/d` and a
+    design (`Maiti2026Power/MXJ2026/NormalizedDesign.lean`: `∑ λ_x ⟪v₁, v_x⟫² = 1/d` and a
     well-separated pair of unit arms), convexity of the divergence in its second argument
-    (`COLT83/Mathlib/InformationTheory/KLMixture.lean`), and the **baseline adaptive lower bound**
+    (`Maiti2026Power/Mathlib/InformationTheory/KLMixture.lean`), and the **baseline adaptive lower bound**
     `T ≥ (2 - √2)/(32 ε²) log(1/(4δ))` for `(ε, δ)`-PAC fixed-budget algorithms on spanning sets in
-    dimension `d ≥ 2`, `δ < 1/4` (`COLT83/MXJ2026/LowerAdaptiveBaseline.lean`,
+    dimension `d ≥ 2`, `δ < 1/4` (`Maiti2026Power/MXJ2026/LowerAdaptiveBaseline.lean`,
     `baseline_le_budget_of_isPAC`, blueprint `lem:baseline_lower`) — the two-point half of
     Theorem 2, proved in the original coordinates (no transformation of the algorithm). Because runs
     can only be constructed in the universe of the action set, `LinearBandit.IsPAC` now quantifies
     over probability spaces in the universe of the ambient space `E` (it was universe-polymorphic);
     the comparator challenges were regenerated accordingly. Sixth area: the noise of linear
-    Gaussian runs (`COLT83/LeanMachineLearning/GaussianNoise.lean`): conditionally on the history
+    Gaussian runs (`Maiti2026Power/LeanMachineLearning/GaussianNoise.lean`): conditionally on the history
     and the current action, `Y_t - ⟪X_t, θ⟫` has the law `N(0,1)` (the blueprint's noise
     representation), hence is conditionally sub-Gaussian, and Mathlib's Azuma–Hoeffding inequality
     bounds the noise sums of any block of rounds (`IsAlgEnvSeq.measureReal_abs_sum_noise_ge_le`),
     which is the concentration input of the estimation phase of Theorem 2's mixture test.
     Seventh area: **Theorem 2 is proved** (`le_budget_of_isPAC`, no `sorry`). The missing pieces
     were the composed test and its analysis: algorithms agreeing on a prefix and the transfer of a
-    PAC guarantee to a partial run (`COLT83/LeanMachineLearning/AlgorithmPrefix.lean`), the
+    PAC guarantee to a partial run (`Maiti2026Power/LeanMachineLearning/AlgorithmPrefix.lean`), the
     algorithm `Algorithm.thenRepeat` "play `alg`, then repeat an action drawn from a kernel" and
     the test algorithm `IdentAlg.testAlg` built from an identification algorithm
     (`RepeatTest.lean`), the error bounds of the test in a linear Gaussian bandit via the
     Azuma bound of the sixth area (`RepeatTestGaussian.lean`), and the mixture testing problem
-    (`COLT83/MXJ2026/MixtureKL.lean`: the divergence from the null law of histories to the
+    (`Maiti2026Power/MXJ2026/MixtureKL.lean`: the divergence from the null law of histories to the
     design-weighted mixture of the alternatives is at most `(N+1)·9ε²/(2d)`, and the
     Bretagnolle–Huber inequality for this mixture). The blueprint's general sequential
     composition lemma (`lem:composition`) is not formalized; the new `lem:prefix_transfer` is
     the special case that is needed. Eighth area (towards Theorem 1): fixed-design runs and least
     squares. A sequence whose conditional law given its past is constant is i.i.d.
-    (`COLT83/Mathlib/Probability/IidOfCondDistrib.lean`), hence the noise of any linear Gaussian
+    (`Maiti2026Power/Mathlib/Probability/IidOfCondDistrib.lean`), hence the noise of any linear Gaussian
     run is an i.i.d. `N(0,1)` vector (standard Gaussian on `EuclideanSpace ℝ (Fin T)`), and under
     a fixed design the observation vector is `Xθ` plus this noise
-    (`COLT83/LeanMachineLearning/FixedDesignRun.lean`, blueprint `lem:fixed_design_law`); the
+    (`Maiti2026Power/LeanMachineLearning/FixedDesignRun.lean`, blueprint `lem:fixed_design_law`); the
     least-squares estimator `Σ⁻¹ Xᵀ y` has the law `N(θ, Σ⁻¹)`
-    (`COLT83/MXJ2026/LeastSquares.lean`, `lem:least_squares_law`). Also the mixed design
+    (`Maiti2026Power/MXJ2026/LeastSquares.lean`, `lem:least_squares_law`). Also the mixed design
     `½ λ₁ + ½ λ_G` with its `G`-optimality and width bounds (`MixedDesign.lean`), the regret
     bound by the difference process (`DifferenceProcess.lean`) and a measurable
     `γ`-approximate argmax selector on a compact set
-    (`COLT83/Mathlib/MeasureTheory/ApproxArgmax.lean`). What remains for Theorem 1 is the
+    (`Maiti2026Power/Mathlib/MeasureTheory/ApproxArgmax.lean`). What remains for Theorem 1 is the
     Borell–TIS inequality (Gaussian concentration chapter), the attainment of the width and
     the assembly of the algorithm. Ninth area: **Gaussian concentration** (blueprint chapter
     `prereq_concentration`, previously entirely unformalized; Mathlib has no Gaussian
-    concentration inequality). `COLT83/Mathlib/Probability/GaussianMGF.lean` (MGF of a linear
+    concentration inequality). `Maiti2026Power/Mathlib/Probability/GaussianMGF.lean` (MGF of a linear
     form under the standard Gaussian, exponential moments of Gaussian norms from Fernique),
     `MaureyPisier.lean` (the Maurey–Pisier argument: a `C¹` function with `‖∇f‖ ≤ L` has a
     sub-Gaussian MGF with constant `c_G L²`, `c_G = π²/4`, via quarter-circle interpolation,
     Jensen, Fubini and Mathlib's rotation invariance of `μ ⊗ μ`),
-    `COLT83/Mathlib/Analysis/{SpecialFunctions,InnerProductSpace}/LogSumExp.lean` (the
+    `Maiti2026Power/Mathlib/Analysis/{SpecialFunctions,InnerProductSpace}/LogSumExp.lean` (the
     log-sum-exp function and softmax weights on `ι → ℝ`, and the log-sum-exp smoothing of a
     finite maximum of linear forms as their composition with `v ↦ (⟪x i, v⟫)ᵢ`, its gradient), `SupportFnDense.lean` (the support function of a compact set as a supremum over
     a dense sequence, with monotone partial maxima) and `BorellTIS.lean` (concentration of
     finite and compact suprema of Gaussian linear forms, the **Borell–TIS inequality** for the
     standard Gaussian and for `N(0, S)`). Tenth area: **Theorem 1 is proved**
     (`exists_isFixedDesign_isPAC`, no `sorry`): the difference process and its concentration
-    (`COLT83/MXJ2026/DifferenceProcess.lean`), the output law of fixed-budget runs
+    (`Maiti2026Power/MXJ2026/DifferenceProcess.lean`), the output law of fixed-budget runs
     (`IsRun.hasCondDistrib_output_finHistory`), the explicit fixed-design algorithm
     `fixedDesignIdentAlg T x s` (rounded design, least squares, measurable approximate argmax)
     with its guarantee `isPAC_fixedDesignIdentAlg` in the general form of the blueprint's
-    `thm:upper` (`COLT83/MXJ2026/FixedDesignAlgorithm.lean`), and the assembly with the
+    `thm:upper` (`Maiti2026Power/MXJ2026/FixedDesignAlgorithm.lean`), and the assembly with the
     Kiefer–Wolfowitz design, an approximate width minimizer, the mixed design, the barrier
-    rounding and the arithmetic of the constant 600 (`COLT83/MXJ2026/Upper.lean`).
+    rounding and the arithmetic of the constant 600 (`Maiti2026Power/MXJ2026/Upper.lean`).
     Eleventh area: **the Gaussian width chapter, upper bounds and Theorem 5**.
-    `COLT83/Mathlib/Probability/SubgaussianMax.lean` (expected maximum of finitely many
+    `Maiti2026Power/Mathlib/Probability/SubgaussianMax.lean` (expected maximum of finitely many
     sub-Gaussian variables, `E[max_i Z_i] ≤ √(2 c log m)`, and the Gaussian width of a finite
-    set), `COLT83/MXJ2026/WidthUpper.lean` (Proposition 4 (i)/(ii) for the `G`-optimal design
+    set), `Maiti2026Power/MXJ2026/WidthUpper.lean` (Proposition 4 (i)/(ii) for the `G`-optimal design
     matrix, the regionalized width and its bound `√(2 d log p)`),
-    `COLT83/MXJ2026/IntrinsicWidth.lean` (a basis-free reduction: the intrinsic width of a
+    `Maiti2026Power/MXJ2026/IntrinsicWidth.lean` (a basis-free reduction: the intrinsic width of a
     non-spanning set is at most `E sup_{x ∈ 𝒳} ⟪x, G⟫` for a Gaussian vector `G` on the span
     whose covariance is the pseudo-inverse of a design matrix) and
-    `COLT83/MXJ2026/Multitask.lean` (the multi-task set: one-hot parametrization, cardinality,
+    `Maiti2026Power/MXJ2026/Multitask.lean` (the multi-task set: one-hot parametrization, cardinality,
     support function as a sum of block maxima, span = vectors with equal block sums and its
     dimension `∑ d_j - m + 1`, the uniform design and its pseudo-inverse, and
     `intrinsicGw_multitaskSet_le : w_int(𝒳) ≤ ∑ √(2 d_j log d_j)`). **Theorem 5 is proved**
     (`width_separation`, no `sorry`), as are `gw_le_card` and `gw_le_sqrt_log_ncard`
     (Proposition 4 (i), (ii)). Twelfth area: **the Sudakov–Fernique chapter and Proposition 4
-    (iii)**. `COLT83/Mathlib/Probability/SteinReal.lean` (Stein's identity
+    (iii)**. `Maiti2026Power/Mathlib/Probability/SteinReal.lean` (Stein's identity
     `E[(ξ - μ) f(ξ)] = v E[f'(ξ)]` for `N(μ, v)`), `SteinIdentity.lean` (Stein's identity for
     the standard Gaussian measure of a finite-dimensional inner product space,
     `E[⟪a, g⟫ F(g)] = E[DF(g) a]`, for `N(0, S)`, `E[⟪a, X⟫ F(X)] = E[DF(X) (S a)]`, and for
@@ -232,28 +232,28 @@ status:
     with `E[(X_i - X_j)²] ≤ E[(Y_i - Y_j)²]`, via the soft-max and independent blocks on
     `ℝ^{ι ⊕ ι}`), `GaussianMaxLower.lean` (lower Mills ratio, `E[ξ⁺] = (2π)^{-1/2}`,
     `E[max(ξ₁, ξ₂)] = π^{-1/2}`, and `E[max_{i ≤ m} ξ_i] ≥ √(log m) / 4` for i.i.d. standard
-    Gaussians, `m ≥ 2`), `COLT83/Mathlib/Analysis/{SpecialFunctions,InnerProductSpace}/LogSumExp.lean`
-    (Hessian of the log-sum-exp and its operator-norm bound), `COLT83/Mathlib/Analysis/InnerProductSpace/IsotropicSeparated.lean`
+    Gaussians, `m ≥ 2`), `Maiti2026Power/Mathlib/Analysis/{SpecialFunctions,InnerProductSpace}/LogSumExp.lean`
+    (Hessian of the log-sum-exp and its operator-norm bound), `Maiti2026Power/Mathlib/Analysis/InnerProductSpace/IsotropicSeparated.lean`
     (a weighted family in isotropic position has `m` points pairwise `√(d + 1 - m)`-separated),
-    and `COLT83/MXJ2026/WidthLower.lean` (the whitened design is isotropic; Sudakov minoration
+    and `Maiti2026Power/MXJ2026/WidthLower.lean` (the whitened design is isotropic; Sudakov minoration
     `gwMat 𝒳 A ≥ √(d log ⌊d/2⌋) / 8`). **Proposition 4 is now fully proved** (`sqrt_log_le_gw`,
     no `sorry`).
 
     Thirteenth area: **Theorem 3 is proved** (`le_budget_of_isFixedDesign_of_isPAC`, no `sorry`),
     by the Bayesian argument of the paper. New library files:
-    `COLT83/Mathlib/Probability/StdGaussianProd.lean` (the product of two standard Gaussian
+    `Maiti2026Power/Mathlib/Probability/StdGaussianProd.lean` (the product of two standard Gaussian
     measures is Gaussian; covariance of linear forms of an independent pair; **independence of
     uncorrelated linear images** `indepFun_add_prod_stdGaussian_of_comp_adjoint_eq_zero`),
-    `COLT83/Mathlib/Probability/IndepIntegral.lean` (`E⟪f(V), W⟫ = 0` for `W` centered and
-    independent of `V`, `f` bounded), `COLT83/Mathlib/Probability/Kernel/PriorAverage.lean`
+    `Maiti2026Power/Mathlib/Probability/IndepIntegral.lean` (`E⟪f(V), W⟫ = 0` for `W` centered and
+    independent of `V`, `f` bounded), `Maiti2026Power/Mathlib/Probability/Kernel/PriorAverage.lean`
     (the expected loss of a procedure that fails with probability `≤ δ` under every parameter is
-    at most `ε + δ ∫ Z dπ`), and additions to `COLT83/Mathlib/Probability/CondDistrib.lean`
+    at most `ε + δ ∫ Z dπ`), and additions to `Maiti2026Power/Mathlib/Probability/CondDistrib.lean`
     (transport of `μ ⊗ₘ κ.comap f`). New project files:
-    `COLT83/LeanMachineLearning/FixedDesignLaw.lean` (the explicit law
+    `Maiti2026Power/LeanMachineLearning/FixedDesignLaw.lean` (the explicit law
     `fixedDesignPairLaw A x θ` of (history, output) of a fixed-design fixed-budget run, and the
-    PAC property on that law), `COLT83/MXJ2026/SingularDesign.lean` (a singular design leaves a
+    PAC property on that law), `Maiti2026Power/MXJ2026/SingularDesign.lean` (a singular design leaves a
     direction invisible; two reward vectors with equal means whose regrets sum to `4 ε`) and
-    `COLT83/MXJ2026/BayesModel.lean` (the Bayesian model on a standard Gaussian pair `(g, η)`:
+    `Maiti2026Power/MXJ2026/BayesModel.lean` (the Bayesian model on a standard Gaussian pair `(g, η)`:
     prior `θ = τ Σ_T^{-1/2} g`, observations, history and recommendation kernel; the orthogonal
     decomposition `θ = W + c Σ_T⁻¹ Xᵀ y` with `W` independent of `y`; the Bayes identity
     `E⟪rec, θ⟫ = c E⟪rec, Σ_T⁻¹ Xᵀ y⟫`; the lower bound `E[r] ≥ τ w_T - c (τ w_T + w_T)` and the
@@ -263,7 +263,7 @@ status:
     (`multitaskSet_lt_budget_of_isPAC`, `hypercubePM_lt_budget_of_isPAC`,
     `hypercube01_lt_budget_of_isPAC`, `mSet_lt_budget_of_isPAC`, no `sorry`; only the unit ball,
     which needs the Gaussian-prior chapter `prereq_bayes`, is left). The shared toolkit is
-    `COLT83/LeanMachineLearning/TwoPoint.lean`: the divergence between the laws of the outputs of
+    `Maiti2026Power/LeanMachineLearning/TwoPoint.lean`: the divergence between the laws of the outputs of
     two runs of a fixed-budget algorithm is at most the expected sum of the squared gaps along the
     trajectory (`IsRun.klDiv_map_out_le_sum_integral`, data processing on top of the divergence
     decomposition), hence the **two-point inequality**
@@ -278,14 +278,14 @@ status:
     `Finset.sum_powersetCard_succ_sum_mem` (the pairs `(S, i)` with `|S| = k+1`, `i ∈ S`, are in
     bijection with the pairs `(B, i)` with `|B| = k`, `i ∉ B`). The two hypercubes are handled at
     once as vertex sets of a box with two values per coordinate
-    (`COLT83/MXJ2026/CubeSet.lean`: support function of a box, simple regret as a Hamming
+    (`Maiti2026Power/MXJ2026/CubeSet.lean`: support function of a box, simple regret as a Hamming
     distance; `LowerCube.lean`: `le_of_isPAC_cubeSet`, blueprint `def:cube_set`,
     `lem:lower_cube`); the multi-task instances and their lower bound are in
     `MultitaskInstances.lean` and `LowerMultitask.lean`, the `m`-set ones in `MSetInstances.lean`
     and `LowerMSet.lean`.
 
     Fifteenth area: **Theorem 6 is proved** (`exists_isPAC_of_finite`, no `sorry`), through a
-    reusable framework of **phased algorithms** (`COLT83/LeanMachineLearning/Phased.lean`,
+    reusable framework of **phased algorithms** (`Maiti2026Power/LeanMachineLearning/Phased.lean`,
     `PhasedAlg`: deterministic algorithms which run in phases of fixed lengths, play in each
     phase a fixed design determined by a state and update the state from the observations of the
     phase; `PhasedAlg.toAlgorithm`, `PhasedAlg.toIdentAlg`, `PhasedAlg.cons`). In a linear
@@ -301,28 +301,28 @@ status:
     schedule `ε_ℓ, δ_ℓ, n_ℓ`, the halving sizes `s_ℓ`, the number of rounds and the budget
     `N_ME ≤ 16000 K log(3/δ)/ε²`; `MedianEliminationRound.lean`: the round-robin design of a
     round, empirical means, top-`⌈s/2⌉` selection through the new
-    `COLT83/Mathlib/Data/Finset/TopBy.lean` (`Finset.topBy`, its cardinality, the comparison
+    `Maiti2026Power/Mathlib/Data/Finset/TopBy.lean` (`Finset.topBy`, its cardinality, the comparison
     property, the median counting argument and its measurability in the scores), the
     sub-Gaussian tails of the empirical means and the one-round guarantee `lem:me_round`;
     `MedianElimination.lean`: the phased algorithm on candidate arms, the good surviving sets
     and `isPAC_medianElim`, blueprint `thm:median_elimination`/`cor:median_elimination_linear`,
     formalized for Gaussian rewards of candidate arms of a linear bandit rather than general
-    sub-Gaussian bandits). The **region algorithm** (`COLT83/MXJ2026/RegionAlgorithm.lean`:
+    sub-Gaussian bandits). The **region algorithm** (`Maiti2026Power/MXJ2026/RegionAlgorithm.lean`:
     a fixed-design phase computing least-squares candidates in the regions, prepended to Median
     Elimination with parameters `(ε/2, δ/2)`; the first-phase guarantee `lem:region_phase1` by
     Borell–TIS on the region of an optimal arm; `isPAC_regionAlg`, blueprint `thm:log_gains`)
     and the assembly in `LogGains.lean` (a cover of `𝒳` by `d` regions of size at most
-    `⌊|𝒳|/d⌋ + 1`, `COLT83/Mathlib/Data/Set/CoverSmall.lean`; Kiefer–Wolfowitz design,
+    `⌊|𝒳|/d⌋ + 1`, `Maiti2026Power/Mathlib/Data/Set/CoverSmall.lean`; Kiefer–Wolfowitz design,
     barrier rounding, `T₁ = ⌈640 (w_𝓡² + d log(4/δ))/ε²⌉`, and the budget arithmetic
-    `COLT83/MXJ2026/LogGainsArith.lean` giving the constant `97281 = 1281 + 6·16000`).
+    `Maiti2026Power/MXJ2026/LogGainsArith.lean` giving the constant `97281 = 1281 + 6·16000`).
 
     Sixteenth area: **the two lower bounds of Theorem 7 are proved**
     (`blockBallSet_le_budget_of_isFixedDesign_of_isPAC`, `blockBallSet_le_budget_of_isPAC`, no
     `sorry`). The adaptive bound is Theorem 2 on the block-ball set, which is compact and
-    spanning (`COLT83/MXJ2026/BlockBall.lean`: block embeddings and projections, support
+    spanning (`Maiti2026Power/MXJ2026/BlockBall.lean`: block embeddings and projections, support
     function `max_i ‖θ⁽ⁱ⁾‖`, regret identity for reward vectors supported on one block). The
     non-adaptive bound follows the blueprint's block restriction, in the form of a **transport
-    lemma** (`COLT83/LeanMachineLearning/FixedDesignTransport.lean`: a fixed-design PAC
+    lemma** (`Maiti2026Power/LeanMachineLearning/FixedDesignTransport.lean`: a fixed-design PAC
     algorithm on `𝒳 ⊆ E` transported through a linear map `L : F → E` to a design on `𝒴 ⊆ F`
     with the same observation laws and a regret-non-increasing recommendation map is PAC on
     `𝒴`, `isPAC_fixedDesignTransport`, proved on the explicit laws `fixedDesignPairLaw`):
@@ -331,24 +331,24 @@ status:
     of a PAC design, `posDef_of_isFixedDesign_of_isPAC*`, now also for budget `0` on sets
     containing `0`; the Bayesian step `gwMat_le_of_isFixedDesign_of_isPAC`, `0.12 w(𝒳, Σ_T) ≤ ε`),
     and the width of the unit ball for a matrix is bounded below
-    (`COLT83/MXJ2026/WidthBall.lean`: `gwMat (unitBall) A ≥ √(2/π) d / √(tr A)`, from
+    (`Maiti2026Power/MXJ2026/WidthBall.lean`: `gwMat (unitBall) A ≥ √(2/π) d / √(tr A)`, from
     `E‖Y‖ ≥ √(2/π) ∑ cᵢ √(Sᵢᵢ)` for `Y ~ N(0, S)` and unit weights `c`,
-    `COLT83/Mathlib/Probability/GaussianAbsMoment.lean`, with `E|Z| = √(2v/π)` for
+    `Maiti2026Power/Mathlib/Probability/GaussianAbsMoment.lean`, with `E|Z| = √(2v/π)` for
     `Z ~ N(0, v)`; blueprint `prop:width_ball`, sharpened from `d/√3` to `√(2/π) d`), with
     `tr Σ' ≤ T/k`.
 
     Seventeenth area: **the unit-ball lower bound of Table 1 is proved**
     (`unitBall_le_budget_of_isPAC`, no `sorry`), completing Table 1, through the Bayesian
     analysis of adaptive algorithms of the blueprint chapter `prereq_bayes`. Library:
-    `COLT83/LeanMachineLearning/EnvDensity.lean` (the **environment likelihood ratio**: for
+    `Maiti2026Power/LeanMachineLearning/EnvDensity.lean` (the **environment likelihood ratio**: for
     reward kernels `κ = κ₀.withDensity ρ`, the law of the history of any algorithm under `κ` is
     the law under `κ₀` with density `∏ ρ (x t) (y t)`, `IsAlgEnvSeq.map_finHistory_eq_withDensity_env`,
     the environment analogue of LML's `Algorithm.density`, with the kernel-level identity
-    `Kernel.compProd_withDensity_right`), `COLT83/Mathlib/Probability/GaussianDensityRatio.lean`
+    `Kernel.compProd_withDensity_right`), `Maiti2026Power/Mathlib/Probability/GaussianDensityRatio.lean`
     (`N(m,1) = N(0,1).withDensity (exp (y m - m²/2))`),
-    `COLT83/Mathlib/Probability/SteinExpGrowth.lean` (**Stein's identity for `C¹` functions of
+    `Maiti2026Power/Mathlib/Probability/SteinExpGrowth.lean` (**Stein's identity for `C¹` functions of
     exponential growth**, one-dimensional, standard Gaussian and `N(0, S)`),
-    `COLT83/Mathlib/Matrix/TraceInv.lean` (AM–HM: `d² ≤ tr A · tr A⁻¹`). Project:
+    `Maiti2026Power/Mathlib/Matrix/TraceInv.lean` (AM–HM: `d² ≤ tr A · tr A⁻¹`). Project:
     `GaussianLikelihood.lean` (the likelihood ratio `exp (∑ (yₜ ⟪xₜ, θ⟫ - ⟪xₜ, θ⟫²/2))` of a
     linear Gaussian history, jointly measurable), `BayesKernel.lean` (the law of the history
     under `θ` as a Markov kernel `histKernel` built from the pure-noise law and the likelihood,
@@ -366,22 +366,22 @@ status:
     Eighteenth area (2026-09-06): **sub-exponential random variables**, the blueprint chapter
     `prereq_subexp`, first prerequisite of Theorem 8 (all its statements are now formalized
     except the unused Gaussian quadratic-form lemma). Library:
-    `COLT83/Mathlib/Probability/Moments/SubExponential.lean` (the structure
+    `Maiti2026Power/Mathlib/Probability/Moments/SubExponential.lean` (the structure
     `HasSubexponentialMGF X V b μ` with real parameters and the range `b * |t| ≤ 1` of `t`, so
     that `b = 0` is Mathlib's `HasSubgaussianMGF`; integrability of all moments and centering
     via the derivative of the MGF at `0` and Fermat's rule; scaling, transport along maps,
     independent sums; the **Bernstein tail bounds** `exp (-min (t²/(2V)) (t/(2b)))`, one- and
     two-sided, and for averages of independent variables),
-    `COLT83/Mathlib/Probability/GaussianSquareMGF.lean` (the Gaussian integral of a quadratic
+    `Maiti2026Power/Mathlib/Probability/GaussianSquareMGF.lean` (the Gaussian integral of a quadratic
     exponent, `E[exp (a X²)] = (1 - 2va)^(-1/2) exp (m² a / (1 - 2va))` for `X ~ N(m, v)`, the
     centered square of a Gaussian has parameters `(8 (v² + m² v), 4v)`, **chi-square**:
     `‖g‖² - d` has parameters `(8d, 4)` under `stdGaussian`, with the tails
     `P(‖g‖² - d ≥ t) ≤ exp (-min (t²/(16d)) (t/8))` and `P(‖g‖² ≥ 2d + 12 log(1/δ)) ≤ δ`;
-    `exp x ≤ 1 + x + x²/2` for `x ≤ 0`), `COLT83/Mathlib/Probability/SubgaussianSquare.lean`
+    `exp x ≤ 1 + x + x²/2` for `x ≤ 0`), `Maiti2026Power/Mathlib/Probability/SubgaussianSquare.lean`
     (the **Gaussian trick** `E[exp (a Z²)] ≤ (1 - 2ca)^(-1/2)` for a sub-Gaussian `Z` by Tonelli
     on `μ.prod N(0,1)`, the fourth moment `E[Z⁴] ≤ 14 c²`, and the general statement: if `Z` is
     sub-Gaussian with constant `c` and `E[Z²] = c` then `Z² - c` has parameters `(16c², 4c)`),
-    `COLT83/Mathlib/Probability/Rademacher.lean` (`signMeasure`, `rademacherMeasure ι` as a
+    `Maiti2026Power/Mathlib/Probability/Rademacher.lean` (`signMeasure`, `rademacherMeasure ι` as a
     product measure, independence and moments of the coordinates, Hoeffding coordinatewise so
     that `∑ εᵢ θᵢ` is sub-Gaussian with constant `‖θ‖²`, its second moment `‖θ‖²`, and the
     centered square with parameters `(16‖θ‖⁴, 4‖θ‖²)`, which replaces the paper's
@@ -391,9 +391,9 @@ status:
     Nineteenth area (2026-09-06): **seeded algorithms and the seed representation of runs**
     (blueprint `lem:seeded` in the model chapter), the LML-side tool used to prove PAC
     guarantees of adaptive algorithms without conditional-expectation arguments.
-    `COLT83/Mathlib/Probability/CondDistribConst.lean` (the kernel `Kernel.mapOfConst Q G`
+    `Maiti2026Power/Mathlib/Probability/CondDistribConst.lean` (the kernel `Kernel.mapOfConst Q G`
     mapping `x` to the law of `G x e`, `e ~ Q`; conditional distributions of functions of a
-    variable and an independent noise) and `COLT83/LeanMachineLearning/Seeded.lean` (the
+    variable and an independent noise) and `Maiti2026Power/LeanMachineLearning/Seeded.lean` (the
     structure `SeededAlg` — a seed law, a first action and measurable next-action maps —, its
     `Algorithm`, noise environments `noiseEnv μe F` with `linearGaussianEnv = noiseEnv`,
     the recursively defined run `seedStep` on the product space `seedMeasure = (seed ⊗ μe)^ℕ`,
@@ -421,7 +421,7 @@ status:
     of the two phases), `NormEstStat.lean` (window statistics of an observation sequence, the
     first-phase outcome `jStar` and the estimate, all measurable), `NormEstAlg.lean` (the
     seeded algorithm `NormEstParam.alg` with uniform Boolean seeds and its deterministic
-    output), `NormEstWindows.lean` + `COLT83/Mathlib/Probability/InfinitePiWindow.lean` (the
+    output), `NormEstWindows.lean` + `Maiti2026Power/Mathlib/Probability/InfinitePiWindow.lean` (the
     seed space `nsMeasure`, the window projections `rbProj`/`lnProj` whose laws are the block
     and noise laws, and their independence from the prefix of the seed sequence — coordinates
     of an i.i.d. sequence indexed by an injective family are i.i.d.), `NormEstPlan.lean` (the
@@ -477,6 +477,11 @@ status:
     martingale lemmas `add_of_hasCondSubexponentialMGF`, `sum_of_hasCondSubexponentialMGF`
     and the **Azuma–Bernstein inequality** `measure_sum_ge_le_of_hasCondSubexponentialMGF`.
 
+    Rename (2026-09-07): the Lean library, package and namespace `COLT83` became
+    `Maiti2026Power` (directory `Maiti2026Power/`, root `Maiti2026Power.lean`); the blueprint
+    tags, the comparator challenges (regenerated with the referee) and CI were updated
+    accordingly. The repository name `colt-2026-83` and its URLs are unchanged.
+
     Not yet formalized: the remaining prerequisites of Part II of the blueprint
     (continuity/attainment of the width, the sub-Gaussian generality of Median Elimination,
     Gaussian quadratic forms, the sequential composition lemma `lem:composition`, which is no
@@ -488,27 +493,27 @@ status:
   sorry_in_definitions: 0
   axioms: []               # to be filled when the proofs are in (phase 2)
   size:
-    lean_lines: 29175      # COLT83/ and COLT83.lean
+    lean_lines: 29175      # Maiti2026Power/ and Maiti2026Power.lean
     theorems_and_lemmas: 1536  # lines starting with theorem/lemma (possibly protected/private)
     definitions: 340       # lines starting with (noncomputable) def/abbrev/structure/inductive/instance/class
     blueprint_tagged_declarations: 1042  # blueprint/lean_decls, autogenerated
   main_results:
-    - declaration: "COLT83.exists_isFixedDesign_isPAC"
-      file: "COLT83/MXJ2026/Upper.lean"
+    - declaration: "Maiti2026Power.exists_isFixedDesign_isPAC"
+      file: "Maiti2026Power/MXJ2026/Upper.lean"
       source_statement: "Theorem 1 — fixed-design upper bound O((d log(1/δ) + w(𝒳)²)/ε²)"
       note: >-
         Existential form of the paper's statement, with the explicit constant 600 of the blueprint
         (the paper's 360 is replaced because the rounding is done by a barrier argument); the
         blueprint's `thm:upper` is the same guarantee for an explicit algorithm
-        (`COLT83.isPAC_fixedDesignIdentAlg`). Fully proved (no `sorry`): Kiefer–Wolfowitz design,
+        (`Maiti2026Power.isPAC_fixedDesignIdentAlg`). Fully proved (no `sorry`): Kiefer–Wolfowitz design,
         approximate width minimizer, barrier rounding, least squares, Borell–TIS concentration
         of the difference process, measurable approximate argmax.
       sorry_count: 0
       axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/exists_isFixedDesign_isPAC.json"
       literature_dependencies: []
-    - declaration: "COLT83.le_budget_of_isPAC"
-      file: "COLT83/MXJ2026/LowerAdaptive.lean"
+    - declaration: "Maiti2026Power.le_budget_of_isPAC"
+      file: "Maiti2026Power/MXJ2026/LowerAdaptive.lean"
       source_statement: "Theorem 2 — lower bound Ω(d log(1/δ)/ε²) for every (adaptive) algorithm"
       note: >-
         Explicit constant 1/20000 (the blueprint proof gives 1/(11556 + 5760√2)); δ < 1/16, d ≥ 2.
@@ -518,8 +523,8 @@ status:
       axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/le_budget_of_isPAC.json"
       literature_dependencies: []
-    - declaration: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
-      file: "COLT83/MXJ2026/LowerNonadaptive.lean"
+    - declaration: "Maiti2026Power.le_budget_of_isFixedDesign_of_isPAC"
+      file: "Maiti2026Power/MXJ2026/LowerNonadaptive.lean"
       source_statement: "Theorem 3 — lower bound Ω(w(𝒳)²/ε²) for non-adaptive fixed designs"
       note: >-
         Explicit constant 1/70, for δ ≤ 1/10 and budget T ≥ 1. Non-adaptive means a deterministic
@@ -530,16 +535,16 @@ status:
       axioms: []
       comparator_config: "comparator/le_budget_of_isFixedDesign_of_isPAC.json"
       literature_dependencies: []
-    - declaration: "COLT83.gw_le_card"
-      file: "COLT83/MXJ2026/WidthBounds.lean"
+    - declaration: "Maiti2026Power.gw_le_card"
+      file: "Maiti2026Power/MXJ2026/WidthBounds.lean"
       source_statement: "Proposition 4 — w(𝒳) ≤ O(d)"
       note: "Proved, as are the companions `gw_le_sqrt_log_ncard` (w(𝒳) ≤ √(2 d log |𝒳|)) and `sqrt_log_le_gw` (w(𝒳) ≥ (1/8)√(d log ⌊d/2⌋), via the Sudakov–Fernique inequality `ProbabilityTheory.sudakov_fernique`)."
       sorry_count: 0
       axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/gw_le_card.json"
       literature_dependencies: []
-    - declaration: "COLT83.width_separation"
-      file: "COLT83/MXJ2026/WidthBounds.lean"
+    - declaration: "Maiti2026Power.width_separation"
+      file: "Maiti2026Power/MXJ2026/WidthBounds.lean"
       source_statement: "Theorem 5 — a finite set with w(𝒳) ≤ O(√(d log d)) and √(d log |𝒳|) ≥ Ω(d^{3/4})"
       note: >-
         The set is a multi-task set that does not span ℝ^d; the statement is about its intrinsic
@@ -548,8 +553,8 @@ status:
       axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/width_separation.json"
       literature_dependencies: []
-    - declaration: "COLT83.exists_isPAC_of_finite"
-      file: "COLT83/MXJ2026/LogGains.lean"
+    - declaration: "Maiti2026Power.exists_isPAC_of_finite"
+      file: "Maiti2026Power/MXJ2026/LogGains.lean"
       source_statement: "Theorem 6 — adaptive algorithm with budget O(d log((|𝒳|/d)₊/δ)/ε²) on finite sets"
       note: >-
         Existential form; explicit constant 97281 = 1281 + 6·16000 (Median Elimination constant),
@@ -562,23 +567,23 @@ status:
       axioms: ["propext", "Classical.choice", "Quot.sound"]
       comparator_config: "comparator/exists_isPAC_of_finite.json"
       literature_dependencies: []
-    - declaration: "COLT83.multitaskSet_lt_budget_of_isPAC"
-      file: "COLT83/MXJ2026/LogGains.lean"
+    - declaration: "Maiti2026Power.multitaskSet_lt_budget_of_isPAC"
+      file: "Maiti2026Power/MXJ2026/LogGains.lean"
       source_statement: "Table 1 — adaptive lower bound Ω((∑ⱼ √dⱼ)²/ε²) for multi-task bandits"
       note: >-
         Companions in the same file: `hypercubePM_lt_budget_of_isPAC`,
         `hypercube01_lt_budget_of_isPAC` (Ω(d²/ε²) on the hypercubes), `mSet_lt_budget_of_isPAC`
         (Ω(m(d-m+1)/ε²) on m-sets) and `unitBall_le_budget_of_isPAC` (Ω(d²/ε²) on the unit ball).
         All five are proved (no `sorry`): the multi-task, hypercube and m-set bounds follow from
-        the two- and three-point Pinsker toolkit of `COLT83/LeanMachineLearning/TwoPoint.lean`;
+        the two- and three-point Pinsker toolkit of `Maiti2026Power/LeanMachineLearning/TwoPoint.lean`;
         the unit-ball bound is the Bayesian argument of the blueprint chapter `prereq_bayes`
-        (`COLT83/MXJ2026/LowerBall.lean`, Gaussian posterior identities via Stein's identity).
+        (`Maiti2026Power/MXJ2026/LowerBall.lean`, Gaussian posterior identities via Stein's identity).
       sorry_count: 0
       axioms: []
       comparator_config: "comparator/multitaskSet_lt_budget_of_isPAC.json"
       literature_dependencies: []
-    - declaration: "COLT83.exists_isPAC_blockBallSet"
-      file: "COLT83/MXJ2026/Separation.lean"
+    - declaration: "Maiti2026Power.exists_isPAC_blockBallSet"
+      file: "Maiti2026Power/MXJ2026/Separation.lean"
       source_statement: "Theorem 7 — polynomial separation: adaptive upper bound O((kd log(8k/δ) + d²)/ε²)"
       note: >-
         With `blockBallSet_le_budget_of_isFixedDesign_of_isPAC` (non-adaptive lower bound
@@ -589,21 +594,21 @@ status:
         fewest rounds (`isPAC_fixedDesignTransport_blockProjBall`) and applying the Bayesian step
         of Theorem 3 with the width of the unit ball (`le_gwMat_unitBall`). Only the adaptive
         upper bound `exists_isPAC_blockBallSet` is proved through the seeded block algorithm
-        `COLT83.BlockParam.alg` (`COLT83.BlockParam.one_sub_le_seedMeasure_real_output`,
-        `COLT83.BlockParam.T_le`).
+        `Maiti2026Power.BlockParam.alg` (`Maiti2026Power.BlockParam.one_sub_le_seedMeasure_real_output`,
+        `Maiti2026Power.BlockParam.T_le`).
       sorry_count: 0
       axioms: []
       comparator_config: "comparator/exists_isPAC_blockBallSet.json"
       literature_dependencies: []
-    - declaration: "COLT83.exists_isAccurateNormEst"
-      file: "COLT83/MXJ2026/NormEstimation.lean"
+    - declaration: "Maiti2026Power.exists_isAccurateNormEst"
+      file: "Maiti2026Power/MXJ2026/NormEstimation.lean"
       source_statement: "Theorem 8 — ℓ₂-norm estimation with O(d log(1/δ)/ε²) samples"
       note: >-
         Existential form; explicit constant 10⁵ and log(4/δ). Proved (no `sorry`): the
-        algorithm is the seeded meta-algorithm `COLT83.NormEstParam.alg` with the deterministic
-        output `COLT83.NormEstParam.output` and budget `COLT83.NormEstParam.T`; its accuracy
-        `1 - 7δ/8` is `COLT83.NormEstParam.one_sub_le_seedMeasure_real_output` and its budget
-        bound `COLT83.NormEstParam.T_le`.
+        algorithm is the seeded meta-algorithm `Maiti2026Power.NormEstParam.alg` with the deterministic
+        output `Maiti2026Power.NormEstParam.output` and budget `Maiti2026Power.NormEstParam.T`; its accuracy
+        `1 - 7δ/8` is `Maiti2026Power.NormEstParam.one_sub_le_seedMeasure_real_output` and its budget
+        bound `Maiti2026Power.NormEstParam.T_le`.
       sorry_count: 0
       axioms: []
       comparator_config: "comparator/exists_isAccurateNormEst.json"
@@ -684,77 +689,77 @@ review:
     dependencies inlined over a Mathlib-only import closure (configs listed as
     `comparator_config` above), and comparator checks that the project proves exactly the
     challenged statements with no axioms beyond `propext`, `Classical.choice` and `Quot.sound`.
-    The library layers (`COLT83/Mathlib/`, `COLT83/LeanMachineLearning/`) were reviewed for
+    The library layers (`Maiti2026Power/Mathlib/`, `Maiti2026Power/LeanMachineLearning/`) were reviewed for
     generality and placement: the Gaussian integrability lemmas hold on separable Banach spaces,
     the CFC and orthonormal-basis lemmas over `RCLike`; the remaining known restrictions are
     recorded as `## TODO` sections in the file docstrings.
 
 alignment:
-  namespace: "COLT83"
+  namespace: "Maiti2026Power"
   note: >-
     The full source-to-Lean map is the blueprint: each theorem/lemma/definition environment in
     `blueprint/src/chapters/*.tex` carries a `\lean{}` tag naming the corresponding declaration.
-    Library-level material lives under `COLT83/LeanMachineLearning/` (namespace `Learning`) and
-    `COLT83/Mathlib/` (Mathlib namespaces); the paper's objects and results under
-    `COLT83/MXJ2026/`. Only the headline statements are repeated here.
+    Library-level material lives under `Maiti2026Power/LeanMachineLearning/` (namespace `Learning`) and
+    `Maiti2026Power/Mathlib/` (Mathlib namespaces); the paper's objects and results under
+    `Maiti2026Power/MXJ2026/`. Only the headline statements are repeated here.
   statements:
     - source: "thm:upper / cor:upper_exists — Theorem 1, fixed-design upper bound"
-      lean: "COLT83.exists_isFixedDesign_isPAC"
-      module: "COLT83.MXJ2026.Upper"
+      lean: "Maiti2026Power.exists_isFixedDesign_isPAC"
+      module: "Maiti2026Power.MXJ2026.Upper"
       status: "proved"
-      note: "Existential form; the explicit algorithm is `COLT83.fixedDesignIdentAlg`."
+      note: "Existential form; the explicit algorithm is `Maiti2026Power.fixedDesignIdentAlg`."
     - source: "thm:lower_adaptive — Theorem 2, adaptive lower bound"
-      lean: "COLT83.le_budget_of_isPAC"
-      module: "COLT83.MXJ2026.LowerAdaptive"
+      lean: "Maiti2026Power.le_budget_of_isPAC"
+      module: "Maiti2026Power.MXJ2026.LowerAdaptive"
       status: "proved"
       note: "Proved with the constant 1/20000; the proof follows the blueprint chapter."
 
     - source: "thm:lower_nonadaptive — Theorem 3, non-adaptive lower bound"
-      lean: "COLT83.le_budget_of_isFixedDesign_of_isPAC"
-      module: "COLT83.MXJ2026.LowerNonadaptive"
+      lean: "Maiti2026Power.le_budget_of_isFixedDesign_of_isPAC"
+      module: "Maiti2026Power.MXJ2026.LowerNonadaptive"
       status: "proved"
       note: >-
-        Bayesian proof: `COLT83/MXJ2026/BayesModel.lean` (prior, orthogonal decomposition, Bayes
-        identity, regret bounds) and `COLT83/MXJ2026/SingularDesign.lean` (singular designs).
+        Bayesian proof: `Maiti2026Power/MXJ2026/BayesModel.lean` (prior, orthogonal decomposition, Bayes
+        identity, regret bounds) and `Maiti2026Power/MXJ2026/SingularDesign.lean` (singular designs).
         `cor:lower_nonadaptive_H` (the paper's `H₂` form) is not formalized.
     - source: "prop:width_le_d, prop:width_finite, prop:width_lower_sqrt_dlogd — Proposition 4"
-      lean: "COLT83.gw_le_card, COLT83.gw_le_sqrt_log_ncard, COLT83.sqrt_log_le_gw"
-      module: "COLT83.MXJ2026.WidthBounds"
+      lean: "Maiti2026Power.gw_le_card, Maiti2026Power.gw_le_sqrt_log_ncard, Maiti2026Power.sqrt_log_le_gw"
+      module: "Maiti2026Power.MXJ2026.WidthBounds"
       status: "proved"
       note: "All three parts proved; (iii) via `prereq_sudakov` (Stein's identity, Gaussian interpolation, Sudakov–Fernique, expected maximum of i.i.d. Gaussians), all formalized." 
     - source: "thm:width_separation — Theorem 5"
-      lean: "COLT83.width_separation"
-      module: "COLT83.MXJ2026.WidthBounds"
+      lean: "Maiti2026Power.width_separation"
+      module: "Maiti2026Power.MXJ2026.WidthBounds"
       status: "proved"
       note: ""
     - source: "thm:log_gains / cor:log_gains_exists — Theorem 6"
-      lean: "COLT83.exists_isPAC_of_finite"
-      module: "COLT83.MXJ2026.LogGains"
+      lean: "Maiti2026Power.exists_isPAC_of_finite"
+      module: "Maiti2026Power.MXJ2026.LogGains"
       status: "proved"
       note: "Existential form; proved through the phased Median-Elimination algorithm of `thm:log_gains`."
     - source: "thm:lower_multitask, thm:lower_hypercube_pm, thm:lower_hypercube_01, thm:lower_msets — Table 1 lower bounds (multi-task, hypercubes, m-sets)"
-      lean: "COLT83.multitaskSet_lt_budget_of_isPAC, COLT83.hypercubePM_lt_budget_of_isPAC, COLT83.hypercube01_lt_budget_of_isPAC, COLT83.mSet_lt_budget_of_isPAC"
-      module: "COLT83.MXJ2026.LogGains"
+      lean: "Maiti2026Power.multitaskSet_lt_budget_of_isPAC, Maiti2026Power.hypercubePM_lt_budget_of_isPAC, Maiti2026Power.hypercube01_lt_budget_of_isPAC, Maiti2026Power.mSet_lt_budget_of_isPAC"
+      module: "Maiti2026Power.MXJ2026.LogGains"
       status: "proved"
       note: >-
         All four proved from the two- and three-point Pinsker toolkit of
-        `COLT83.LeanMachineLearning.TwoPoint`; the Lean forms are the contrapositives
+        `Maiti2026Power.LeanMachineLearning.TwoPoint`; the Lean forms are the contrapositives
         (`le_of_isPAC_cubeSet`, `le_of_isPAC_multitaskSet`, `le_of_isPAC_mSet`).
     - source: "cor:lower_ball_adaptive — Table 1 lower bound for the unit ball"
-      lean: "COLT83.unitBall_le_budget_of_isPAC"
-      module: "COLT83.MXJ2026.LogGains"
+      lean: "Maiti2026Power.unitBall_le_budget_of_isPAC"
+      module: "Maiti2026Power.MXJ2026.LogGains"
       status: "proved"
       note: "Proved through the Gaussian-prior chapter `prereq_bayes` and the Bayesian regret bound of `LowerBall.lean`."
     - source: "thm:separation_lower_nonadaptive, thm:separation / cor:separation_exists — Theorem 7"
-      lean: "COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, COLT83.blockBallSet_le_budget_of_isPAC, COLT83.exists_isPAC_blockBallSet"
-      module: "COLT83.MXJ2026.Separation"
+      lean: "Maiti2026Power.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, Maiti2026Power.blockBallSet_le_budget_of_isPAC, Maiti2026Power.exists_isPAC_blockBallSet"
+      module: "Maiti2026Power.MXJ2026.Separation"
       status: "proved"
-      note: "The two lower bounds and the existential upper bound are proved; the block algorithm of `thm:separation` is the seeded algorithm `COLT83.BlockParam.alg`, proved PAC with failure probability 15δ/16."
+      note: "The two lower bounds and the existential upper bound are proved; the block algorithm of `thm:separation` is the seeded algorithm `Maiti2026Power.BlockParam.alg`, proved PAC with failure probability 15δ/16."
     - source: "thm:norm_estimation / cor:norm_estimation_exists — Theorem 8"
-      lean: "COLT83.exists_isAccurateNormEst"
-      module: "COLT83.MXJ2026.NormEstimation"
+      lean: "Maiti2026Power.exists_isAccurateNormEst"
+      module: "Maiti2026Power.MXJ2026.NormEstimation"
       status: "proved"
-      note: "Existential form; the meta-algorithm of `thm:norm_estimation` is `COLT83.NormEstParam.alg` (a seeded algorithm), proved accurate with failure probability 7δ/8."
+      note: "Existential form; the meta-algorithm of `thm:norm_estimation` is `Maiti2026Power.NormEstParam.alg` (a seeded algorithm), proved accurate with failure probability 7δ/8."
     - source: "Part II — prerequisites (Gaussian concentration, sub-exponential variables, divergence decomposition, Sudakov–Fernique, Median Elimination, Gaussian posteriors)"
       lean: ""
       module: ""
@@ -766,4 +771,4 @@ acknowledgements: >-
   model (`Learning.Algorithm`, `Learning.Environment`, `Learning.stationaryEnv`,
   `Learning.detAlgorithm`, `Learning.trajMeasure`), on LeanSpec for specification statements, and
   on Patrick Massot's leanblueprint/checkdecls for the blueprint infrastructure. The material under
-  `COLT83/LeanMachineLearning/` and `COLT83/Mathlib/` is written to be contributed upstream.
+  `Maiti2026Power/LeanMachineLearning/` and `Maiti2026Power/Mathlib/` is written to be contributed upstream.

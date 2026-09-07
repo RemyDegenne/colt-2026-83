@@ -24,7 +24,7 @@ the width machinery and is used in Chapter~\ref{chap:separation}.
 \label{sec:upper_design}
 
 \begin{definition}[Mixed design]\label{def:mixed_design}
-\lean{COLT83.mixDesign, COLT83.designMatrix_mixDesign, COLT83.IsDesign.mixDesign, COLT83.posDef_designMatrix_mixDesign}\leanok
+\lean{Maiti2026Power.mixDesign, Maiti2026Power.designMatrix_mixDesign, Maiti2026Power.IsDesign.mixDesign, Maiti2026Power.posDef_designMatrix_mixDesign}\leanok
 \uses{def:arm_set, def:design_matrix, lem:width_attained, thm:kiefer_wolfowitz}
 Let $\Xs$ be spanning. Let $\lambda_1 \in \simplex_{\Xs}$ with $A_1 := A(\lambda_1) \in \PD$ and
 $\gwidth{\Xs}{A_1} = \gw(\Xs)$ (Lemma~\ref{lem:width_attained}), and let $\lambda_G \in \simplex_{\Xs}$
@@ -41,7 +41,7 @@ corresponding support).
 \end{definition}
 
 \begin{lemma}[Bounds for the mixed design]\label{lem:mixed_design_bounds}
-\lean{COLT83.smul_designMatrix_le_designMatrix_mixDesign_left, COLT83.smul_designMatrix_le_designMatrix_mixDesign_right, COLT83.IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le, COLT83.gwMat_designMatrix_mixDesign_le}\leanok
+\lean{Maiti2026Power.smul_designMatrix_le_designMatrix_mixDesign_left, Maiti2026Power.smul_designMatrix_le_designMatrix_mixDesign_right, Maiti2026Power.IsGOptimalDesign.dotProduct_inv_designMatrix_mixDesign_le, Maiti2026Power.gwMat_designMatrix_mixDesign_le}\leanok
 \uses{def:mixed_design, def:width_matrix, def:g_value}
 In the setting of Definition~\ref{def:mixed_design} ($\Xs$ spanning), for every $x \in \Xs$,
 $\norm{x}_{A_0^{-1}}^2 \le 2d$, and $\gwidth{\Xs}{A_0} \le \sqrt2\,\gw(\Xs)$.
@@ -59,7 +59,7 @@ $c^{-1/2} = \sqrt2$),
 $\gwidth{\Xs}{A_0} \le \gwidth{\Xs}{\tfrac12A_1} = \sqrt2\,\gwidth{\Xs}{A_1} = \sqrt2\,\gw(\Xs)$.
 \end{proof}
 
-\textbf{Lean remark.} The mixture \texttt{COLT83.mixDesign w₁ w₂} and the two bounds are
+\textbf{Lean remark.} The mixture \texttt{Maiti2026Power.mixDesign w₁ w₂} and the two bounds are
 formalized for an arbitrary design distribution $\lambda_1$ with $A(\lambda_1) \succ 0$ (the
 width bound reads $\gwidth{\Xs}{A_0} \le \sqrt2\,\gwidth{\Xs}{A(\lambda_1)}$); the choice of a
 width-minimizing $\lambda_1$ (Lemma~\ref{lem:width_attained}) is made only when the algorithm
@@ -69,7 +69,7 @@ is assembled.
 \label{sec:upper_ls}
 
 \begin{definition}[Least-squares estimator]\label{def:least_squares}
-\lean{COLT83.leastSquares, COLT83.designRows, COLT83.lsMatrix, COLT83.leastSquares_eq_toEuclideanLin}\leanok
+\lean{Maiti2026Power.leastSquares, Maiti2026Power.designRows, Maiti2026Power.lsMatrix, Maiti2026Power.leastSquares_eq_toEuclideanLin}\leanok
 \uses{def:fixed_design}
 For a fixed design $x_0,\dots,x_{T-1}$ with $\Sigma_T = X^\top X \in \PD$ and observations
 $y \in \R^T$, the \emph{least-squares estimator} is
@@ -80,7 +80,7 @@ a linear (hence measurable) function of $y$.
 \end{definition}
 
 \begin{lemma}[Law of the least-squares error]\label{lem:least_squares_law}
-\lean{COLT83.leastSquares_inner_add, COLT83.lsMatrix_mul_transpose, COLT83.hasLaw_leastSquares_of_fixedDesign}\leanok
+\lean{Maiti2026Power.leastSquares_inner_add, Maiti2026Power.lsMatrix_mul_transpose, Maiti2026Power.hasLaw_leastSquares_of_fixedDesign}\leanok
 \uses{def:least_squares, lem:fixed_design_law}
 Under the fixed design run against $\nu_\theta$,
 $\hat\theta - \theta = \Sigma_T^{-1}X^\top\eta \sim \Normal(0,\Sigma_T^{-1})$, where
@@ -101,7 +101,7 @@ Lemma~\ref{lem:gauss_law_of_cov} together with $(\Sigma_T^{-1/2})^2 = \Sigma_T^{
 \end{proof}
 
 \textbf{Lean remark.} The formalized statement is
-$\hat\theta \sim \Normal(\theta, \Sigma_T^{-1})$ (\texttt{COLT83.hasLaw\_leastSquares\_of\_fixedDesign},
+$\hat\theta \sim \Normal(\theta, \Sigma_T^{-1})$ (\texttt{Maiti2026Power.hasLaw\_leastSquares\_of\_fixedDesign},
 for the run of the fixed design in the environment $\nu_\theta$ and any $T$ with
 $\Sigma_T \succ 0$), obtained from $\hat\theta = \theta + \Sigma_T^{-1}X^\top\eta$
 (\texttt{leastSquares\_inner\_add}), the standard Gaussian law of $\eta$
@@ -154,7 +154,7 @@ measurable map $y \mapsto s_\gamma(\hat\theta(y))$. The paper uses an exact argm
 $\gamma = \eps/4$ and absorb the loss in the constant (Theorem~\ref{thm:upper}).
 
 \begin{lemma}[Regret is controlled by the difference process]\label{lem:regret_le_difference_process}
-\lean{COLT83.simpleRegret_le_supportFn_add_supportFn}\leanok
+\lean{Maiti2026Power.simpleRegret_le_supportFn_add_supportFn}\leanok
 \uses{def:regret}
 Let $\theta, \hat\theta \in \R^d$, $\gamma \ge 0$, and $\rec \in \Xs$ with
 $\ip{\rec}{\hat\theta} \ge \max_{x\in\Xs}\ip{x}{\hat\theta} - \gamma$. Then
@@ -184,7 +184,7 @@ maximizer $x^\star$: it follows from the subadditivity of the support function
 $\sup_x\ip{x}{\theta} \le \sup_x\ip{x}{\theta-\hat\theta} + \sup_x\ip{x}{\hat\theta}$.
 
 \begin{lemma}[Concentration of the difference process]\label{lem:difference_process_concentration}
-\lean{COLT83.diffSup, COLT83.diffSup_eq_supportFn_add_neg, COLT83.continuous_diffSup, COLT83.integral_diffSup_multivariateGaussian, COLT83.measureReal_diffSup_gt_le}\leanok
+\lean{Maiti2026Power.diffSup, Maiti2026Power.diffSup_eq_supportFn_add_neg, Maiti2026Power.continuous_diffSup, Maiti2026Power.integral_diffSup_multivariateGaussian, Maiti2026Power.measureReal_diffSup_gt_le}\leanok
 \uses{def:width_matrix, lem:width_symm, cor:sup_bound_symmetric}
 Let $\Sigma \in \PD$, $\Delta \sim \Normal(0,\Sigma^{-1})$, $D := \max_{x,x'\in\Xs}\ip{x-x'}{\Delta}$
 and $\sigma^2 := \max_{x\in\Xs}\norm{x}_{\Sigma^{-1}}^2$. Then $\E D = 2\,\gwidth{\Xs}{\Sigma}$, and
@@ -214,7 +214,7 @@ Lemma~\ref{lem:sqrt_props}(iv).)
 \label{sec:upper_theorem}
 
 \begin{definition}[The fixed-design identification algorithm]\label{def:fixed_design_algorithm}
-\lean{COLT83.lsRecommend, COLT83.measurable_lsRecommend, COLT83.fixedDesignIdentAlg, COLT83.isFixedBudget_fixedDesignIdentAlg, COLT83.isFixedDesign_fixedDesignIdentAlg, COLT83.output_fixedDesignIdentAlg}\leanok
+\lean{Maiti2026Power.lsRecommend, Maiti2026Power.measurable_lsRecommend, Maiti2026Power.fixedDesignIdentAlg, Maiti2026Power.isFixedBudget_fixedDesignIdentAlg, Maiti2026Power.isFixedDesign_fixedDesignIdentAlg, Maiti2026Power.output_fixedDesignIdentAlg}\leanok
 \uses{def:arm_set, def:fixed_design, def:mixed_design, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:width}
 Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$, and set
 \[
@@ -250,7 +250,7 @@ reduced to $320$. The paper's constant is $360$.
 \end{remark}
 
 \begin{theorem}[Fixed-design upper bound (Theorem~1 of the paper)]\label{thm:upper}
-\lean{COLT83.isPAC_fixedDesignIdentAlg}\leanok
+\lean{Maiti2026Power.isPAC_fixedDesignIdentAlg}\leanok
 \uses{def:arm_set, def:fixed_design_algorithm, def:pac, def:width}
 Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$. The algorithm
 $\mathsf{Alg}_{\mathrm{fd}}(\eps,\delta)$
@@ -262,7 +262,7 @@ of Definition~\ref{def:fixed_design_algorithm} is $(\eps,\delta)$-PAC on $\Xs$, 
 \end{theorem}
 
 \begin{corollary}[Theorem~1 of the paper, existential form]\label{cor:upper_exists}
-\lean{COLT83.exists_isFixedDesign_isPAC}\leanok
+\lean{Maiti2026Power.exists_isFixedDesign_isPAC}\leanok
 \uses{thm:upper, def:fixed_design, def:pac, def:width}
 Let $\Xs$ be spanning, $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
 $T \le 600\,(\gw(\Xs)^2 + d\log(2/\delta))/\eps^2 + 1$ and a fixed-design identification
@@ -320,14 +320,14 @@ Thus $\Prob_\theta(r(\rec,\theta) \le \eps) \ge \Prob_\theta(E) \ge 1 - \delta$,
 which is Definition~\ref{def:pac}. The bound $\lceil u\rceil \le u + 1$ gives the budget bound.
 \end{proof}
 
-\textbf{Lean remark.} The formalized algorithm \texttt{COLT83.fixedDesignIdentAlg T x s}
+\textbf{Lean remark.} The formalized algorithm \texttt{Maiti2026Power.fixedDesignIdentAlg T x s}
 takes the design $x$ and the selector $s$ as parameters, and
-\texttt{COLT83.isPAC\_fixedDesignIdentAlg} is the guarantee in the general form ``if
+\texttt{Maiti2026Power.isPAC\_fixedDesignIdentAlg} is the guarantee in the general form ``if
 $\Sigma_T \succ 0$, $\norm{x}^2_{\Sigma_T^{-1}} \le \sigma^2$ on $\Xs$, $s$ is an $\eps/4$-selector
 and $2\gwidth{\Xs}{\Sigma_T} + 2\sigma\sqrt{2\cG\log(1/\delta)} \le 3\eps/4$, then the
 algorithm is $(\eps,\delta)$-PAC''; the choice of the design and the arithmetic of the
 constants are done in the proof of Corollary~\ref{cor:upper_exists}
-(\texttt{COLT83.exists\_isFixedDesign\_isPAC}). Instead of a width-minimizing design
+(\texttt{Maiti2026Power.exists\_isFixedDesign\_isPAC}). Instead of a width-minimizing design
 $\lambda_1$ (Lemma~\ref{lem:width_attained}, not formalized) the formal proof uses an
 approximate minimizer with $\gwidth{\Xs}{A_1}^2 \le \gw(\Xs)^2 + (\log 2)/4$, which the slack
 $337.5 - 320 = 17.5$ of the arithmetic absorbs. The case $d = 0$ is treated separately (every
@@ -368,7 +368,7 @@ $360$ to $600$. The dependence on $\eps$, $\delta$, $d$ and $\gw(\Xs)$ is unchan
 \label{sec:upper_ball}
 
 \begin{lemma}[Identification on the unit ball by a basis design]\label{lem:ball_identification}
-\lean{COLT83.lnNoise_real_norm_lnDelta_gt_le, COLT83.norm_sub_inner_normalizeBall_le}
+\lean{Maiti2026Power.lnNoise_real_norm_lnDelta_gt_le, Maiti2026Power.norm_sub_inner_normalizeBall_le}
 \uses{def:pac, def:fixed_design, def:least_squares}
 Let $\Xs = \ball_d$, $\eps > 0$, $\delta \in (0,1)$, and
 \[

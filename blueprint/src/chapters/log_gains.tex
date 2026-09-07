@@ -38,7 +38,7 @@ spanning hypothesis is what makes the $G$-optimal design of
 Theorem~\ref{thm:kiefer_wolfowitz} available; it is repeated in each statement.
 
 \begin{definition}[Region-based adaptive algorithm]\label{def:region_algorithm}
-\lean{COLT83.regionCandidates, COLT83.regionAlg, COLT83.start_regionAlg}\leanok
+\lean{Maiti2026Power.regionCandidates, Maiti2026Power.regionAlg, Maiti2026Power.start_regionAlg}\leanok
 \uses{def:bai_alg, def:regionalized_width, thm:kiefer_wolfowitz, thm:rounding, def:least_squares, lem:approx_argmax_selector, def:median_elimination, cor:median_elimination_linear, lem:composition, lem:phased}
 Let $\Xs$ be a finite spanning action set and let $\mathcal R = (R_1,\dots,R_K)$, $K \ge 1$,
 be a partition of $\Xs$ into nonempty subsets. Let $\lambda_G \in \simplex_{\Xs}$ and
@@ -82,7 +82,7 @@ Corollary~\ref{cor:log_gains_exists}. The recommendation is the surviving candid
 $T_1 + N_{\mathrm{ME}}(K,\eps/2,\delta/2)$ (\texttt{start\_regionAlg}).
 
 \begin{lemma}[Width of a region under a scalar Loewner bound]\label{lem:log_gains_region_width_bound}
-\lean{COLT83.gwMat_le_of_smul_le}\leanok
+\lean{Maiti2026Power.gwMat_le_of_smul_le}\leanok
 \uses{def:width_matrix, lem:width_matrix_wd}
 Let $R \subset \R^d$ be nonempty and compact (typically a region of a partition of $\Xs$),
 $A, B \in \PD$ and $c > 0$ with $B \succeq cA$. Then, in the notation of
@@ -108,7 +108,7 @@ $\gwidth{R}{cA} = c^{-1/2}\gwidth{R}{A}$.
 \end{proof}
 
 \begin{lemma}[The candidate of the optimal region is good]\label{lem:region_phase1}
-\lean{COLT83.one_sub_le_measureReal_regionCandidates, COLT83.region_phase1_arith}\leanok
+\lean{Maiti2026Power.one_sub_le_measureReal_regionCandidates, Maiti2026Power.region_phase1_arith}\leanok
 \uses{def:region_algorithm}
 Let $\Xs$ be a finite spanning action set and $\mathcal R$ a partition of $\Xs$ as in
 Definition~\ref{def:region_algorithm}.
@@ -194,7 +194,7 @@ $\lfloor m/d\rfloor + 1$ elements.
 \end{proof}
 
 \begin{theorem}[Theorem~6 of the paper]\label{thm:log_gains}
-\lean{COLT83.isPAC_regionAlg, COLT83.regionGood, COLT83.logGains_budget_arith}\leanok
+\lean{Maiti2026Power.isPAC_regionAlg, Maiti2026Power.regionGood, Maiti2026Power.logGains_budget_arith}\leanok
 \uses{def:region_algorithm, def:pac}
 Let $\Xs$ be a finite spanning action set, $\eps\in(0,1]$, $\delta\in(0,1)$.
 \begin{enumerate}
@@ -217,7 +217,7 @@ Let $\Xs$ be a finite spanning action set, $\eps\in(0,1]$, $\delta\in(0,1)$.
 \end{theorem}
 
 \begin{corollary}[Theorem~6 of the paper, existential form]\label{cor:log_gains_exists}
-\lean{COLT83.exists_isPAC_of_finite}\leanok
+\lean{Maiti2026Power.exists_isPAC_of_finite}\leanok
 \uses{thm:log_gains, def:pac}
 Let $\Xs$ be a finite spanning action set with $m := \abs\Xs$, $\eps \in (0,1]$ and
 $\delta \in (0,1)$. There exist a budget
@@ -436,7 +436,7 @@ $\delta \ge (b-1)/9$ directly, so no bad instance needs to be exhibited (and
 \label{sec:log_gains_lower_multitask}
 
 \begin{definition}[Hard instances for the multi-task set]\label{def:multitask_instances}
-\lean{COLT83.mtSum, COLT83.mtEps, COLT83.mtParam, COLT83.mtParam0, COLT83.sum_mtEps, COLT83.inner_mtParam, COLT83.supportFn_mtParam, COLT83.inner_mtParam0_sub_mtParam, COLT83.mtParam0_update, COLT83.inner_mtParam_nonneg}\leanok
+\lean{Maiti2026Power.mtSum, Maiti2026Power.mtEps, Maiti2026Power.mtParam, Maiti2026Power.mtParam0, Maiti2026Power.sum_mtEps, Maiti2026Power.inner_mtParam, Maiti2026Power.supportFn_mtParam, Maiti2026Power.inner_mtParam0_sub_mtParam, Maiti2026Power.mtParam0_update, Maiti2026Power.inner_mtParam_nonneg}\leanok
 \uses{def:multitask_set, def:regret}
 Let $\Xs$ be the multi-task action set of Definition~\ref{def:multitask_set} (blocks
 $B_1,\dots,B_m$ of sizes $d_j \ge 2$) and $\eps > 0$. Let
@@ -533,7 +533,7 @@ $\theta' = \texttt{mtParam}(d,\eps,\kappa^{j\to i})$, and
 (iv) is Cauchy--Schwarz (Lemma~\ref{lem:sum_sqrt_cs}) over the block.
 
 \begin{lemma}[Cauchy--Schwarz for square roots]\label{lem:sum_sqrt_cs}
-\lean{COLT83.sum_sqrt_le_sqrt_card_mul_sum}\leanok
+\lean{Maiti2026Power.sum_sqrt_le_sqrt_card_mul_sum}\leanok
 For nonnegative reals $(a_k)_{k \in K}$ indexed by a finite set $K$,
 $\sum_{k\in K}\sqrt{a_k} \le \sqrt{\abs K\sum_{k\in K}a_k}$.
 \end{lemma}
@@ -566,7 +566,7 @@ naming the set $\Xs^{(j)}$ of arms with an empty block.
 \end{proof}
 
 \begin{theorem}[Lower bound for multi-task bandits]\label{thm:lower_multitask}
-\lean{COLT83.le_of_isPAC_multitaskSet}\leanok
+\lean{Maiti2026Power.le_of_isPAC_multitaskSet}\leanok
 \uses{def:multitask_instances, def:pac}
 Let $\Xs$ be the multi-task action set, $\eps > 0$, and let $\mathsf{Alg}$ be an
 identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
@@ -579,7 +579,7 @@ $\Prob_{\theta_{\tilde x}}\big(r(\rec,\theta_{\tilde x}) > \eps\big) \ge 0.4$.
 \end{theorem}
 
 \begin{corollary}[PAC lower bound for multi-task bandits]\label{cor:lower_multitask_pac}
-\lean{COLT83.multitaskSet_lt_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.multitaskSet_lt_budget_of_isPAC}\leanok
 \uses{thm:lower_multitask, def:pac}
 Let $\Xs$ be the multi-task action set (block sizes $d_j \ge 2$) and $\eps > 0$. An
 $(\eps,\delta)$-PAC algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 0.4$ has
@@ -647,7 +647,7 @@ $K = d_1$ arms.
 Both hypercubes of Table~1 are sets of vertices of a box, and the same argument covers them.
 
 \begin{definition}[Boxes with two values per coordinate]\label{def:cube_set}
-\lean{COLT83.cubeSet, COLT83.cubeVec, COLT83.cubeSet_eq_range, COLT83.cubeSet_finite, COLT83.isCompact_cubeSet, COLT83.norm_le_of_mem_cubeSet, COLT83.signVec, COLT83.signVecZero, COLT83.signVecZero_update, COLT83.inner_smul_signVecZero_sub, COLT83.supportFn_cubeSet, COLT83.hammingCard, COLT83.simpleRegret_smul_signVec, COLT83.hypercubePM_eq_cubeSet, COLT83.hypercube01_eq_cubeSet}\leanok
+\lean{Maiti2026Power.cubeSet, Maiti2026Power.cubeVec, Maiti2026Power.cubeSet_eq_range, Maiti2026Power.cubeSet_finite, Maiti2026Power.isCompact_cubeSet, Maiti2026Power.norm_le_of_mem_cubeSet, Maiti2026Power.signVec, Maiti2026Power.signVecZero, Maiti2026Power.signVecZero_update, Maiti2026Power.inner_smul_signVecZero_sub, Maiti2026Power.supportFn_cubeSet, Maiti2026Power.hammingCard, Maiti2026Power.simpleRegret_smul_signVec, Maiti2026Power.hypercubePM_eq_cubeSet, Maiti2026Power.hypercube01_eq_cubeSet}\leanok
 \uses{def:arm_set, def:regret}
 Let $u_- < u_+$ be two reals. The \emph{box} they define is the action set
 \[
@@ -672,7 +672,7 @@ so $0 \le r \le c(u_+-u_-)d$ on $\cubeset(u)$ and $Z(c\,\sigma(s)) = c(u_+-u_-)d
 \end{definition}
 
 \begin{lemma}[Lower bound on a box]\label{lem:lower_cube}
-\lean{COLT83.le_of_isPAC_cubeSet}\leanok
+\lean{Maiti2026Power.le_of_isPAC_cubeSet}\leanok
 \uses{def:cube_set, def:pac}
 Let $\cubeset(u)$ be a box in $\R^d$, let $\eps > 0$, let $M$ satisfy
 $\abs{u_-} \le M$ and $\abs{u_+} \le M$, and let $c > 0$ be normalized by
@@ -736,7 +736,7 @@ $1.5/9 = 1/6$.
 \end{proof}
 
 \begin{corollary}[PAC lower bound for the hypercube $\{-1,1\}^d$]\label{cor:lower_hypercube_pm_pac}
-\lean{COLT83.hypercubePM_lt_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.hypercubePM_lt_budget_of_isPAC}\leanok
 \uses{lem:lower_cube, def:pac}
 Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{-1,1\}^d$ with budget $T \ge 1$ and
 $\delta < 1/6$ has $T > d^2/(100\,\eps^2)$.
@@ -767,7 +767,7 @@ $\indic\{s = 1\}$ and the regret is $\frac{10\eps}{d}$ times the Hamming distanc
 \end{proof}
 
 \begin{corollary}[PAC lower bound for the hypercube $\{0,1\}^d$]\label{cor:lower_hypercube_01_pac}
-\lean{COLT83.hypercube01_lt_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.hypercube01_lt_budget_of_isPAC}\leanok
 \uses{lem:lower_cube, def:pac}
 Let $\eps > 0$. An $(\eps,\delta)$-PAC algorithm on $\{0,1\}^d$ with budget $T \ge 1$ and
 $\delta < 1/6$ has $T > d^2/(400\,\eps^2)$.
@@ -795,7 +795,7 @@ $O((d\log(1/\delta) + d^2)/\eps^2)$ of Theorem~\ref{thm:upper} since $\gw \le d$
 \label{sec:log_gains_lower_msets}
 
 \begin{definition}[$m$-sets and their hard instances]\label{def:msets}
-\lean{COLT83.mSet, COLT83.msParam, COLT83.msVec, COLT83.msVec_mem_mSet, COLT83.mSet_nonempty, COLT83.norm_le_of_mem_mSet, COLT83.inner_msParam, COLT83.inner_msParam_sub_insert, COLT83.inner_msParam_nonneg, COLT83.supportFn_msParam}\leanok
+\lean{Maiti2026Power.mSet, Maiti2026Power.msParam, Maiti2026Power.msVec, Maiti2026Power.msVec_mem_mSet, Maiti2026Power.mSet_nonempty, Maiti2026Power.norm_le_of_mem_mSet, Maiti2026Power.inner_msParam, Maiti2026Power.inner_msParam_sub_insert, Maiti2026Power.inner_msParam_nonneg, Maiti2026Power.supportFn_msParam}\leanok
 \uses{def:arm_set, def:regret}
 Let $1 \le m \le d-1$. The \emph{$m$-set} action set is
 $\Xs := \{x \in \{0,1\}^d : \sum_{i\le d}x_i = m\}$, with $\abs\Xs = \binom dm$; it spans
@@ -892,7 +892,7 @@ exceptional sets by $n/4$ each from $\sum_{i}\E N_i = mT$ and $\sum_i\Prob(A_i) 
 Pinsker step is Lemma~\ref{lem:two_point_pinsker} in its data-dependent form.
 
 \begin{theorem}[Lower bound for $m$-sets]\label{thm:lower_msets}
-\lean{COLT83.le_of_isPAC_mSet}\leanok
+\lean{Maiti2026Power.le_of_isPAC_mSet}\leanok
 \uses{def:msets, def:pac}
 Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$, let $\eps > 0$ and let
 $\mathsf{Alg}$ be an identification algorithm on $\Xs$ with budget $T \ge 1$ satisfying
@@ -904,7 +904,7 @@ there exists an $m$-subset $S$ with $\Prob_{\theta^{(S)}}(r(\rec,\theta^{(S)}) >
 \end{theorem}
 
 \begin{corollary}[PAC lower bound for $m$-sets]\label{cor:lower_msets_pac}
-\lean{COLT83.mSet_lt_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.mSet_lt_budget_of_isPAC}\leanok
 \uses{thm:lower_msets, def:pac}
 Let $\Xs$ be the $m$-sets with $n = d - m + 1 \ge 20m$ and $\eps > 0$. An $(\eps,\delta)$-PAC
 algorithm on $\Xs$ with budget $T \ge 1$ and $\delta < 2/9$ has $T > mn/(2500\,\eps^2)$.
@@ -970,7 +970,7 @@ or \texttt{Nat.succ\_mul\_choose\_eq}). Lemma~\ref{lem:msets_good_set} is a coun
 \label{sec:log_gains_lower_ball}
 
 \begin{corollary}[Adaptive lower bound for the unit ball]\label{cor:lower_ball_adaptive}
-\lean{COLT83.unitBall_le_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.unitBall_le_budget_of_isPAC}\leanok
 \uses{def:pac, cor:ball_pac_lower}
 Let $d \ge 2$, $\eps > 0$ and $\delta \le 1/500$. Every $(\eps,\delta)$-PAC identification
 algorithm on $\ball_d$ with budget $T$ satisfies $T \ge d^2/(1000\,\eps^2)$.

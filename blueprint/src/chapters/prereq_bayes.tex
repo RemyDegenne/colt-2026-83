@@ -176,7 +176,7 @@ $\varphi(y-m) = \varphi(y)\,e^{ym-m^2/2}$ since $-(y-m)^2/2 = -y^2/2+ym-m^2/2$. 
 \end{proof}
 
 \begin{corollary}[Likelihood ratio of a linear Gaussian history]\label{cor:pb_gaussian_likelihood}
-\lean{Learning.LinearBandit.stepLogLR, Learning.LinearBandit.stepLR, Learning.LinearBandit.measurable_uncurry_stepLR, Learning.LinearBandit.linearGaussianKernel_eq_withDensity, Learning.LinearBandit.likelihood, Learning.LinearBandit.likelihood_pos, Learning.LinearBandit.envDensity_stepLR, Learning.LinearBandit.measurable_likelihood, Learning.LinearBandit.measurable_likelihood_prod, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood, COLT83.histB, COLT83.histS, COLT83.likelihood_eq_gaussTilt}\leanok
+\lean{Learning.LinearBandit.stepLogLR, Learning.LinearBandit.stepLR, Learning.LinearBandit.measurable_uncurry_stepLR, Learning.LinearBandit.linearGaussianKernel_eq_withDensity, Learning.LinearBandit.likelihood, Learning.LinearBandit.likelihood_pos, Learning.LinearBandit.envDensity_stepLR, Learning.LinearBandit.measurable_likelihood, Learning.LinearBandit.measurable_likelihood_prod, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood, Maiti2026Power.histB, Maiti2026Power.histS, Maiti2026Power.likelihood_eq_gaussTilt}\leanok
 \uses{def:env, lem:env_likelihood_ratio, lem:pb_gaussian_density_ratio}
 Let $\Xs$ be an action set, $\theta\in\R^d$, $T\ge1$, and for a history $h = (x_t,y_t)_{t<T}$
 define
@@ -195,7 +195,7 @@ $(\theta,h)\mapsto\mathrm{ENNReal.ofReal}(\ell_\theta(h))$ follows from that of 
 \texttt{ENNReal.measurable\_ofReal}.) In Lean, \texttt{likelihood θ h} is the sum form
 $\exp(\sum_{t<T}(y_t\ip{x_t}{\theta} - \tfrac12\ip{x_t}{\theta}^2))$, valid on any action
 set; the identification with $\ip{b_T}{\theta} - \tfrac12\theta^\top S_T\theta$ is
-\texttt{COLT83.likelihood\_eq\_gaussTilt} (stated on the unit ball, with
+\texttt{Maiti2026Power.likelihood\_eq\_gaussTilt} (stated on the unit ball, with
 \texttt{histB}, \texttt{histS} for $b_T$, $S_T$).
 \end{corollary}
 
@@ -215,7 +215,7 @@ $\mathrm{ENNReal.ofReal}(\prod_t\rho_\theta(x_t,y_t)) = \prod_t\mathrm{ENNReal.o
 \end{proof}
 
 \begin{lemma}[The law of the run as a Markov kernel in $\theta$]\label{lem:pb_kernel_of_likelihood}
-\lean{Learning.LinearBandit.noiseHistLaw, Learning.LinearBandit.histKernel, Learning.LinearBandit.histKernel_apply, Learning.IsAlgEnvSeq.map_finHistory_eq_histKernel, Learning.IsAlgEnvSeq.hasLaw_finHistory_histKernel, Learning.LinearBandit.pairKernel, Learning.LinearBandit.pairKernel_apply, Learning.IdentAlg.IsRun.hasLaw_finHistory_out_pairKernel, Learning.LinearBandit.IsPAC.le_measureReal_pairKernel, Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le, COLT83.expRegret, COLT83.stronglyMeasurable_expRegret}\leanok
+\lean{Learning.LinearBandit.noiseHistLaw, Learning.LinearBandit.histKernel, Learning.LinearBandit.histKernel_apply, Learning.IsAlgEnvSeq.map_finHistory_eq_histKernel, Learning.IsAlgEnvSeq.hasLaw_finHistory_histKernel, Learning.LinearBandit.pairKernel, Learning.LinearBandit.pairKernel_apply, Learning.IdentAlg.IsRun.hasLaw_finHistory_out_pairKernel, Learning.LinearBandit.IsPAC.le_measureReal_pairKernel, Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le, Maiti2026Power.expRegret, Maiti2026Power.stronglyMeasurable_expRegret}\leanok
 \uses{def:bai_alg, cor:pb_gaussian_likelihood}
 Let $\Xs$ be an action set and $\mathsf{Alg} = (\mathrm{alg},\rho)$ an identification algorithm
 with budget $T\ge1$ on $\Xs$ (Definition~\ref{def:bai_alg}). Define, for $\theta\in\R^d$,
@@ -262,7 +262,7 @@ is built from the single reference law $\Prob_0^T$ and the explicit density $\el
 \label{sec:pre_bayes_joint}
 
 \begin{definition}[Bayesian joint law and posterior quantities]\label{def:bayes_joint}
-\lean{COLT83.noisePairLaw, COLT83.pairKernel_eq_withDensity, COLT83.bayesJointLaw, COLT83.bayesJointLaw_eq_withDensity, ProbabilityTheory.gaussPrior, ProbabilityTheory.postPrec, ProbabilityTheory.postCov, ProbabilityTheory.postMean, ProbabilityTheory.posDef_postPrec, ProbabilityTheory.posDef_postCov, ProbabilityTheory.toEuclideanCLM_postPrec_postMean, ProbabilityTheory.sub_toEuclideanCLM_postMean}\leanok
+\lean{Maiti2026Power.noisePairLaw, Maiti2026Power.pairKernel_eq_withDensity, Maiti2026Power.bayesJointLaw, Maiti2026Power.bayesJointLaw_eq_withDensity, ProbabilityTheory.gaussPrior, ProbabilityTheory.postPrec, ProbabilityTheory.postCov, ProbabilityTheory.postMean, ProbabilityTheory.posDef_postPrec, ProbabilityTheory.posDef_postCov, ProbabilityTheory.toEuclideanCLM_postPrec_postMean, ProbabilityTheory.sub_toEuclideanCLM_postMean}\leanok
 \uses{def:bai_alg, cor:pb_gaussian_likelihood, lem:pb_kernel_of_likelihood, lem:loewner_inv, lem:eigen_quadratic_bounds}
 Let $d\ge1$, $\Xs$ an action set, $\mathsf{Alg} = (\mathrm{alg},\rho)$ an identification algorithm
 with budget $T\ge1$ on $\Xs$ (Definition~\ref{def:bai_alg}) and $\sigma>0$. Let
@@ -296,7 +296,7 @@ functions of the history through $b_T$, $S_T$, but this measurability is never n
 Lean remark after Lemma~\ref{lem:posterior_second_moment}).
 
 \begin{lemma}[Fubini for the joint law]\label{lem:pb_joint_fubini}
-\lean{COLT83.integral_bayesJointLaw, COLT83.integrable_bayesJointLaw_iff, COLT83.integral_likelihood_noisePairLaw, COLT83.integrable_likelihood_noisePairLaw, COLT83.integrable_likelihood_mul_prod, COLT83.integral_likelihood_mul_prod, COLT83.integral_indicator_mul_simpleRegret_bayesJointLaw}\leanok
+\lean{Maiti2026Power.integral_bayesJointLaw, Maiti2026Power.integrable_bayesJointLaw_iff, Maiti2026Power.integral_likelihood_noisePairLaw, Maiti2026Power.integrable_likelihood_noisePairLaw, Maiti2026Power.integrable_likelihood_mul_prod, Maiti2026Power.integral_likelihood_mul_prod, Maiti2026Power.integral_indicator_mul_simpleRegret_bayesJointLaw}\leanok
 \uses{def:bayes_joint, cor:pb_gaussian_likelihood}
 For every measurable $f : \R^d\times\mathcal{H}_T\times\Xs\to[0,\infty]$,
 \[
@@ -425,10 +425,10 @@ integrates to $0$.
 \textbf{Lean remark.} \texttt{PosteriorGaussian.lean} contains this section for the general tilt
 $(b, S)$ (\texttt{gaussTilt b S}, \texttt{postCov σ S}, \texttt{postMean σ b S}); it is applied
 to $b = b_T(h)$, $S = S_T(h)$ for each fixed history $h$ through
-\texttt{COLT83.likelihood\_eq\_gaussTilt}.
+\texttt{Maiti2026Power.likelihood\_eq\_gaussTilt}.
 
 \begin{lemma}[Posterior mean identity]\label{lem:posterior_mean}
-\lean{COLT83.postU, COLT83.stronglyMeasurable_postU, COLT83.integrable_likelihood_mul_inner_prod, COLT83.integrable_norm_postU, COLT83.integral_inner_bayesJointLaw_le}\leanok
+\lean{Maiti2026Power.postU, Maiti2026Power.stronglyMeasurable_postU, Maiti2026Power.integrable_likelihood_mul_inner_prod, Maiti2026Power.integrable_norm_postU, Maiti2026Power.integral_inner_bayesJointLaw_le}\leanok
 \uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square}
 Let $\Xs \subseteq \ball_d$ and define, for a history $h$,
 $u_T(h) := \int\ell_\theta(h)\,\theta\,\pi(d\theta) = Z_T(h)\,m_T(h)$ with
@@ -452,7 +452,7 @@ parametric integral (Mathlib \texttt{StronglyMeasurable.integral\_prod\_right'})
 \end{proof}
 
 \begin{lemma}[Posterior second moment]\label{lem:posterior_second_moment}
-\lean{COLT83.postZ, COLT83.postN, COLT83.stronglyMeasurable_postZ, COLT83.stronglyMeasurable_postN, COLT83.postZ_pos, COLT83.norm_postU_sq_le, COLT83.norm_postU_le, COLT83.integrable_postZ, COLT83.integral_postZ, COLT83.integrable_postN, COLT83.integral_postN, COLT83.integral_norm_postU_le}\leanok
+\lean{Maiti2026Power.postZ, Maiti2026Power.postN, Maiti2026Power.stronglyMeasurable_postZ, Maiti2026Power.stronglyMeasurable_postN, Maiti2026Power.postZ_pos, Maiti2026Power.norm_postU_sq_le, Maiti2026Power.norm_postU_le, Maiti2026Power.integrable_postZ, Maiti2026Power.integral_postZ, Maiti2026Power.integrable_postN, Maiti2026Power.integral_postN, Maiti2026Power.integral_norm_postU_le}\leanok
 \uses{def:bayes_joint, lem:pb_joint_fubini, lem:gaussian_complete_square, lem:trace_inv_lower}
 Let $\Xs \subseteq \ball_d$ and $N_T(h) := \int\norm\theta^2\ell_\theta(h)\,\pi(d\theta)$. For
 every history $h$, with $c := d^2/(d\sigma^{-2}+T)$,
@@ -488,7 +488,7 @@ not needed.
 \label{sec:pre_bayes_ball}
 
 \begin{lemma}[Lower bound on the posterior trace]\label{lem:trace_inv_lower}
-\lean{COLT83.le_trace_postCov_histS, COLT83.trace_histS_le, COLT83.posSemidef_histS}\leanok
+\lean{Maiti2026Power.le_trace_postCov_histS, Maiti2026Power.trace_histS_le, Maiti2026Power.posSemidef_histS}\leanok
 \uses{def:bayes_joint, lem:trace_inv_amhm}
 If $\Xs\subseteq\ball_d$, then for every history $h$, $\tr V_T(h)\ge\frac{d^2}{d\sigma^{-2}+T}$.
 \end{lemma}
@@ -502,7 +502,7 @@ gives $\tr V_T(h)\ge d^2/\tr(\sigma^{-2}I+S_T(h))\ge d^2/(d\sigma^{-2}+T)$.
 \end{proof}
 
 \begin{lemma}[Expected norm of a Gaussian vector, lower bound]\label{lem:pb_norm_lower}
-\lean{COLT83.le_integral_norm_gaussPrior, COLT83.integral_norm_sq_gaussPrior, COLT83.integrable_norm_gaussPrior, COLT83.integrable_norm_sq_gaussPrior}\leanok
+\lean{Maiti2026Power.le_integral_norm_gaussPrior, Maiti2026Power.integral_norm_sq_gaussPrior, Maiti2026Power.integrable_norm_gaussPrior, Maiti2026Power.integrable_norm_sq_gaussPrior}\leanok
 \uses{lem:gauss_norm_lower, lem:gauss_norm_moments}
 If $\theta\sim\Normal(0,\sigma^2I_d)$ then $\E\norm\theta^2 = \sigma^2d$ and
 $\E\norm\theta\ge\sqrt{2/\pi}\,\sigma\sqrt d$.
@@ -516,7 +516,7 @@ $c_i = 1/\sqrt d$ and $S = \sigma^2I_d$.
 \end{proof}
 
 \begin{lemma}[Bayesian simple regret on the ball]\label{lem:bayes_regret_ball}
-\lean{COLT83.integral_simpleRegret_bayesJointLaw_ge}\leanok
+\lean{Maiti2026Power.integral_simpleRegret_bayesJointLaw_ge}\leanok
 \uses{def:bayes_joint, def:regret, lem:posterior_mean, lem:posterior_second_moment, lem:pb_norm_lower}
 Let $\Xs = \ball_d$. Under the joint law $Q$ of Definition~\ref{def:bayes_joint},
 \[
@@ -537,7 +537,7 @@ by Lemmas~\ref{lem:posterior_mean} and~\ref{lem:posterior_second_moment}.
 \end{proof}
 
 \begin{theorem}[Simple-regret lower bound on the unit ball]\label{thm:ball_simple_regret_lower}
-\lean{COLT83.simpleRegret_unitBall_nonneg, COLT83.simpleRegret_unitBall_le, COLT83.expRegret_nonneg, COLT83.expRegret_le, COLT83.integrable_expRegret, COLT83.integrable_simpleRegret_bayesJointLaw, COLT83.integral_norm_sq_bayesJointLaw, COLT83.integral_indicator_mul_simpleRegret_bayesJointLaw_ge, COLT83.le_measureReal_norm_le_gaussPrior, COLT83.exists_norm_le_and_le_expRegret, COLT83.exists_norm_le_and_le_expRegret_unitBall}\leanok
+\lean{Maiti2026Power.simpleRegret_unitBall_nonneg, Maiti2026Power.simpleRegret_unitBall_le, Maiti2026Power.expRegret_nonneg, Maiti2026Power.expRegret_le, Maiti2026Power.integrable_expRegret, Maiti2026Power.integrable_simpleRegret_bayesJointLaw, Maiti2026Power.integral_norm_sq_bayesJointLaw, Maiti2026Power.integral_indicator_mul_simpleRegret_bayesJointLaw_ge, Maiti2026Power.le_measureReal_norm_le_gaussPrior, Maiti2026Power.exists_norm_le_and_le_expRegret, Maiti2026Power.exists_norm_le_and_le_expRegret_unitBall}\leanok
 \uses{def:bayes_joint, def:regret, lem:bayes_regret_ball, lem:pb_joint_fubini, lem:gauss_norm_moments}
 Let $d\ge1$, $T\ge1$ and $\mathsf{Alg}$ be any identification algorithm with budget $T$ on
 $\Xs = \ball_d$. With the prior $\pi = \Normal(0,\sigma^2I_d)$, $\sigma^2 := d/(4T)$:
@@ -593,7 +593,7 @@ $7/200$. The choice $\sigma^2 = d/(4T)$ is not optimal either but keeps the arit
 \end{remark}
 
 \begin{corollary}[PAC lower bound on the unit ball]\label{cor:ball_pac_lower}
-\lean{COLT83.unitBall_le_budget_of_isPAC, COLT83.pairKernel_zero_eq, COLT83.not_isPAC_unitBall_of_isFixedBudget_zero}\leanok
+\lean{Maiti2026Power.unitBall_le_budget_of_isPAC, Maiti2026Power.pairKernel_zero_eq, Maiti2026Power.not_isPAC_unitBall_of_isFixedBudget_zero}\leanok
 \uses{def:pac, lem:pac_expected_regret, lem:pb_kernel_of_likelihood, thm:ball_simple_regret_lower}
 Let $d\ge2$, $\eps>0$ and $\delta\le1/500$. Every $(\eps,\delta)$-PAC identification algorithm
 on $\ball_d$ with budget $T$ satisfies

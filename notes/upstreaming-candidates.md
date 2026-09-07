@@ -1,6 +1,6 @@
 # Upstreaming candidates
 
-Assessment of the library layers `COLT83/Mathlib/` and `COLT83/LeanMachineLearning/` as
+Assessment of the library layers `Maiti2026Power/Mathlib/` and `Maiti2026Power/LeanMachineLearning/` as
 contributions to Mathlib and to LML (LeanMachineLearning), written on 2026-09-06 after phase 2
 was completed (every headline result proved, comparator green). Overlaps were checked against
 the Mathlib revision pinned in `lake-manifest.json` at that date
@@ -55,7 +55,7 @@ Batson–Spielman–Srivastava rounding), `Analysis/InnerProductSpace/IsotropicS
 `Probability/Kernel/PriorAverage.lean`, `Data/Set/CoverSmall.lean`,
 `Data/Finset/PowersetCardSum.lean`, `Probability/GaussianDensityRatio.lean`,
 `Probability/KLGaussian.lean` (unless Mathlib still lacks the divergence between Gaussians with
-the same variance), `Probability/IndepIntegral.lean`; and everything under `COLT83/MXJ2026/`,
+the same variance), `Probability/IndepIntegral.lean`; and everything under `Maiti2026Power/MXJ2026/`,
 which is the paper itself.
 
 ## Suggested order
@@ -67,6 +67,6 @@ Mathlib API. Then the KL convexity/chain-rule files and the Gaussian toolbox fil
 and Borell–TIS packages are the most valuable but also the largest, and the compact-set versions
 wait on the support-function design decision.
 
-Before any PR: remove the `COLT83.`-specific docstring references to the blueprint, check the
+Before any PR: remove the `Maiti2026Power.`-specific docstring references to the blueprint, check the
 `## TODO` sections above, and note that the files use the `module` system with
 `@[expose] public section`.

@@ -33,7 +33,7 @@ $d \le k \le d^2$.
 \label{sec:separation_set}
 
 \begin{definition}[Block-ball action set]\label{def:block_ball_set}
-\lean{COLT83.blockBallSet}\leanok
+\lean{Maiti2026Power.blockBallSet}\leanok
 \uses{def:arm_set}
 For $i \in \{1,\dots,k\}$ let $B_i := \{(i-1)d + 1, \dots, id\}$ be the $i$-th block of
 coordinates of $\R^{kd}$, let $\iota_i : \R^d \to \R^{kd}$ be the isometric embedding which
@@ -57,7 +57,7 @@ determines its block unless it is $0$. Where a block index is needed for a point
 we use the smallest one.
 
 \begin{lemma}[Basic properties of the block-ball set]\label{lem:block_ball_basic}
-\lean{COLT83.blockEmb, COLT83.blockProj, COLT83.inner_blockEmb_left, COLT83.norm_blockEmb, COLT83.norm_blockProj_le, COLT83.blockProj_blockEmb_same, COLT83.blockProj_blockEmb_of_ne, COLT83.exists_blockProj_eq_zero, COLT83.blockBallSet_eq_iUnion, COLT83.isCompact_blockBallSet, COLT83.blockBallSet_subset_unitBall, COLT83.span_blockBallSet, COLT83.supportFn_blockBallSet, COLT83.supportFn_blockBallSet_blockEmb, COLT83.simpleRegret_blockBallSet_blockEmb, COLT83.supportFn_unitBall, COLT83.simpleRegret_unitBall}\leanok
+\lean{Maiti2026Power.blockEmb, Maiti2026Power.blockProj, Maiti2026Power.inner_blockEmb_left, Maiti2026Power.norm_blockEmb, Maiti2026Power.norm_blockProj_le, Maiti2026Power.blockProj_blockEmb_same, Maiti2026Power.blockProj_blockEmb_of_ne, Maiti2026Power.exists_blockProj_eq_zero, Maiti2026Power.blockBallSet_eq_iUnion, Maiti2026Power.isCompact_blockBallSet, Maiti2026Power.blockBallSet_subset_unitBall, Maiti2026Power.span_blockBallSet, Maiti2026Power.supportFn_blockBallSet, Maiti2026Power.supportFn_blockBallSet_blockEmb, Maiti2026Power.simpleRegret_blockBallSet_blockEmb, Maiti2026Power.supportFn_unitBall, Maiti2026Power.simpleRegret_unitBall}\leanok
 \uses{def:block_ball_set, def:regret}
 $\Xs = \bigcup_i\iota_i(\ball_d)$ is a compact subset of $\ball_{kd}$ with $\Span(\Xs) = \R^{kd}$,
 hence an action set in the sense of Definition~\ref{def:arm_set}. Every $x \in \Xs$ satisfies
@@ -94,7 +94,7 @@ Definition~\ref{def:regret} and $\ip{\rec}{\iota_i\vartheta} = \ip{\pi_i\rec}{\v
 \label{sec:separation_lower}
 
 \begin{lemma}[Restriction of a fixed design to a block]\label{lem:block_restriction}
-\lean{COLT83.blockProjBall, COLT83.blockDesign, COLT83.blockRounds, COLT83.isPAC_fixedDesignTransport_blockProjBall, COLT83.trace_sum_outerSelf_blockDesign_le, COLT83.pairwiseDisjoint_blockRounds, COLT83.sum_card_blockRounds_le, COLT83.exists_mul_card_blockRounds_le}\leanok
+\lean{Maiti2026Power.blockProjBall, Maiti2026Power.blockDesign, Maiti2026Power.blockRounds, Maiti2026Power.isPAC_fixedDesignTransport_blockProjBall, Maiti2026Power.trace_sum_outerSelf_blockDesign_le, Maiti2026Power.pairwiseDisjoint_blockRounds, Maiti2026Power.sum_card_blockRounds_le, Maiti2026Power.exists_mul_card_blockRounds_le}\leanok
 \uses{def:fixed_design, def:block_ball_set, lem:block_ball_basic, def:pac, lem:fixed_design_transport}
 Let $x_0,\dots,x_{T-1} \in \Xs$ be a fixed design with recommendation kernel $\rho$ (from
 $\R^T$ to $\Xs$) which is $(\eps,\delta)$-PAC on $\Xs$, and fix a block $i$. The projected
@@ -131,7 +131,7 @@ the history and with $\pi_i$ is where the randomness allowed in Definition~\ref{
 is used.
 
 \begin{theorem}[Non-adaptive lower bound for the block-ball set]\label{thm:separation_lower_nonadaptive}
-\lean{COLT83.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, COLT83.blockBallSet_le_budget_of_isPAC}\leanok
+\lean{Maiti2026Power.blockBallSet_le_budget_of_isFixedDesign_of_isPAC, Maiti2026Power.blockBallSet_le_budget_of_isPAC}\leanok
 \uses{def:block_ball_set, lem:block_ball_basic, def:fixed_design, def:pac}
 Let $\eps \in (0,1]$. Recall that $\Xs$ is a spanning action set in $\R^{kd}$
 (Lemma~\ref{lem:block_ball_basic}).
@@ -188,7 +188,7 @@ The last claim is $T \ge \max(a,b) \ge (a+b)/2$.
 \label{sec:separation_algorithm}
 
 \begin{lemma}[Transporting an algorithm on $\ball_d$ to a block]\label{lem:separation_block_embedding}
-\lean{COLT83.blockEmbBall, COLT83.blockProjBall_blockEmbBall, COLT83.BlockParam.F_blockEmbBall, COLT83.BlockParam.seedStep_block, COLT83.BlockParam.yω_block, COLT83.BlockParam.estN_eq, COLT83.shiftSeq, COLT83.nsMeasure_map_shiftSeq}\leanok
+\lean{Maiti2026Power.blockEmbBall, Maiti2026Power.blockProjBall_blockEmbBall, Maiti2026Power.BlockParam.F_blockEmbBall, Maiti2026Power.BlockParam.seedStep_block, Maiti2026Power.BlockParam.yω_block, Maiti2026Power.BlockParam.estN_eq, Maiti2026Power.shiftSeq, Maiti2026Power.nsMeasure_map_shiftSeq}\leanok
 \uses{def:block_ball_set, def:env, def:bai_alg, def:norm_estimator, lem:seeded, def:meta_algorithm}
 Let $\iota_i : \ball_d \to \Xs$ be the embedding of the unit ball on block $i$ (so
 $\pi_i \circ \iota_i = \mathrm{id}$). For every $\theta \in \R^{kd}$ and $x \in \ball_d$, the
@@ -249,7 +249,7 @@ its action coordinates; the action type of $\iota_i\mathrm{alg}$ is the subtype 
 required to compose it with other algorithms on $\Xs$ (Lemma~\ref{lem:composition}).
 
 \begin{definition}[Block algorithm]\label{def:block_algorithm}
-\lean{COLT83.BlockParam, COLT83.BlockParam.P, COLT83.BlockParam.N, COLT83.BlockParam.n₂, COLT83.BlockParam.T₂, COLT83.BlockParam.T, COLT83.BlockParam.blockOf, COLT83.BlockParam.basisRound, COLT83.BlockParam.estN, COLT83.BlockParam.iHat, COLT83.BlockParam.thetaHat, COLT83.normalizeBall, COLT83.BlockParam.recommend, COLT83.BlockParam.nextAction, COLT83.BlockParam.alg, COLT83.BlockParam.output}\leanok
+\lean{Maiti2026Power.BlockParam, Maiti2026Power.BlockParam.P, Maiti2026Power.BlockParam.N, Maiti2026Power.BlockParam.n₂, Maiti2026Power.BlockParam.T₂, Maiti2026Power.BlockParam.T, Maiti2026Power.BlockParam.blockOf, Maiti2026Power.BlockParam.basisRound, Maiti2026Power.BlockParam.estN, Maiti2026Power.BlockParam.iHat, Maiti2026Power.BlockParam.thetaHat, Maiti2026Power.normalizeBall, Maiti2026Power.BlockParam.recommend, Maiti2026Power.BlockParam.nextAction, Maiti2026Power.BlockParam.alg, Maiti2026Power.BlockParam.output}\leanok
 \uses{def:block_ball_set, def:meta_algorithm, lem:ball_identification, lem:seeded}
 Let $\eps \in (0,1]$ and $\delta \in (0,1)$, let $N := N_{\mathrm{norm}}(\eps/4, \delta/(2k))$ be
 the budget of the meta-algorithm $\mathrm{NormEst}(\eps/4, \delta/(2k))$
@@ -298,7 +298,7 @@ $\iota_i\mathrm{alg}$, so its policy kernels are finite case distinctions of ker
 (\texttt{Kernel.piecewise}), and Lemma~\ref{lem:composition} applies.
 
 \begin{lemma}[Selection of a good block]\label{lem:block_selection}
-\lean{COLT83.BlockParam.estN_le_iHat, COLT83.norm_sub_inner_normalizeBall_le, COLT83.BlockParam.regret_le}\leanok
+\lean{Maiti2026Power.BlockParam.estN_le_iHat, Maiti2026Power.norm_sub_inner_normalizeBall_le, Maiti2026Power.BlockParam.regret_le}\leanok
 \uses{def:block_algorithm, lem:block_ball_basic}
 Let $\theta \in \R^{kd}$ and let $y$ be an observation sequence such that
 $\abs{\hat r_i - \norm{\theta^{(i)}}} \le \eps/4$ for all $i < k$, where $\hat r_i$ is the estimate
@@ -344,7 +344,7 @@ probability at least $1 - \delta/2$. On this event, with $i_* \in \argmax_i\norm
 \end{proof}
 
 \begin{theorem}[Polynomial separation; Theorem~7 of the paper]\label{thm:separation}
-\lean{COLT83.BlockParam.seedAction_of_T₂_le, COLT83.BlockParam.thetaHat_eq, COLT83.BlockParam.recommend_yOf_seedFinHist, COLT83.BlockParam.one_sub_le_seedMeasure_real_output, COLT83.BlockParam.T_le}\leanok
+\lean{Maiti2026Power.BlockParam.seedAction_of_T₂_le, Maiti2026Power.BlockParam.thetaHat_eq, Maiti2026Power.BlockParam.recommend_yOf_seedFinHist, Maiti2026Power.BlockParam.one_sub_le_seedMeasure_real_output, Maiti2026Power.BlockParam.T_le}\leanok
 \uses{def:block_algorithm, def:pac, thm:separation_lower_nonadaptive, lem:seeded}
 Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The block algorithm is $(\eps,\delta)$-PAC on $\Xs$
 (with failure probability at most $15\delta/16$), with budget
@@ -364,7 +364,7 @@ Theorem~\ref{thm:lower_nonadaptive}; see Remark~\ref{rem:separation_gap}.
 \end{theorem}
 
 \begin{corollary}[Theorem~7 of the paper, existential form of the upper bound]\label{cor:separation_exists}
-\lean{COLT83.exists_isPAC_blockBallSet}\leanok
+\lean{Maiti2026Power.exists_isPAC_blockBallSet}\leanok
 \uses{thm:separation, def:pac}
 Let $k \ge 1$, $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
 $T \le C_{\mathrm{sep}}\,(kd\log(8k/\delta) + d^2)/\eps^2$ and an identification algorithm with

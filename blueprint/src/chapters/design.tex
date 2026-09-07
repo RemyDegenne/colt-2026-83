@@ -210,7 +210,7 @@ the rest of the blueprint can use whichever definition is convenient. Note that
 The formalization uses \texttt{CFC.sqrt} and proves the items (i), (iii), (iv), (v) directly from
 \texttt{CFC.sqrt\_mul\_sqrt\_self} and \texttt{Matrix.PosSemidef.inv\_sqrt}, without the spectral
 formula; the eigenvalue statements of (i)--(ii) and the scaling rule (vi) are not formalized yet
-(the latter is proved inline where it is used, in \texttt{COLT83.gwMat\_smul}).
+(the latter is proved inline where it is used, in \texttt{Maiti2026Power.gwMat\_smul}).
 
 \begin{lemma}[Inversion reverses the Loewner order]\label{lem:loewner_inv}
 \lean{Matrix.PosDef.of_le, Matrix.PosDef.inv_le_inv}\leanok
@@ -285,7 +285,7 @@ a design maximizes $\det A(\lambda)$ if and only if it minimizes $\max_{x \in \X
 ``$D$-optimal $\Rightarrow$ $G$-optimal'' together with the value $d$.
 
 \begin{definition}[$G$-value of a matrix]\label{def:g_value}
-\lean{COLT83.gValue}\leanok
+\lean{Maiti2026Power.gValue}\leanok
 \uses{def:arm_set, lem:eigen_quadratic_bounds}
 For $A \in \PD$ the \emph{$G$-value} of $A$ on $\Xs$ is
 \[
@@ -296,7 +296,7 @@ nonempty.
 \end{definition}
 
 \begin{lemma}[The $G$-value of a design matrix is at least $d$]\label{lem:g_ge_d}
-\lean{COLT83.sum_mul_dotProduct_inv_mulVec, COLT83.IsDesign.card_le_gValue, COLT83.IsDesign.dotProduct_inv_mulVec_eq_card}\leanok
+\lean{Maiti2026Power.sum_mul_dotProduct_inv_mulVec, Maiti2026Power.IsDesign.card_le_gValue, Maiti2026Power.IsDesign.dotProduct_inv_mulVec_eq_card}\leanok
 \uses{def:g_value, def:design_matrix}
 Let $\lambda \in \simplex_{\Xs}$ with $A(\lambda) \in \PD$. Then
 \[
@@ -327,7 +327,7 @@ $\designset(\Xs)$: $\det A_D = \max_{A \in \designset(\Xs)} \det A$.
 \end{definition}
 
 \begin{lemma}[Existence and positivity of a $D$-optimal design]\label{lem:exists_d_optimal}
-\lean{COLT83.exists_isMaxOn_det_designSet, COLT83.posDef_of_isMaxOn_det}\leanok
+\lean{Maiti2026Power.exists_isMaxOn_det_designSet, Maiti2026Power.posDef_of_isMaxOn_det}\leanok
 \uses{def:arm_set, def:d_optimal, lem:designset_basic, lem:exists_posdef_design, lem:eigen_quadratic_bounds}
 A $D$-optimal design matrix $A_D$ exists. Assume moreover that $\Xs$ is spanning. Then
 $\det A_D > 0$; consequently $A_D \in \PD$.
@@ -349,7 +349,7 @@ the last step is \texttt{Matrix.PosSemidef.posDef\_iff\_det\_ne\_zero}
 (\texttt{Mathlib/Analysis/Matrix/Order.lean}).
 
 \begin{lemma}[Determinant along a rank-one mixture]\label{lem:det_rank_one_mix}
-\lean{Matrix.det_add_vecMulVec, COLT83.det_smul_add_smul_outerSelf}\leanok
+\lean{Matrix.det_add_vecMulVec, Maiti2026Power.det_smul_add_smul_outerSelf}\leanok
 Let $A \in \R^{d\times d}$ be invertible and $u, v \in \R^d$. Then (matrix determinant lemma)
 \[
   \det(A + uv^\top) = \det A\,\big(1 + v^\top A^{-1} u\big) .
@@ -389,7 +389,7 @@ $t \mapsto \det((1-t)A_D + t\,xx^\top)$ at $t = 0$ is available in closed form f
 Lemma~\ref{lem:det_rank_one_mix}, and the formalization follows this elementary route.
 
 \begin{theorem}[Kiefer--Wolfowitz: existence of a $G$-optimal design]\label{thm:kiefer_wolfowitz}
-\lean{COLT83.IsGOptimalDesign, COLT83.exists_isGOptimalDesign, COLT83.IsGOptimalDesign.gValue_eq, COLT83.IsGOptimalDesign.dotProduct_inv_mulVec_eq_card}\leanok
+\lean{Maiti2026Power.IsGOptimalDesign, Maiti2026Power.exists_isGOptimalDesign, Maiti2026Power.IsGOptimalDesign.gValue_eq, Maiti2026Power.IsGOptimalDesign.dotProduct_inv_mulVec_eq_card}\leanok
 \uses{def:arm_set, def:g_value, def:design_matrix, lem:g_ge_d}
 Assume that $\Xs$ is spanning. There is a design distribution $\lambda_G \in \simplex_{\Xs}$
 (finitely supported, as every design distribution) such that $A_G := A(\lambda_G)
@@ -426,9 +426,9 @@ $x^\top A_G^{-1}x = d$ on the support.
 \end{proof}
 
 \textbf{Lean remark.} The formalization packages the conclusion as the predicate
-\texttt{COLT83.IsGOptimalDesign 𝒳 w}: $w$ is a design distribution on $\Xs$
-(\texttt{COLT83.IsDesign}), its design matrix is positive definite and
-$x^\top A(w)^{-1}x \le d$ for all $x \in \Xs$; \texttt{COLT83.exists\_isGOptimalDesign} is the
+\texttt{Maiti2026Power.IsGOptimalDesign 𝒳 w}: $w$ is a design distribution on $\Xs$
+(\texttt{Maiti2026Power.IsDesign}), its design matrix is positive definite and
+$x^\top A(w)^{-1}x \le d$ for all $x \in \Xs$; \texttt{Maiti2026Power.exists\_isGOptimalDesign} is the
 existence statement, and the value $g_{\Xs}(A_G) = d$ and the support property are the lemmas
 \texttt{IsGOptimalDesign.gValue\_eq} and \texttt{IsGOptimalDesign.dotProduct\_inv\_mulVec\_eq\_card}.
 The theorem needs $d \ge 1$ (the type \texttt{ι} nonempty), as does
@@ -449,7 +449,7 @@ identity that the paper extracts from John's theorem.
 \end{remark}
 
 \begin{corollary}[Whitened arms have norm at most $\sqrt d$]\label{cor:g_optimal_norm_bound}
-\lean{COLT83.IsGOptimalDesign.norm_sqrt_inv_le, COLT83.IsGOptimalDesign.norm_sqrt_inv_eq}\leanok
+\lean{Maiti2026Power.IsGOptimalDesign.norm_sqrt_inv_le, Maiti2026Power.IsGOptimalDesign.norm_sqrt_inv_eq}\leanok
 \uses{thm:kiefer_wolfowitz, lem:sqrt_props}
 Let $\Xs$ be spanning and let $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz}. Every $x \in \Xs$ satisfies
 $\norm{A_G^{-1/2}x}^2 = x^\top A_G^{-1}x \le d$.
@@ -463,7 +463,7 @@ $x^\top A_G^{-1} x \le g_{\Xs}(A_G) = d$.
 \end{proof}
 
 \begin{corollary}[Normalized $G$-optimal design]\label{cor:g_optimal_normalized}
-\lean{COLT83.normalizeMat, COLT83.IsGOptimalDesign.norm_normalizeMat_eq_one, COLT83.IsGOptimalDesign.designMatrix_mapDomain_normalizeMat, COLT83.IsGOptimalDesign.norm_normalizeMat_le, COLT83.IsGOptimalDesign.isDesign_mapDomain_normalizeMat, COLT83.IsGOptimalDesign.span_image_normalizeMat_eq_top, COLT83.isUnit_normalizeMat}\leanok
+\lean{Maiti2026Power.normalizeMat, Maiti2026Power.IsGOptimalDesign.norm_normalizeMat_eq_one, Maiti2026Power.IsGOptimalDesign.designMatrix_mapDomain_normalizeMat, Maiti2026Power.IsGOptimalDesign.norm_normalizeMat_le, Maiti2026Power.IsGOptimalDesign.isDesign_mapDomain_normalizeMat, Maiti2026Power.IsGOptimalDesign.span_image_normalizeMat_eq_top, Maiti2026Power.isUnit_normalizeMat}\leanok
 \uses{thm:kiefer_wolfowitz, cor:g_optimal_norm_bound, lem:sqrt_props}
 Let $\Xs$ be spanning, let $\lambda_G$, $A_G$ be as in Theorem~\ref{thm:kiefer_wolfowitz} and set $M := d^{-1/2}A_G^{-1/2}$,
 $v_x := Mx = A_G^{-1/2}x/\sqrt d$ for $x \in \supp\lambda_G$, and
@@ -492,7 +492,7 @@ spanning.
 \label{sec:design_caratheodory}
 
 \begin{lemma}[Carath\'eodory for design matrices]\label{lem:caratheodory_design}
-\lean{COLT83.exists_isDesign_of_mem_designSet, COLT83.mem_designSet_iff}\leanok
+\lean{Maiti2026Power.exists_isDesign_of_mem_designSet, Maiti2026Power.mem_designSet_iff}\leanok
 \uses{def:design_matrix}
 Every $A \in \designset(\Xs)$ is of the form $A = A(\lambda)$ for a design distribution
 $\lambda \in \simplex_{\Xs}$ with $\abs{\supp\lambda} \le d^2 + 1$.
@@ -520,10 +520,10 @@ basis of matrices $E_{ii}$ and $E_{ij} + E_{ji}$, $i < j$); the formalization ap
 full matrix space $\texttt{Matrix ι ι ℝ}$, of dimension $d^2$, which is sufficient for every use
 in this blueprint (the support size of $\lambda_G$ and $\lambda_1$ only needs to be finite).
 Design distributions are encoded as finitely supported functions
-$\texttt{EuclideanSpace ℝ ι →₀ ℝ}$ (\texttt{Finsupp}) with the predicate \texttt{COLT83.IsDesign}
+$\texttt{EuclideanSpace ℝ ι →₀ ℝ}$ (\texttt{Finsupp}) with the predicate \texttt{Maiti2026Power.IsDesign}
 (support in $\Xs$, nonnegative, summing to one), and $A(\lambda)$ is the linear map
-\texttt{COLT83.designMatrix}; the equality of $\designset(\Xs)$ with the set of design matrices
-of design distributions is \texttt{COLT83.mem\_designSet\_iff}.
+\texttt{Maiti2026Power.designMatrix}; the equality of $\designset(\Xs)$ with the set of design matrices
+of design distributions is \texttt{Maiti2026Power.mem\_designSet\_iff}.
 
 \begin{lemma}[Local Lipschitz continuity of the square root]\label{lem:design_sqrt_continuous}
 \uses{lem:sqrt_props, lem:eigen_quadratic_bounds}
@@ -687,7 +687,7 @@ matrices given weight one (no upper barrier is needed since only a lower bound o
 $\Sigma_T$ is used).
 
 \begin{definition}[Lower barrier potential]\label{def:barrier_potential}
-\lean{COLT83.barrier, COLT83.barrier_eq_sum, COLT83.barrier_neg_card_zero}\leanok
+\lean{Maiti2026Power.barrier, Maiti2026Power.barrier_eq_sum, Maiti2026Power.barrier_neg_card_zero}\leanok
 \uses{lem:eigen_quadratic_bounds}
 For $B \in \Sym$ and $l \in \R$ with $l < \lambda_{\min}(B)$, so that $B - lI \in \PD$, the
 \emph{lower barrier potential} is
@@ -733,7 +733,7 @@ computation $(M + uu^\top)N = I$ into $(M+uu^\top)^{-1} = N$). The rank-one
 matrix $uu^\top$ is \texttt{Matrix.vecMulVec u u}.
 
 \begin{lemma}[One barrier step]\label{lem:barrier_step}
-\lean{COLT83.barrierScore, COLT83.barrier_lt_barrier_add_half, COLT83.barrier_step}\leanok
+\lean{Maiti2026Power.barrierScore, Maiti2026Power.barrier_lt_barrier_add_half, Maiti2026Power.barrier_step}\leanok
 \uses{def:barrier_potential, lem:sherman_morrison_trace, lem:eigen_quadratic_bounds}
 Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with $\lambda_{\min}(B) > l'$. Set
 $M := B - l'I \in \PD$, $\Delta := \Phi_{l'}(B) - \Phi_l(B)$, and for $u \in \R^d$
@@ -762,7 +762,7 @@ $\Phi_{l'}(B + uu^\top) \le \Phi_{l'}(B) - \Delta = \Phi_l(B)$.
 \end{proof}
 
 \begin{lemma}[Averaging the barrier criterion]\label{lem:barrier_average}
-\lean{COLT83.barrier_average}\leanok
+\lean{Maiti2026Power.barrier_average}\leanok
 \uses{def:barrier_potential, lem:barrier_step, lem:eigen_quadratic_bounds}
 Let $u_1,\dots,u_m \in \R^d$ and $p_1,\dots,p_m \ge 0$ with $\sum_ip_i = 1$ and
 $\sum_i p_iu_iu_i^\top = I_d$. Let $l \in \R$, $l' := l + 1/2$, and $B \in \Sym$ with
@@ -811,7 +811,7 @@ $L_B(u_i)$ being $\ge 1$ forces $\max_iL_B(u_i) \ge 1$.
 \end{proof}
 
 \begin{theorem}[Rounding to a fixed design of any size $T \ge 4d$]\label{thm:rounding}
-\lean{COLT83.exists_rounding}\leanok
+\lean{Maiti2026Power.exists_rounding}\leanok
 \uses{def:design_matrix, lem:sqrt_props, def:barrier_potential}
 Let $\lambda \in \simplex_{\Xs}$ with $A := A(\lambda) \in \PD$ and let $T \ge 4d$ be an integer.
 There exist $x_0, \dots, x_{T-1} \in \supp\lambda$ (with repetitions allowed) such that
@@ -849,8 +849,8 @@ by congruence with $M = A^{1/2}$ (Lemma~\ref{lem:loewner_congruence}) and $A^{1/
 
 \textbf{Lean remark.} The proof is an existence statement proved by induction on $t$:
 ``for every $t$ there is a family \texttt{x : Fin t → E} of points of the support whose $B_t$
-satisfies the invariant'' (\texttt{COLT83.exists\_rounding}); the greedy choice at each step is
-the point provided by Lemma~\ref{lem:barrier_average} (\texttt{COLT83.barrier\_average}, stated
+satisfies the invariant'' (\texttt{Maiti2026Power.exists\_rounding}); the greedy choice at each step is
+the point provided by Lemma~\ref{lem:barrier_average} (\texttt{Maiti2026Power.barrier\_average}, stated
 for a design distribution with design matrix $I$, here the whitened distribution
 $\lambda \circ (A^{-1/2})^{-1}$ of \texttt{IsDesign.mapDomain}), and the family is extended with
 \texttt{Fin.snoc}. The invariant ``$\lambda_{\min}(B_t) > l_t$'' is the spectral condition
@@ -862,7 +862,7 @@ the theorem produces a design of length exactly $T$ with points in the support o
 which is what Definition~\ref{def:fixed_design} consumes.
 
 \begin{corollary}[Fixed design with controlled inverse and width]\label{cor:fixed_design_from_distribution}
-\lean{COLT83.posDef_of_smul_le, COLT83.dotProduct_inv_mulVec_le_of_smul_le, COLT83.gwMat_le_of_smul_le}\leanok
+\lean{Maiti2026Power.posDef_of_smul_le, Maiti2026Power.dotProduct_inv_mulVec_le_of_smul_le, Maiti2026Power.gwMat_le_of_smul_le}\leanok
 \uses{thm:rounding, def:width_matrix, lem:loewner_scalar, lem:width_mono, lem:width_homog}
 In the setting of Theorem~\ref{thm:rounding}, let $x_0,\dots,x_{T-1}$ be the design it provides
 and $\Sigma_T := \sum_{t<T}x_tx_t^\top$. Then $\Sigma_T \in \PD$,

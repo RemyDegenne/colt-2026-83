@@ -26,9 +26,9 @@ Numerical bounds on $\pi$, $e$ and $\log 2$: \texttt{Real.pi\_lt\_d2}, \texttt{R
 \textbf{What is missing.} Stein's identity for Gaussian vectors, the interpolation formula, the
 Sudakov--Fernique inequality itself, the lower Mills-ratio bound and the lower bound on the
 expected maximum are all absent from Mathlib; they are formalized in this project in
-\texttt{COLT83/Mathlib/Probability/\{SteinReal, SteinIdentity, GaussianInterpolation,
+\texttt{Maiti2026Power/Mathlib/Probability/\{SteinReal, SteinIdentity, GaussianInterpolation,
 SudakovFernique, GaussianMaxLower\}.lean} and
-\texttt{COLT83/Mathlib/Analysis/\{SpecialFunctions, InnerProductSpace\}/LogSumExp.lean}.
+\texttt{Maiti2026Power/Mathlib/Analysis/\{SpecialFunctions, InnerProductSpace\}/LogSumExp.lean}.
 
 \textbf{Lean remark (organisation).} The Lean development is coordinate-free where possible.
 Stein's identity is proved for the standard Gaussian measure of a finite-dimensional inner
@@ -47,10 +47,10 @@ derivative of $\psi(t) = \E F(Z_t)$ is
 $\E[\sum_k D^2F(Z_t)(Z_te_k, Z_t'e_k)]$ with the cross terms vanishing block by block
 (\texttt{hasDerivAt\_integral\_comp\_gaussianInterp}, \texttt{sum\_apply\_gaussianInterp\_block}).
 The soft-max is \texttt{logSumExp β (EuclideanSpace.basisFun ι ℝ)}: the coordinate soft-max
-\texttt{Real.logSumExp} of \texttt{COLT83/Mathlib/Analysis/SpecialFunctions/LogSumExp.lean}
+\texttt{Real.logSumExp} of \texttt{Maiti2026Power/Mathlib/Analysis/SpecialFunctions/LogSumExp.lean}
 (defined on $\R^m$, with its Hessian \texttt{Real.fderiv\_fderiv\_logSumExp\_single}) composed
 with the coordinates, as an instance of the general log-sum-exp smoothing of a maximum of linear
-forms of \texttt{COLT83/Mathlib/Analysis/InnerProductSpace/LogSumExp.lean}.
+forms of \texttt{Maiti2026Power/Mathlib/Analysis/InnerProductSpace/LogSumExp.lean}.
 
 \section{Gaussian integration by parts}
 \label{sec:pre_sudakov_stein}

@@ -1,5 +1,5 @@
-name = "COLT83"
-defaultTargets = ["COLT83"]
+name = "Maiti2026Power"
+defaultTargets = ["Maiti2026Power"]
 lintDriver = "batteries/runLinter"
 
 [leanOptions]
@@ -24,7 +24,7 @@ rev = "main"
 subDir = "LeanSpec"
 
 [[lean_lib]]
-name = "COLT83"
+name = "Maiti2026Power"
 
 # Comparator (https://github.com/leanprover/comparator) challenge/solution modules for the
 # headline results listed in formalization.yaml; see comparator/README.md. One library with a

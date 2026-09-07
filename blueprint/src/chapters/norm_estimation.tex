@@ -35,7 +35,7 @@ $\Xs = \ball_d$ and $r := \norm{\theta}$.
 \label{sec:norm_setup}
 
 \begin{definition}[Norm estimation algorithm]\label{def:norm_estimator}
-\lean{COLT83.IsAccurateNormEst}\leanok
+\lean{Maiti2026Power.IsAccurateNormEst}\leanok
 \uses{def:env, def:bai_alg}
 An \emph{estimation algorithm with budget $T$} on $\ball_d$ is a pair $(\mathrm{alg}, \rho)$
 of an LML algorithm with actions in $\ball_d$ and observations in $\R$, and a Markov kernel
@@ -55,7 +55,7 @@ All the estimators below are deterministic functions of the history, so $\rho$ i
 \texttt{Kernel.deterministic}.
 
 \begin{definition}[Rademacher direction]\label{def:rademacher_direction}
-\lean{COLT83.radDir, COLT83.radDir_mem_unitBall, COLT83.measurable_radDir}\leanok
+\lean{Maiti2026Power.radDir, Maiti2026Power.radDir_mem_unitBall, Maiti2026Power.measurable_radDir}\leanok
 \uses{def:arm_set}
 A \emph{Rademacher direction} is the random vector $x := \sigma/\sqrt d \in \R^d$ where
 $\sigma = (\sigma_1, \dots, \sigma_d)$ has i.i.d.\ coordinates uniform on $\{-1, +1\}$. We
@@ -68,7 +68,7 @@ the uniform law (\texttt{uniformBoolVec}, the seed of the meta-algorithm), throu
 $\sigma_i := \mathrm{signOf}(u_i) \in \{-1,+1\}$; $\mathrm{radDir}(u) := \sigma/\sqrt d$.
 
 \begin{lemma}[Inner products with a Rademacher direction]\label{lem:direction_second_moment}
-\lean{COLT83.inner_radDir, COLT83.card_mul_inner_radDir_sq, COLT83.norm_radDir_le_one}\leanok
+\lean{Maiti2026Power.inner_radDir, Maiti2026Power.card_mul_inner_radDir_sq, Maiti2026Power.norm_radDir_le_one}\leanok
 \uses{def:rademacher_direction}
 Let $x = \sigma/\sqrt d$ be a Rademacher direction and $\theta \in \R^d$. Then
 $\ip{x}{\theta} = \ip{\sigma}{\theta}/\sqrt d$ and $d\,\ip{x}{\theta}^2 = \ip{\sigma}{\theta}^2$;
@@ -86,7 +86,7 @@ identity is $\ip{x}{\theta} = \ip{\sigma}{\theta}/\sqrt d$.
 \end{proof}
 
 \begin{definition}[Rademacher block sampling and the squared statistic]\label{def:squared_statistic}
-\lean{COLT83.rbMeasure, COLT83.rbMean, COLT83.rbStat, COLT83.rbX, COLT83.rbW, COLT83.rbStat_sub_sq_eq}\leanok
+\lean{Maiti2026Power.rbMeasure, Maiti2026Power.rbMean, Maiti2026Power.rbStat, Maiti2026Power.rbX, Maiti2026Power.rbW, Maiti2026Power.rbStat_sub_sq_eq}\leanok
 \uses{def:rademacher_direction, def:env, def:regret}
 Let $s \ge 1$ and $K \ge 1$ be integers. The \emph{Rademacher block sampling rule}
 $\mathrm{RB}(s, K)$ is the sampling rule with actions in $\ball_d$ and budget $sK$ which, for
@@ -141,7 +141,7 @@ $sK$. The identity $\bar Z - r^2 = \frac1K\sum X_k + \frac1K\sum W_k$ is a rearr
 $Z_k = X_k + W_k + r^2$.
 
 \begin{lemma}[Window projections of the seed space]\label{lem:statistic_structure}
-\lean{COLT83.nsMeasure, COLT83.rbProj, COLT83.nsMeasure_map_rbProj, COLT83.indepFun_prefix_rbProj, COLT83.lnProj, COLT83.nsMeasure_map_lnProj, COLT83.indepFun_prefix_lnProj, ProbabilityTheory.indepFun_prefix_window, MeasureTheory.Measure.infinitePi_map_eval_comp, MeasureTheory.Measure.infinitePi_map_eval_comp', COLT83.shiftSeq, COLT83.nsMeasure_map_shiftSeq, COLT83.winStat, COLT83.winStat_eq_rbStat}\leanok
+\lean{Maiti2026Power.nsMeasure, Maiti2026Power.rbProj, Maiti2026Power.nsMeasure_map_rbProj, Maiti2026Power.indepFun_prefix_rbProj, Maiti2026Power.lnProj, Maiti2026Power.nsMeasure_map_lnProj, Maiti2026Power.indepFun_prefix_lnProj, ProbabilityTheory.indepFun_prefix_window, MeasureTheory.Measure.infinitePi_map_eval_comp, MeasureTheory.Measure.infinitePi_map_eval_comp', Maiti2026Power.shiftSeq, Maiti2026Power.nsMeasure_map_shiftSeq, Maiti2026Power.winStat, Maiti2026Power.winStat_eq_rbStat}\leanok
 \uses{def:squared_statistic, lem:seeded}
 Let $\Omega_{\mathrm{seed}} := \big(\{-1,+1\}^d \times \R\big)^{\N}$ with the product law
 $\Prob_{\mathrm{seed}} := \big(\mathrm{Unif}(\{-1,+1\}^d) \otimes \Normal(0,1)\big)^{\otimes\N}$
@@ -221,7 +221,7 @@ $\bar Z - r^2 = \frac1K\sum_k X_k + \frac1K\sum_k W_k$ separates the fluctuation
 directions (Term~1, the $X_k$) from the fluctuations of the noise (Term~2, the $W_k$).
 
 \begin{lemma}[Term 1 is sub-exponential]\label{lem:term1_subexp}
-\lean{COLT83.hasSubexponentialMGF_rbX, COLT83.iIndepFun_rbX, COLT83.rbX_eq_zero_of_eq_zero}\leanok
+\lean{Maiti2026Power.hasSubexponentialMGF_rbX, Maiti2026Power.iIndepFun_rbX, Maiti2026Power.rbX_eq_zero_of_eq_zero}\leanok
 \uses{def:squared_statistic, lem:statistic_structure, def:subexp}
 On the block space $(\Omega_{s,K}, \Prob_{s,K})$, the variables $X_k = d\mu_k^2 - r^2$,
 $k < K$, are independent and each has $\mathrm{HasSubexponentialMGF}\ X_k\ (16 r^4)\ (4r^2)$.
@@ -240,7 +240,7 @@ $\mu_k = 0 = r$.
 \end{proof}
 
 \begin{lemma}[Tail bound for Term 1]\label{lem:term1_bound}
-\lean{COLT83.rbMeasure_real_avg_rbX_gt_le}\leanok
+\lean{Maiti2026Power.rbMeasure_real_avg_rbX_gt_le}\leanok
 \uses{lem:term1_subexp}
 Assume $r > 0$. For every $t \ge 0$,
 \[
@@ -260,7 +260,7 @@ $X_k = 0$.
 \end{proof}
 
 \begin{lemma}[Term 2 is conditionally sub-exponential]\label{lem:term2_conditional}
-\lean{COLT83.rbNoise, COLT83.hasLaw_sqrt_mul_rbMean, COLT83.hasSubexponentialMGF_rbW, COLT83.iIndepFun_rbW}\leanok
+\lean{Maiti2026Power.rbNoise, Maiti2026Power.hasLaw_sqrt_mul_rbMean, Maiti2026Power.hasSubexponentialMGF_rbW, Maiti2026Power.iIndepFun_rbW}\leanok
 \uses{def:squared_statistic, lem:statistic_structure, def:subexp}
 Fix deterministic sign vectors $\sigma^{(0)}, \dots, \sigma^{(K-1)}$, let
 $x^{(k)} := \sigma^{(k)}/\sqrt d$, $\mu_k := \ip{x^{(k)}}{\theta}$, and let the noises
@@ -291,7 +291,7 @@ of $\zeta_k$ alone.
 \end{proof}
 
 \begin{lemma}[Tail bound for Term 2]\label{lem:term2_bound}
-\lean{COLT83.rbVbar, COLT83.sum_rbVbar_eq, COLT83.rbNoise_real_avg_rbW_ge_le, COLT83.rbMeasure_real_avg_rbW_gt_le}\leanok
+\lean{Maiti2026Power.rbVbar, Maiti2026Power.sum_rbVbar_eq, Maiti2026Power.rbNoise_real_avg_rbW_ge_le, Maiti2026Power.rbMeasure_real_avg_rbW_gt_le}\leanok
 \uses{lem:term2_conditional, lem:statistic_structure}
 On the block space, let
 \[
@@ -334,7 +334,7 @@ the inner bound of Lemma~\ref{lem:term2_conditional} for each fixed direction ve
 conditional expectation is needed.
 
 \begin{lemma}[Bound on the conditional variance proxy]\label{lem:vbar_bound}
-\lean{COLT83.rbMeasure_real_rbVbar_gt_le}\leanok
+\lean{Maiti2026Power.rbMeasure_real_rbVbar_gt_le}\leanok
 \uses{lem:term2_bound, lem:term1_bound}
 With $\bar V$ as in Lemma~\ref{lem:term2_bound} and
 \[
@@ -356,7 +356,7 @@ probability at most $2\exp(-K/128)$.
 \end{proof}
 
 \begin{definition}[Additive estimation algorithm; Algorithm~1]\label{def:additive_algorithm}
-\lean{COLT83.addS, COLT83.addK}\leanok
+\lean{Maiti2026Power.addS, Maiti2026Power.addK}\leanok
 \uses{def:squared_statistic, def:norm_estimator}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $r_0 > 0$ (a scale parameter), and set
 \[
@@ -389,7 +389,7 @@ kernel); its parameters $s, K$ are natural numbers computed from $(\eps,\delta,r
 with a data-dependent $r_0$ taking finitely many values.
 
 \begin{theorem}[Additive estimation with a constant-factor estimate; Algorithm~1]\label{thm:additive_estimation}
-\lean{COLT83.rbMeasure_real_addEst_gt_le, COLT83.rbMeasure_real_sqrt_addEst_gt_le, COLT83.NormEstParam.s'_mul_K'_le}\leanok
+\lean{Maiti2026Power.rbMeasure_real_addEst_gt_le, Maiti2026Power.rbMeasure_real_sqrt_addEst_gt_le, Maiti2026Power.NormEstParam.s'_mul_K'_le}\leanok
 \uses{def:additive_algorithm, def:norm_estimator, def:multiscale_algorithm}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$, $r_0 \ge \eps$, and let $s = s(r_0)$, $K = K(r_0)$
 be the parameters of Algorithm~1 (Definition~\ref{def:additive_algorithm}, with
@@ -470,7 +470,7 @@ $\delta/2$ claimed by the paper; the extra room is not used.
 \label{sec:norm_test}
 
 \begin{definition}[Scale test]\label{def:scale_test}
-\lean{COLT83.testS, COLT83.testK}\leanok
+\lean{Maiti2026Power.testS, Maiti2026Power.testK}\leanok
 \uses{def:squared_statistic}
 For a scale $t > 0$ and a confidence level $\delta' \in (0,1)$, the test
 $\mathrm{Test}(t,\delta')$ is the algorithm $\mathrm{RB}(s,K)$ with
@@ -491,7 +491,7 @@ tests are the windows of the first phase of the meta-algorithm
 block space.
 
 \begin{lemma}[Error of the test under $H_0$]\label{lem:test_error_h0}
-\lean{COLT83.testS_facts, COLT83.testK_facts, COLT83.six_mul_exp_neg_le, COLT83.rbMeasure_real_test_h0_le}\leanok
+\lean{Maiti2026Power.testS_facts, Maiti2026Power.testK_facts, Maiti2026Power.six_mul_exp_neg_le, Maiti2026Power.rbMeasure_real_test_h0_le}\leanok
 \uses{def:scale_test}
 Let $\delta' \in (0,1/4]$ and $\theta$ with $r \le t$. Then, on the block space of
 $\mathrm{RB}(s,K)$, $\Prob_{s,K}(U \ge \tfrac32 t^2) \le 3\delta'/4$: the test returns $H_1$
@@ -525,7 +525,7 @@ $6e^{-K/2048} \le 6\delta'/8 = 3\delta'/4$.
 \end{proof}
 
 \begin{lemma}[Error of the test under $H_1$]\label{lem:test_error_h1}
-\lean{COLT83.rbMeasure_real_test_h1_le}\leanok
+\lean{Maiti2026Power.rbMeasure_real_test_h1_le}\leanok
 \uses{def:scale_test}
 Let $\delta' \in (0,1/4]$ and $\theta$ with $r \ge 2t$. Then
 $\Prob_{s,K}(U < \tfrac32 t^2) \le 3\delta'/4$: the test returns $H_0$ with probability at
@@ -554,7 +554,7 @@ Lemma~\ref{lem:test_error_h0}.
 \end{proof}
 
 \begin{definition}[Multi-scale algorithm; Algorithm~2]\label{def:multiscale_algorithm}
-\lean{COLT83.nsScale, COLT83.nsDelta, COLT83.nsS, COLT83.nsK, COLT83.nsJ, COLT83.nsStart, COLT83.one_le_nsJ, COLT83.nsScale_nsJ_lt, COLT83.NormEstParam.testStat, COLT83.NormEstParam.testH1, COLT83.NormEstParam.jStar}\leanok
+\lean{Maiti2026Power.nsScale, Maiti2026Power.nsDelta, Maiti2026Power.nsS, Maiti2026Power.nsK, Maiti2026Power.nsJ, Maiti2026Power.nsStart, Maiti2026Power.one_le_nsJ, Maiti2026Power.nsScale_nsJ_lt, Maiti2026Power.NormEstParam.testStat, Maiti2026Power.NormEstParam.testH1, Maiti2026Power.NormEstParam.jStar}\leanok
 \uses{def:scale_test}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and set, for $j \in \N$,
 \[
@@ -594,7 +594,7 @@ in a very restricted sense: only the choice between ``continue'' and ``idle'' de
 data.
 
 \begin{lemma}[Good event of the multi-scale algorithm]\label{lem:norm_multiscale_good_event}
-\lean{COLT83.NormEstParam.testOK, COLT83.NormEstParam.badTest, COLT83.NormEstParam.nsMeasure_real_badTest_le, COLT83.NormEstParam.bad, COLT83.NormEstParam.nsMeasure_real_bad_le, COLT83.sum_nsDelta_le}\leanok
+\lean{Maiti2026Power.NormEstParam.testOK, Maiti2026Power.NormEstParam.badTest, Maiti2026Power.NormEstParam.nsMeasure_real_badTest_le, Maiti2026Power.NormEstParam.bad, Maiti2026Power.NormEstParam.nsMeasure_real_bad_le, Maiti2026Power.sum_nsDelta_le}\leanok
 \uses{def:multiscale_algorithm, lem:test_error_h0, lem:test_error_h1, lem:statistic_structure}
 Run the multi-scale algorithm against $\nu_\theta$ on the seed space of
 Lemma~\ref{lem:statistic_structure}. For $j < J$ let $E_j$ be the event that the outcome of
@@ -620,7 +620,7 @@ $\sum_{j<J} 3\delta_j/4 \le \frac{3\delta}{4}\sum_{j\ge0}2^{-j-2} = \frac{3\delt
 \end{proof}
 
 \begin{theorem}[Guarantee of the multi-scale algorithm]\label{thm:multiscale_guarantee}
-\lean{COLT83.NormEstParam.jStar_bounds}\leanok
+\lean{Maiti2026Power.NormEstParam.jStar_bounds}\leanok
 \uses{def:multiscale_algorithm, lem:norm_multiscale_good_event}
 Let $E_j$, $j < J$, be the events of Lemma~\ref{lem:norm_multiscale_good_event} and let $G$
 be the complement of $\bigcup_{j<J}E_j$ (all tests are correct), so
@@ -649,7 +649,7 @@ $j_* = J$ then $\sqrt d \le t_J/2 = t_{J-1} < r$: this is (c).
 \end{proof}
 
 \begin{lemma}[Budget of the multi-scale algorithm]\label{lem:multiscale_samples}
-\lean{COLT83.sum_pow_le, COLT83.sum_mul_pow_le, COLT83.NormEstParam.s_le, COLT83.NormEstParam.K_le, COLT83.NormEstParam.T₁_le}\leanok
+\lean{Maiti2026Power.sum_pow_le, Maiti2026Power.sum_mul_pow_le, Maiti2026Power.NormEstParam.s_le, Maiti2026Power.NormEstParam.K_le, Maiti2026Power.NormEstParam.T₁_le}\leanok
 \uses{def:multiscale_algorithm}
 With $L := \log(4/\delta)$, the budget of the multi-scale algorithm satisfies
 \[
@@ -681,7 +681,7 @@ $N_{\mathrm{ms}} \le 8\cdot 7967\,dL/\eps^2 \le 64000\,dL/\eps^2$.
 \label{sec:norm_large}
 
 \begin{definition}[Large-norm estimator; Algorithm~3]\label{def:large_norm_algorithm}
-\lean{COLT83.lnN, COLT83.lnNoise, COLT83.lnDelta, COLT83.lnR, COLT83.lnEst}\leanok
+\lean{Maiti2026Power.lnN, Maiti2026Power.lnNoise, Maiti2026Power.lnDelta, Maiti2026Power.lnR, Maiti2026Power.lnEst}\leanok
 \uses{def:fixed_design, def:norm_estimator}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $n := \lceil 48\log(4/\delta)/\eps^2 \rceil$. The
 \emph{large-norm estimator} is the fixed-design estimation algorithm with budget $dn$ which
@@ -704,7 +704,7 @@ the guarantee below is stated on the noise space, and transported through the ba
 projection of Lemma~\ref{lem:statistic_structure}(ii).
 
 \begin{lemma}[Decomposition of the large-norm estimator]\label{lem:large_norm_decomposition}
-\lean{COLT83.lnR_sub_eq, COLT83.hasLaw_two_mul_inner_lnDelta, COLT83.lnG, COLT83.hasLaw_lnG, COLT83.norm_lnDelta_sq_sub_eq, COLT83.hasSubexponentialMGF_lnQ}\leanok
+\lean{Maiti2026Power.lnR_sub_eq, Maiti2026Power.hasLaw_two_mul_inner_lnDelta, Maiti2026Power.lnG, Maiti2026Power.hasLaw_lnG, Maiti2026Power.norm_lnDelta_sq_sub_eq, Maiti2026Power.hasSubexponentialMGF_lnQ}\leanok
 \uses{def:large_norm_algorithm, def:subexp}
 On the noise space, $\Delta \sim \Normal(0, I_d/n)$ and
 \[
@@ -732,7 +732,7 @@ Lemma~\ref{lem:subexp_const_mul}.
 \end{proof}
 
 \begin{theorem}[Guarantee in the large-norm regime]\label{thm:large_norm_guarantee}
-\lean{COLT83.lnNoise_real_lnEst_gt_le, COLT83.NormEstParam.n_le}\leanok
+\lean{Maiti2026Power.lnNoise_real_lnEst_gt_le, Maiti2026Power.NormEstParam.n_le}\leanok
 \uses{def:large_norm_algorithm}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$ and $\theta$ with $r \ge \sqrt d$. Then, on the noise
 space,
@@ -797,7 +797,7 @@ for the final step; with $\eps \le 1 \le \sqrt d \le r$ the weaker $\eps \le r$ 
 \label{sec:norm_meta}
 
 \begin{definition}[Meta-algorithm for norm estimation; Algorithm~4]\label{def:meta_algorithm}
-\lean{COLT83.NormEstParam, COLT83.nsN2, COLT83.nsBudget, COLT83.NormEstParam.T, COLT83.NormEstParam.phaseOf, COLT83.NormEstParam.rbBlock, COLT83.NormEstParam.basisRound, COLT83.NormEstParam.planAction, COLT83.NormEstParam.nextAction, COLT83.NormEstParam.alg, COLT83.NormEstParam.addStat, COLT83.NormEstParam.lnRStat, COLT83.NormEstParam.estimate, COLT83.NormEstParam.output}\leanok
+\lean{Maiti2026Power.NormEstParam, Maiti2026Power.nsN2, Maiti2026Power.nsBudget, Maiti2026Power.NormEstParam.T, Maiti2026Power.NormEstParam.phaseOf, Maiti2026Power.NormEstParam.rbBlock, Maiti2026Power.NormEstParam.basisRound, Maiti2026Power.NormEstParam.planAction, Maiti2026Power.NormEstParam.nextAction, Maiti2026Power.NormEstParam.alg, Maiti2026Power.NormEstParam.addStat, Maiti2026Power.NormEstParam.lnRStat, Maiti2026Power.NormEstParam.estimate, Maiti2026Power.NormEstParam.output}\leanok
 \uses{def:multiscale_algorithm, def:additive_algorithm, def:large_norm_algorithm, lem:seeded, def:norm_estimator}
 Let $\eps \in (0,1]$, $\delta \in (0,1)$, let $T_1 := N_{\mathrm{ms}}$ be the budget of the
 multi-scale algorithm and
@@ -847,7 +847,7 @@ the phases sequentially; here the composition is replaced by the deterministic s
 and the data-dependence is entirely in $j_*$.
 
 \begin{lemma}[The run of the meta-algorithm follows its plan]\label{lem:norm_meta_plan}
-\lean{COLT83.NormEstParam.seedAction_eq_planAction, COLT83.NormEstParam.yω_eq, COLT83.NormEstParam.testStat_eq_rbStat, COLT83.NormEstParam.addStat_eq_rbStat, COLT83.NormEstParam.lnRStat_eq_lnR, COLT83.NormEstParam.estimate_congr, COLT83.NormEstParam.estimate_yOf_seedFinHist, COLT83.NormEstParam.jsω_prefixExtend}\leanok
+\lean{Maiti2026Power.NormEstParam.seedAction_eq_planAction, Maiti2026Power.NormEstParam.yω_eq, Maiti2026Power.NormEstParam.testStat_eq_rbStat, Maiti2026Power.NormEstParam.addStat_eq_rbStat, Maiti2026Power.NormEstParam.lnRStat_eq_lnR, Maiti2026Power.NormEstParam.estimate_congr, Maiti2026Power.NormEstParam.estimate_yOf_seedFinHist, Maiti2026Power.NormEstParam.jsω_prefixExtend}\leanok
 \uses{def:meta_algorithm, lem:seeded, lem:statistic_structure}
 Run $\mathrm{NormEst}(\eps,\delta)$ against $\nu_\theta$ on the seed space
 $(\Omega_{\mathrm{seed}}, \Prob_{\mathrm{seed}})$ of Lemma~\ref{lem:statistic_structure}, with
@@ -893,7 +893,7 @@ deterministic, as required by Definition~\ref{def:bai_alg}; the padded rounds ar
 not used by the estimate.
 
 \begin{theorem}[Norm estimation; Theorem~8 of the paper]\label{thm:norm_estimation}
-\lean{COLT83.NormEstParam.fail2, COLT83.NormEstParam.fail_subset, COLT83.NormEstParam.nsMeasure_real_jsω_inter_preimage_eq_mul, COLT83.NormEstParam.nsMeasure_real_fail2_le, COLT83.NormEstParam.nsMeasure_real_estimate_fail_le, COLT83.NormEstParam.one_sub_le_seedMeasure_real_output, COLT83.NormEstParam.N₂_le, COLT83.NormEstParam.T_le}\leanok
+\lean{Maiti2026Power.NormEstParam.fail2, Maiti2026Power.NormEstParam.fail_subset, Maiti2026Power.NormEstParam.nsMeasure_real_jsω_inter_preimage_eq_mul, Maiti2026Power.NormEstParam.nsMeasure_real_fail2_le, Maiti2026Power.NormEstParam.nsMeasure_real_estimate_fail_le, Maiti2026Power.NormEstParam.one_sub_le_seedMeasure_real_output, Maiti2026Power.NormEstParam.N₂_le, Maiti2026Power.NormEstParam.T_le}\leanok
 \uses{def:meta_algorithm, def:norm_estimator, lem:seeded}
 Let $\eps \in (0,1]$ and $\delta \in (0,1)$. The meta-algorithm $\mathrm{NormEst}(\eps,\delta)$
 is an $(\eps,\delta)$-accurate estimation algorithm on $\ball_d$: for every
@@ -906,7 +906,7 @@ budget satisfies
 \end{theorem}
 
 \begin{corollary}[Theorem~8 of the paper, existential form]\label{cor:norm_estimation_exists}
-\lean{COLT83.exists_isAccurateNormEst}\leanok
+\lean{Maiti2026Power.exists_isAccurateNormEst}\leanok
 \uses{thm:norm_estimation, def:norm_estimator}
 Let $\eps \in (0,1]$ and $\delta \in (0,1)$. There exist a budget
 $T \le C_{\mathrm{norm}}\, d\log(4/\delta)/\eps^2$ and an $(\eps,\delta)$-accurate estimation

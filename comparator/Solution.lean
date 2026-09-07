@@ -3,13 +3,13 @@ Copyright (c) 2026 Rémy Degenne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Rémy Degenne
 -/
-import COLT83.MXJ2026.Upper
-import COLT83.MXJ2026.LowerAdaptive
-import COLT83.MXJ2026.LowerNonadaptive
-import COLT83.MXJ2026.WidthBounds
-import COLT83.MXJ2026.LogGains
-import COLT83.MXJ2026.Separation
-import COLT83.MXJ2026.NormEstimation
+import Maiti2026Power.MXJ2026.Upper
+import Maiti2026Power.MXJ2026.LowerAdaptive
+import Maiti2026Power.MXJ2026.LowerNonadaptive
+import Maiti2026Power.MXJ2026.WidthBounds
+import Maiti2026Power.MXJ2026.LogGains
+import Maiti2026Power.MXJ2026.Separation
+import Maiti2026Power.MXJ2026.NormEstimation
 
 /-! # Comparator solution module
 
