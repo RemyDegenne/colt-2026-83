@@ -44,13 +44,17 @@ measure \texttt{ProbabilityTheory.iIndepFun\_pi}; the standard Gaussian vector
 (Section~\ref{sec:pre_subexp_def}), its kernel and conditional versions with the
 Azuma--Bernstein inequality (Section~\ref{sec:pre_subexp_kernel}), the MGF of the square of a
 real Gaussian (Lemma~\ref{lem:gaussian_square_mgf}), and the sub-exponential bounds of
-Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}.
+Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}. The sub-exponential
+structure and its API now live in LML
+(\texttt{LeanMachineLearning/ForMathlib/Probability/Moments/SubExponential.lean}); only the
+Gaussian and Rademacher applications of Sections~\ref{sec:pre_subexp_gaussian}
+and~\ref{sec:pre_subexp_rademacher} are formalized here.
 
 \textbf{Lean remark.} The definition below mirrors \texttt{HasSubgaussianMGF}: a structure
 \texttt{HasSubexponentialMGF (X : Ω → ℝ) (V b : ℝ) (μ : Measure Ω) : Prop} with fields
 \texttt{integrable\_exp\_mul : ∀ t : ℝ, b * |t| ≤ 1 → Integrable (fun ω ↦ exp (t * X ω)) μ} and
 \texttt{mgf\_le : ∀ t : ℝ, b * |t| ≤ 1 → mgf X μ t ≤ exp (V * t\^{}2 / 2)}
-(\texttt{Maiti2026Power/Mathlib/Probability/Moments/SubExponential.lean}). The range of $t$ is
+(\texttt{LeanMachineLearning/ForMathlib/Probability/Moments/SubExponential.lean}). The range of $t$ is
 written as $b\abs t\le1$ rather than $\abs t\le1/b$ so that \texttt{b = 0} imposes no
 restriction on $t$ (the hypothesis $0\cdot\abs t\le1$ is always true):
 \texttt{HasSubexponentialMGF X V 0 μ} is then equivalent to \texttt{HasSubgaussianMGF X V μ}
@@ -122,7 +126,7 @@ $e^{\lambda^2V/2} \le e^{\lambda^2V'/2}$.
 \end{proof}
 
 \begin{lemma}[Sub-Gaussian is sub-exponential with $b = 0$]\label{lem:subexp_of_subgaussian}
-\lean{ProbabilityTheory.HasSubexponentialMGF.of_hasSubgaussianMGF, ProbabilityTheory.HasSubexponentialMGF.hasSubgaussianMGF}\leanok
+\lean{ProbabilityTheory.HasSubgaussianMGF.hasSubexponentialMGF, ProbabilityTheory.HasSubexponentialMGF.hasSubgaussianMGF}\leanok
 \uses{def:subexp, lem:ps_subexp_mono}
 $X$ has a sub-Gaussian MGF with constant $c \ge 0$ (Mathlib
 \texttt{HasSubgaussianMGF X c}: $e^{\lambda X}$ integrable and $\E e^{\lambda X} \le e^{c\lambda^2/2}$
@@ -331,7 +335,7 @@ there; its second derivative at $0$, which is $\E X^2$ (Mathlib
 \end{proof}
 
 \begin{lemma}[Stability of the kernel version]\label{lem:subexp_kernel_stability}
-\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.fun_zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_kernel, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_measure, ProbabilityTheory.Kernel.HasSubexponentialMGF.neg, ProbabilityTheory.Kernel.HasSubexponentialMGF.mono, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_hasSubgaussianMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.hasSubgaussianMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.congr, ProbabilityTheory.Kernel.hasSubexponentialMGF_congr, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_map, ProbabilityTheory.Kernel.HasSubexponentialMGF.id_map_iff, ProbabilityTheory.Kernel.HasSubexponentialMGF.const_mul}\leanok
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.fun_zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_kernel, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_measure, ProbabilityTheory.Kernel.HasSubexponentialMGF.neg, ProbabilityTheory.Kernel.HasSubexponentialMGF.mono, ProbabilityTheory.Kernel.HasSubgaussianMGF.hasSubexponentialMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.hasSubgaussianMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.congr, ProbabilityTheory.Kernel.hasSubexponentialMGF_congr, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_map, ProbabilityTheory.Kernel.HasSubexponentialMGF.id_map_iff, ProbabilityTheory.Kernel.HasSubexponentialMGF.const_mul}\leanok
 \uses{def:subexp_kernel}
 The kernel version is stable under the operations of Lemmas~\ref{lem:ps_subexp_mono},
 \ref{lem:subexp_of_subgaussian}, \ref{lem:subexp_const_mul} and~\ref{lem:ps_subexp_map}, with
@@ -413,7 +417,7 @@ computation is at most $e^{\lambda^2V_Y/2}\int e^{\lambda X}d(\kappa\circ\nu) < 
 \end{proof}
 
 \begin{definition}[Conditionally sub-exponential variable]\label{def:subexp_cond}
-\lean{ProbabilityTheory.HasCondSubexponentialMGF, ProbabilityTheory.HasCondSubexponentialMGF.mgf_le, ProbabilityTheory.HasCondSubexponentialMGF.cgf_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_trim_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.fun_zero, ProbabilityTheory.HasCondSubexponentialMGF.zero, ProbabilityTheory.HasCondSubexponentialMGF.memLp_exp_mul, ProbabilityTheory.HasCondSubexponentialMGF.integrable_exp_mul, ProbabilityTheory.HasCondSubexponentialMGF.of_hasCondSubgaussianMGF, ProbabilityTheory.HasCondSubexponentialMGF.hasCondSubgaussianMGF}\leanok
+\lean{ProbabilityTheory.HasCondSubexponentialMGF, ProbabilityTheory.HasCondSubexponentialMGF.mgf_le, ProbabilityTheory.HasCondSubexponentialMGF.cgf_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_trim_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.fun_zero, ProbabilityTheory.HasCondSubexponentialMGF.zero, ProbabilityTheory.HasCondSubexponentialMGF.memLp_exp_mul, ProbabilityTheory.HasCondSubexponentialMGF.integrable_exp_mul, ProbabilityTheory.HasCondSubgaussianMGF.hasCondSubexponentialMGF, ProbabilityTheory.HasCondSubexponentialMGF.hasCondSubgaussianMGF}\leanok
 \uses{def:subexp_kernel}
 Let $\Omega$ be a standard Borel space, $\Prob$ a finite measure and $\mathcal G$ a
 sub-$\sigma$-algebra. A random variable $X$ is conditionally sub-exponential with parameters

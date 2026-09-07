@@ -6,7 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Maiti2026Power.Mathlib.Probability.Moments.SubExponential
+public import LeanMachineLearning.ForMathlib.Probability.Moments.SubExponential
 
 /-!
 # The moment generating function of the square of a Gaussian variable
@@ -219,7 +219,7 @@ lemma hasSubexponentialMGF_sum_sq_sub_one_pi_gaussianReal :
   have h_indep : iIndepFun (fun i (g : ι → ℝ) ↦ g i ^ 2 - 1)
       (Measure.pi fun _ : ι ↦ gaussianReal 0 1) :=
     iIndepFun_pi (X := fun _ x ↦ x ^ 2 - 1) fun i ↦ by fun_prop
-  have h := HasSubexponentialMGF.fun_sum_of_iIndepFun h_indep (fun i ↦ by fun_prop)
+  have h := HasSubexponentialMGF.fun_sum_of_iIndepFun h_indep
     (V := fun _ ↦ 8) (b := 4) fun i ↦ ?_
   · simpa only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_comm] using h
   · have := hasSubexponentialMGF_sq_sub_gaussianReal 0 1
@@ -250,8 +250,7 @@ lemma measureReal_norm_sq_sub_ge_le_stdGaussian [Nonempty ι] {t : ℝ} (ht : 0 
   have hd : (0 : ℝ) < Fintype.card ι := by
     have := Fintype.card_pos (α := ι)
     positivity
-  have := hasSubexponentialMGF_norm_sq_sub_stdGaussian (ι := ι).measure_ge_le (by positivity)
-    (by norm_num) ht
+  have := hasSubexponentialMGF_norm_sq_sub_stdGaussian (ι := ι).measure_ge_le ht
   refine this.trans (le_of_eq ?_)
   congr 3 <;> ring
 

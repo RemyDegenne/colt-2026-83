@@ -124,7 +124,6 @@ public import Maiti2026Power.Mathlib.Probability.InfinitePiWindow
 public import Maiti2026Power.Mathlib.Probability.KLGaussian
 public import Maiti2026Power.Mathlib.Probability.Kernel.PriorAverage
 public import Maiti2026Power.Mathlib.Probability.MaureyPisier
-public import Maiti2026Power.Mathlib.Probability.Moments.SubExponential
 public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 public import Maiti2026Power.Mathlib.Probability.Rademacher
 public import Maiti2026Power.Mathlib.Probability.StdGaussianProd

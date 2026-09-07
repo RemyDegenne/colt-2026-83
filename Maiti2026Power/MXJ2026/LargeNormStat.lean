@@ -318,9 +318,7 @@ theorem lnNoise_real_lnEst_gt_le (hd : 0 < Fintype.card ι) {ε δ : ℝ} (hε :
     have hse := hasSubexponentialMGF_lnQ (ι := ι) hnpos
     have hV : (0 : ℝ) < (1 / n) ^ 2 * (8 * Fintype.card ι) :=
       mul_pos (pow_pos (one_div_pos.2 hn') 2) (mul_pos (by norm_num) hd')
-    have hb : (0 : ℝ) < |1 / (n : ℝ)| * 4 :=
-      mul_pos (abs_pos.2 (one_div_ne_zero hn'.ne')) (by norm_num)
-    refine (hse.measure_abs_ge_le hV hb hu).trans ?_
+    refine (hse.measure_abs_ge_le hu).trans ?_
     have h3L : 3 * log (4 / δ) ≤ min (u ^ 2 / (2 * ((1 / n) ^ 2 * (8 * Fintype.card ι))))
         (u / (2 * (|1 / (n : ℝ)| * 4))) := by
       refine le_min ?_ ?_

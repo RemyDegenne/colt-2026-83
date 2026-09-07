@@ -140,7 +140,7 @@ theorem rbMeasure_real_test_h0_le (hd : 0 < Fintype.card ι) {t δ' : ℝ} (ht :
         simp [rbX_eq_zero_of_eq_zero, hapos.le]
       rw [this, measureReal_empty]
       positivity
-    · refine (rbMeasure_real_avg_rbX_gt_le hr hKpos ha).trans
+    · refine (rbMeasure_real_avg_rbX_gt_le hKpos ha).trans
         (two_mul_exp_neg_mul_min_le hK' ?_ ?_)
       · rw [ha_def, le_div_iff₀ (by positivity)]
         have : ‖θ‖ ^ 4 ≤ t ^ 4 := pow_le_pow_left₀ hr0 hθ 4
@@ -214,7 +214,7 @@ theorem rbMeasure_real_test_h1_le (hd : 0 < Fintype.card ι) {t δ' : ℝ} (ht :
   refine (rbMeasure_real_abs_rbStat_sub_gt_le (θ := θ) (τ := τ) hd hspos hKpos ha).trans ?_
   have hb1 : (rbMeasure ι s K).real {p | a < |(∑ k, rbX K θ p.1 k) / K|}
       ≤ 2 * exp (-(K / 2048)) := by
-    refine (rbMeasure_real_avg_rbX_gt_le hr hKpos ha).trans
+    refine (rbMeasure_real_avg_rbX_gt_le hKpos ha).trans
       (two_mul_exp_neg_mul_min_le hK' ?_ ?_)
     · rw [ha_def, le_div_iff₀ (by positivity)]
       nlinarith

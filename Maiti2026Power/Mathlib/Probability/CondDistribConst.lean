@@ -11,7 +11,6 @@ public import Mathlib.Probability.HasCondDistrib
 # Constant conditional distributions and functions of a variable and an independent noise
 
 * `Kernel.mapOfConst Q G`: the kernel `x ↦ Q.map (G x)`.
-* `IndepFun.hasCondDistrib_const`: if `Y ⊥ X` and `Y ~ Q` then `Y | X ~ Q`.
 * `HasLaw.hasCondDistrib_snd_const`: if `(X, Y) ~ Q ⊗ R` then `Y | X ~ R`.
 * `HasCondDistrib.mapOfConst`: if `Y | X ~ Q` then `G X Y | X ~ Q.map (G X)`.
 * `HasCondDistrib.snd_of_const_prod`: if `(Y, Z) | X ~ Q ⊗ R` then `Z | (X, Y) ~ R`.
@@ -66,15 +65,6 @@ lemma const_compProd_const (Q : Measure 𝓨) [SFinite Q] (R : Measure 𝓩) [SF
   simp [Kernel.const_apply]
 
 end Kernel
-
-/-- If `Y` is independent of `X` with law `Q`, then the conditional law of `Y` given `X` is the
-constant kernel `Q`. -/
-lemma IndepFun.hasCondDistrib_const [IsFiniteMeasure P] {X : Ω → 𝓧} {Y : Ω → 𝓨}
-    {Q : Measure 𝓨} [SFinite Q] (h : IndepFun X Y P) (hX : AEMeasurable X P) (hY : HasLaw Y Q P) :
-    HasCondDistrib Y X (Kernel.const 𝓧 Q) P := by
-  unfold HasCondDistrib
-  rw [Measure.compProd_const]
-  exact h.hasLaw_prod ⟨hX, rfl⟩ hY
 
 /-- If `(X, Y) ~ Q ⊗ R` then the conditional law of `Y` given `X` is the constant kernel `R`. -/
 lemma HasLaw.hasCondDistrib_snd_const [IsFiniteMeasure P] {X : Ω → 𝓧} {Y : Ω → 𝓨}

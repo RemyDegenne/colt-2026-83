@@ -13,7 +13,7 @@ public import Mathlib.Probability.HasCondDistrib
 General facts about `HasCondDistrib` (and a few kernel identities) used throughout the
 sequential-learning developments:
 
-* `Kernel.const_comap_eq`, `Kernel.compProd_prodMkLeft_apply`: kernel identities;
+* `Kernel.const_comap_eq`: a kernel identity;
 * `HasCondDistrib.comp_hasLaw`: a conditional distribution is transported along a map `g`
   carrying `P` to `P'`;
 * `HasCondDistrib.const_comp_right`: a constant conditional law given `Z` is a constant
@@ -40,14 +40,6 @@ lemma Kernel.const_comap_eq (ν : Measure β) {f : 𝓧 → 𝓩} (hf : Measurab
     (Kernel.const 𝓩 ν).comap f hf = Kernel.const 𝓧 ν := by
   ext a s _
   simp [Kernel.comap_apply]
-
-/-- `(ξ ⊗ₖ prodMkLeft α κ) a = ξ a ⊗ₘ κ`. -/
-lemma Kernel.compProd_prodMkLeft_apply (ξ : Kernel α β) [IsSFiniteKernel ξ]
-    (κ : Kernel β γ) [IsSFiniteKernel κ] (a : α) :
-    (ξ ⊗ₖ Kernel.prodMkLeft α κ) a = ξ a ⊗ₘ κ := by
-  ext s hs
-  rw [Kernel.compProd_apply hs, Measure.compProd_apply hs]
-  simp [Kernel.prodMkLeft_apply]
 
 end kernel
 

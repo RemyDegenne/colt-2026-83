@@ -127,7 +127,7 @@ theorem rbMeasure_real_addEst_gt_le (hd : 0 < Fintype.card ι) {ε δ r₀ : ℝ
   have hr₀4 : ‖θ‖ ^ 2 / 4 < r₀ ^ 2 := by nlinarith
   -- Term 1
   have hb1 : (rbMeasure ι s K).real {p | a < |(∑ k, rbX K θ p.1 k) / K|} ≤ δ / 8 := by
-    refine (rbMeasure_real_avg_rbX_gt_le hr hKpos ha).trans (two_mul_exp_neg_le_div_eight hδ ?_)
+    refine (rbMeasure_real_avg_rbX_gt_le hKpos ha).trans (two_mul_exp_neg_le_div_eight hδ ?_)
     have e1 : a ^ 2 / (32 * ‖θ‖ ^ 4) = ε ^ 2 / (512 * ‖θ‖ ^ 2) := by
       rw [ha_def]
       field_simp

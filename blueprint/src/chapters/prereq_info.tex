@@ -49,13 +49,16 @@ argument, nor the ``integrated'' form of the chain rule
 $\KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta) = \int \KL(\kappa_x\|\eta_x)\,\mu(dx)$ (the Mathlib file
 explicitly avoids it because $x \mapsto \KL(\kappa_x\|\eta_x)$ need not be measurable in
 general; it is measurable when the target space is countably generated, which is all we need).
-The divergence decomposition for algorithm-environment sequences is new to LML.
+The integrated chain rule and the invariance of $\KL$ under measurable embeddings now live in LML
+(\texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/ChainRule.lean}); the
+policy/reward specialization of Lemma~\ref{lem:pi_kl_step} and the divergence decomposition for
+algorithm-environment sequences are new to LML.
 
 \section{Basic inequalities}
 \label{sec:pre_info_basic}
 
 \begin{lemma}[Invariance under measurable embeddings]\label{lem:pi_kl_measurable_equiv}
-\lean{InformationTheory.klDiv_map_of_measurableEmbedding, InformationTheory.klDiv_map_measurableEquiv}\leanok
+\lean{InformationTheory.klDiv_map_measurableEmbedding, InformationTheory.klDiv_map_measurableEquiv}\leanok
 Let $\mu,\nu$ be finite measures on $\Omega$ and $f : \Omega \to \Omega'$ a measurable embedding
 (for example a measurable equivalence). Then $\KL(f_*\mu \,\|\, f_*\nu) = \KL(\mu\|\nu)$.
 \end{lemma}

@@ -197,15 +197,14 @@ lemma rbX_eq_zero_of_eq_zero (u : Fin K → ι → Bool) (k : Fin K) :
   simp [rbX]
 
 /-- **Tail bound for Term 1** (blueprint `lem:term1_bound`). -/
-lemma rbMeasure_real_avg_rbX_gt_le (hr : 0 < ‖θ‖) (hK : 0 < K) {t : ℝ} (ht : 0 ≤ t) :
+lemma rbMeasure_real_avg_rbX_gt_le (hK : 0 < K) {t : ℝ} (ht : 0 ≤ t) :
     (rbMeasure ι s K).real {p | t < |(∑ k, rbX K θ p.1 k) / K|}
       ≤ 2 * exp (-(K * min (t ^ 2 / (32 * ‖θ‖ ^ 4)) (t / (8 * ‖θ‖ ^ 2)))) := by
   have : Nonempty (Fin K) := ⟨(⟨0, hK⟩ : Fin K)⟩
   rw [show {p : (Fin K → ι → Bool) × (Fin K → Fin s → ℝ) | t < |(∑ k, rbX K θ p.1 k) / K|}
       = {p | p.1 ∈ {u | t < |(∑ k, rbX K θ u k) / K|}} from rfl, rbMeasure_real_fst]
   have := HasSubexponentialMGF.measure_abs_average_ge_le_of_forall (ι := Fin K)
-    (iIndepFun_rbX (K := K) (θ := θ)) (fun k ↦ measurable_rbX k)
-    (fun k ↦ hasSubexponentialMGF_rbX k) (by positivity) (by positivity) ht
+    (iIndepFun_rbX (K := K) (θ := θ)) (fun k ↦ hasSubexponentialMGF_rbX k) ht
   simp only [Fintype.card_fin] at this
   have hsub : {u : Fin K → ι → Bool | t < |(∑ k, rbX K θ u k) / K|}
       ⊆ {u | t ≤ |(∑ k, rbX K θ u k) / K|} :=
@@ -327,21 +326,14 @@ lemma rbVbar_pos (hd : 0 < Fintype.card ι) (hs : 0 < s) (u : Fin K → ι → B
   linarith
 
 /-- Conditional tail bound for Term 2, for fixed directions. -/
-lemma rbNoise_real_avg_rbW_ge_le (hd : 0 < Fintype.card ι) (hs : 0 < s) (hK : 0 < K)
+lemma rbNoise_real_avg_rbW_ge_le (hs : 0 < s) (hK : 0 < K)
     (u : Fin K → ι → Bool) {t : ℝ} (ht : 0 ≤ t) :
     (rbNoise s K).real {e | t ≤ |(∑ k, rbW s K θ (u, e) k) / K|}
       ≤ 2 * exp (-(K * min (t ^ 2 / (2 * rbVbar s K θ u))
         (t / (2 * (4 * ((Fintype.card ι : ℝ) / s)))))) := by
   have : Nonempty (Fin K) := ⟨(⟨0, hK⟩ : Fin K)⟩
-  have hsum : 0 < ∑ k : Fin K, 8 * (((Fintype.card ι : ℝ) / s) ^ 2
-      + (√(Fintype.card ι) * inner ℝ (radDir (u k)) θ) ^ 2 * ((Fintype.card ι : ℝ) / s)) := by
-    have hK' : (0 : ℝ) < K := by positivity
-    have := rbVbar_pos (θ := θ) hd hs u
-    rw [← sum_rbVbar_eq hK, div_pos_iff_of_pos_right hK'] at this
-    exact this
   have := HasSubexponentialMGF.measure_abs_average_ge_le (ι := Fin K) (iIndepFun_rbW (θ := θ) u)
-    (fun k ↦ (measurable_rbW k).comp (measurable_const.prodMk measurable_id))
-    (fun k ↦ hasSubexponentialMGF_rbW hs u k) hsum (by positivity) ht
+    (fun k ↦ hasSubexponentialMGF_rbW hs u k) ht
   rw [Fintype.card_fin, sum_rbVbar_eq hK] at this
   exact this
 
@@ -379,7 +371,7 @@ lemma rbMeasure_real_avg_rbW_gt_le (hd : 0 < Fintype.card ι) (hs : 0 < s) (hK :
                 exact le_of_lt he.2
             refine (measure_mono hsub').trans ?_
             rw [← ENNReal.ofReal_toReal (measure_ne_top _ _), ← measureReal_def]
-            refine ENNReal.ofReal_le_ofReal ((rbNoise_real_avg_rbW_ge_le hd hs hK u ht).trans ?_)
+            refine ENNReal.ofReal_le_ofReal ((rbNoise_real_avg_rbW_ge_le hs hK u ht).trans ?_)
             rw [hc]
             have hV := rbVbar_pos (θ := θ) hd hs u
             have h1 : t ^ 2 / (2 * τ) ≤ t ^ 2 / (2 * rbVbar s K θ u) :=
@@ -464,7 +456,7 @@ lemma rbMeasure_real_rbVbar_gt_le (hK : 0 < K) :
         linarith [key]
       linarith [h3, hp]
     refine (measureReal_mono hsub (measure_ne_top _ _)).trans ?_
-    refine (rbMeasure_real_avg_rbX_gt_le hr hK (by positivity)).trans (le_of_eq ?_)
+    refine (rbMeasure_real_avg_rbX_gt_le hK (by positivity)).trans (le_of_eq ?_)
     congr 2
     have h1 : (‖θ‖ ^ 2 / 2) ^ 2 / (32 * ‖θ‖ ^ 4) = 1 / 128 := by
       field_simp

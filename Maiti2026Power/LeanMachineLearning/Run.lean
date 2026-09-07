@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.FixedBudget
+public import Maiti2026Power.Mathlib.Probability.CondDistrib
 public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
 
 /-!
