@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.Probability.Independence.Basic
 
 /-!
 # Sums and averages of independent Gaussian variables

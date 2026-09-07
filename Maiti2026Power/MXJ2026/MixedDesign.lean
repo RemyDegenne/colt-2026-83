@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.OptimalDesign
-public import Maiti2026Power.MXJ2026.Width
 
 /-!
 # The mixed design

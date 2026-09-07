@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.GaussianLikelihood
-public import Maiti2026Power.LeanMachineLearning.FixedBudget
-public import Maiti2026Power.LeanMachineLearning.Run
 public import Maiti2026Power.LeanMachineLearning.TwoPoint
 
 /-!

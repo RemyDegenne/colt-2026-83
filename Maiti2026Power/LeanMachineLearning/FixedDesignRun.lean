@@ -6,10 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.GaussianNoise
-public import Maiti2026Power.LeanMachineLearning.IdentAlg
 public import Maiti2026Power.Mathlib.Probability.IidOfCondDistrib
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Mathlib.Analysis.Normed.Lp.MeasurableSpace
 
 /-!
 # The noise of a linear Gaussian run is i.i.d.; fixed-design runs

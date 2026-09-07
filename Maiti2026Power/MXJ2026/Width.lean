@@ -6,10 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Probability.GaussianWidth
-public import Maiti2026Power.Mathlib.Matrix.LoewnerInv
-public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
-public import Mathlib.Analysis.Convex.Hull
-public import Mathlib.LinearAlgebra.Matrix.PosDef
 public import Maiti2026Power.MXJ2026.OuterSelf
 
 /-!

@@ -5,9 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.HasCondDistrib
-public import Mathlib.Probability.Independence.Basic
-public import Mathlib.MeasureTheory.Constructions.Pi
 public import Maiti2026Power.Mathlib.Probability.CondDistrib
 
 /-!

@@ -6,12 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
-public import Mathlib.Analysis.Calculus.Gradient.Basic
-public import Mathlib.Analysis.Calculus.MeanValue
-public import Mathlib.Analysis.Convex.Integral
-public import Mathlib.MeasureTheory.Integral.Prod
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-public import Mathlib.Probability.Moments.SubGaussian
 public import Maiti2026Power.Mathlib.Analysis.Calculus.QuarterCircle
 
 /-!

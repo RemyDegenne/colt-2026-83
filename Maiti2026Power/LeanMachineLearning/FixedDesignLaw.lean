@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.FixedDesignRun
-public import Maiti2026Power.LeanMachineLearning.FixedBudget
 public import Maiti2026Power.LeanMachineLearning.Run
 
 /-!

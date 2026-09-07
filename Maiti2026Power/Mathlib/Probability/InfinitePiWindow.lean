@@ -5,7 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.ProductMeasure
 public import Mathlib.Probability.Independence.InfinitePi
 
 /-!

@@ -5,9 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.Kernel.Composition.MeasureCompProd
 public import Mathlib.Probability.Kernel.Composition.IntegralCompProd
-public import Mathlib.MeasureTheory.Integral.Prod
 
 /-! # Averages under a prior of a loss controlled with high probability
 

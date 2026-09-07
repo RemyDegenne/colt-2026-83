@@ -6,9 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Analysis.CStarAlgebra.Matrix
-public import Mathlib.Analysis.InnerProductSpace.Adjoint
 public import Mathlib.LinearAlgebra.Matrix.PosDef
-public import Mathlib.Topology.Instances.Matrix
 
 /-!
 # Matrices as linear maps on Euclidean spaces

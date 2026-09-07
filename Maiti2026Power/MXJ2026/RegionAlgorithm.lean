@@ -8,7 +8,6 @@ module
 public import Maiti2026Power.LeanMachineLearning.MedianElimination
 public import Maiti2026Power.MXJ2026.LeastSquares
 public import Maiti2026Power.MXJ2026.DifferenceProcess
-public import Maiti2026Power.MXJ2026.WidthUpper
 
 /-!
 # The region algorithm: fixed design, then Median Elimination on regional candidates

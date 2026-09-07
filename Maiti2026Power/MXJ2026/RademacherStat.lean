@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.Mathlib.Probability.Rademacher
 public import Maiti2026Power.Mathlib.Probability.GaussianSum
-public import Maiti2026Power.Mathlib.Probability.GaussianSquareMGF
 public import Maiti2026Power.MXJ2026.UnitBall
 
 /-!

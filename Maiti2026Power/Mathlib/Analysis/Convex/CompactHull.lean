@@ -8,7 +8,6 @@ module
 public import Mathlib.Analysis.Convex.Caratheodory
 public import Mathlib.Analysis.Convex.StdSimplex
 public import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-public import Mathlib.Topology.Algebra.Module.FiniteDimension
 
 /-!
 # Compactness of the convex hull of a compact set

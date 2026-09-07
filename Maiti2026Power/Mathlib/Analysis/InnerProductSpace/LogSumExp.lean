@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.Mathlib.Analysis.SpecialFunctions.LogSumExp
 public import Mathlib.Analysis.Calculus.Gradient.Basic
-public import Mathlib.Analysis.InnerProductSpace.Calculus
 
 /-!
 # Log-sum-exp smoothing of a maximum of linear forms

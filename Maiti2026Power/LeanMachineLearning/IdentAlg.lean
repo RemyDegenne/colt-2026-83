@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.Mathlib.MeasureTheory.MeasurableSpace.Sigma
 public import LeanMachineLearning.SequentialLearning.Deterministic
-public import Mathlib.Probability.Process.HittingTime
 
 /-!
 # Identification algorithms: sampling rule, stopping rule, output rule

@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.NormEstProof
-public import Maiti2026Power.MXJ2026.NormEstBudget
 public import Maiti2026Power.MXJ2026.BlockBall
 
 /-!

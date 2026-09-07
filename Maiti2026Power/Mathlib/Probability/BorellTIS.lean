@@ -10,7 +10,6 @@ public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.LogSumExp
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.SupportFnDense
 public import Maiti2026Power.Mathlib.Probability.GaussianWidth
 public import Maiti2026Power.Mathlib.Matrix.Loewner
-public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 
 /-!
 # Concentration of the supremum of a linear Gaussian process (Borell–TIS)

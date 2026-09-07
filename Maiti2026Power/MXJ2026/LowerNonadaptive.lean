@@ -5,9 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
-public import Maiti2026Power.MXJ2026.StructuredSets
-public import Maiti2026Power.MXJ2026.Width
 public import Maiti2026Power.MXJ2026.BayesModel
 public import Maiti2026Power.MXJ2026.SingularDesign
 public import Maiti2026Power.MXJ2026.WidthDesign

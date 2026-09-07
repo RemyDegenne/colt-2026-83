@@ -8,7 +8,6 @@ module
 public import Maiti2026Power.LeanMachineLearning.IdentAlg
 public import LeanMachineLearning.SequentialLearning.StationaryEnv
 public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 
 /-!
 # Linear Gaussian bandits and `(ε, δ)`-PAC identification

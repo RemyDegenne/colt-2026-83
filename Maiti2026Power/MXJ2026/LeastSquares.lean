@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.LeanMachineLearning.FixedDesignRun
 public import Maiti2026Power.MXJ2026.Rounding
-public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 
 /-!
 # The least-squares estimator of a fixed design

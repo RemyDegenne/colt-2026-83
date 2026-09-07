@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.NormalizedDesign
-public import Maiti2026Power.MXJ2026.Width
 public import Maiti2026Power.Mathlib.Probability.SudakovFernique
 public import Maiti2026Power.Mathlib.Probability.GaussianMaxLower
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.IsotropicSeparated

@@ -8,10 +8,7 @@ module
 public import Mathlib.InformationTheory.KullbackLeibler.ChainRule
 public import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
 public import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
-public import Mathlib.Probability.Kernel.Composition.MeasureComp
 public import Mathlib.Probability.Kernel.Composition.RadonNikodym
-public import Mathlib.Probability.Kernel.MeasurableLIntegral
-public import Mathlib.Probability.Kernel.RadonNikodym
 public import Maiti2026Power.Mathlib.Probability.CondDistrib
 
 /-!
@@ -29,8 +26,8 @@ source is countable), the function `a ↦ klDiv (κ a) (η a)` is measurable
   `klDiv (μ ⊗ₘ (π ⊗ₖ κ̃)) (μ ⊗ₘ (π ⊗ₖ η̃)) = ∫⁻ b, klDiv (κ b) (η b) ∂(π ∘ₘ μ)` where
   `κ̃ = prodMkLeft α κ` ignores the first coordinate.
 
-We also record the invariance of the divergence under measurable equivalences
-(`klDiv_map_measurableEquiv`).
+We also record the invariance of the divergence under measurable embeddings
+(`klDiv_map_of_measurableEmbedding`) and measurable equivalences (`klDiv_map_measurableEquiv`).
 -/
 
 @[expose] public section
@@ -42,13 +39,23 @@ namespace InformationTheory
 
 variable {α β γ : Type*} {mα : MeasurableSpace α} {mβ : MeasurableSpace β} {mγ : MeasurableSpace γ}
 
+/-- The Kullback–Leibler divergence is invariant under measurable embeddings. -/
+lemma klDiv_map_of_measurableEmbedding (μ ν : Measure α) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+    {f : α → β} (hf : MeasurableEmbedding f) :
+    klDiv (μ.map f) (ν.map f) = klDiv μ ν := by
+  refine le_antisymm (klDiv_map_le μ ν hf.measurable) ?_
+  rcases isEmpty_or_nonempty α with hα | hα
+  · simp [μ.eq_zero_of_isEmpty, ν.eq_zero_of_isEmpty]
+  have h := klDiv_map_le (μ.map f) (ν.map f) hf.measurable_invFun
+  rwa [Measure.map_map hf.measurable_invFun hf.measurable,
+    Measure.map_map hf.measurable_invFun hf.measurable, hf.leftInverse_invFun.comp_eq_id,
+    Measure.map_id, Measure.map_id] at h
+
 /-- The Kullback–Leibler divergence is invariant under measurable equivalences. -/
 lemma klDiv_map_measurableEquiv (μ ν : Measure α) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (e : α ≃ᵐ β) :
-    klDiv (μ.map e) (ν.map e) = klDiv μ ν := by
-  refine le_antisymm (klDiv_map_le μ ν e.measurable) ?_
-  have h := klDiv_map_le (μ.map e) (ν.map e) e.symm.measurable
-  rwa [MeasurableEquiv.map_symm_map, MeasurableEquiv.map_symm_map] at h
+    klDiv (μ.map e) (ν.map e) = klDiv μ ν :=
+  klDiv_map_of_measurableEmbedding μ ν e.measurableEmbedding
 
 section kernel
 

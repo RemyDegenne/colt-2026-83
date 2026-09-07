@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.LeanMachineLearning.FixedBudget
 public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
-public import Maiti2026Power.Mathlib.Probability.CondDistrib
 
 /-!
 # Transport and existence of runs of identification algorithms

@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.HasCondDistrib
-public import Mathlib.Probability.Kernel.Composition.MeasureComp
-public import Mathlib.Probability.Kernel.Composition.Comp
 
 /-!
 # Lemmas on conditional distributions and kernels

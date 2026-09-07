@@ -7,7 +7,6 @@ module
 
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 public import Maiti2026Power.Mathlib.Probability.GaussianWidth
-public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.Analysis.Convex.Integral
 public import Maiti2026Power.Mathlib.Order.CiSupFinite
 

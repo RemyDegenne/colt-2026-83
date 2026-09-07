@@ -5,9 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.Mathlib.Probability.GaussianSum
-public import Maiti2026Power.Mathlib.Probability.GaussianSquareMGF
-public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 public import Maiti2026Power.MXJ2026.RademacherEst
 public import Mathlib.Analysis.Complex.ExponentialBounds
 

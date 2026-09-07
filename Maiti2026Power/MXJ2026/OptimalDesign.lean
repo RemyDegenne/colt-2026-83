@@ -6,10 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Analysis.Calculus.LocalExtr
-public import Maiti2026Power.Mathlib.Matrix.Loewner
 public import Maiti2026Power.MXJ2026.DesignSet
-public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
-public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
 
 /-!
 # Design distributions and the Kiefer–Wolfowitz theorem

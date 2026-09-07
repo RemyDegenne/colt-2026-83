@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.Run
-public import Maiti2026Power.LeanMachineLearning.FixedBudget
 
 /-!
 # Algorithms agreeing on a prefix; transfer of PAC guarantees

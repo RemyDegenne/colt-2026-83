@@ -5,15 +5,12 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
-public import Maiti2026Power.MXJ2026.StructuredSets
-public import Maiti2026Power.MXJ2026.Width
-public import Maiti2026Power.MXJ2026.BlockBall
 public import Maiti2026Power.MXJ2026.WidthBall
 public import Maiti2026Power.MXJ2026.LowerNonadaptive
 public import Maiti2026Power.MXJ2026.LowerAdaptive
 public import Maiti2026Power.LeanMachineLearning.FixedDesignTransport
 public import Maiti2026Power.MXJ2026.BlockProof
+public import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 
 /-!
 # Polynomial separation between adaptive and non-adaptive algorithms (Theorem 7)

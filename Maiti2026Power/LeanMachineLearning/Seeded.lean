@@ -5,11 +5,9 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.ProductMeasure
 public import Mathlib.Probability.Independence.InfinitePi
 public import Maiti2026Power.Mathlib.Probability.CondDistribConst
 public import Maiti2026Power.LeanMachineLearning.FixedBudget
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
 
 /-!
 # Seeded algorithms: internal randomness as a product measure

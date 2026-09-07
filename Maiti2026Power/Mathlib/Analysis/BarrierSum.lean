@@ -9,7 +9,6 @@ public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Linarith
-public import Mathlib.Tactic.Positivity
 
 /-!
 # The barrier sum inequality

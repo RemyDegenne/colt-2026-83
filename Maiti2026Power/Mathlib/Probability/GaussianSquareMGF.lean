@@ -5,8 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
-public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Maiti2026Power.Mathlib.Probability.Moments.SubExponential
 

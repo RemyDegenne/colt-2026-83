@@ -7,10 +7,6 @@ module
 
 public import Maiti2026Power.Mathlib.Data.Finset.TopBy
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
-public import Mathlib.MeasureTheory.Constructions.Pi
-public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.Probability.Independence.Basic
-public import Mathlib.Probability.Moments.SubGaussian
 
 /-!
 # One round of Median Elimination

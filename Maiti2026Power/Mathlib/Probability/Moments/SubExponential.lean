@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.Moments.SubGaussian
-public import Mathlib.Probability.Moments.MGFAnalytic
 import Mathlib.Analysis.Convex.Integral
 
 /-!

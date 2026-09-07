@@ -6,10 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Exp
-public import Mathlib.Data.Fintype.Lattice
 public import Mathlib.Data.Fintype.Order
-public import Mathlib.Algebra.Order.BigOperators.Group.Finset
-public import Mathlib.Order.ConditionallyCompleteLattice.Finset
 
 /-!
 # Suprema of finitely many real numbers

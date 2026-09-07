@@ -9,11 +9,6 @@ public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 public import Maiti2026Power.Mathlib.Probability.SteinReal
 public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 public import Maiti2026Power.Mathlib.Matrix.Loewner
-public import Mathlib.Analysis.Calculus.FDeriv.Equiv
-public import Mathlib.Analysis.Calculus.FDeriv.CompCLM
-public import Mathlib.Analysis.Calculus.Deriv.Prod
-public import Mathlib.Analysis.Calculus.Deriv.Comp
-public import Mathlib.MeasureTheory.Integral.Prod
 
 /-!
 # Stein's identity for the standard Gaussian measure

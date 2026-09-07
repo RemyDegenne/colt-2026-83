@@ -5,9 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
 public import Mathlib.Analysis.Matrix.Order
-public import Mathlib.Analysis.Matrix.PosDef
 
 /-!
 # Traces, inverses and positivity of functions of a Hermitian matrix

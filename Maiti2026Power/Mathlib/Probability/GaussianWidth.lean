@@ -5,13 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.InnerProductSpace.Adjoint
-public import Mathlib.MeasureTheory.Group.Convolution
-public import Mathlib.MeasureTheory.Group.IntegralConvolution
-public import Mathlib.Probability.Distributions.Gaussian.Fernique
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.SupportFn
 public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Gaussian widths

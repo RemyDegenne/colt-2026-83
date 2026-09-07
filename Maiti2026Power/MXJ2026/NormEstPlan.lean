@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.NormEstAlg
+public import Maiti2026Power.MXJ2026.NormEstWindows
 
 /-!
 # The run of the norm-estimation algorithm on the seed space follows the plan

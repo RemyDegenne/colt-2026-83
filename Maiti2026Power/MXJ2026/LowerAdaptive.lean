@@ -5,13 +5,9 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
 public import Maiti2026Power.LeanMachineLearning.RepeatTestGaussian
-public import Maiti2026Power.MXJ2026.StructuredSets
-public import Maiti2026Power.MXJ2026.Width
 public import Maiti2026Power.MXJ2026.LowerAdaptiveBaseline
 public import Maiti2026Power.MXJ2026.MixtureKL
-public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
 
 /-!
 # The lower bound for adaptive algorithms (Theorem 2)

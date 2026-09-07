@@ -5,7 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.Mathlib.Probability.CondDistrib
 public import LeanMachineLearning.SequentialLearning.Means
 public import Mathlib.Probability.Moments.SubGaussian
 

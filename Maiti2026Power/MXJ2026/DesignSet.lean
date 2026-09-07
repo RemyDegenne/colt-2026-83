@@ -6,11 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.Width
-public import Mathlib.Analysis.Convex.Caratheodory
-public import Mathlib.Analysis.Convex.StdSimplex
-public import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-public import Mathlib.Topology.Instances.Matrix
-public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
 public import Maiti2026Power.Mathlib.Analysis.Convex.CompactHull
 
 /-!

@@ -5,11 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ContDiff.Operations
 public import Mathlib.Data.Fintype.Order
 public import Mathlib.Algebra.BigOperators.Field
-public import Mathlib.Analysis.Calculus.FDeriv.Prod
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Maiti2026Power.Mathlib.Algebra.Order.BigOperators.Covariance
 

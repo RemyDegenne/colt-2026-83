@@ -5,8 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
-public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 
 /-!

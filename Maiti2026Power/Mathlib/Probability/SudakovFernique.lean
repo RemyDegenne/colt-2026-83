@@ -6,12 +6,9 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Probability.GaussianInterpolation
-public import Maiti2026Power.Mathlib.Probability.MultivariateGaussian
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.LogSumExp
-public import Maiti2026Power.Mathlib.Matrix.Loewner
 public import Maiti2026Power.Mathlib.Probability.GaussianWidth
 public import Mathlib.Data.Matrix.ColumnRowPartitioned
-public import Mathlib.Analysis.Calculus.Deriv.MeanValue
 
 /-!
 # The Sudakov–Fernique inequality

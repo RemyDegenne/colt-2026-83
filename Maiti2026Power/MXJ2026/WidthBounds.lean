@@ -5,11 +5,9 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
 public import Maiti2026Power.MXJ2026.Multitask
 public import Maiti2026Power.MXJ2026.WidthUpper
 public import Maiti2026Power.MXJ2026.WidthLower
-public import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
 # Properties of the Gaussian width term (Proposition 4 and Theorem 5)

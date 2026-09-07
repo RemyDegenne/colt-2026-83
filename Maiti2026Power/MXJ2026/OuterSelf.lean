@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Matrix.Loewner
-public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
-public import Mathlib.Topology.Instances.Matrix
 
 /-!
 # The rank-one matrices `x xᵀ`

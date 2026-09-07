@@ -5,12 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Analysis.Complex.ExponentialBounds
-public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
-public import Mathlib.MeasureTheory.Integral.Pi
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 public import Maiti2026Power.Mathlib.Order.CiSupFinite
 

@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.DesignSet
-public import Mathlib.Analysis.Matrix.Order
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 
 /-!

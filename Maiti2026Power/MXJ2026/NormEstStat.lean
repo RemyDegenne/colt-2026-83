@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.NormEstSchedule
-public import Maiti2026Power.MXJ2026.NormEstWindows
 
 /-!
 # The statistics of the norm-estimation meta-algorithm, as functions of the observations

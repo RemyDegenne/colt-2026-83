@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.MXJ2026.BlockPlan
+public import Maiti2026Power.MXJ2026.NormEstBudget
 
 /-!
 # Correctness and budget of the block algorithm (Theorem 7, upper bound)

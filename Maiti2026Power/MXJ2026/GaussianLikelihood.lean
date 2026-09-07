@@ -6,8 +6,8 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.EnvDensity
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
 public import Maiti2026Power.Mathlib.Probability.GaussianDensityRatio
+public import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 
 /-!
 # Likelihood ratio of a linear Gaussian history

@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
 /-!
 # Stein's identity for real Gaussian measures

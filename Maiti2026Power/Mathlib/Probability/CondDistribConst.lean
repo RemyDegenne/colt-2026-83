@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Probability.HasCondDistrib
-public import Mathlib.Probability.Independence.Basic
-public import Mathlib.Probability.Kernel.Composition.MeasureComp
 
 /-!
 # Constant conditional distributions and functions of a variable and an independent noise

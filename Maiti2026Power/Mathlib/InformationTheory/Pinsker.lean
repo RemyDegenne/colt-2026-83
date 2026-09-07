@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
-public import Mathlib.Analysis.Calculus.Deriv.MeanValue
-public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Maiti2026Power.Mathlib.Probability.Distributions.Bernoulli
 
 /-!

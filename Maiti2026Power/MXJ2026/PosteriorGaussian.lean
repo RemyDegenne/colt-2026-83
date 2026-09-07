@@ -6,9 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Probability.SteinExpGrowth
-public import Maiti2026Power.Mathlib.Matrix.Loewner
-public import Maiti2026Power.Mathlib.Matrix.TraceInv
-public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.EuclideanMatrix
 
 /-!
 # Gaussian posterior identities

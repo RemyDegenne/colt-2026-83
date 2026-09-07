@@ -54,17 +54,18 @@ The divergence decomposition for algorithm-environment sequences is new to LML.
 \section{Basic inequalities}
 \label{sec:pre_info_basic}
 
-\begin{lemma}[Invariance under measurable equivalences]\label{lem:pi_kl_measurable_equiv}
-\lean{InformationTheory.klDiv_map_measurableEquiv}\leanok
-Let $\mu,\nu$ be measures on $\Omega$ and $e : \Omega \to \Omega'$ a measurable equivalence.
-Then $\KL(e_*\mu \,\|\, e_*\nu) = \KL(\mu\|\nu)$.
+\begin{lemma}[Invariance under measurable embeddings]\label{lem:pi_kl_measurable_equiv}
+\lean{InformationTheory.klDiv_map_of_measurableEmbedding, InformationTheory.klDiv_map_measurableEquiv}\leanok
+Let $\mu,\nu$ be finite measures on $\Omega$ and $f : \Omega \to \Omega'$ a measurable embedding
+(for example a measurable equivalence). Then $\KL(f_*\mu \,\|\, f_*\nu) = \KL(\mu\|\nu)$.
 \end{lemma}
 
 \begin{proof}
 \leanok
 Two applications of the data-processing inequality (Mathlib \texttt{klDiv\_map\_le}): with
-$e$ we get $\le$, and with $e^{-1}$ applied to $e_*\mu, e_*\nu$ we get $\ge$, since
-$(e^{-1})_*e_*\mu = \mu$ (\texttt{MeasurableEquiv.map\_symm\_map}).
+$f$ we get $\le$, and with a measurable left inverse $g$ of $f$ applied to $f_*\mu, f_*\nu$ we get
+$\ge$, since $g_*f_*\mu = (g \circ f)_*\mu = \mu$. If $\Omega$ is empty then $\mu = \nu = 0$ and
+both sides vanish; otherwise such a $g$ is given by \texttt{MeasurableEmbedding.invFun}.
 \end{proof}
 
 \begin{lemma}[Divergence of two Gaussians with the same variance]\label{lem:kl_gaussian}

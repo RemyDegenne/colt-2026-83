@@ -5,10 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Basic
 public import Mathlib.Probability.Distributions.Gaussian.HasGaussianLaw.Independence
-public import Mathlib.Probability.Moments.CovarianceBilin
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 
 /-!

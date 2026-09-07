@@ -5,19 +5,16 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
 public import Maiti2026Power.MXJ2026.LowerCube
 public import Maiti2026Power.MXJ2026.LowerMSet
 public import Maiti2026Power.MXJ2026.LowerMultitask
-public import Maiti2026Power.MXJ2026.StructuredSets
-public import Maiti2026Power.MXJ2026.Width
+public import Maiti2026Power.MXJ2026.WidthUpper
 public import Maiti2026Power.MXJ2026.RegionAlgorithm
 public import Maiti2026Power.MXJ2026.LogGainsArith
 public import Maiti2026Power.MXJ2026.LowerBall
 public import Maiti2026Power.MXJ2026.FixedDesignAlgorithm
-public import Maiti2026Power.MXJ2026.Rounding
+public import Maiti2026Power.Mathlib.MeasureTheory.ApproxArgmax
 public import Maiti2026Power.Mathlib.Data.Set.CoverSmall
-public import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
 # Structured sets on which adaptivity gives at most logarithmic gains (Theorem 6, Table 1)

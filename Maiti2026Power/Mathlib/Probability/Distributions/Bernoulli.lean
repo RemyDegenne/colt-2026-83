@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Probability.Distributions.Bernoulli
 public import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 
 /-!
 # Lebesgue integrals and densities of Bernoulli measures

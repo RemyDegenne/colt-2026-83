@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.LinearBandit
-public import LeanMachineLearning.SequentialLearning.Means
-public import Mathlib.Probability.Moments.SubGaussian
 public import Maiti2026Power.LeanMachineLearning.CondSubgaussian
 public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 

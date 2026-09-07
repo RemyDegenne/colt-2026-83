@@ -6,8 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Matrix.LoewnerInv
-public import Mathlib.Analysis.CStarAlgebra.Matrix
-public import Mathlib.LinearAlgebra.Matrix.SchurComplement
 
 /-!
 # The Loewner order, quadratic forms and square roots

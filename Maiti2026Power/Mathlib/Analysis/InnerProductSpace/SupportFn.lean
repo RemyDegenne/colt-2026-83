@@ -5,12 +5,8 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.InnerProductSpace.Basic
 public import Mathlib.Analysis.InnerProductSpace.Continuous
 public import Mathlib.Data.Fintype.Order
-public import Mathlib.Analysis.Convex.Function
-public import Mathlib.Analysis.Normed.Group.Pointwise
-public import Mathlib.Topology.Order.Compact
 
 /-!
 # The support function of a set in an inner product space

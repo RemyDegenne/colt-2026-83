@@ -8,7 +8,6 @@ module
 public import Maiti2026Power.LeanMachineLearning.FixedDesignLaw
 public import Maiti2026Power.MXJ2026.LeastSquares
 public import Maiti2026Power.MXJ2026.DifferenceProcess
-public import Maiti2026Power.MXJ2026.Width
 public import Maiti2026Power.Mathlib.Probability.StdGaussianProd
 public import Maiti2026Power.Mathlib.Probability.Kernel.PriorAverage
 public import Maiti2026Power.Mathlib.Probability.IndepIntegral

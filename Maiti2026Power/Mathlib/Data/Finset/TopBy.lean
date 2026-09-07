@@ -5,9 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 public import Mathlib.Data.Finset.Sort
-public import Mathlib.Data.Prod.Lex
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 
 /-!

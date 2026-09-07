@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Algebra.Order.Field.GeomSum
 public import Mathlib.Analysis.Complex.ExponentialBounds
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-public import Mathlib.Analysis.SpecificLimits.Basic
 
 /-!
 # The schedule of Median Elimination

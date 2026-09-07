@@ -5,12 +5,9 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.LinearBandit
-public import Maiti2026Power.MXJ2026.StructuredSets
-public import Maiti2026Power.MXJ2026.Width
+public import Maiti2026Power.Mathlib.MeasureTheory.ApproxArgmax
 public import Maiti2026Power.MXJ2026.FixedDesignAlgorithm
 public import Maiti2026Power.MXJ2026.MixedDesign
-public import Maiti2026Power.MXJ2026.Rounding
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Analysis.Complex.ExponentialBounds
 

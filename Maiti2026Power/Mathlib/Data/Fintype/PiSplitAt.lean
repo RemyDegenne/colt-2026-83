@@ -5,9 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Logic.Equiv.Prod
 public import Mathlib.Data.Fintype.BigOperators
-public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 
 /-!

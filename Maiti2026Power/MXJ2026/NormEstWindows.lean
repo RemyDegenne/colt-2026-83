@@ -6,7 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.Mathlib.Probability.InfinitePiWindow
-public import Maiti2026Power.MXJ2026.RademacherStat
 public import Maiti2026Power.MXJ2026.LargeNormStat
 
 /-!

@@ -6,9 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Analysis.Complex.ExponentialBounds
-public import Mathlib.Analysis.Real.Sqrt
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-public import Mathlib.Data.Nat.Cast.Order.Field
 
 /-!
 # Arithmetic of the constants in the log-gains theorem

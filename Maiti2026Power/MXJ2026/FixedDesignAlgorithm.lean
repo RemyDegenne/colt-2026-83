@@ -8,7 +8,6 @@ module
 public import Maiti2026Power.LeanMachineLearning.FixedBudget
 public import Maiti2026Power.MXJ2026.LeastSquares
 public import Maiti2026Power.MXJ2026.DifferenceProcess
-public import Maiti2026Power.Mathlib.MeasureTheory.ApproxArgmax
 
 /-!
 # The fixed-design identification algorithm and its guarantee

@@ -6,9 +6,6 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
-public import Mathlib.Analysis.Convex.Integral
-public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
-public import Mathlib.MeasureTheory.Integral.MeanInequalities
 
 /-!
 # The Bretagnolle–Huber inequality

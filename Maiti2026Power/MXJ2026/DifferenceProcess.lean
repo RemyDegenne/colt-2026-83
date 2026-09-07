@@ -6,9 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Maiti2026Power.LeanMachineLearning.LinearBandit
-public import Maiti2026Power.Mathlib.Probability.GaussianWidth
 public import Maiti2026Power.Mathlib.Probability.BorellTIS
-public import Maiti2026Power.Mathlib.Matrix.Loewner
 public import Maiti2026Power.MXJ2026.Width
 
 /-!

@@ -5,8 +5,6 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Mathlib.Analysis.Convex.Jensen
-public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Maiti2026Power.Mathlib.MeasureTheory.MixtureMeasure
 
