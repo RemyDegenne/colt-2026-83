@@ -7,7 +7,7 @@ The development is blueprint-driven: `blueprint/src/` contains a detailed proof 
 * Paper source: `source/`
 * Blueprint: `blueprint/src/` (build with `leanblueprint pdf` / `leanblueprint web` from `blueprint/`)
 * Lean library: `COLT83/`
-* Blueprint outline and design decisions: `notes/`
+* Blueprint outline, design decisions and upstreaming candidates: `notes/`
 
 ## Status and layout
 

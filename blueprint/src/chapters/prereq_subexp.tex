@@ -21,7 +21,10 @@ $(16\norm\theta^4, 4\norm\theta^2)$. All constants are explicit and tracked. Ref
 with \texttt{measure\_ge\_le}, \texttt{neg}, \texttt{add\_of\_indepFun},
 \texttt{sum\_of\_iIndepFun}, \texttt{of\_map}, \texttt{congr\_identDistrib}, Hoeffding's lemma
 \texttt{hasSubgaussianMGF\_of\_mem\_Icc\_of\_integral\_eq\_zero}, and LML's
-\texttt{measure\_le\_le}. Moment generating functions: \texttt{ProbabilityTheory.mgf},
+\texttt{measure\_le\_le}; its versions with respect to a kernel and a measure
+(\texttt{Kernel.HasSubgaussianMGF}) and conditionally on a sub-$\sigma$-algebra
+(\texttt{HasCondSubgaussianMGF}, through \texttt{condExpKernel}), with the Azuma--Hoeffding
+inequality \texttt{measure\_sum\_ge\_le\_of\_hasCondSubgaussianMGF}. Moment generating functions: \texttt{ProbabilityTheory.mgf},
 \texttt{iIndepFun.mgf\_sum}, \texttt{iIndepFun.integrable\_exp\_mul\_sum}, the Chernoff bound
 \texttt{measure\_ge\_le\_exp\_mul\_mgf} (\texttt{Mathlib/Probability/Moments/Basic.lean}),
 the derivative of the MGF \texttt{hasDerivAt\_mgf} (\texttt{MGFAnalytic.lean}), integrability
@@ -38,8 +41,9 @@ measure \texttt{ProbabilityTheory.iIndepFun\_pi}; the standard Gaussian vector
 (\texttt{map\_pi\_eq\_stdGaussian}).
 
 \textbf{What is missing.} The sub-exponential structure itself and all its properties
-(Section~\ref{sec:pre_subexp_def}), the MGF of the square of a real Gaussian
-(Lemma~\ref{lem:gaussian_square_mgf}), and the sub-exponential bounds of
+(Section~\ref{sec:pre_subexp_def}), its kernel and conditional versions with the
+Azuma--Bernstein inequality (Section~\ref{sec:pre_subexp_kernel}), the MGF of the square of a
+real Gaussian (Lemma~\ref{lem:gaussian_square_mgf}), and the sub-exponential bounds of
 Sections~\ref{sec:pre_subexp_gaussian} and~\ref{sec:pre_subexp_rademacher}.
 
 \textbf{Lean remark.} The definition below mirrors \texttt{HasSubgaussianMGF}: a structure
@@ -54,8 +58,13 @@ restriction on $t$ (the hypothesis $0\cdot\abs t\le1$ is always true):
 $b = 0$ case of the statements below (Lemma~\ref{lem:subexp_of_subgaussian}). Unlike
 Mathlib's sub-Gaussian constant, the parameters are real numbers (not \texttt{ℝ≥0}), which
 avoids coercions in the arithmetic of Chapter~\ref{chap:norm}; the lemmas that need $V > 0$
-or $b > 0$ assume it explicitly. A kernel version, as for \texttt{Kernel.HasSubgaussianMGF}, is
-not needed.
+or $b > 0$ assume it explicitly. As Mathlib does for sub-Gaussian variables, the file also
+provides the version with respect to a kernel and a measure
+(\texttt{Kernel.HasSubexponentialMGF}), the conditional version
+(\texttt{HasCondSubexponentialMGF}) and the Azuma--Bernstein inequality for martingale
+differences (Section~\ref{sec:pre_subexp_kernel}); the measure version is derived from the
+kernel version wherever Mathlib does so, and the tail bounds below therefore hold for any
+measure, not only finite ones. None of Section~\ref{sec:pre_subexp_kernel} is used in Part~I.
 
 \section{Definition and basic properties}
 \label{sec:pre_subexp_def}
@@ -256,6 +265,252 @@ two-sided bound
 $2\exp(-\min(t^2/(2\bar V/K), t/(2b/K))) = 2\exp(-K\min(t^2/(2\bar V), t/(2b)))$.
 (For $b = 0$ the same computation with the $b = 0$ clause of Lemma~\ref{lem:subexp_tail} gives
 $2\exp(-Kt^2/(2\bar V))$, Mathlib's \texttt{measure\_sum\_ge\_le\_of\_iIndepFun}.)
+\end{proof}
+
+\section{Kernel and conditional versions}
+\label{sec:pre_subexp_kernel}
+
+Mathlib defines sub-Gaussian variables first with respect to a kernel and a measure
+(\texttt{Kernel.HasSubgaussianMGF}), then derives the conditional notion
+(\texttt{HasCondSubgaussianMGF}, the kernel being the conditional expectation kernel of a
+sub-$\sigma$-algebra) and the notion with respect to a measure (a constant kernel); the payoff
+is the Azuma--Hoeffding inequality for martingale differences. This section follows the same
+layering for the sub-exponential property, so that the sub-exponential file has the same
+interface as Mathlib's sub-Gaussian file. It also records Bernstein's condition
+(Lemma~\ref{lem:bernstein_condition}), the sub-exponential counterpart of Hoeffding's lemma.
+
+\begin{definition}[Sub-exponential MGF with respect to a kernel]\label{def:subexp_kernel}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF, ProbabilityTheory.hasSubexponentialMGF_iff_kernel}\leanok
+\uses{def:subexp}
+Let $\nu$ be a measure on $\Omega'$, $\kappa$ a kernel from $\Omega'$ to $\Omega$,
+$X : \Omega \to \R$ and $V, b \in \R$. We say that $X$ has a sub-exponential MGF with
+parameters $(V, b)$ with respect to $\kappa$ and $\nu$ if for every $\lambda$ with
+$b\abs\lambda \le 1$, $e^{\lambda X}$ is integrable with respect to the composition
+$\kappa\circ\nu = \int\kappa(\omega',\cdot)\,d\nu(\omega')$, and for $\nu$-almost every
+$\omega'$ and every such $\lambda$,
+$\int e^{\lambda X}\,d\kappa(\omega',\cdot) \le e^{\lambda^2V/2}$.
+The property of Definition~\ref{def:subexp} with respect to a measure $\Prob$ is the case of
+the constant kernel $\Prob$ on the one-point space.
+\end{definition}
+
+\begin{lemma}[Basic properties of the kernel version]\label{lem:subexp_kernel_basic}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.aestronglyMeasurable, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_integrable_exp_mul, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_aestronglyMeasurable, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_forall_integrable_exp_mul_of_forall, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_forall_integrable_exp_mul, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_forall_memLp_exp_mul, ProbabilityTheory.Kernel.HasSubexponentialMGF.memLp_exp_mul, ProbabilityTheory.Kernel.HasSubexponentialMGF.cgf_le, ProbabilityTheory.Kernel.HasSubexponentialMGF.isFiniteMeasure, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_univ_le_one, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_ae_mgf_le, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_hasSubexponentialMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_integral_eq_zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.ae_eq_zero_of_hasSubexponentialMGF_zero}\leanok
+\uses{def:subexp_kernel}
+Let $X$ have a sub-exponential MGF with parameters $(V,b)$ with respect to $\kappa$ and $\nu$.
+Then $X$ is almost everywhere strongly measurable for $\kappa\circ\nu$, and for $\nu$-almost
+every $\omega'$: $\kappa(\omega',\cdot)$ is a finite measure of mass at most $1$;
+$e^{\lambda X}$ is $\kappa(\omega',\cdot)$-integrable for every admissible $\lambda$
+simultaneously, and $e^{\lambda X} \in L^p(\kappa(\omega',\cdot))$ whenever $p\lambda$ is
+admissible; $X$ has a sub-exponential MGF with parameters $(V,b)$ with respect to the measure
+$\kappa(\omega',\cdot)$ (Definition~\ref{def:subexp}). In particular, if $\kappa$ is a Markov
+kernel, $\int X\,d\kappa(\omega',\cdot) = 0$ for $\nu$-almost every $\omega'$, and if
+moreover $V = 0$ then $X = 0$ $\kappa(\omega',\cdot)$-a.s.\ for $\nu$-almost every $\omega'$.
+If $V \ge 0$, the cumulant generating function is at most $\lambda^2V/2$ on the admissible
+set. Conversely, to establish the property it suffices to check the MGF bound for each
+admissible $\lambda$ separately, $\nu$-almost everywhere.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_kernel, lem:ps_subexp_integral_zero}
+The measurability, finiteness and integrability claims are those of Mathlib's
+\texttt{Kernel.HasSubgaussianMGF}, with the admissible set $\{\lambda : b\abs\lambda\le1\}$
+in place of $\R$: for $b \le 0$ it is $\R$ and integrability for all $\lambda$ follows from
+integrability at the integers; for $b > 0$ it is the interval $[-1/b, 1/b]$ and integrability
+at the two endpoints suffices, the set of $\lambda$ such that $e^{\lambda X}$ is integrable
+being convex. The converse statement (``for all $\lambda$, a.e.'' implies ``a.e., for all
+$\lambda$'') uses the countability of the rationals: almost everywhere, the bound holds at
+every admissible rational and at the (at most two) endpoints $\pm1/b$, and $e^{\lambda X}$ is
+integrable on the admissible set; on the open set $\{b\abs\lambda < 1\}$ the MGF is continuous
+(Mathlib \texttt{continuousOn\_mgf} on the interior of the integrability set), so the bound
+extends from the rationals by density. The case $V = 0$: the MGF is at most $1$ on a
+neighbourhood of $0$ and, by Jensen's inequality and the centering of
+Lemma~\ref{lem:ps_subexp_integral_zero}, at least $e^{\lambda\E X} = 1$, so it is constant
+there; its second derivative at $0$, which is $\E X^2$ (Mathlib
+\texttt{iteratedDeriv\_mgf\_zero}), vanishes.
+\end{proof}
+
+\begin{lemma}[Stability of the kernel version]\label{lem:subexp_kernel_stability}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.fun_zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_kernel, ProbabilityTheory.Kernel.HasSubexponentialMGF.zero_measure, ProbabilityTheory.Kernel.HasSubexponentialMGF.neg, ProbabilityTheory.Kernel.HasSubexponentialMGF.mono, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_hasSubgaussianMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.hasSubgaussianMGF, ProbabilityTheory.Kernel.HasSubexponentialMGF.congr, ProbabilityTheory.Kernel.hasSubexponentialMGF_congr, ProbabilityTheory.Kernel.HasSubexponentialMGF.of_map, ProbabilityTheory.Kernel.HasSubexponentialMGF.id_map_iff, ProbabilityTheory.Kernel.HasSubexponentialMGF.const_mul}\leanok
+\uses{def:subexp_kernel}
+The kernel version is stable under the operations of Lemmas~\ref{lem:ps_subexp_mono},
+\ref{lem:subexp_of_subgaussian}, \ref{lem:subexp_const_mul} and~\ref{lem:ps_subexp_map}, with
+the same parameters: monotonicity in $(V,b)$, the sub-Gaussian case $b = 0$, scaling
+$aX \mapsto (a^2V, \abs a\,b)$ and negation, almost-sure modification of $X$ (for
+$\kappa\circ\nu$), and transport along a measurable map $Y$ (if $X$ has the property for the
+kernel $\kappa$ pushed forward by $Y$, then $X\circ Y$ has it for $\kappa$). The zero variable
+has parameters $(0, b)$ for every $b$ when $\kappa$ is zero or Markov and $\nu$ is finite, and
+every $X$ has every parameters for the zero kernel or the zero measure.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_kernel}
+Same proofs as for the measure version, inside the almost-everywhere quantifier.
+\end{proof}
+
+\begin{lemma}[Tail bounds for the kernel version]\label{lem:subexp_kernel_tail}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_ge_le_exp_add, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_ge_le_exp_neg_sq, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_ge_le_exp_neg_div, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_ge_le, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_le_le, ProbabilityTheory.Kernel.HasSubexponentialMGF.measure_abs_ge_le}\leanok
+\uses{def:subexp_kernel}
+The bounds of Lemma~\ref{lem:subexp_tail} hold for $\kappa(\omega',\cdot)$ in place of
+$\Prob$, for $\nu$-almost every $\omega'$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_kernel, lem:subexp_tail}
+Chernoff's bound $\kappa(\omega',\{X\ge t\}) \le e^{-st}\int e^{sX}d\kappa(\omega',\cdot)
+\le \exp(-st + s^2V/2)$ for every admissible $s \ge 0$, almost surely, then the choices of
+$s$ of Lemma~\ref{lem:subexp_tail}.
+\end{proof}
+
+\begin{lemma}[Sum of two dependent sub-exponential variables]\label{lem:subexp_add_holder}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.add_of_holderConjugate, ProbabilityTheory.Kernel.HasSubexponentialMGF.add, ProbabilityTheory.HasSubexponentialMGF.add_of_holderConjugate, ProbabilityTheory.HasSubexponentialMGF.add}\leanok
+\uses{def:subexp_kernel, def:subexp}
+Let $X$ and $Y$ (on the same space, not necessarily independent) have parameters $(V_X, b_X)$
+and $(V_Y, b_Y)$, with respect to a kernel and a measure or with respect to a measure, and
+let $p, q > 1$ with $1/p + 1/q = 1$. Then $X + Y$ has parameters
+$(pV_X + qV_Y,\ \max(pb_X, qb_Y))$. In particular ($p = q = 2$), $X+Y$ has parameters
+$(2(V_X + V_Y),\ 2\max(b_X, b_Y))$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_kernel, lem:subexp_kernel_basic}
+Hölder's inequality: for $\max(pb_X, qb_Y)\abs\lambda \le 1$, $p\lambda$ is admissible for
+$X$ and $q\lambda$ for $Y$, so $e^{\lambda X}\in L^p$ and $e^{\lambda Y} \in L^q$
+(Lemma~\ref{lem:subexp_kernel_basic}) and
+$\E e^{\lambda(X+Y)} \le (\E e^{p\lambda X})^{1/p}(\E e^{q\lambda Y})^{1/q}
+\le \exp(pV_X\lambda^2/2 + qV_Y\lambda^2/2)$. The integrability of $e^{\lambda(X+Y)}$ for
+$\kappa\circ\nu$ is that of the product of an $L^p$ and an $L^q$ function.
+\end{proof}
+
+\begin{lemma}[Sum along a composition of kernels]\label{lem:subexp_add_compProd}
+\lean{ProbabilityTheory.Kernel.HasSubexponentialMGF.prodMkLeft_compProd, ProbabilityTheory.Kernel.HasSubexponentialMGF.integrable_exp_add_compProd, ProbabilityTheory.Kernel.HasSubexponentialMGF.add_compProd, ProbabilityTheory.Kernel.HasSubexponentialMGF.add_comp}\leanok
+\uses{def:subexp_kernel}
+Let $\nu$ be an s-finite measure on $\Omega'$, $\kappa$ a kernel from $\Omega'$ to $\Omega$
+and $\eta$ a zero-or-Markov kernel from $\Omega'\times\Omega$ to $\Omega''$. If
+$X : \Omega\to\R$ has parameters $(V_X, b)$ with respect to $\kappa$ and $\nu$, and
+$Y : \Omega''\to\R$ has parameters $(V_Y, b)$ with respect to $\eta$ and $\nu\otimes\kappa$,
+then $(x, y) \mapsto X(x) + Y(y)$ has parameters $(V_X + V_Y, b)$ with respect to
+$\kappa\otimes\eta$ and $\nu$. The same holds for a kernel $\eta$ from $\Omega$ to $\Omega''$
+and $Y$ with parameters $(V_Y, b)$ with respect to $\eta$ and $\kappa\circ\nu$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_kernel, lem:subexp_kernel_basic}
+This is Mathlib's \texttt{Kernel.HasSubgaussianMGF.add\_compProd} restricted to the
+admissible $\lambda$. The bound on the MGF, for a fixed admissible $\lambda$ and
+$\nu$-almost every $\omega'$, is Fubini for $(\kappa\otimes\eta)(\omega',\cdot)$:
+$\int e^{\lambda(X(x)+Y(y))} = \int e^{\lambda X(x)}\big(\int e^{\lambda Y(y)}\,d\eta((\omega',x),y)\big)d\kappa(\omega',x)
+\le e^{\lambda^2V_Y/2}\int e^{\lambda X}d\kappa(\omega',\cdot) \le e^{\lambda^2(V_X+V_Y)/2}$;
+the ``for all $\lambda$'' form then follows from Lemma~\ref{lem:subexp_kernel_basic}. The
+integrability of $e^{\lambda(X+Y)}$ for $(\kappa\otimes\eta)\circ\nu$ cannot use the
+Cauchy--Schwarz argument of the sub-Gaussian case, which needs $2\lambda$ to be admissible: it
+is proved on the Lebesgue integral of the nonnegative integrand, which by the same Fubini
+computation is at most $e^{\lambda^2V_Y/2}\int e^{\lambda X}d(\kappa\circ\nu) < \infty$.
+\end{proof}
+
+\begin{definition}[Conditionally sub-exponential variable]\label{def:subexp_cond}
+\lean{ProbabilityTheory.HasCondSubexponentialMGF, ProbabilityTheory.HasCondSubexponentialMGF.mgf_le, ProbabilityTheory.HasCondSubexponentialMGF.cgf_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_trim_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.ae_condExp_le, ProbabilityTheory.HasCondSubexponentialMGF.fun_zero, ProbabilityTheory.HasCondSubexponentialMGF.zero, ProbabilityTheory.HasCondSubexponentialMGF.memLp_exp_mul, ProbabilityTheory.HasCondSubexponentialMGF.integrable_exp_mul, ProbabilityTheory.HasCondSubexponentialMGF.of_hasCondSubgaussianMGF, ProbabilityTheory.HasCondSubexponentialMGF.hasCondSubgaussianMGF}\leanok
+\uses{def:subexp_kernel}
+Let $\Omega$ be a standard Borel space, $\Prob$ a finite measure and $\mathcal G$ a
+sub-$\sigma$-algebra. A random variable $X$ is conditionally sub-exponential with parameters
+$(V,b)$ given $\mathcal G$ if it has the property of Definition~\ref{def:subexp_kernel} with
+respect to the conditional expectation kernel of $\mathcal G$ (Mathlib
+\texttt{condExpKernel}) and the restriction of $\Prob$ to $\mathcal G$. Concretely,
+$e^{\lambda X}$ is integrable for every admissible $\lambda$ and
+$\E[e^{\lambda X}\mid\mathcal G] \le e^{\lambda^2V/2}$ almost surely; the case $b = 0$ is
+Mathlib's \texttt{HasCondSubgaussianMGF}.
+\end{definition}
+
+\begin{lemma}[Bernstein's condition]\label{lem:bernstein_condition}
+\lean{ProbabilityTheory.exp_le_one_add_add_of_abs_le_one, ProbabilityTheory.hasSubexponentialMGF_of_abs_le_of_integral_eq_zero, ProbabilityTheory.hasSubexponentialMGF_sub_integral_of_abs_le}\leanok
+\uses{def:subexp}
+Let $X$ be a random variable on a probability space with $\abs X \le M$ almost surely,
+$\E X = 0$ and $\E X^2 \le v$. Then $\mathrm{HasSubexponentialMGF}(X, 3v/2, M)$.
+Consequently, if $\abs X \le M$ almost surely then $X - \E X$ has parameters
+$(3\Var(X)/2,\ 2M)$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp}
+For $\abs x \le 1$, $e^x \le 1 + x + \frac34x^2$ (Mathlib \texttt{Real.exp\_bound} with two
+terms of the series). For $M\abs\lambda \le 1$, $\abs{\lambda X} \le 1$ almost surely, hence
+$\E e^{\lambda X} \le 1 + \lambda\E X + \frac34\lambda^2\E X^2 \le 1 + \frac34\lambda^2 v
+\le e^{\frac34\lambda^2v} = e^{\lambda^2(3v/2)/2}$. For the second claim,
+$\abs{X - \E X} \le \abs X + \abs{\E X} \le 2M$ and $\E(X-\E X)^2 = \Var(X)$.
+\end{proof}
+
+\begin{lemma}[Further properties of the measure version]\label{lem:subexp_measure_more}
+\lean{ProbabilityTheory.HasSubexponentialMGF.aestronglyMeasurable, ProbabilityTheory.HasSubexponentialMGF.memLp_exp_mul, ProbabilityTheory.HasSubexponentialMGF.cgf_le, ProbabilityTheory.HasSubexponentialMGF.fun_zero, ProbabilityTheory.HasSubexponentialMGF.zero, ProbabilityTheory.HasSubexponentialMGF.trim, ProbabilityTheory.HasSubexponentialMGF.ae_eq_zero_of_hasSubexponentialMGF_zero, ProbabilityTheory.HasSubexponentialMGF.sub_of_indepFun, ProbabilityTheory.HasSubexponentialMGF.measure_sum_ge_le_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.measure_sum_le_le_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.measure_sum_range_ge_le_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.measure_sum_range_le_le_of_iIndepFun, ProbabilityTheory.HasSubexponentialMGF.measureReal_le_le_exp}\leanok
+\uses{def:subexp, lem:subexp_sum, lem:subexp_tail}
+(i) \emph{Bernstein's inequality:} if $X_1,\dots,X_K$ are independent with parameters
+$(V_i, b)$, $\sum_iV_i > 0$ and $b > 0$, then for $t \ge 0$, $\Prob(\sum_iX_i \ge t)$ and
+$\Prob(\sum_iX_i \le -t)$ are at most $\exp(-\min(t^2/(2\sum_iV_i),\ t/(2b)))$; for $K$
+variables with the same parameters $(V, b)$ the bound is $\exp(-\min(t^2/(2KV), t/(2b)))$.
+(ii) If $X - \E X$ and $Y - \E Y$ have parameters $(V_X, b)$ and $(V_Y, b)$, $X$ and $Y$ are
+independent and $\E Y \le \E X$, then
+$\Prob(X \le Y) \le \exp(-\min((\E X - \E Y)^2/(2(V_X+V_Y)),\ (\E X - \E Y)/(2b)))$.
+(iii) The property is preserved by restricting $\Prob$ to a sub-$\sigma$-algebra for which
+$X$ is measurable; a difference of independent sub-exponential variables has parameters
+$(V_X + V_Y, b)$; the zero variable has parameters $(0, b)$, and conversely a variable with
+parameters $(0, b)$ on a probability space vanishes almost surely; $e^{\lambda X} \in L^p$
+whenever $p\lambda$ is admissible; and the cumulant generating function is at most
+$\lambda^2V/2$ on the admissible set when $V \ge 0$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp, lem:subexp_sum, lem:subexp_tail, lem:subexp_kernel_basic}
+(i) is Lemma~\ref{lem:subexp_sum} followed by Lemma~\ref{lem:subexp_tail}; (ii) applies the
+upper tail bound to $(Y - \E Y) - (X - \E X)$, which has parameters $(V_X + V_Y, b)$, at
+$t = \E X - \E Y \ge 0$; (iii) are the corresponding statements of
+Lemma~\ref{lem:subexp_kernel_basic} for the constant kernel, or direct.
+\end{proof}
+
+\begin{lemma}[Sums of conditionally sub-exponential increments]\label{lem:subexp_martingale}
+\lean{ProbabilityTheory.HasSubexponentialMGF.add_of_hasCondSubexponentialMGF, ProbabilityTheory.HasSubexponentialMGF.sum_of_hasCondSubexponentialMGF}\leanok
+\uses{def:subexp_cond, def:subexp}
+Let $\Omega$ be standard Borel and $\Prob$ finite. If $X$ has parameters $(V_X, b)$ with
+respect to the restriction of $\Prob$ to a sub-$\sigma$-algebra $\mathcal G$, and $Y$ is
+conditionally sub-exponential with parameters $(V_Y, b)$ given $\mathcal G$, then $X + Y$ has
+parameters $(V_X + V_Y, b)$ with respect to $\Prob$. Consequently, if $\Prob$ is a probability
+measure, $(Y_i)_{i\in\N}$ is a process adapted to a filtration $(\mathcal F_i)_{i\in\N}$,
+$Y_0$ has parameters $(V_0, b)$ and, for $i < n-1$, $Y_{i+1}$ is conditionally
+sub-exponential with parameters $(V_{i+1}, b)$ given $\mathcal F_i$, then
+$\sum_{i<n}Y_i$ has parameters $(\sum_{i<n}V_i,\ b)$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{def:subexp_cond, lem:subexp_add_compProd, lem:subexp_measure_more}
+The first claim is Lemma~\ref{lem:subexp_add_compProd} for the constant kernel
+$\Prob|_{\mathcal G}$ and the conditional expectation kernel, whose composition-product is
+the law of $\omega\mapsto(\omega,\omega)$ under $\Prob$ (Mathlib
+\texttt{compProd\_trim\_condExpKernel}); $X + Y$ is the image of $(x,y)\mapsto X(x)+Y(y)$
+under this diagonal map. The second is an induction on $n$, the partial sum
+$\sum_{i\le n}Y_i$ being $\mathcal F_n$-measurable, hence sub-exponential for
+$\Prob|_{\mathcal F_n}$ by Lemma~\ref{lem:subexp_measure_more}(iii).
+\end{proof}
+
+\begin{lemma}[Azuma--Bernstein inequality]\label{lem:azuma_bernstein}
+\lean{ProbabilityTheory.measure_sum_ge_le_of_hasCondSubexponentialMGF}\leanok
+\uses{lem:subexp_martingale}
+In the setting of Lemma~\ref{lem:subexp_martingale}, if $\sum_{i<n}V_i > 0$ and $b > 0$, then
+for every $t \ge 0$,
+\[
+  \Prob\Big(\sum_{i<n}Y_i \ge t\Big)
+  \le \exp\Big(-\min\Big(\frac{t^2}{2\sum_{i<n}V_i}, \frac{t}{2b}\Big)\Big).
+\]
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:subexp_martingale, lem:subexp_tail}
+Lemmas~\ref{lem:subexp_martingale} and~\ref{lem:subexp_tail}.
 \end{proof}
 
 \section{Squares of Gaussian variables}
