@@ -110,29 +110,29 @@ section kl
 
 variable (alg : Algorithm 𝒳 ℝ) (N : ℕ)
 
-/-- The law of the history up to time `N` of the algorithm `alg` in the linear Gaussian
+/-- The law of the history of the first `N` rounds of the algorithm `alg` in the linear Gaussian
 environment on `𝒳` with reward vector `θ`. -/
-noncomputable def histLaw (θ : EuclideanSpace ℝ ι) : Measure (Iic N → 𝒳 × ℝ) :=
+noncomputable def histLaw (θ : EuclideanSpace ℝ ι) : Measure (Fin N → 𝒳 × ℝ) :=
   (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (IT.hist N)
 
 instance (θ : EuclideanSpace ℝ ι) : IsProbabilityMeasure (histLaw alg N θ) :=
   Measure.isProbabilityMeasure_map (IT.measurable_hist N).aemeasurable
 
 omit [DecidableEq ι] in
-lemma histLaw_apply (θ : EuclideanSpace ℝ ι) {E : Set (Iic N → 𝒳 × ℝ)} (hE : MeasurableSet E) :
+lemma histLaw_apply (θ : EuclideanSpace ℝ ι) {E : Set (Fin N → 𝒳 × ℝ)} (hE : MeasurableSet E) :
     histLaw alg N θ E = trajMeasure alg (linearGaussianEnv 𝒳 θ) (IT.hist N ⁻¹' E) :=
   Measure.map_apply (IT.measurable_hist N) hE
 
 omit [DecidableEq ι] in
-lemma histLaw_real_apply (θ : EuclideanSpace ℝ ι) {E : Set (Iic N → 𝒳 × ℝ)}
+lemma histLaw_real_apply (θ : EuclideanSpace ℝ ι) {E : Set (Fin N → 𝒳 × ℝ)}
     (hE : MeasurableSet E) :
     (histLaw alg N θ).real E = (trajMeasure alg (linearGaussianEnv 𝒳 θ)).real (IT.hist N ⁻¹' E) :=
   by rw [measureReal_def, histLaw_apply alg N θ hE, measureReal_def]
 
-/-- The mixture, with the weights of the design `w`, of the laws of the history up to time `N`
-under the alternatives `mixtureParam w ε x`, `x` in the support of `w`. -/
+/-- The mixture, with the weights of the design `w`, of the laws of the history of the first `N`
+rounds under the alternatives `mixtureParam w ε x`, `x` in the support of `w`. -/
 noncomputable def mixtureHistLaw (w : EuclideanSpace ℝ ι →₀ ℝ) (ε : ℝ) :
-    Measure (Iic N → 𝒳 × ℝ) :=
+    Measure (Fin N → 𝒳 × ℝ) :=
   ∑ x ∈ w.support, (designWeight w x : ℝ≥0∞) • histLaw alg N (mixtureParam w ε x)
 
 lemma IsDesign.isProbabilityMeasure_mixtureHistLaw (hw : IsDesign 𝒳 w) (ε : ℝ) :
@@ -141,12 +141,12 @@ lemma IsDesign.isProbabilityMeasure_mixtureHistLaw (hw : IsDesign 𝒳 w) (ε : 
 
 /-- **Divergence to the mixture** (blueprint `lem:mixture_kl`): for every algorithm and horizon
 `N`, the divergence from the law of the history under `θ = 0` to the mixture of the laws under
-the alternatives is at most `(N + 1) · 9 ε² / (2 d)`. -/
+the alternatives is at most `N · 9 ε² / (2 d)`. -/
 lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
     (hw : IsGOptimalDesign 𝒳 w)
     {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) :
     klDiv (histLaw alg N 0) (mixtureHistLaw alg N w ε) ≤
-      ENNReal.ofReal ((N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι))) := by
+      ENNReal.ofReal (N * (9 * ε ^ 2 / (2 * Fintype.card ι))) := by
   have hwd := hw.isDesign
   set P₀ := trajMeasure alg (linearGaussianEnv 𝒳 0) with hP₀
   have hrun := IT.isAlgEnvSeq_trajMeasure alg (linearGaussianEnv 𝒳 0)
@@ -165,28 +165,28 @@ lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
       (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (history IT.action IT.feedback N) :=
     fun _ ↦ rfl
   have hterm : ∀ x, klDiv (histLaw alg N 0) (histLaw alg N (mixtureParam w ε x)) =
-      ENNReal.ofReal (∑ t ∈ range (N + 1), ∫ h, f x t h ∂P₀) := fun x ↦ by
+      ENNReal.ofReal (∑ t ∈ range N, ∫ h, f x t h ∂P₀) := fun x ↦ by
     rw [hhist, hhist]
     exact klDiv_map_history hrun (IT.isAlgEnvSeq_trajMeasure _ _) hR N
   simp_rw [hterm]
   calc ∑ x ∈ w.support, (designWeight w x : ℝ≥0∞) *
-        ENNReal.ofReal (∑ t ∈ range (N + 1), ∫ h, f x t h ∂P₀)
-      = ENNReal.ofReal (∑ x ∈ w.support, w x * ∑ t ∈ range (N + 1), ∫ h, f x t h ∂P₀) := by
+        ENNReal.ofReal (∑ t ∈ range N, ∫ h, f x t h ∂P₀)
+      = ENNReal.ofReal (∑ x ∈ w.support, w x * ∑ t ∈ range N, ∫ h, f x t h ∂P₀) := by
         rw [ENNReal.ofReal_sum_of_nonneg fun x _ ↦ mul_nonneg (hwd.nonneg x)
           (sum_nonneg fun t _ ↦ integral_nonneg (hf_nonneg x t))]
         refine sum_congr rfl fun x _ ↦ ?_
         rw [ENNReal.ofReal_mul (hwd.nonneg x)]
         rfl
-    _ ≤ ENNReal.ofReal ((N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι))) := by
+    _ ≤ ENNReal.ofReal (N * (9 * ε ^ 2 / (2 * Fintype.card ι))) := by
         refine ENNReal.ofReal_le_ofReal ?_
-        calc ∑ x ∈ w.support, w x * ∑ t ∈ range (N + 1), ∫ h, f x t h ∂P₀
-            = ∑ t ∈ range (N + 1), ∫ h, ∑ x ∈ w.support, w x * f x t h ∂P₀ := by
+        calc ∑ x ∈ w.support, w x * ∑ t ∈ range N, ∫ h, f x t h ∂P₀
+            = ∑ t ∈ range N, ∫ h, ∑ x ∈ w.support, w x * f x t h ∂P₀ := by
               simp_rw [mul_sum]
               rw [sum_comm]
               refine sum_congr rfl fun t _ ↦ ?_
               rw [integral_finsetSum _ fun x _ ↦ (hf_int x t).const_mul _]
               exact sum_congr rfl fun x _ ↦ (integral_const_mul _ _).symm
-          _ ≤ ∑ t ∈ range (N + 1), ∫ _, 9 * ε ^ 2 / (2 * Fintype.card ι) ∂P₀ := by
+          _ ≤ ∑ t ∈ range N, ∫ _, 9 * ε ^ 2 / (2 * Fintype.card ι) ∂P₀ := by
               refine sum_le_sum fun t _ ↦ integral_mono_of_nonneg
                 (Filter.Eventually.of_forall fun h ↦ sum_nonneg fun x _ ↦
                   mul_nonneg (hwd.nonneg x) (hf_nonneg x t h))
@@ -202,24 +202,24 @@ lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
                     ring
                 _ ≤ (9 * ε ^ 2 / Fintype.card ι) / 2 := by gcongr
                 _ = 9 * ε ^ 2 / (2 * Fintype.card ι) := by ring
-          _ = (N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by simp
+          _ = N * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by simp
 
 /-- **Lower bound for the mixture testing problem** (blueprint `lem:test_lower`,
 Bretagnolle–Huber form): for every algorithm, horizon `N` and measurable set `E` of histories,
 if `P₀(E) ≤ α` and `P_{θ⁽ˣ⁾}(Eᶜ) ≤ β` for every support point `x`, then
-`½ exp (-(N + 1) 9 ε² / (2 d)) ≤ α + β`. -/
+`½ exp (-N · 9 ε² / (2 d)) ≤ α + β`. -/
 lemma IsGOptimalDesign.exp_neg_le_of_mixture [Nonempty ι] (hw : IsGOptimalDesign 𝒳 w) {R : ℝ}
-    (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) {E : Set (Iic N → 𝒳 × ℝ)} (hE : MeasurableSet E)
+    (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) {E : Set (Fin N → 𝒳 × ℝ)} (hE : MeasurableSet E)
     {α β : ℝ} (hβ0 : 0 ≤ β) (hα : (histLaw alg N 0).real E ≤ α)
     (hβ : ∀ x ∈ w.support, (histLaw alg N (mixtureParam w ε x)).real Eᶜ ≤ β) :
-    1 / 2 * exp (-((N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤ α + β := by
+    1 / 2 * exp (-(N * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤ α + β := by
   have hmix := hw.isDesign.isProbabilityMeasure_mixtureHistLaw alg N ε
   have hkl := hw.klDiv_histLaw_zero_mixtureHistLaw_le alg N hR ε
   have hne : klDiv (histLaw alg N 0) (mixtureHistLaw alg N w ε) ≠ ∞ :=
     ne_top_of_le_ne_top ENNReal.ofReal_ne_top hkl
   have hbh := bretagnolle_huber (μ := histLaw alg N 0) (ν := mixtureHistLaw alg N w ε) hE hne
-  have hC : 0 ≤ (N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by positivity
-  have h1 : exp (-((N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤
+  have hC : 0 ≤ N * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by positivity
+  have h1 : exp (-(N * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤
       exp (-(klDiv (histLaw alg N 0) (mixtureHistLaw alg N w ε)).toReal) :=
     exp_le_exp.2 (neg_le_neg (ENNReal.toReal_le_of_le_ofReal hC hkl))
   have h2 : (mixtureHistLaw alg N w ε).real Eᶜ ≤ β := by

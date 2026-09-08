@@ -41,7 +41,7 @@ measurable (\texttt{Kernel.measurableSet\_absolutelyContinuous}, via
 (\texttt{history\_succ}, \texttt{hasCondDistrib\_step}, \texttt{hasCondDistrib\_action}),
 stationary environments \texttt{stationaryEnv} (feedback kernel
 \texttt{feedback\_stationaryEnv}: $(h,a) \mapsto \nu(a)$), and uniqueness of the law of the
-history (\texttt{eq\_trajMeasure\_map\_frestrictLe\_of\_isAlgEnvSeqUntil}).
+history (\texttt{IsAlgEnvSeqUntil.map\_history}).
 
 \textbf{What is missing.} Mathlib has neither the divergence of two Gaussians, nor Pinsker's
 inequality, nor the Bretagnolle--Huber inequality, nor convexity of $\KL$ in its second
@@ -52,7 +52,11 @@ general; it is measurable when the target space is countably generated, which is
 The integrated chain rule and the invariance of $\KL$ under measurable embeddings now live in LML
 (\texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/ChainRule.lean}); the
 policy/reward specialization of Lemma~\ref{lem:pi_kl_step} and the divergence decomposition for
-algorithm-environment sequences are new to LML.
+algorithm-environment sequences are new to LML. Mathlib also lacks the behaviour of $\KL$ under
+restrictions (Lemma~\ref{lem:kl_restrict}), the invariance under sufficient statistics
+(Lemma~\ref{lem:kl_sufficient_statistic}) and the continuity of $\KL$ along a generating
+sequence of $\sigma$-algebras (Lemma~\ref{lem:kl_iSup_map}), which the stopping-time and
+trajectory versions of the decomposition (Section~\ref{sec:pre_info_stopping}) rely on.
 
 \section{Basic inequalities}
 \label{sec:pre_info_basic}
@@ -321,9 +325,42 @@ integral is $\KL(\kappa_x\|\eta_x)$ for $\mu$-a.e.\ $x$ (those with $\kappa_x\ll
 last claim is Mathlib \texttt{klDiv\_compProd\_eq\_add} followed by the equality just proved.
 \end{proof}
 
+\begin{lemma}[Sufficient statistics and the divergence]\label{lem:kl_sufficient_statistic}
+\lean{InformationTheory.klDiv_map_of_leftInverse, InformationTheory.klDiv_map_of_eq_withDensity_comp, InformationTheory.klDiv_compProd_comap, MeasureTheory.Measure.map_compProd_comap, MeasureTheory.Measure.map_compProd_of_forall_map_eq, ProbabilityTheory.HasCondDistrib.map_of_forall_map_eq, ProbabilityTheory.HasCondDistrib.prodMk_const_left, ProbabilityTheory.HasCondDistrib.restrict_preimage, MeasureTheory.Measure.restrict_compProd_prod_univ}\leanok
+\uses{lem:pi_kl_measurable_equiv}
+Let $\mu,\nu$ be finite measures on $\Omega$.
+\begin{enumerate}
+\item[(i)] If $g : \Omega \to \Omega'$ is measurable with a measurable left inverse, then
+  $\KL(g_*\mu\|g_*\nu) = \KL(\mu\|\nu)$.
+\item[(ii)] If $\mu = (f\circ g)\cdot\nu$ for a measurable $g : \Omega\to\Omega'$ and a measurable
+  $f : \Omega' \to [0,\infty]$ (the density factors through $g$, i.e.\ $g$ is a sufficient
+  statistic), then $\KL(g_*\mu\|g_*\nu) = \KL(\mu\|\nu)$.
+\item[(iii)] Let $\kappa,\eta$ be finite kernels from $\mathcal{B}$ to $\mathcal{C}$ and
+  $f : \Omega\to\mathcal{B}$ measurable. Then
+  $\KL(\mu\otimes(\kappa\circ f)\,\|\,\mu\otimes(\eta\circ f)) = \KL(f_*\mu\otimes\kappa\,\|\,f_*\mu\otimes\eta)$:
+  the conditional divergence of two kernels which depend on the conditioning variable only through
+  $f$ is the conditional divergence given $f$.
+\end{enumerate}
+No countable generation hypothesis is needed.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:pi_kl_measurable_equiv}
+(i) is two applications of the data-processing inequality (as for measurable embeddings).
+(ii): $g_*\mu = f\cdot g_*\nu$ (change of variables), so both pairs are absolutely continuous
+with densities $f\circ g$ and $f$, and the $\mathrm{klFun}$ integrals agree by the change of
+variables $g$. (iii): if $f_*\mu\otimes\kappa\not\ll f_*\mu\otimes\eta$ then, transporting along
+$(\omega,c)\mapsto(f(\omega),c)$, neither is the left-hand pair, and both divergences are
+infinite. Otherwise let $D$ be the density of $f_*\mu\otimes\kappa$ with respect to
+$f_*\mu\otimes\eta$; the sections of $D$ integrate to $\kappa(b,t)$ for $f_*\mu$-almost every $b$,
+for each fixed measurable $t$, so $\mu\otimes(\kappa\circ f)$ and $(D\circ(f\times\mathrm{id}))\cdot(\mu\otimes(\eta\circ f))$
+agree on rectangles, hence everywhere, and (ii) applies with $g = f\times\mathrm{id}$.
+\end{proof}
+
 \begin{lemma}[One step of an algorithm-environment pair]\label{lem:pi_kl_step}
-\lean{ProbabilityTheory.Kernel.compProd_prodMkLeft_apply, InformationTheory.klDiv_compProd_compProd_prodMkLeft}\leanok
-\uses{lem:kl_compProd_kernel}
+\lean{ProbabilityTheory.Kernel.compProd_prodMkLeft_apply, InformationTheory.klDiv_compProd_compProd_prodMkLeft_eq_klDiv_comp_compProd, InformationTheory.klDiv_compProd_compProd_prodMkLeft}\leanok
+\uses{lem:kl_compProd_kernel, lem:kl_sufficient_statistic}
 Let $P$ be a probability measure on a measurable space $\mathcal{H}$ (``histories''), $\pi$ a
 Markov kernel from $\mathcal{H}$ to a countably generated space $\mathcal{A}$ (``policy''),
 and $\kappa,\kappa'$ Markov kernels from $\mathcal{A}$ to a countably generated space
@@ -335,7 +372,10 @@ to $\mathcal{Y}$ (LML/Mathlib \texttt{Kernel.prodMkLeft}), and similarly $\tilde
   = \int^- \KL(\kappa(a)\|\kappa'(a))\,(\pi\circ P)(da)
   = \int^-\!\!\int^- \KL(\kappa(a)\|\kappa'(a))\,\pi(h,da)\,P(dh),
 \]
-where $\pi\circ P := \int \pi(h,\cdot)\,P(dh)$ is the law of the next action.
+where $\pi\circ P := \int \pi(h,\cdot)\,P(dh)$ is the law of the next action. In
+composition-product form, without any countable generation hypothesis,
+$\KL\big(P\otimes(\pi\otimes\tilde\kappa)\,\big\|\,P\otimes(\pi\otimes\tilde\kappa')\big)
+  = \KL\big((\pi\circ P)\otimes\kappa\,\big\|\,(\pi\circ P)\otimes\kappa'\big)$.
 \end{lemma}
 
 \begin{proof}
@@ -371,33 +411,33 @@ $\mathcal{Y}$ and let $\nu := \mathrm{stationaryEnv}(\kappa)$, $\nu' := \mathrm{
 be the corresponding stationary environments (LML \texttt{Learning.stationaryEnv}: the
 observation at every round has law $\kappa(x_t)$ given the past and the action $x_t$). Let
 $\mathrm{alg}$ be an LML algorithm with actions in $\mathcal{A}$ and observations in $\mathcal{Y}$,
-with policy kernels $\pi_n$ (from histories $(x_t,y_t)_{t\le n}$ to $\mathcal{A}$) and initial
-law $p_0$. For $n \ge 0$ let
+with policy kernels $\pi_n$ (from histories $(x_t,y_t)_{t< n}$ of the first $n$ rounds to
+$\mathcal{A}$; the initial law is $p_0 = \pi_0(\emptyset)$). For $n \ge 0$ let
 \[
-  \Prob^{(n)} := \mathrm{law}\big((x_t,y_t)_{t \le n}\big)
+  \Prob^{(n)} := \mathrm{law}\big((x_t,y_t)_{t < n}\big)
   = (\mathrm{trajMeasure}(\mathrm{alg},\nu))_*\mathrm{hist}_n,
   \qquad
   \Prob'^{(n)} := (\mathrm{trajMeasure}(\mathrm{alg},\nu'))_*\mathrm{hist}_n ,
 \]
-the laws of the history up to time $n$ (a history of \emph{length} $T = n+1$) under the two
-environments. We write $\E^{(n)}$ for the expectation under $\Prob^{(n)}$ and, for $T \ge 1$,
-$\Prob^T := \Prob^{(T-1)}$ for the law of a history of length $T$. By LML
-\texttt{eq\_trajMeasure\_map\_frestrictLe\_of\_isAlgEnvSeqUntil}, $\Prob^{(n)}$ is the law of
-$(x_t,y_t)_{t\le n}$ for \emph{any} algorithm-environment sequence of $(\mathrm{alg},\nu)$ on any
+the laws of the history of the first $n$ rounds (a history of \emph{length} $n$) under the two
+environments. We write $\E^{(n)}$ for the expectation under $\Prob^{(n)}$ and also
+$\Prob^T := \Prob^{(T)}$ when we want to emphasize the length. By LML
+\texttt{IsAlgEnvSeqUntil.map\_history}, $\Prob^{(n)}$ is the law of
+$(x_t,y_t)_{t< n}$ for \emph{any} algorithm-environment sequence of $(\mathrm{alg},\nu)$ on any
 probability space.
 \end{definition}
 
 \begin{theorem}[Divergence decomposition]\label{thm:divergence_decomposition}
-\lean{Learning.IsAlgEnvSeq.map_history_succ, Learning.IsAlgEnvSeq.klDiv_map_history}\leanok
-\uses{def:env_pair}
-In the setting of Definition~\ref{def:env_pair}, for every $n \ge 0$,
+\lean{Learning.IsAlgEnvSeq.map_history_succ, Learning.IsAlgEnvSeq.klDiv_map_history, Learning.IsAlgEnvSeq.klDiv_map_history_compProd, Learning.IsAlgEnvSeq.klDiv_map_history_stepKernel}\leanok
+\uses{def:env_pair, lem:stopped_history_chain_rule}
+In the setting of Definition~\ref{def:env_pair}, for every $T \ge 0$,
 \[
-  \KL\big(\Prob^{(n)}\,\big\|\,\Prob'^{(n)}\big)
-  = \sum_{t=0}^{n} \int^- \KL\big(\kappa(x_t)\,\big\|\,\kappa'(x_t)\big)\,d\Prob^{(n)}
+  \KL\big(\Prob^{(T)}\,\big\|\,\Prob'^{(T)}\big)
+  = \sum_{t<T} \int^- \KL\big(\kappa(x_t)\,\big\|\,\kappa'(x_t)\big)\,d\Prob^{(T)}
   \qquad\text{in } [0,\infty],
 \]
-where $x_t$ denotes the $t$-th action of the history. Equivalently, for a history of length
-$T \ge 1$, $\KL(\Prob^T\|\Prob'^T) = \sum_{t<T}\E^{(T-1)}[\KL(\kappa(x_t)\|\kappa'(x_t))]$.
+where $x_t$ denotes the $t$-th action of the history, that is
+$\KL(\Prob^T\|\Prob'^T) = \sum_{t<T}\E^{(T)}[\KL(\kappa(x_t)\|\kappa'(x_t))]$.
 If moreover $\KL(\kappa(a)\|\kappa'(a)) \le C < \infty$ for all $a \in \mathcal{A}$, then
 $\KL(\Prob^T\|\Prob'^T) \le TC < \infty$ and the identity holds in $\R$ with ordinary
 expectations.
@@ -405,48 +445,44 @@ expectations.
 
 \begin{proof}
 \leanok
-\uses{lem:pi_kl_measurable_equiv, lem:kl_compProd_kernel, lem:pi_kl_step}
-Write $\mathcal{H}_n := (\{0,\dots,n\} \to \mathcal{A}\times\mathcal{Y})$ for the space of
-histories up to time $n$. By definition of the stationary environment, the feedback kernel at
-every time is $\tilde\kappa : (h,a)\mapsto\kappa(a)$ (LML \texttt{feedback\_stationaryEnv},
-\texttt{ν0\_stationaryEnv}). We prove the identity by induction on $n$.
+\uses{lem:pi_kl_measurable_equiv, lem:kl_compProd_kernel, lem:pi_kl_step, lem:stopped_history_chain_rule}
+In the formalization the theorem is the special case $S = \emptyset$ (no stopping) of the chain
+rule for stopped histories, Lemma~\ref{lem:stopped_history_chain_rule}: the stopping time is
+$+\infty$, the history stopped at $\min(\tau, T)$ is the history of the first $T$ rounds, and the
+one-step terms are those of Lemma~\ref{lem:pi_kl_step}. We nevertheless record the direct
+induction, which is the argument of the paper.
 
-\emph{Base case $n = 0$.} The pair $(x_0,y_0)$ has law $p_0\otimes\kappa$ under $\nu$ and
-$p_0\otimes\kappa'$ under $\nu'$ (LML \texttt{hasLaw\_step\_zero}), and $\mathrm{hist}_0$ is the
-image of $(x_0,y_0)$ by the measurable equivalence $\mathcal{A}\times\mathcal{Y}\simeq\mathcal{H}_0$.
-By Lemma~\ref{lem:pi_kl_measurable_equiv}, Mathlib \texttt{klDiv\_compProd\_eq\_add},
-\texttt{klDiv\_self} and Lemma~\ref{lem:kl_compProd_kernel},
-\[
-  \KL(\Prob^{(0)}\|\Prob'^{(0)}) = \KL(p_0\otimes\kappa\,\|\,p_0\otimes\kappa')
-  = 0 + \int^-\KL(\kappa(a)\|\kappa'(a))\,p_0(da)
-  = \int^-\KL(\kappa(x_0)\|\kappa'(x_0))\,d\Prob^{(0)},
-\]
-the last step because $x_0 \sim p_0$ under $\Prob^{(0)}$ (\texttt{hasLaw\_action\_zero}) and
-the integrand only depends on $x_0$ (change of variables for the Lebesgue integral,
-\texttt{lintegral\_map}).
+Write $\mathcal{H}_n := (\{0,\dots,n-1\} \to \mathcal{A}\times\mathcal{Y})$ for the space of
+histories of the first $n$ rounds. By definition of the stationary environment, the feedback
+kernel at every round is $\tilde\kappa : (h,a)\mapsto\kappa(a)$ (LML
+\texttt{feedback\_stationaryEnv}). We prove the identity by induction on $T$.
 
-\emph{Induction step.} Assume the identity for $n$. By LML \texttt{history\_succ} and
-\texttt{hasCondDistrib\_step}, $\mathrm{hist}_{n+1} = e^{-1}(\mathrm{hist}_n, (x_{n+1},y_{n+1}))$
-for the measurable equivalence $e : \mathcal{H}_{n+1}\simeq\mathcal{H}_n\times(\mathcal{A}\times\mathcal{Y})$
-(\texttt{MeasurableEquiv.IicSuccProd}), and the law of $(\mathrm{hist}_n,(x_{n+1},y_{n+1}))$ is
-the composition-product $\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)$ (the step kernel
+\emph{Base case $T = 0$.} $\mathcal{H}_0$ is a one-point space, so $\Prob^{(0)} = \Prob'^{(0)}$
+is the Dirac mass at the empty history (LML \texttt{hasLaw\_history\_zero}) and both sides
+vanish (\texttt{klDiv\_self} and the empty sum).
+
+\emph{Induction step.} Assume the identity for $T$. By LML \texttt{history\_succ} and
+\texttt{hasCondDistrib\_step}, $\mathrm{hist}_{T+1} = e^{-1}(\mathrm{hist}_T, (x_T,y_T))$
+for the measurable equivalence $e : \mathcal{H}_{T+1}\simeq\mathcal{H}_T\times(\mathcal{A}\times\mathcal{Y})$
+(\texttt{MeasurableEquiv.finSuccProd}), and the law of $(\mathrm{hist}_T,(x_T,y_T))$ is
+the composition-product $\Prob^{(T)}\otimes(\pi_T\otimes\tilde\kappa)$ (the step kernel
 \texttt{stepKernel alg env n = alg.policy n ⊗ₖ env.feedback n}); similarly with primes, with
-the \emph{same} policy kernel $\pi_n$. Hence, by Lemma~\ref{lem:pi_kl_measurable_equiv},
+the \emph{same} policy kernel $\pi_T$. Hence, by Lemma~\ref{lem:pi_kl_measurable_equiv},
 \texttt{klDiv\_compProd\_eq\_add} and Lemma~\ref{lem:pi_kl_step},
 \begin{align*}
-  \KL(\Prob^{(n+1)}\|\Prob'^{(n+1)})
-  &= \KL\big(\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)\,\big\|\,\Prob'^{(n)}\otimes(\pi_n\otimes\tilde\kappa')\big)\\
-  &= \KL(\Prob^{(n)}\|\Prob'^{(n)})
-     + \KL\big(\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa)\,\big\|\,\Prob^{(n)}\otimes(\pi_n\otimes\tilde\kappa')\big)\\
-  &= \sum_{t=0}^{n}\int^-\KL(\kappa(x_t)\|\kappa'(x_t))\,d\Prob^{(n)}
-     + \int^-\KL(\kappa(a)\|\kappa'(a))\,(\pi_n\circ\Prob^{(n)})(da).
+  \KL(\Prob^{(T+1)}\|\Prob'^{(T+1)})
+  &= \KL\big(\Prob^{(T)}\otimes(\pi_T\otimes\tilde\kappa)\,\big\|\,\Prob'^{(T)}\otimes(\pi_T\otimes\tilde\kappa')\big)\\
+  &= \KL(\Prob^{(T)}\|\Prob'^{(T)})
+     + \KL\big(\Prob^{(T)}\otimes(\pi_T\otimes\tilde\kappa)\,\big\|\,\Prob^{(T)}\otimes(\pi_T\otimes\tilde\kappa')\big)\\
+  &= \sum_{t<T}\int^-\KL(\kappa(x_t)\|\kappa'(x_t))\,d\Prob^{(T)}
+     + \int^-\KL(\kappa(a)\|\kappa'(a))\,(\pi_T\circ\Prob^{(T)})(da).
 \end{align*}
-Finally $\pi_n\circ\Prob^{(n)}$ is the law of $x_{n+1}$ under $\Prob^{(n+1)}$ (LML
-\texttt{hasCondDistrib\_action}: the conditional law of $x_{n+1}$ given $\mathrm{hist}_n$ is
-$\pi_n(\mathrm{hist}_n)$), and $\Prob^{(n)}$ is the image of $\Prob^{(n+1)}$ under the restriction
-$\mathcal{H}_{n+1}\to\mathcal{H}_n$ (consistency of the laws of histories,
-\texttt{hist\_eq\_frestrictLe}), so every term is an integral under $\Prob^{(n+1)}$ of a function
-of the history, and the sum runs over $t \le n+1$.
+Finally $\pi_T\circ\Prob^{(T)}$ is the law of $x_T$ under $\Prob^{(T+1)}$ (LML
+\texttt{hasCondDistrib\_action}: the conditional law of $x_T$ given $\mathrm{hist}_T$ is
+$\pi_T(\mathrm{hist}_T)$), and $\Prob^{(T)}$ is the image of $\Prob^{(T+1)}$ under the restriction
+$\mathcal{H}_{T+1}\to\mathcal{H}_T$ (consistency of the laws of histories, LML
+\texttt{history\_eq\_comp\_history}), so every term is an integral under $\Prob^{(T+1)}$ of a
+function of the history, and the sum runs over $t < T+1$.
 
 \emph{Finite case.} If the one-step divergences are bounded by $C$, the right-hand side is at
 most $(n+1)C$, so all quantities are finite and \texttt{ENNReal.toReal} turns the identity into
@@ -457,21 +493,25 @@ a real identity, the integrals becoming Bochner integrals of bounded measurable 
 \textbf{Lean remark.} The formalization (\texttt{Learning.IsAlgEnvSeq.klDiv\_map\_history})
 states the theorem for two algorithm-environment sequences \texttt{IsAlgEnvSeq X Y alg
 (stationaryEnv κ) P} and \texttt{IsAlgEnvSeq X' Y' alg (stationaryEnv κ') P'} on arbitrary
-probability spaces, as \texttt{klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) =
-∑ t ∈ range (n + 1), ∫⁻ ω, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P}; this covers the trajectory
+probability spaces, as \texttt{klDiv (P.map (history X Y T)) (P'.map (history X' Y' T)) =
+∑ t ∈ range T, ∫⁻ ω, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P}; this covers the trajectory
 measures (which are such sequences) and avoids the uniqueness-of-law step. The finite form is
-only recorded for the Gaussian case (Corollary~\ref{cor:divergence_decomposition_gaussian}). The hypotheses
-\texttt{MeasurableSpace.CountablyGenerated 𝓐} and \texttt{CountablyGenerated 𝓨} are needed for
-the measurability of the integrands (Lemma~\ref{lem:kl_compProd_kernel}); they hold for
-$\mathcal{A} = \Xs$, $\mathcal{A} = \mathrm{Fin}\,K$ and $\mathcal{Y} = \R$. Only the environment
-changes: the policy kernels are shared, which is what makes \texttt{klDiv\_compProd\_left}
-(inside Lemma~\ref{lem:pi_kl_step}) applicable. This is the environment analogue of LML's
+only recorded for the Gaussian case (Corollary~\ref{cor:divergence_decomposition_gaussian}).
+Every conditional divergence is recorded in two forms: the \emph{integral form} above, which
+needs the hypothesis \texttt{MeasurableSpace.CountablyGenerated 𝓨} for the measurability of the
+integrands (Lemma~\ref{lem:kl_compProd_kernel}; it holds for $\mathcal{Y} = \R$), and the
+\emph{composition-product form} \texttt{∑ t ∈ range T, klDiv (P.map (X t) ⊗ₘ κ) (P.map
+(X t) ⊗ₘ κ')} (\texttt{klDiv\_map\_history\_compProd}), valid on arbitrary measurable spaces.
+The chain rule for two arbitrary environments, with the conditional divergences of the step
+kernels, is \texttt{klDiv\_map\_history\_stepKernel}. Only the environment changes: the policy
+kernels are shared, which is what makes \texttt{klDiv\_compProd\_left} (inside
+Lemma~\ref{lem:pi_kl_step}) applicable. This is the environment analogue of LML's
 \texttt{Algorithm.density}, and of Lemma~\ref{lem:env_likelihood_ratio} below, which give the
 Radon--Nikodym derivative rather than its expected logarithm.
 
 \begin{lemma}[Appending the recommendation does not change the divergence]
 \label{lem:kl_data_processing_recommendation}
-\lean{Learning.IdentAlg.IsFixedBudget.stoppingTime_eq, Learning.IdentAlg.IsFixedBudget.stoppedHist_eq, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le, Learning.LinearBandit.IsRun.exp_neg_le_measureReal_add_of_sq_le}\leanok
+\lean{Learning.IdentAlg.IsFixedBudget.stoppingTime_eq, Learning.IdentAlg.IsFixedBudget.stoppedHist_eq, Learning.IdentAlg.IsFixedBudget.stoppingTime_ne_top, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out_of_isFixedBudget, Learning.IdentAlg.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le, Learning.LinearBandit.IsRun.exp_neg_le_measureReal_add_of_sq_le}\leanok
 \uses{def:env_pair, def:bai_alg, lem:pinsker, lem:bretagnolle_huber}
 In the setting of Definition~\ref{def:env_pair}, let $T \ge 1$ and let $\rho$ be a Markov
 kernel from histories of length $T$ to a measurable space $\mathcal{X}$ (a recommendation rule).
@@ -513,6 +553,224 @@ $\KL(\mathrm{law}(\rec)\|\mathrm{law}'(\rec)) \le \KL(\Prob^T\|\Prob'^T)$ is rec
 the Bretagnolle--Huber consequence for linear Gaussian environments,
 $\Prob_\theta(\rec\in B) + \Prob_{\theta'}(\rec\notin B) \ge \tfrac12\exp(-TR^2\norm{\theta-\theta'}^2/2)$,
 is \texttt{LinearBandit.IsRun.exp\_neg\_le\_measureReal\_add}.
+
+\subsection{Stopped histories and infinite trajectories}
+\label{sec:pre_info_stopping}
+
+The paper only needs the divergence decomposition for a fixed number of rounds. For the library
+we also prove it for histories stopped at a stopping time (the change-of-measure lemma of
+fixed-confidence lower bounds, Kaufmann, Capp\'e and Garivier 2016) and for whole trajectories.
+The results below are formalized in \texttt{Maiti2026Power/LeanMachineLearning/\{HistoryLaw,
+StoppedHistory, DivergenceDecomposition, RunDivergence\}.lean} and
+\texttt{Maiti2026Power/Mathlib/InformationTheory/\{KLCompProd, KLRestrict, KLFiltration\}.lean}.
+
+\begin{definition}[Histories of the first $n$ rounds, step kernels]\label{def:fin_history}
+\lean{Learning.history, Learning.stepKernel, Learning.IsAlgEnvSeq.hasCondDistrib_action, Learning.IsAlgEnvSeq.hasCondDistrib_feedback, Learning.IsAlgEnvSeq.hasCondDistrib_step, Learning.IsAlgEnvSeq.map_history_succ, Learning.map_history_succ_of_hasCondDistrib, Learning.feedback_stationaryEnv, Learning.stepKernel_stationaryEnv}\leanok
+\uses{def:env_pair}
+For action and feedback processes $X, Y$ on $\Omega$, the \emph{history of the first $n$ rounds}
+is $\mathrm{hist}_n := (X_t, Y_t)_{t < n} : \Omega \to (\{0,\dots,n-1\}\to\mathcal{A}\times\mathcal{Y})$
+(LML \texttt{Learning.history}; $n = 0$ is allowed and gives the one-point space), and
+$\mathrm{hist}_{n+1} = (\mathrm{hist}_n, (X_n, Y_n))$ (\texttt{Fin.snoc}). For an algorithm
+$\mathrm{alg}$ with policy kernels $\pi_n$ and an environment $\nu$ with feedback kernels
+$\nu_n$, the \emph{step kernel at round $n$} is $\sigma_n := \pi_n\otimes\nu_n$, a Markov kernel
+from histories of $n$ rounds to $\mathcal{A}\times\mathcal{Y}$ (LML \texttt{Learning.stepKernel}).
+For an algorithm-environment sequence, $X_n$, $Y_n$ and $(X_n, Y_n)$ have conditional laws
+$\pi_n$, $\nu_n$ and $\sigma_n$ given $\mathrm{hist}_n$ (and $X_n$), and the law of
+$\mathrm{hist}_{n+1}$ is $\mathrm{law}(\mathrm{hist}_n)\otimes\sigma_n$. For a stationary
+environment with reward kernel $\kappa$, $\nu_n = \tilde\kappa : (h, a)\mapsto\kappa(a)$ at
+every round, so $\sigma_n = \pi_n\otimes\tilde\kappa$.
+\end{definition}
+
+\begin{definition}[Stopping rules, stopping times, stopped histories]\label{def:stopping_rule}
+\lean{Learning.stoppingTime, Learning.stoppedHist, Learning.stoppingTime_le_iff, Learning.lt_stoppingTime_iff, Learning.stoppingTime_eq_coe_iff, Learning.stoppingTime_eq_top_iff, Learning.stoppingTime_empty, Learning.notMem_of_lt_stoppingTime, Learning.stoppedHist_mem_of_ne_top, Learning.stoppedHist_min_of_le, Learning.stoppedHist_min_of_lt, Learning.measurable_stoppingTime, Learning.measurable_stoppedHist, Learning.IsAlgEnvSeq.isStoppingTime_stoppingTime, Learning.exists_measurableSet_preimage_lt_stoppingTime, Learning.truncHist, Learning.truncHist_stoppedHist, Learning.map_stoppedHist_min_eq_map_truncHist, Learning.restrict_map_truncHist, Learning.IdentAlg.stoppingTime, Learning.IdentAlg.stoppedHist}\leanok
+\uses{def:fin_history, def:bai_alg}
+A \emph{stopping rule} is a measurable set $S$ of histories of variable length,
+$S \subseteq \bigsqcup_n (\{0,\dots,n-1\}\to\mathcal{A}\times\mathcal{Y})$: the interaction stops after
+$n$ rounds if the history of these $n$ rounds belongs to $S$. Its \emph{stopping time}
+$\tau_S := \inf\{n : \mathrm{hist}_n \in S\} \in \N\cup\{\infty\}$ (Mathlib \texttt{hittingAfter})
+is the number of rounds played; it is a stopping time of the history filtration of any
+algorithm-environment sequence, $\{n < \tau_S\}$ is determined by $\mathrm{hist}_n$, and
+$\tau_S = \infty$ for $S = \emptyset$. For a random time $\tau$, the \emph{stopped history}
+$\mathrm{hist}_\tau := \langle\tau, \mathrm{hist}_\tau\rangle$ is the history of the first $\tau$
+rounds as a history of variable length (of length $0$ if $\tau = \infty$); it belongs to $S$ when
+$\tau = \tau_S < \infty$. The \emph{truncation} $\mathrm{trunc}_M$ keeps the first $M$ rounds of a
+history of variable length: $\mathrm{trunc}_M(\mathrm{hist}_\tau) = \mathrm{hist}_{\min(\tau,M)}$
+when $\tau < \infty$, so that the law of $\mathrm{hist}_{\min(\tau,M)}$ is the image of the law of
+$\mathrm{hist}_\tau$ by $\mathrm{trunc}_M$ when $\tau$ is almost surely finite, and both laws
+agree on histories of length $< M$. The stopping time and stopped history of an identification
+algorithm (Definition~\ref{def:bai_alg}) are those of its stopping rule.
+\end{definition}
+
+\begin{lemma}[Restrictions and the divergence]\label{lem:kl_restrict}
+\lean{MeasureTheory.Measure.rnDeriv_restrict_restrict, InformationTheory.klDiv_restrict_of_ac, InformationTheory.klDiv_restrict_add_restrict_compl, InformationTheory.klDiv_restrict_le, InformationTheory.klDiv_add_add_of_measure_eq_zero, InformationTheory.klDiv_eq_iSup_restrict}\leanok
+Let $\mu,\nu$ be finite measures on $\Omega$ and $s$ a measurable set. Then
+$\KL(\mu\|\nu) = \KL(\mu|_s\,\|\,\nu|_s) + \KL(\mu|_{s^c}\,\|\,\nu|_{s^c})$; in particular
+$\KL(\mu|_s\|\nu|_s) \le \KL(\mu\|\nu)$, and the divergence of two sums of measures carried by
+$s$ and $s^c$ respectively is the sum of the divergences of the two parts. If $s_n \uparrow \Omega$
+is an increasing sequence of measurable sets, $\KL(\mu\|\nu) = \sup_n \KL(\mu|_{s_n}\|\nu|_{s_n})$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+The Radon--Nikodym derivative of $\mu|_s$ with respect to $\nu|_s$ is that of $\mu$ with respect
+to $\nu$ (both are $\nu|_s$-densities of $\mu|_s = (\nu|_s)\cdot\frac{d\mu}{d\nu}$), so when
+$\mu\ll\nu$ the identities are those of the integral $\int\mathrm{klFun}(d\mu/d\nu)\,d\nu$ over
+$s$, $s^c$ and $s_n$ (monotone convergence for the last one, $\mathrm{klFun}\ge 0$). When
+$\mu\not\ll\nu$, a set $A$ with $\nu(A) = 0 < \mu(A)$ meets $s$ or $s^c$, and some $s_n$, with
+positive $\mu$-measure, so the corresponding restricted divergences are infinite too.
+\end{proof}
+
+\begin{lemma}[Chain rule for stopped histories]\label{lem:stopped_history_chain_rule}
+\lean{Learning.map_stoppedHist_min_eq_add, Learning.map_stoppedHist_min_succ_eq_add, Learning.map_stoppedHist_min_zero, Learning.IsAlgEnvSeq.map_history_succ_restrict_lt_stoppingTime, Learning.IsAlgEnvSeq.map_action_restrict_lt_stoppingTime, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min, Learning.sum_ite_lt_eq_sum_range_toNat_min}\leanok
+\uses{def:env_pair, def:fin_history, def:stopping_rule, lem:kl_restrict, lem:pi_kl_measurable_equiv, lem:pi_kl_step, lem:kl_sufficient_statistic}
+Let $\mathrm{alg}$ be an algorithm, $\nu,\nu'$ two environments, $(X,Y)$ and $(X',Y')$
+algorithm-environment sequences of $(\mathrm{alg},\nu)$ and $(\mathrm{alg},\nu')$ on probability
+spaces $(\Omega,\Prob)$ and $(\Omega',\Prob')$, $S$ a stopping rule with stopping times $\tau$,
+$\tau'$ on the two spaces, and $M \ge 0$. Then
+\[
+  \KL\big(\mathrm{law}(\mathrm{hist}_{\min(\tau,M)})\,\big\|\,\mathrm{law}(\mathrm{hist}'_{\min(\tau',M)})\big)
+  = \sum_{t < M} \KL\big(\Prob|_{\{t<\tau\}}\circ\mathrm{hist}_t^{-1}\otimes\sigma_t\,\big\|\,
+      \Prob|_{\{t<\tau\}}\circ\mathrm{hist}_t^{-1}\otimes\sigma'_t\big),
+\]
+the sum over the rounds of the conditional divergences of the step kernels $\sigma_t,\sigma'_t$
+of the two environments given the first $t$ rounds, on the event $\{t < \tau\}$ (the round is
+played). For two stationary environments with reward kernels $\kappa,\kappa'$ the $t$-th term is
+$\KL(\Prob|_{\{t<\tau\}}\circ X_t^{-1}\otimes\kappa\,\|\,\Prob|_{\{t<\tau\}}\circ X_t^{-1}\otimes\kappa')$
+(composition-product form) and, when $\mathcal{Y}$ is countably generated, the right-hand side is
+$\E\big[\sum_{t<\min(\tau,M)}\KL(\kappa(X_t)\|\kappa'(X_t))\big]$ (integral form).
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:kl_restrict, lem:pi_kl_measurable_equiv, lem:pi_kl_step, lem:kl_sufficient_statistic, lem:kl_compProd_kernel}
+Induction on $M$. For $M = 0$ both laws are the Dirac mass at the empty history. For the step
+$M\to M+1$, write $Z_M := \mathrm{hist}_{\min(\tau,M)}$. The law of $Z_{M+1}$ splits according
+to whether $\tau \le M$: on $\{\tau\le M\}$, $Z_{M+1} = Z_M$, and on $\{M < \tau\}$, $Z_{M+1}$ is the
+history of the first $M+1$ rounds; the two parts are carried by the disjoint sets of histories of
+length $\le M$ and of length $M+1$. Likewise the law of $Z_M$ splits into its restriction to
+$\{\tau\le M\}$ (carried by $S$, as $Z_M = \mathrm{hist}_\tau \in S$ there) and the law of
+$\mathrm{hist}_M$ on $\{M<\tau\}$ (carried by $S^c$). By the additivity of
+Lemma~\ref{lem:kl_restrict} over disjoint supports, the invariance under the embeddings
+$h\mapsto\langle n,h\rangle$ (Lemma~\ref{lem:pi_kl_measurable_equiv}) and the chain rule
+\texttt{klDiv\_compProd\_eq\_add}, since on $\{M<\tau\}$ (an event determined by
+$\mathrm{hist}_M$) the law of $\mathrm{hist}_{M+1}$ is $\mathrm{law}(\mathrm{hist}_M)\otimes\sigma_M$,
+\[
+  \KL(Z_{M+1}) = \KL(Z_M|_{\tau\le M}) + \KL(\rho_M) + \KL(\rho_M\otimes\sigma_M\,\|\,\rho_M\otimes\sigma'_M)
+  = \KL(Z_M) + \KL(\rho_M\otimes\sigma_M\,\|\,\rho_M\otimes\sigma'_M),
+\]
+where $\rho_M$ is the law of $\mathrm{hist}_M$ on $\{M<\tau\}$ (primes omitted on the second
+arguments). The stationary case is Lemma~\ref{lem:pi_kl_step} in composition-product form, the
+law of $X_t$ on $\{t<\tau\}$ being the policy applied to the law of $\mathrm{hist}_t$ on that
+event; the integral form is Lemma~\ref{lem:kl_compProd_kernel} and the exchange of the finite sum
+with the integral.
+\end{proof}
+
+\begin{theorem}[Divergence decomposition at a stopping time]\label{thm:divergence_decomposition_stopping}
+\lean{Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist}\leanok
+\uses{def:env_pair, def:stopping_rule, lem:stopped_history_chain_rule, lem:kl_restrict}
+In the setting of Lemma~\ref{lem:stopped_history_chain_rule}, assume that the stopping time is
+almost surely finite under both $\Prob$ and $\Prob'$. Then
+\[
+  \KL\big(\mathrm{law}(\mathrm{hist}_\tau)\,\big\|\,\mathrm{law}(\mathrm{hist}'_{\tau'})\big)
+  = \sum_{t=0}^{\infty} \KL\big(\Prob|_{\{t<\tau\}}\circ\mathrm{hist}_t^{-1}\otimes\sigma_t\,\big\|\,
+      \Prob|_{\{t<\tau\}}\circ\mathrm{hist}_t^{-1}\otimes\sigma'_t\big),
+\]
+and for two stationary environments with reward kernels $\kappa,\kappa'$,
+\[
+  \KL\big(\mathrm{law}(\mathrm{hist}_\tau)\,\big\|\,\mathrm{law}(\mathrm{hist}'_{\tau'})\big)
+  = \sum_{t=0}^{\infty}\KL\big(\Prob|_{\{t<\tau\}}\circ X_t^{-1}\otimes\kappa\,\big\|\,\Prob|_{\{t<\tau\}}\circ X_t^{-1}\otimes\kappa'\big)
+  = \E\Big[\sum_{t<\tau}\KL(\kappa(X_t)\|\kappa'(X_t))\Big],
+\]
+the last form when $\mathcal{Y}$ is countably generated.
+\end{theorem}
+
+\begin{proof}
+\leanok
+\uses{lem:stopped_history_chain_rule, lem:kl_restrict}
+The series is the supremum over $M$ of the partial sums, which are the divergences of the laws
+of $\mathrm{hist}_{\min(\tau,M)}$ by Lemma~\ref{lem:stopped_history_chain_rule}. Since the
+stopping times are almost surely finite, these laws are the images of the laws
+$\mu,\mu'$ of the stopped histories by the truncation $\mathrm{trunc}_M$, so their divergences
+are at most $\KL(\mu\|\mu')$ (data processing). Conversely, the images agree with $\mu,\mu'$ on
+histories of length $< M$, and these sets increase to the whole space, so by
+Lemma~\ref{lem:kl_restrict} (monotone convergence, then monotonicity under restriction)
+$\KL(\mu\|\mu') = \sup_M\KL(\mu|_{\mathrm{length}<M}\|\mu'|_{\mathrm{length}<M}) \le \sup_M\KL(\mathrm{trunc}_M{}_*\mu\|\mathrm{trunc}_M{}_*\mu')$.
+The integral form follows from the composition-product form as in
+Lemma~\ref{lem:stopped_history_chain_rule}, the series and the integral being exchanged by
+monotone convergence, and $\sum_t\mathbf 1_{t<\tau}(\cdot) = \sum_{t<\tau}(\cdot)$ on $\{\tau<\infty\}$.
+\end{proof}
+
+\begin{lemma}[Change of measure at a stopping time for runs]\label{lem:run_change_of_measure}
+\lean{Learning.IdentAlg.IsRun.ae_stoppedHist_mem_stopSet, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le_stoppedHist, Learning.IdentAlg.IsRun.klDiv_map_out_le_tsum_compProd, Learning.IdentAlg.IsRun.klDiv_map_out_le_lintegral}\leanok
+\uses{def:bai_alg, def:stopping_rule, thm:divergence_decomposition_stopping, lem:kl_data_processing_recommendation}
+Let $A$ be an identification algorithm and consider two runs of $A$, in two environments, on
+probability spaces $(\Omega,\Prob)$ and $(\Omega',\Prob')$, whose stopping times are almost surely
+finite. Then the divergence between the laws of (stopped history, output) is the divergence
+between the laws of the stopped histories, and the divergence between the laws of the outputs
+is at most the latter. For two stationary environments with reward kernels $\kappa,\kappa'$,
+\[
+  \KL\big(\mathrm{law}(\rec)\,\big\|\,\mathrm{law}'(\rec')\big)
+  \le \E\Big[\sum_{t<\tau}\KL(\kappa(X_t)\|\kappa'(X_t))\Big]
+\]
+(when $\mathcal{Y}$ is countably generated; the composition-product form holds in general).
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{thm:divergence_decomposition_stopping, lem:kl_data_processing_recommendation}
+As in Lemma~\ref{lem:kl_data_processing_recommendation}: the stopped history belongs to the
+stopping set almost surely, on which the output rule is a probability kernel, so
+\texttt{klDiv\_compProd\_left\_of\_ae} applies; then data processing along the projection on the
+output, and Theorem~\ref{thm:divergence_decomposition_stopping}.
+\end{proof}
+
+\begin{lemma}[The divergence along a generating sequence of maps]\label{lem:kl_iSup_map}
+\lean{InformationTheory.klDiv_map_eq_lintegral_klFun_condExp, InformationTheory.klDiv_eq_iSup_map, MeasurableSpace.iSup_comap_restrictFin}\leanok
+\uses{lem:kl_restrict}
+Let $\mu,\nu$ be finite measures on $\Omega$ and $g_n : \Omega\to\Omega_n$ be measurable maps whose
+$\sigma$-algebras $\sigma(g_n)$ increase to the $\sigma$-algebra of $\Omega$. Then
+$\KL(\mu\|\nu) = \sup_n \KL({g_n}_*\mu\,\|\,{g_n}_*\nu)$. The projections of a sequence space
+$\N\to E$ on the coordinates $\le n$ satisfy the hypothesis.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:kl_restrict}
+The inequality $\ge$ is the data-processing inequality. For $\le$, if $\mu\ll\nu$ with density
+$f$, then $\KL({g_n}_*\mu\|{g_n}_*\nu) = \int\mathrm{klFun}(\E_\nu[f\mid\sigma(g_n)])\,d\nu$ (Mathlib
+\texttt{toReal\_rnDeriv\_map}), the conditional expectations converge $\nu$-almost everywhere to
+$f$ by L\'evy's upward theorem (Mathlib \texttt{Integrable.tendsto\_ae\_condExp}), and Fatou's
+lemma gives $\int\mathrm{klFun}(f)\,d\nu \le \liminf_n\int\mathrm{klFun}(\E_\nu[f\mid\sigma(g_n)])\,d\nu$.
+If $\mu\not\ll\nu$, pick $A$ with $\nu(A) = 0 < \mu(A)$; by L\'evy's theorem under $\mu+\nu$
+applied to $\mathbf 1_A$, the $\sigma(g_n)$-measurable sets $B_n := \{\E_{\mu+\nu}[\mathbf 1_A\mid\sigma(g_n)] > 1/2\}$
+satisfy $\mu(B_n)\to\mu(A)$ and $\nu(B_n)\to 0$, and the lower bound
+$\mu(B)\log(\mu(B)/\nu(B)) + \nu(B) - \mu(B) \le \KL(\mu|_B\|\nu|_B) \le \KL(\mu\|\nu)$ (Mathlib
+\texttt{mul\_log\_le\_klDiv} and Lemma~\ref{lem:kl_restrict}), applied to the images and the
+sets $B_n = g_n^{-1}(C_n)$, shows that the divergences of the images tend to infinity.
+\end{proof}
+
+\begin{theorem}[Divergence decomposition for trajectories]\label{thm:divergence_decomposition_trajectory}
+\lean{Learning.klDiv_map_trajectory_eq_iSup, Learning.IsAlgEnvSeq.klDiv_map_trajectory_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_trajectory_compProd, Learning.IsAlgEnvSeq.klDiv_map_trajectory}\leanok
+\uses{def:env_pair, thm:divergence_decomposition, lem:kl_iSup_map}
+In the setting of Definition~\ref{def:env_pair}, for two algorithm-environment sequences on
+$(\Omega,\Prob)$, $(\Omega',\Prob')$, the divergence between the laws of the whole trajectories
+$(X_t,Y_t)_{t\in\N}$ is
+\[
+  \sum_{t=0}^{\infty}\KL\big(\Prob\circ X_t^{-1}\otimes\kappa\,\big\|\,\Prob\circ X_t^{-1}\otimes\kappa'\big)
+  = \sum_{t=0}^{\infty}\E\big[\KL(\kappa(X_t)\|\kappa'(X_t))\big]
+\]
+(the last form when $\mathcal{Y}$ is countably generated), and for two arbitrary environments it
+is the series of the conditional divergences of the step kernels given the past.
+\end{theorem}
+
+\begin{proof}
+\leanok
+\uses{thm:divergence_decomposition, lem:kl_iSup_map}
+By Lemma~\ref{lem:kl_iSup_map} applied to the projections on the first $n+1$ coordinates, the
+divergence between the laws of the trajectories is the supremum over $n$ of the divergences
+between the laws of the histories up to time $n$, which are the partial sums of the series by
+Theorem~\ref{thm:divergence_decomposition}.
+\end{proof}
 
 \begin{corollary}[Divergence decomposition for linear Gaussian environments]
 \label{cor:divergence_decomposition_gaussian}

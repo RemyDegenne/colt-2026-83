@@ -139,7 +139,7 @@ bounds are stated for randomized procedures). Budget $T = 0$ is allowed: the his
 $0$ lives in a one-point space (\texttt{Fin 0 → 𝒳 × ℝ}) and the recommendation kernel is then
 just a probability measure on $\Xs$; this degenerate case is needed by the singular-design lemma
 (Lemma~\ref{lem:singular_design_fails}) and its use in Chapter~\ref{chap:separation}. Histories
-of length $T \ge 1$ are LML's \texttt{Iic (T-1) → 𝒳 × ℝ}. A deterministic recommendation is the kernel
+of length $T$ are LML's \texttt{Fin T → 𝒳 × ℝ}. A deterministic recommendation is the kernel
 \texttt{Kernel.deterministic}. Stopping times are not modelled: the paper's PAC algorithms use
 a deterministic budget $T = (H_1 \log(1/\delta) + H_2)/\eps^2$ and all its lower bounds are
 stated for such budgets; a randomized budget can be handled by padding
@@ -266,7 +266,7 @@ write $\Prob_\theta$ for the law of either.
 \end{definition}
 
 \begin{lemma}[Law of the observations under a fixed design]\label{lem:fixed_design_law}
-\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec, Learning.IsAlgEnvSeq.hasLaw_noise_finVec, Learning.IsAlgEnvSeq.iIndepFun_noise, Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec, Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign, Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign, Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign, Learning.IdentAlg.IsRun.hasCondDistrib_output_finHistory, Learning.IdentAlg.IsRun.output_ae_eq_of_output_eq_deterministic}\leanok
+\lean{Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec, Learning.IsAlgEnvSeq.hasLaw_noise_finVec, Learning.IsAlgEnvSeq.iIndepFun_noise, Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec, Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign, Learning.IsAlgEnvSeq.ae_feedback_eq_of_fixedDesign, Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign, Learning.IdentAlg.IsRun.hasCondDistrib_output_history, Learning.IdentAlg.IsRun.output_ae_eq_of_output_eq_deterministic}\leanok
 \uses{def:fixed_design, lem:noise_representation}
 Under a fixed design run against $\nu_\theta$, the observation vector
 $y = (y_t)_{t<T}$ satisfies $y = X\theta + \eta$ with $\eta \sim \Normal(0, I_T)$, and
@@ -290,7 +290,7 @@ Lemma~\ref{lem:gauss_pi} in its sequential form applies
 \texttt{EuclideanSpace ℝ (Fin T)}). For a fixed design the actions are $x_t$ almost surely
 (LML \texttt{action\_detAlgorithm\_ae\_all\_eq}) and $y_t = \ip{x_t}{\theta} + \eta_t$, which
 gives the law of $y$ (\texttt{hasLaw\_feedback\_finVec\_of\_fixedDesign}); the joint law with
-the recommendation is \texttt{Learning.IdentAlg.map\_finHistory\_out\_eq}.
+the recommendation is \texttt{Learning.IdentAlg.map\_history\_out\_eq}.
 
 \begin{lemma}[Transport of a fixed-design algorithm through a linear map]\label{lem:fixed_design_transport}
 \lean{Learning.LinearBandit.relabelHist, Learning.LinearBandit.transportKernel, Learning.LinearBandit.fixedDesignTransport, Learning.LinearBandit.fixedDesignHistLaw_map_relabelHist, Learning.LinearBandit.isPAC_fixedDesignTransport}\leanok
@@ -573,18 +573,18 @@ and the region algorithm of Chapter~\ref{chap:log_gains} are \emph{phased algori
 using the independence of the future noise from the past.
 
 \begin{lemma}[Algorithms agreeing on a prefix; transfer of PAC guarantees]\label{lem:prefix_transfer}
-\lean{Learning.Algorithm.AgreeUntil, Learning.IsAlgEnvSeqUntil.of_agreeUntil, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_agreeUntil, Learning.IsAlgEnvSeqUntil.map_history_eq, Learning.IdentAlg.map_finHistory_out_eq, Learning.IdentAlg.IsPAC.le_measureReal_of_isAlgEnvSeqUntil}\leanok
+\lean{Learning.Algorithm.AgreeUntil, Learning.IsAlgEnvSeqUntil.of_agreeUntil, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_agreeUntil, Learning.IsAlgEnvSeqUntil.map_history, Learning.IdentAlg.map_history_out_eq, Learning.IdentAlg.IsPAC.le_measureReal_of_isAlgEnvSeqUntil}\leanok
 \uses{def:bai_alg, def:pac}
-Let $\mathrm{alg}, \mathrm{alg}'$ be two algorithms with the same initial action distribution
-and the same policies at times $t < T_1$ (they \emph{agree until time $T_1$}). Then every
+Let $\mathrm{alg}, \mathrm{alg}'$ be two algorithms with the same policies at the rounds
+$t < T$ (they \emph{agree until time $T$}). Then every
 algorithm-environment sequence for $\mathrm{alg}$ (in any environment $\nu$) is an
-algorithm-environment sequence for $\mathrm{alg}'$ until time $T_1$ (LML
-\texttt{IsAlgEnvSeqUntil}), and the law of its history $\hist_{T_1+1}$ is the law of the history
+algorithm-environment sequence for $\mathrm{alg}'$ until time $T$ (LML
+\texttt{IsAlgEnvSeqUntil}), and the law of its history $\hist_{T}$ is the law of the history
 of $\mathrm{alg}'$ against $\nu$. Consequently, let $\mathsf{Alg} = (\mathrm{alg}', \rho)$ be an
-identification algorithm with budget $T_1 + 1$, let $(x_t, y_t)_t$ be an algorithm-environment
-sequence for $\mathrm{alg}'$ until time $T_1$ on $(\Omega, \Prob)$ and let $\rec$ be a random
-variable with conditional law $\rho(\hist_{T_1+1})$ given $\hist_{T_1+1}$. Then
-$(\hist_{T_1+1}, \rec)$ has the law $\Prob_\theta$ of Definition~\ref{def:bai_alg}, and if
+identification algorithm with budget $T$, let $(x_t, y_t)_t$ be an algorithm-environment
+sequence for $\mathrm{alg}'$ until time $T$ on $(\Omega, \Prob)$ and let $\rec$ be a random
+variable with conditional law $\rho(\hist_{T})$ given $\hist_{T}$. Then
+$(\hist_{T}, \rec)$ has the law $\Prob_\theta$ of Definition~\ref{def:bai_alg}, and if
 $\mathsf{Alg}$ is $\delta$-PAC for a measurable goodness predicate, then
 $\Prob(\rec \text{ is good}) \ge 1 - \delta$.
 \end{lemma}
@@ -593,17 +593,17 @@ $\Prob(\rec \text{ is good}) \ge 1 - \delta$.
 \leanok
 \uses{def:bai_alg, def:pac}
 The first assertion is immediate from the definitions, since the conditions of
-\texttt{IsAlgEnvSeqUntil} at time $T_1$ only involve the policies at times $t < T_1$. The law of
-the history is then the image of the trajectory measure of $(\mathrm{alg}', \nu)$
-(\texttt{Learning.eq\_trajMeasure\_map\_frestrictLe\_of\_isAlgEnvSeqUntil}). For the second
-assertion, the law of $(\hist_{T_1+1}, \rec)$ is the composition-product of the law of
-$\hist_{T_1+1}$ with $\rho$, and so is the law of (history, recommendation) under the canonical
+\texttt{IsAlgEnvSeqUntil} at time $T$ only involve the policies at the rounds $t < T$. The law of
+the history is then the image of the trajectory measure of $(\mathrm{alg}', \nu)$ (LML
+\texttt{IsAlgEnvSeqUntil.map\_history}). For the second
+assertion, the law of $(\hist_{T}, \rec)$ is the composition-product of the law of
+$\hist_{T}$ with $\rho$, and so is the law of (history, recommendation) under the canonical
 run of $\mathsf{Alg}$ (\texttt{Learning.IdentAlg.fixedBudgetRunMeasure}); the PAC property
 applied to the canonical run gives the bound.
 \end{proof}
 
 \begin{lemma}[Seeded algorithms and the seed representation of a run]\label{lem:seeded}
-\lean{Learning.SeededAlg, Learning.SeededAlg.toAlgorithm, Learning.SeededAlg.policy_apply, Learning.noiseEnv, Learning.LinearBandit.linearGaussianEnv_eq_noiseEnv, Learning.SeededAlg.seedMeasure, Learning.SeededAlg.seedStep, Learning.SeededAlg.seedFinHist, Learning.SeededAlg.seedFeedback_eq, Learning.SeededAlg.isAlgEnvSeq_seed, Learning.IsAlgEnvSeq.map_history_eq, Learning.IsAlgEnvSeq.map_finHistory_eq, Learning.IsAlgEnvSeq.map_finHistory_eq_seed, Learning.IdentAlg.IsRun.measureReal_eq_seed, Learning.SeededAlg.isPAC_fixedBudget_deterministic, Learning.SeededAlg.linearBandit_isPAC_fixedBudget_deterministic, ProbabilityTheory.Kernel.mapOfConst, ProbabilityTheory.IndepFun.hasCondDistrib_const, ProbabilityTheory.HasCondDistrib.mapOfConst, ProbabilityTheory.HasCondDistrib.snd_of_const_prod}\leanok
+\lean{Learning.SeededAlg, Learning.SeededAlg.toAlgorithm, Learning.SeededAlg.policy_apply, Learning.noiseEnv, Learning.LinearBandit.linearGaussianEnv_eq_noiseEnv, Learning.SeededAlg.seedMeasure, Learning.SeededAlg.seedStep, Learning.SeededAlg.seedFinHist, Learning.SeededAlg.seedFeedback_eq, Learning.SeededAlg.isAlgEnvSeq_seed, Learning.IsAlgEnvSeq.map_history_eq, Learning.IsAlgEnvSeq.map_history_eq_seed, Learning.IdentAlg.IsRun.measureReal_eq_seed, Learning.SeededAlg.isPAC_fixedBudget_deterministic, Learning.SeededAlg.linearBandit_isPAC_fixedBudget_deterministic, ProbabilityTheory.Kernel.mapOfConst, ProbabilityTheory.IndepFun.hasCondDistrib_const, ProbabilityTheory.HasCondDistrib.mapOfConst, ProbabilityTheory.HasCondDistrib.snd_of_const_prod}\leanok
 \uses{def:bai_alg, def:pac, def:env}
 A \emph{seeded algorithm} with seed space $U$ is given by a probability measure $\mu_U$ on
 $U$ (the law of the seeds), a measurable first action $a_0 : U \to \Xs$ and measurable

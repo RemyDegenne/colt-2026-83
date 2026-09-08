@@ -494,16 +494,17 @@ Hence $\Prob^{\mathrm{test}}_{\theta^{(j)}}(\hat H = 0) \le 2\delta$.
 
 \textbf{Lean remark.} The formalization does not use the general composition lemma. The
 test's sampling rule is the single LML algorithm \texttt{Learning.Algorithm.thenRepeat}
-(\texttt{Learning.IdentAlg.testAlg} when $\rho$ is the recommendation rule of $\mathsf{Alg}$):
-its policy is that of $\mathrm{alg}$ at times $t < n$, the kernel $\rho$ applied to the
-history of the first $n$ rounds at time $t = n$, and the deterministic policy ``play the action
-recorded at index $n$ of the history'' afterwards; the recommendation of $\mathsf{Alg}$ is thus
-the action $x_n$. The three facts used about a run of this algorithm are: it is an
-algorithm-environment sequence for $\mathrm{alg}$ until time $n-1$
-(\texttt{IsAlgEnvSeq.isAlgEnvSeqUntil\_of\_thenRepeat}), $x_n$ has conditional law
-$\rho(\hist_n)$ given $\hist_n$ (\texttt{hasCondDistrib\_action\_succ\_of\_thenRepeat}), and
-$x_{n+s} = x_n$ almost surely (\texttt{action\_add\_ae\_eq\_of\_thenRepeat}). The PAC guarantee
-of $\mathsf{Alg}$ is transferred to $x_n$ by Lemma~\ref{lem:prefix_transfer}
+(\texttt{Learning.IdentAlg.testAlg} when $\rho$ is the recommendation rule of $\mathsf{Alg}$;
+\texttt{thenRepeat alg n ρ} plays $\mathrm{alg}$ for the first $n+1$ rounds):
+its policy is that of $\mathrm{alg}$ at the rounds $t < n+1$, the kernel $\rho$ applied to the
+history of the first $n+1$ rounds at round $t = n+1$, and the deterministic policy ``play the
+action recorded at index $n+1$ of the history'' afterwards; the recommendation of $\mathsf{Alg}$
+is thus the action $x_{n+1}$. The three facts used about a run of this algorithm are: it is an
+algorithm-environment sequence for $\mathrm{alg}$ until time $n+1$
+(\texttt{IsAlgEnvSeq.isAlgEnvSeqUntil\_of\_thenRepeat}), $x_{n+1}$ has conditional law
+$\rho(\hist_{n+1})$ given $\hist_{n+1}$ (\texttt{hasCondDistrib\_action\_succ\_of\_thenRepeat}),
+and $x_{n+1+s} = x_{n+1}$ almost surely (\texttt{action\_add\_ae\_eq\_of\_thenRepeat}). The PAC
+guarantee of $\mathsf{Alg}$ is transferred to $x_{n+1}$ by Lemma~\ref{lem:prefix_transfer}
 (\texttt{IsPAC.le\_measureReal\_action\_succ\_of\_testAlg}). The concentration of
 $\bar\eta$ is Lemma~\ref{lem:noise_azuma} applied to the run of the test itself (so no
 conditioning on $\hist_n$ is needed): $\hat v = \ip{x_n}{\theta} + \bar\eta$ almost surely

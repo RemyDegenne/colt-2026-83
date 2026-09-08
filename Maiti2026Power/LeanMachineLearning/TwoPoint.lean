@@ -39,7 +39,7 @@ namespace Learning.LinearBandit
 open IdentAlg
 
 variable {E 𝓞 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
-  [OpensMeasurableSpace E] [MeasurableSpace.CountablyGenerated E] {m𝓞 : MeasurableSpace 𝓞}
+  [OpensMeasurableSpace E] {m𝓞 : MeasurableSpace 𝓞}
   {𝒳 : Set E} {θ θ' : E} {A : IdentAlg 𝒳 ℝ 𝓞} {T : ℕ}
   {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
@@ -54,14 +54,9 @@ lemma IsRun.klDiv_map_out_le_sum_integral {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, 
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤
-      ENNReal.ofReal (∑ t ∈ Finset.range T, ∫ ω, ⟪(X t ω : E), θ - θ'⟫ ^ 2 / 2 ∂P) := by
-  rcases Nat.eq_zero_or_eq_succ_pred T with hT | hT
-  · subst hT
-    rw [IdentAlg.IsRun.klDiv_map_out_eq_zero hA h h']
-    exact bot_le
-  · rw [hT] at hA ⊢
-    exact (IdentAlg.IsRun.klDiv_map_out_le hA h h').trans
-      (klDiv_map_history_of_sq_le h.isAlgEnvSeq h'.isAlgEnvSeq hC (T - 1)).le
+      ENNReal.ofReal (∑ t ∈ Finset.range T, ∫ ω, ⟪(X t ω : E), θ - θ'⟫ ^ 2 / 2 ∂P) :=
+  (IdentAlg.IsRun.klDiv_map_out_le hA h h').trans
+    (klDiv_map_history_of_sq_le h.isAlgEnvSeq h'.isAlgEnvSeq hC T).le
 
 /-- **Two-point inequality with a data-dependent divergence** (blueprint `lem:two_point_pinsker`):
 if the expected sum of the squared gaps along the trajectory is at most `K`, the probabilities of
@@ -139,7 +134,6 @@ lemma IsRun.one_sub_le_measureReal_add_of_sq_le {C : ℝ} {θp θm : E}
 
 variable {ε δ Z : ℝ}
 
-omit [MeasurableSpace.CountablyGenerated E] in
 /-- **From a PAC guarantee to an expected regret bound** (blueprint
 `lem:fail_prob_from_expected_value`): if the recommendation is `ε`-optimal with probability at
 least `1 - δ` and the simple regret on the instance `θ` is between `0` and `Z ≥ ε`, then the

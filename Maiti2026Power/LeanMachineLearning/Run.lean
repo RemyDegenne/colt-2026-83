@@ -48,8 +48,6 @@ lemma IsAlgEnvSeq.comp_hasLaw (h : IsAlgEnvSeq X Y alg env P') (hg : HasLaw g P'
     IsAlgEnvSeq (fun n ↦ X n ∘ g) (fun n ↦ Y n ∘ g) alg env P where
   measurable_action n := (h.measurable_action n).comp hgm
   measurable_feedback n := (h.measurable_feedback n).comp hgm
-  hasLaw_action_zero := HasLaw.comp h.hasLaw_action_zero hg
-  hasCondDistrib_feedback_zero := h.hasCondDistrib_feedback_zero.comp_hasLaw hg
   hasCondDistrib_action n := (h.hasCondDistrib_action n).comp_hasLaw hg
   hasCondDistrib_feedback n := (h.hasCondDistrib_feedback n).comp_hasLaw hg
 
@@ -68,9 +66,9 @@ namespace IdentAlg
 variable (A : IdentAlg 𝓐 𝓨 𝓞) (env : Environment 𝓐 𝓨) (T : ℕ)
 
 /-- The history of the first `T` rounds of a trajectory `h : ℕ → 𝓐 × 𝓨` is measurable. -/
-lemma measurable_finHistory_traj :
-    Measurable (finHistory (IT.action (𝓐 := 𝓐) (𝓨 := 𝓨)) IT.feedback T) := by
-  unfold finHistory
+lemma measurable_history_traj :
+    Measurable (history (IT.action (𝓐 := 𝓐) (𝓨 := 𝓨)) IT.feedback T) := by
+  unfold history
   fun_prop
 
 /-- The output rule of a fixed-budget algorithm at its budget is a Markov kernel. -/
@@ -83,8 +81,8 @@ the environment `env`: the trajectory `ℕ → 𝓐 × 𝓨` has the law `trajMe
 given the trajectory, the output is drawn from `A.output T` applied to the history of the first
 `T` rounds. -/
 noncomputable def fixedBudgetRunMeasure : Measure ((ℕ → 𝓐 × 𝓨) × 𝓞) :=
-  trajMeasure A.alg env ⊗ₘ (A.output T).comap (finHistory IT.action IT.feedback T)
-    (measurable_finHistory_traj T)
+  trajMeasure A.alg env ⊗ₘ (A.output T).comap (history IT.action IT.feedback T)
+    (measurable_history_traj T)
 
 instance [IsMarkovKernel (A.output T)] : IsProbabilityMeasure (A.fixedBudgetRunMeasure env T) := by
   unfold fixedBudgetRunMeasure
@@ -100,18 +98,18 @@ lemma IsFixedBudget.isRun_fixedBudgetRunMeasure (hA : A.IsFixedBudget T)
     A.IsRun env (fun n ω ↦ IT.action n ω.1) (fun n ω ↦ IT.feedback n ω.1) Prod.snd
       (A.fixedBudgetRunMeasure env T) := by
   have hprob : ∀ h : ℕ → 𝓐 × 𝓨,
-      IsProbabilityMeasure (A.outputKernel ⟨T, finHistory IT.action IT.feedback T h⟩) :=
+      IsProbabilityMeasure (A.outputKernel ⟨T, history IT.action IT.feedback T h⟩) :=
     fun h ↦ A.isProbabilityMeasure_output T _ (by unfold IsFixedBudget at hA; simp [hA])
   have hfst : HasLaw Prod.fst (trajMeasure A.alg env) (A.fixedBudgetRunMeasure env T) :=
     ⟨measurable_fst.aemeasurable, Measure.fst_compProd _ _⟩
   refine ⟨(IT.isAlgEnvSeq_trajMeasure A.alg env).comp_hasLaw hfst measurable_fst, ?_⟩
   have hsh : A.stoppedHist (fun n ω ↦ IT.action n ω.1) (fun n ω ↦ IT.feedback n ω.1) =
       fun p : (ℕ → 𝓐 × 𝓨) × 𝓞 ↦
-        (⟨T, finHistory IT.action IT.feedback T p.1⟩ : Σ n, Fin n → 𝓐 × 𝓨) :=
+        (⟨T, history IT.action IT.feedback T p.1⟩ : Σ n, Fin n → 𝓐 × 𝓨) :=
     funext fun p ↦ hA.stoppedHist_eq p
   rw [hsh]
   exact hasCondDistrib_snd_compProd_comap (trajMeasure A.alg env) A.outputKernel
-    ((measurable_sigma_mk T).comp (measurable_finHistory_traj T)) hprob
+    ((measurable_sigma_mk T).comp (measurable_history_traj T)) hprob
 
 end IdentAlg
 

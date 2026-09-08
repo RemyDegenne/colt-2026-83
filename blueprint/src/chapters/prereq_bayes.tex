@@ -50,9 +50,9 @@ headline constants).
 \begin{definition}[Environment density along a history]\label{def:pb_env_density}
 \lean{Learning.envDensity, Learning.measurable_envDensity, Learning.envDensity_zero, Learning.envDensity_snoc}\leanok
 Let $\mathcal{A},\mathcal{Y}$ be measurable spaces and $\rho : \mathcal{A}\times\mathcal{Y}\to[0,\infty]$
-be measurable. For $n\ge0$ and a history $h = (x_t,y_t)_{t\le n}$ define
-$D_n^\rho(h) := \prod_{t=0}^n\rho(x_t,y_t)$, a measurable function of $h$. For a history of
-length $T\ge1$ we write $D_T^\rho := D_{T-1}^\rho$.
+be measurable. For $n\ge0$ and a history $h = (x_t,y_t)_{t< n}$ of the first $n$ rounds define
+$D_n^\rho(h) := \prod_{t<n}\rho(x_t,y_t)$, a measurable function of $h$ (an empty product,
+hence $1$, for $n = 0$).
 \end{definition}
 
 \begin{lemma}[Composition-product of a kernel with a kernel having a density]
@@ -98,13 +98,13 @@ at every point are equal (\texttt{Kernel.ext}).
 \end{proof}
 
 \begin{lemma}[Environment likelihood ratio]\label{lem:env_likelihood_ratio}
-\lean{Learning.IsAlgEnvSeq.map_history_eq_withDensity_env, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_env, Learning.toFinHistory_IicSuccProd_symm}\leanok
+\lean{Learning.IsAlgEnvSeq.map_history_eq_withDensity_env}\leanok
 \uses{def:pb_env_density, lem:pb_kernel_compProd_withDensity_right}
 Let $\kappa_0,\kappa$ be Markov kernels from $\mathcal{A}$ to $\mathcal{Y}$ and
 $\rho : \mathcal{A}\times\mathcal{Y}\to[0,\infty]$ measurable with
 $\kappa(a) = \kappa_0(a).\mathrm{withDensity}(\rho(a,\cdot))$ for every $a\in\mathcal{A}$. Let
 $\mathrm{alg}$ be any algorithm and, for $n\ge0$, let $\Prob^{(n)}$ and $\Prob_0^{(n)}$ be the
-laws of the history $(x_t,y_t)_{t\le n}$ under $\mathrm{stationaryEnv}(\kappa)$, resp.\
+laws of the history $(x_t,y_t)_{t< n}$ under $\mathrm{stationaryEnv}(\kappa)$, resp.\
 $\mathrm{stationaryEnv}(\kappa_0)$ (Definition~\ref{def:env_pair}). Then
 \[
   \Prob^{(n)} = \Prob_0^{(n)}.\mathrm{withDensity}\big(D_n^\rho\big),
@@ -122,11 +122,9 @@ $(h,a)\mapsto\kappa_0(a)$ (the feedback kernels of the stationary environments, 
 \texttt{feedback\_stationaryEnv}), so that
 $\tilde\kappa = \tilde\kappa_0.\mathrm{withDensity}((h,a),y)\mapsto\rho(a,y))$.
 
-\emph{Base case.} $(x_0,y_0)$ has law $p_0\otimes\kappa = p_0\otimes(\kappa_0.\mathrm{withDensity}\,\rho)
-= (p_0\otimes\kappa_0).\mathrm{withDensity}((a,y)\mapsto\rho(a,y))$ (Mathlib
-\texttt{Measure.compProd\_withDensity}), and $\mathrm{hist}_0$ is its image by the measurable
-equivalence $\mathcal{A}\times\mathcal{Y}\simeq\mathcal{H}_0$, which commutes with
-\texttt{withDensity} (LML \texttt{map\_equiv\_withDensity}); $D_0^\rho(h) = \rho(x_0,y_0)$.
+\emph{Base case.} $\mathcal{H}_0$ is a one-point space, so $\Prob^{(0)} = \Prob_0^{(0)}$ is the
+Dirac mass at the empty history (LML \texttt{hasLaw\_history\_zero}) and
+$D_0^\rho = 1$ is the empty product.
 
 \emph{Induction step.} By LML \texttt{history\_succ} and \texttt{hasCondDistrib\_step},
 $\Prob^{(n+1)}$ is the image under $e^{-1} : \mathcal{H}_n\times(\mathcal{A}\times\mathcal{Y})\simeq\mathcal{H}_{n+1}$
@@ -150,12 +148,10 @@ $D_{n+1}^\rho(e^{-1}(h,(a,y))) = D_n^\rho(h)\rho(a,y)$. The integral formulas ar
 \end{proof}
 
 \textbf{Lean remark.} \texttt{Learning.envDensity ρ n : (Fin n → 𝓐 × 𝓨) → ℝ≥0∞} is the
-product $\prod_{t<n}\rho(x_t,y_t)$ over \texttt{Fin n} (so that it applies to the histories
-\texttt{finHistory} used throughout), with the recursion \texttt{envDensity\_snoc}; the law
-identity is proved first for LML's \texttt{history X Y n : Iic n → 𝓐 × 𝓨} by the induction of
-\texttt{hasLaw\_history\_withDensity} (\texttt{map\_history\_eq\_withDensity\_env}) and
-transported to \texttt{finHistory} through \texttt{toFinHistory}
-(\texttt{map\_finHistory\_eq\_withDensity\_env}). The kernel-level identity
+product $\prod_{t<n}\rho(x_t,y_t)$ over \texttt{Fin n}, matching LML's histories
+\texttt{history X Y n : Fin n → 𝓐 × 𝓨}, with the recursion \texttt{envDensity\_snoc}; the law
+identity \texttt{map\_history\_eq\_withDensity\_env} is proved by induction on $n$ from the
+composition-product recursion of the law of the history. The kernel-level identity
 $\pi\otimes(\tilde\kappa_0.\mathrm{withDensity}\,\rho) = (\pi\otimes\tilde\kappa_0).\mathrm{withDensity}(\rho\circ\mathrm{snd})$
 is Lemma~\ref{lem:pb_kernel_compProd_withDensity_right}, the right-factor analogue of LML's
 \texttt{Kernel.compProd\_withDensity\_left}; it is not in Mathlib or LML and is proved
@@ -176,7 +172,7 @@ $\varphi(y-m) = \varphi(y)\,e^{ym-m^2/2}$ since $-(y-m)^2/2 = -y^2/2+ym-m^2/2$. 
 \end{proof}
 
 \begin{corollary}[Likelihood ratio of a linear Gaussian history]\label{cor:pb_gaussian_likelihood}
-\lean{Learning.LinearBandit.stepLogLR, Learning.LinearBandit.stepLR, Learning.LinearBandit.measurable_uncurry_stepLR, Learning.LinearBandit.linearGaussianKernel_eq_withDensity, Learning.LinearBandit.likelihood, Learning.LinearBandit.likelihood_pos, Learning.LinearBandit.envDensity_stepLR, Learning.LinearBandit.measurable_likelihood, Learning.LinearBandit.measurable_likelihood_prod, Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood, Maiti2026Power.histB, Maiti2026Power.histS, Maiti2026Power.likelihood_eq_gaussTilt}\leanok
+\lean{Learning.LinearBandit.stepLogLR, Learning.LinearBandit.stepLR, Learning.LinearBandit.measurable_uncurry_stepLR, Learning.LinearBandit.linearGaussianKernel_eq_withDensity, Learning.LinearBandit.likelihood, Learning.LinearBandit.likelihood_pos, Learning.LinearBandit.envDensity_stepLR, Learning.LinearBandit.measurable_likelihood, Learning.LinearBandit.measurable_likelihood_prod, Learning.IsAlgEnvSeq.map_history_eq_withDensity_likelihood, Maiti2026Power.histB, Maiti2026Power.histS, Maiti2026Power.likelihood_eq_gaussTilt}\leanok
 \uses{def:env, lem:env_likelihood_ratio, lem:pb_gaussian_density_ratio}
 Let $\Xs$ be an action set, $\theta\in\R^d$, $T\ge1$, and for a history $h = (x_t,y_t)_{t<T}$
 define
@@ -215,7 +211,7 @@ $\mathrm{ENNReal.ofReal}(\prod_t\rho_\theta(x_t,y_t)) = \prod_t\mathrm{ENNReal.o
 \end{proof}
 
 \begin{lemma}[The law of the run as a Markov kernel in $\theta$]\label{lem:pb_kernel_of_likelihood}
-\lean{Learning.LinearBandit.noiseHistLaw, Learning.LinearBandit.histKernel, Learning.LinearBandit.histKernel_apply, Learning.IsAlgEnvSeq.map_finHistory_eq_histKernel, Learning.IsAlgEnvSeq.hasLaw_finHistory_histKernel, Learning.LinearBandit.pairKernel, Learning.LinearBandit.pairKernel_apply, Learning.IdentAlg.IsRun.hasLaw_finHistory_out_pairKernel, Learning.LinearBandit.IsPAC.le_measureReal_pairKernel, Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le, Maiti2026Power.expRegret, Maiti2026Power.stronglyMeasurable_expRegret}\leanok
+\lean{Learning.LinearBandit.noiseHistLaw, Learning.LinearBandit.histKernel, Learning.LinearBandit.histKernel_apply, Learning.IsAlgEnvSeq.map_history_eq_histKernel, Learning.IsAlgEnvSeq.hasLaw_history_histKernel, Learning.LinearBandit.pairKernel, Learning.LinearBandit.pairKernel_apply, Learning.IdentAlg.IsRun.hasLaw_history_out_pairKernel, Learning.LinearBandit.IsPAC.le_measureReal_pairKernel, Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le, Maiti2026Power.expRegret, Maiti2026Power.stronglyMeasurable_expRegret}\leanok
 \uses{def:bai_alg, cor:pb_gaussian_likelihood}
 Let $\Xs$ be an action set and $\mathsf{Alg} = (\mathrm{alg},\rho)$ an identification algorithm
 with budget $T\ge1$ on $\Xs$ (Definition~\ref{def:bai_alg}). Define, for $\theta\in\R^d$,

@@ -37,6 +37,29 @@ lemma measurable_sigma_iff {f : (Σ a, β a) → γ} :
     Measurable f ↔ ∀ a, Measurable (f ∘ Sigma.mk a) :=
   ⟨fun hf a ↦ hf.comp (measurable_sigma_mk a), measurable_sigma_of_measurable_comp_mk⟩
 
+/-- The first projection of a sigma type is measurable (it is constant on every fiber). -/
+lemma measurable_sigma_fst [MeasurableSpace α] : Measurable (Sigma.fst : (Σ a, β a) → α) :=
+  measurable_sigma_of_measurable_comp_mk fun _ ↦ measurable_const
+
+/-- `x ↦ ⟨n x, f (n x) x⟩` is measurable when the index `n x` ranges over a countable type with
+measurable singletons and each `f i` is measurable. -/
+lemma Measurable.sigmaMk [Countable α] [MeasurableSpace α] [MeasurableSingletonClass α]
+    {n : γ → α} (hn : Measurable n) {f : (a : α) → γ → β a} (hf : ∀ a, Measurable (f a)) :
+    Measurable fun x ↦ (⟨n x, f (n x) x⟩ : Σ a, β a) := by
+  intro s hs
+  have : (fun x ↦ (⟨n x, f (n x) x⟩ : Σ a, β a)) ⁻¹' s =
+      ⋃ a, n ⁻¹' {a} ∩ f a ⁻¹' (Sigma.mk a ⁻¹' s) := by
+    ext x
+    simp only [Set.mem_preimage, Set.mem_iUnion, Set.mem_inter_iff, Set.mem_singleton_iff]
+    constructor
+    · intro h
+      exact ⟨n x, rfl, h⟩
+    · rintro ⟨a, rfl, h⟩
+      exact h
+  rw [this]
+  exact MeasurableSet.iUnion fun a ↦
+    (hn (measurableSet_singleton a)).inter (hf a (measurableSet_sigma_iff.1 hs a))
+
 /-- `Sigma.mk a` is a measurable embedding. -/
 lemma measurableEmbedding_sigma_mk (a : α) :
     MeasurableEmbedding (Sigma.mk a : β a → Σ a, β a) where

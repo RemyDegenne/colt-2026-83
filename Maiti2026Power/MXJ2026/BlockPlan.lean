@@ -90,24 +90,16 @@ lemma block_round_mod (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) : (i * Q.N d + t)
     Nat.mod_eq_of_lt ht]
 
 lemma nextAction_of_lt (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) {n : ℕ}
-    (h : Iic n → blockBallSet Q.k d × ℝ) (u : Fin d → Bool) :
+    (h : Fin n → blockBallSet Q.k d × ℝ) (u : Fin d → Bool) :
     Q.nextAction d (i * Q.N d + t) h u = blockEmbBall i (Q.P.nextAction t (Q.pastOfBlock d i h)
       (Q.P.jStar (Fin d) (Q.yOfBlock d i h)) u) := by
   unfold nextAction
   rw [ite_eq_left (Q.block_round_lt i ht), Q.blockOf_eq i ht, Q.block_round_mod i ht]
 
-lemma nextAction_block_zero (hd : 0 < d) (i : Fin Q.k) {n : ℕ}
-    (h : Iic n → blockBallSet Q.k d × ℝ) (u : Fin d → Bool) :
-    Q.nextAction d (i * Q.N d) h u = blockEmbBall i ((Q.P.alg (Fin d)).act0 u) := by
-  have hd' : 0 < Fintype.card (Fin d) := by simpa using hd
-  have := Q.nextAction_of_lt i (Q.N_pos hd) h u
-  rw [add_zero] at this
-  rw [this, Q.P.nextAction_zero_eq hd']
-
 /-- **The block algorithm simulates the meta-algorithm on each block**: the step of round
 `i N + t`, `t < N`, of the run on the seed space is the step of round `t` of the meta-algorithm
 against `θ^(i)` on the seed sequence shifted by `i N`, embedded on block `i`. -/
-theorem seedStep_block (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
+theorem seedStep_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
     (ω : ℕ → (Fin d → Bool) × ℝ) (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) :
     (Q.alg d).seedStep (Q.F θ) (i * Q.N d + t) ω
       = (blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) t
@@ -133,69 +125,50 @@ theorem seedStep_block (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
       refine Prod.ext (ih r hr hrN) ?_
       rw [SeededAlg.seedFeedback_eq, SeededAlg.seedFeedback_eq, ih r hr hrN, Q.F_blockEmbBall]
       rfl
-    cases t with
-    | zero =>
-      rcases Nat.eq_zero_or_pos ((i : ℕ) * Q.N d) with h0 | hpos
-      · have hi : i = ⟨0, Q.hk⟩ := by
-          ext
-          have hN := Q.N_pos hd
-          exact (Nat.mul_eq_zero.1 h0).resolve_right (by omega)
-        rw [add_zero, h0, SeededAlg.seedStep_zero, SeededAlg.seedStep_zero]
-        simp only [shiftSeq, zero_add]
-        rw [hi]
-        rfl
-      · obtain ⟨m, hm⟩ : ∃ m, (i : ℕ) * Q.N d = m + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hpos).symm⟩
-        rw [add_zero, hm, SeededAlg.seedStep_succ, SeededAlg.seedStep_zero]
-        change Q.nextAction d (m + 1) _ _ = _
-        rw [← hm, Q.nextAction_block_zero hd]
-        rfl
-    | succ t =>
-      have ht' : t < Q.N d := by omega
-      rw [← add_assoc, SeededAlg.seedStep_succ, SeededAlg.seedStep_succ]
-      change Q.nextAction d (i * Q.N d + t + 1) _ _
-        = blockEmbBall i (Q.P.nextAction (t + 1) _ _ _)
-      rw [add_assoc, Q.nextAction_of_lt i ht]
-      have hpast : Q.pastOfBlock d i
-            (fun j : Iic (i * Q.N d + t) ↦ (Q.alg d).seedStep (Q.F θ) j ω)
-          = NormEstParam.pastOf fun j : Iic t ↦ (Q.P.alg (Fin d)).seedStep
-            (NormEstParam.F (blockProj i θ)) j (shiftSeq (i * Q.N d) ω) := by
-        funext r
-        simp only [pastOfBlock, NormEstParam.pastOf, mem_Iic]
-        split_ifs with h1 h2 h2
-        · rw [ihp r (by omega) (by omega), blockProjBall_blockEmbBall]
-        · omega
-        · omega
-        · rfl
-      have hy : Q.yOfBlock d i
-            (fun j : Iic (i * Q.N d + t) ↦ (Q.alg d).seedStep (Q.F θ) j ω)
-          = NormEstParam.yOfIic fun j : Iic t ↦ (Q.P.alg (Fin d)).seedStep
-            (NormEstParam.F (blockProj i θ)) j (shiftSeq (i * Q.N d) ω) := by
-        funext r
-        simp only [yOfBlock, NormEstParam.yOfIic, mem_Iic]
-        split_ifs with h1 h2 h2
-        · rw [ihp r (by omega) (by omega)]
-        · omega
-        · omega
-        · rfl
-      rw [hpast, hy]
-      rfl
+    rw [SeededAlg.seedStep_eq, SeededAlg.seedStep_eq]
+    change Q.nextAction d (i * Q.N d + t) _ _ = blockEmbBall i (Q.P.nextAction t _ _ _)
+    rw [Q.nextAction_of_lt i ht]
+    have hpast : Q.pastOfBlock d i
+          (fun j : Fin (i * Q.N d + t) ↦ (Q.alg d).seedStep (Q.F θ) j ω)
+        = NormEstParam.pastOf fun j : Fin t ↦ (Q.P.alg (Fin d)).seedStep
+          (NormEstParam.F (blockProj i θ)) j (shiftSeq (i * Q.N d) ω) := by
+      funext r
+      simp only [pastOfBlock, NormEstParam.pastOf]
+      split_ifs with h1 h2 h2
+      · rw [ihp r (by omega) (by omega), blockProjBall_blockEmbBall]
+      · omega
+      · omega
+      · rfl
+    have hy : Q.yOfBlock d i
+          (fun j : Fin (i * Q.N d + t) ↦ (Q.alg d).seedStep (Q.F θ) j ω)
+        = NormEstParam.yOf fun j : Fin t ↦ (Q.P.alg (Fin d)).seedStep
+          (NormEstParam.F (blockProj i θ)) j (shiftSeq (i * Q.N d) ω) := by
+      funext r
+      simp only [yOfBlock, NormEstParam.yOf]
+      split_ifs with h1 h2 h2
+      · rw [ihp r (by omega) (by omega)]
+      · omega
+      · omega
+      · rfl
+    rw [hpast, hy]
+    rfl
 
 /-- The observation of round `i N + t` of block `i` is the observation of round `t` of the
 meta-algorithm against `θ^(i)` on the shifted seed sequence. -/
-lemma yω_block (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
+lemma yω_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
     (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) :
     Q.yω θ ω (i * Q.N d + t) = Q.P.yω (blockProj i θ) (shiftSeq (i * Q.N d) ω) t := by
   unfold yω SeededAlg.seedFeedback
-  rw [Q.seedStep_block hd θ ω i ht]
+  rw [Q.seedStep_block θ ω i ht]
   rfl
 
 /-- The estimate of block `i` is the estimate of the meta-algorithm against `θ^(i)` on the
 shifted seed sequence. -/
-theorem estN_eq (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
+theorem estN_eq (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
     (i : Fin Q.k) :
     Q.estN d i (Q.yω θ ω)
       = Q.P.estimate (Fin d) (Q.P.yω (blockProj i θ) (shiftSeq (i * Q.N d) ω)) :=
-  Q.P.estimate_congr fun _ hr ↦ Q.yω_block hd θ ω i hr
+  Q.P.estimate_congr fun _ hr ↦ Q.yω_block θ ω i hr
 
 /-! ### The second phase -/
 
@@ -225,28 +198,26 @@ lemma basisRound_basis (m : Fin d) {ℓ : ℕ} (hℓ : ℓ < Q.n₂ d) :
 
 /-- The action of a round of the second phase: the basis vector of the round on the selected
 block, or `0`. -/
-theorem seedAction_of_T₂_le (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
+theorem seedAction_of_T₂_le (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
     (ω : ℕ → (Fin d → Bool) × ℝ) {t : ℕ} (ht : Q.T₂ d ≤ t) :
     (Q.alg d).seedAction (Q.F θ) t ω = match Q.basisRound d t with
       | some m => blockEmbBall (Q.iHat d (Q.yω θ ω))
           ⟨EuclideanSpace.single m 1, single_mem_unitBall m⟩
       | none => Q.zeroBB d := by
-  have hpos : 0 < t := lt_of_lt_of_le (Q.T₂_pos hd) ht
-  obtain ⟨m, rfl⟩ : ∃ m, t = m + 1 := ⟨t - 1, by omega⟩
-  rw [SeededAlg.seedAction, SeededAlg.seedStep_succ]
-  change Q.nextAction d (m + 1) (fun j : Iic m ↦ (Q.alg d).seedStep (Q.F θ) j ω) (ω (m + 1)).1 = _
+  rw [SeededAlg.seedAction, SeededAlg.seedStep_eq]
+  change Q.nextAction d t (fun j : Fin t ↦ (Q.alg d).seedStep (Q.F θ) j ω) (ω t).1 = _
   unfold nextAction
   rw [ite_eq_right (not_lt.2 ht)]
-  have : Q.iHat d (NormEstParam.yOfIic fun j : Iic m ↦ (Q.alg d).seedStep (Q.F θ) j ω)
+  have : Q.iHat d (NormEstParam.yOf fun j : Fin t ↦ (Q.alg d).seedStep (Q.F θ) j ω)
       = Q.iHat d (Q.yω θ ω) := by
     refine Q.iHat_congr fun m' hm' ↦ Q.estN_congr (fun r hr ↦ ?_) hm'
-    have hr' : r ∈ Iic m := mem_Iic.2 (by omega)
-    rw [NormEstParam.yOfIic, dite_eq_left hr']
+    have hr' : r < t := by omega
+    rw [NormEstParam.yOf, dite_eq_left hr']
     rfl
   rw [this]
-  rcases Q.basisRound d (m + 1) with _ | m' <;> rfl
+  rcases Q.basisRound d t with _ | m' <;> rfl
 
-lemma yω_basis (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
+lemma yω_basis (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ → (Fin d → Bool) × ℝ)
     (m : Fin d) {ℓ : ℕ} (hℓ : ℓ < Q.n₂ d) :
     Q.yω θ ω (Q.T₂ d + Fintype.equivFin (Fin d) m * Q.n₂ d + ℓ)
       = θ (Q.iHat d (Q.yω θ ω), m) + (ω (Q.T₂ d + Fintype.equivFin (Fin d) m * Q.n₂ d + ℓ)).2 := by
@@ -254,20 +225,20 @@ lemma yω_basis (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : 
       = Q.F θ ((Q.alg d).seedAction (Q.F θ) (Q.T₂ d + Fintype.equivFin (Fin d) m * Q.n₂ d + ℓ) ω)
         (ω (Q.T₂ d + Fintype.equivFin (Fin d) m * Q.n₂ d + ℓ)).2 :=
     SeededAlg.seedFeedback_eq (Q.alg d) (Q.F θ) _ _
-  rw [h1, Q.seedAction_of_T₂_le hd θ ω (Nat.le_add_right_of_le (Nat.le_add_right _ _)),
+  rw [h1, Q.seedAction_of_T₂_le θ ω (Nat.le_add_right_of_le (Nat.le_add_right _ _)),
     Q.basisRound_basis m hℓ]
   simp [F_blockEmbBall, NormEstParam.F, LinearBandit.linearNoise, EuclideanSpace.inner_single_left]
 
 /-- The vector of empirical means of the second phase is `θ^(î) + Δ`, where `Δ` is the
 noise average of the basis window. -/
-theorem thetaHat_eq (hd : 0 < d) (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
+theorem thetaHat_eq (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
     (ω : ℕ → (Fin d → Bool) × ℝ) :
     Q.thetaHat d (Q.yω θ ω)
       = blockProj (Q.iHat d (Q.yω θ ω)) θ + lnDelta (Q.n₂ d) (lnProj (Q.T₂ d) (Q.n₂ d) ω) := by
   have hn : (Q.n₂ d : ℝ) ≠ 0 := by have := Q.n₂_pos (d := d); positivity
   ext m
   simp only [thetaHat, lnDelta, lnProj, PiLp.toLp_apply, PiLp.add_apply, blockProj_apply]
-  rw [Finset.sum_congr rfl fun ℓ _ ↦ Q.yω_basis hd θ ω m ℓ.2, Finset.sum_add_distrib, add_div,
+  rw [Finset.sum_congr rfl fun ℓ _ ↦ Q.yω_basis θ ω m ℓ.2, Finset.sum_add_distrib, add_div,
     Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
     mul_div_cancel_left₀ _ hn]
 

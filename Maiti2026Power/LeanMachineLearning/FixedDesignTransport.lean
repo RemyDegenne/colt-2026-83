@@ -105,7 +105,7 @@ theorem isPAC_fixedDesignTransport {E : Type u} [NormedAddCommGroup E] [InnerPro
     (hreg : ∀ (ϑ : F) (y : 𝒳), simpleRegret 𝒴 ϑ (π y) ≤ simpleRegret 𝒳 (L ϑ) y) :
     IsPAC 𝒴 (fixedDesignTransport A T x x' hπ) ε δ := by
   intro ϑ Ω _ P _ X Y out hrun
-  have hlaw := hrun.hasLaw_finHistory_out_of_fixedDesign isFixedBudget_fixedDesignTransport
+  have hlaw := hrun.hasLaw_history_out_of_fixedDesign isFixedBudget_fixedDesignTransport
     alg_fixedDesignTransport
   have hG' : MeasurableSet {y : 𝒴 | simpleRegret 𝒴 ϑ y ≤ ε} :=
     measurableSet_le

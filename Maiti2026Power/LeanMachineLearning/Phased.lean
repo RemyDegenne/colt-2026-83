@@ -69,18 +69,19 @@ structure PhasedAlg (𝓐 𝓨 S : Type*) [MeasurableSpace 𝓐] [MeasurableSpac
   /-- The state update is measurable. -/
   measurable_upd : ∀ ℓ, Measurable (Function.uncurry (upd ℓ))
 
-/-- The observation sequence read from a history up to time `n`, extended beyond `n` by the
-observation at time `n`. -/
-def extendObs (n : ℕ) (h : Iic n → 𝓐 × 𝓨) : ℕ → 𝓨 :=
-  fun t ↦ (h ⟨min t n, Finset.mem_Iic.2 (min_le_right t n)⟩).2
+/-- The observation sequence read from a history of the first `n` rounds (`0 < n`), extended
+beyond `n - 1` by the observation at time `n - 1`. -/
+def extendObs (n : ℕ) (hn : 0 < n) (h : Fin n → 𝓐 × 𝓨) : ℕ → 𝓨 :=
+  fun t ↦ (h ⟨min t (n - 1), by omega⟩).2
 
-lemma measurable_extendObs (n : ℕ) : Measurable (extendObs (𝓐 := 𝓐) (𝓨 := 𝓨) n) :=
+lemma measurable_extendObs (n : ℕ) (hn : 0 < n) :
+    Measurable (extendObs (𝓐 := 𝓐) (𝓨 := 𝓨) n hn) :=
   measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).snd
 
 omit m𝓐 m𝓨 in
-lemma extendObs_history {Ω : Type*} (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) {t : ℕ}
-    (ht : t ≤ n) : extendObs n (history X Y n ω) t = Y t ω := by
-  simp [extendObs, history, min_eq_left ht]
+lemma extendObs_history {Ω : Type*} (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (hn : 0 < n) (ω : Ω)
+    {t : ℕ} (ht : t < n) : extendObs n hn (history X Y n ω) t = Y t ω := by
+  simp [extendObs, history, min_eq_left (by omega : t ≤ n - 1)]
 
 namespace PhasedAlg
 
@@ -213,13 +214,21 @@ lemma actionAt_congr {t : ℕ} {y y' : ℕ → 𝓨} (h : ∀ s < t, y s = y' s)
 lemma measurable_actionAt (t : ℕ) : Measurable (A.actionAt t) :=
   (A.measurable_actAt _ _).comp (A.measurable_state _)
 
+/-- The action at round `n` computed from the history of the first `n` rounds. -/
+noncomputable def nextAction (n : ℕ) (h : Fin n → 𝓐 × 𝓨) : 𝓐 :=
+  if hn : 0 < n then A.actionAt n (extendObs n hn h) else A.act 0 A.init ⟨0, A.len_pos 0⟩
+
+lemma measurable_nextAction (n : ℕ) : Measurable (A.nextAction n) := by
+  unfold nextAction
+  split_ifs with hn
+  · exact (A.measurable_actionAt n).comp (measurable_extendObs n hn)
+  · exact measurable_const
+
 /-- The phased algorithm as a deterministic LML algorithm: at time `t` in phase `ℓ`, it plays the
 action `act ℓ s j` where `s` is the state computed from the observations before the phase and
 `j = t - start ℓ`. -/
 noncomputable def toAlgorithm : Algorithm 𝓐 𝓨 :=
-  detAlgorithm (fun n h ↦ A.actionAt (n + 1) (extendObs n h))
-    (fun n ↦ (A.measurable_actionAt (n + 1)).comp (measurable_extendObs n))
-    (A.act 0 A.init ⟨0, A.len_pos 0⟩)
+  detAlgorithm A.nextAction A.measurable_nextAction
 
 /-- The state at the start of phase `ℓ` as a function of the history of the first `start ℓ`
 rounds. -/
@@ -302,12 +311,12 @@ lemma measurable_stateProc (hY : ∀ t, Measurable (Y t)) (ℓ : ℕ) :
     Measurable (A.stateProc Y ℓ) :=
   (A.measurable_state ℓ).comp (measurable_pi_lambda _ hY)
 
-lemma stateOfFinHistory_finHistory (ℓ : ℕ) (ω : Ω) :
-    A.stateOfFinHistory ℓ (finHistory X Y (A.start ℓ) ω) = A.stateProc Y ℓ ω := by
+lemma stateOfFinHistory_history (ℓ : ℕ) (ω : Ω) :
+    A.stateOfFinHistory ℓ (history X Y (A.start ℓ) ω) = A.stateProc Y ℓ ω := by
   unfold stateOfFinHistory stateProc
   split_ifs with hℓ
   · exact A.state_congr fun t ht ↦ by
-      simp [finHistory, min_eq_left (by omega : t ≤ A.start ℓ - 1)]
+      simp [history, min_eq_left (by omega : t ≤ A.start ℓ - 1)]
   · obtain rfl : ℓ = 0 := by
       by_contra hne
       exact hℓ (A.start_pos_iff.2 (Nat.pos_of_ne_zero hne))
@@ -319,18 +328,14 @@ include h
 /-- Along a run of the phased algorithm, the actions are given by `actionAt` applied to the
 observation process. -/
 lemma ae_action_eq : ∀ᵐ ω ∂P, ∀ t, X t ω = A.actionAt t fun s ↦ Y s ω := by
-  have h' : IsAlgEnvSeq X Y (detAlgorithm (fun n h ↦ A.actionAt (n + 1) (extendObs n h))
-      (fun n ↦ (A.measurable_actionAt (n + 1)).comp (measurable_extendObs n))
-      (A.act 0 A.init ⟨0, A.len_pos 0⟩)) env P := h
+  have h' : IsAlgEnvSeq X Y (detAlgorithm A.nextAction A.measurable_nextAction) env P := h
   filter_upwards [h'.action_detAlgorithm_ae_all_eq] with ω hω t
-  cases t with
-  | zero =>
-    rw [hω.1]
+  rw [hω t, nextAction]
+  split_ifs with ht
+  · exact A.actionAt_congr fun s hs ↦ extendObs_history X Y t ht ω hs
+  · obtain rfl : t = 0 := by omega
     have := A.actionAt_start_add (ℓ := 0) ⟨0, A.len_pos 0⟩ fun s ↦ Y s ω
     simpa using this.symm
-  | succ t =>
-    rw [hω.2 t]
-    exact A.actionAt_congr fun s hs ↦ extendObs_history X Y t ω (by omega)
 
 /-- Along a run of the phased algorithm, the action at time `start ℓ + j` is `act ℓ s j` where
 `s` is the state at the start of phase `ℓ`. -/
@@ -374,7 +379,7 @@ lemma output_ae_eq_of_isRun [MeasurableEq 𝓞]
     o =ᵐ[P] fun ω ↦ out (A.stateProc Y L ω) := by
   filter_upwards [hrun.output_ae_eq_of_output_eq_deterministic A.isFixedBudget_toIdentAlg _
     A.output_toIdentAlg] with ω hω
-  rw [hω, A.stateOfFinHistory_finHistory]
+  rw [hω, A.stateOfFinHistory_history]
 
 end identAlg
 
@@ -428,8 +433,8 @@ lemma hasCondDistrib_phaseNoise (ℓ : ℕ) :
       (Kernel.const _ (Measure.pi fun _ ↦ gaussianReal 0 1)) P := by
   have h1 := (h.hasCondDistrib_noise_window (A.start ℓ) (A.len ℓ)).const_comp_right
     (A.measurable_stateOfFinHistory ℓ)
-  have h2 : A.stateOfFinHistory ℓ ∘ finHistory X Y (A.start ℓ) = A.stateProc Y ℓ :=
-    funext fun ω ↦ A.stateOfFinHistory_finHistory ℓ ω
+  have h2 : A.stateOfFinHistory ℓ ∘ history X Y (A.start ℓ) = A.stateProc Y ℓ :=
+    funext fun ω ↦ A.stateOfFinHistory_history ℓ ω
   rwa [h2] at h1
 
 variable [MeasurableEq 𝒳]

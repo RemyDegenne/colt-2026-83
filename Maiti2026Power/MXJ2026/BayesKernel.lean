@@ -16,9 +16,9 @@ under the reward vector `θ` is `histKernel alg T θ = noiseHistLaw.withDensity 
 where `noiseHistLaw` is the law under pure noise (`θ = 0`); since the likelihood is jointly
 measurable, this is a Markov kernel in `θ` (`histKernel`), which agrees with the law of the
 history of every algorithm-environment sequence under `θ`
-(`IsAlgEnvSeq.map_finHistory_eq_histKernel`). For a fixed-budget identification algorithm `A`,
+(`IsAlgEnvSeq.map_history_eq_histKernel`). For a fixed-budget identification algorithm `A`,
 the law of (history, recommendation) is the Markov kernel `pairKernel A T = histKernel ⊗ₖ output`
-(`IsRun.hasLaw_finHistory_out_pairKernel`), and the PAC property of `A` is a statement about
+(`IsRun.hasLaw_history_out_pairKernel`), and the PAC property of `A` is a statement about
 `pairKernel A T θ` for every `θ` (`IsPAC.le_measureReal_pairKernel`,
 `IsPAC.integral_simpleRegret_pairKernel_le`).
 
@@ -40,10 +40,10 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [Measurabl
 
 /-- The law of the history of `T` rounds of `alg` under pure noise (`θ = 0`). -/
 noncomputable def noiseHistLaw (alg : Algorithm 𝒳 ℝ) (T : ℕ) : Measure (Fin T → 𝒳 × ℝ) :=
-  (trajMeasure alg (linearGaussianEnv 𝒳 0)).map (finHistory IT.action IT.feedback T)
+  (trajMeasure alg (linearGaussianEnv 𝒳 0)).map (history IT.action IT.feedback T)
 
 instance (alg : Algorithm 𝒳 ℝ) (T : ℕ) : IsProbabilityMeasure (noiseHistLaw alg T) :=
-  Measure.isProbabilityMeasure_map (IdentAlg.measurable_finHistory_traj T).aemeasurable
+  Measure.isProbabilityMeasure_map (IdentAlg.measurable_history_traj T).aemeasurable
 
 lemma measurable_uncurry_ofReal_likelihood (T : ℕ) :
     Measurable (Function.uncurry fun (θ : E) (h : Fin T → 𝒳 × ℝ) ↦
@@ -66,24 +66,24 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasur
   {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {alg : Algorithm 𝒳 ℝ} {θ : E}
 
 /-- The history of any algorithm-environment sequence under `θ` has law `histKernel alg T θ`. -/
-lemma _root_.Learning.IsAlgEnvSeq.map_finHistory_eq_histKernel
+lemma _root_.Learning.IsAlgEnvSeq.map_history_eq_histKernel
     (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P) (T : ℕ) :
-    P.map (finHistory X Y T) = histKernel alg T θ := by
+    P.map (history X Y T) = histKernel alg T θ := by
   rw [histKernel_apply, noiseHistLaw]
-  exact h.map_finHistory_eq_withDensity_likelihood (IT.isAlgEnvSeq_trajMeasure alg _) T
+  exact h.map_history_eq_withDensity_likelihood (IT.isAlgEnvSeq_trajMeasure alg _) T
 
 instance (alg : Algorithm 𝒳 ℝ) (T : ℕ) : IsMarkovKernel (histKernel (E := E) alg T) :=
   ⟨fun θ ↦ by
-    rw [← (IT.isAlgEnvSeq_trajMeasure alg (linearGaussianEnv 𝒳 θ)).map_finHistory_eq_histKernel T]
-    exact Measure.isProbabilityMeasure_map (IdentAlg.measurable_finHistory_traj T).aemeasurable⟩
+    rw [← (IT.isAlgEnvSeq_trajMeasure alg (linearGaussianEnv 𝒳 θ)).map_history_eq_histKernel T]
+    exact Measure.isProbabilityMeasure_map (IdentAlg.measurable_history_traj T).aemeasurable⟩
 
-lemma _root_.Learning.IsAlgEnvSeq.hasLaw_finHistory_histKernel
+lemma _root_.Learning.IsAlgEnvSeq.hasLaw_history_histKernel
     (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P) (T : ℕ) :
-    HasLaw (finHistory X Y T) (histKernel alg T θ) P := by
+    HasLaw (history X Y T) (histKernel alg T θ) P := by
   have hX := h.measurable_action
   have hY := h.measurable_feedback
-  have hfin : Measurable (finHistory X Y T) := by unfold finHistory; fun_prop
-  exact ⟨hfin.aemeasurable, h.map_finHistory_eq_histKernel T⟩
+  have hfin : Measurable (history X Y T) := Learning.measurable_history hX hY T
+  exact ⟨hfin.aemeasurable, h.map_history_eq_histKernel T⟩
 
 section identAlg
 
@@ -105,13 +105,13 @@ lemma pairKernel_apply (θ : E) :
 
 /-- For any run of `A` under `θ`, (history of the `T` rounds, recommendation) has law
 `pairKernel A T θ`. -/
-lemma _root_.Learning.IdentAlg.IsRun.hasLaw_finHistory_out_pairKernel
+lemma _root_.Learning.IdentAlg.IsRun.hasLaw_history_out_pairKernel
     (hA : A.IsFixedBudget T) {out : Ω → 𝒳}
     (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P) :
-    HasLaw (fun ω ↦ (finHistory X Y T ω, out ω)) (pairKernel A T θ) P := by
+    HasLaw (fun ω ↦ (history X Y T ω, out ω)) (pairKernel A T θ) P := by
   rw [pairKernel_apply]
-  exact (h.isAlgEnvSeq.hasLaw_finHistory_histKernel T).prodMk_of_hasCondDistrib
-    (h.hasCondDistrib_output_finHistory hA)
+  exact (h.isAlgEnvSeq.hasLaw_history_histKernel T).prodMk_of_hasCondDistrib
+    (h.hasCondDistrib_output_history hA)
 
 lemma measurableSet_simpleRegret_le (θ : E) (ε : ℝ) :
     MeasurableSet {p : (Fin T → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ p.2 ≤ ε} :=
@@ -133,7 +133,7 @@ lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_pairKernel (hpac : IsPAC
     1 - δ ≤ (pairKernel A T θ).real {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
   have := hA.isMarkovKernel_output
   have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
-  have hlaw := hrun.hasLaw_finHistory_out_pairKernel hA
+  have hlaw := hrun.hasLaw_history_out_pairKernel hA
   have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ hrun
   rw [← hlaw.measureReal_eq (p := fun p ↦ simpleRegret 𝒳 θ p.2 ≤ ε)
     (measurableSet_simpleRegret_le θ ε)]

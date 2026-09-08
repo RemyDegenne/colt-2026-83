@@ -117,9 +117,9 @@ theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompa
   have hrun : ∀ θ, IsAlgEnvSeq IT.action IT.feedback alg (linearGaussianEnv 𝒳 θ)
       (trajMeasure alg (linearGaussianEnv 𝒳 θ)) := fun θ ↦ IT.isAlgEnvSeq_trajMeasure alg _
   obtain ⟨w, hw⟩ := exists_isGOptimalDesign h𝒳 hspan
-  set N := n + m with hN
-  set g : (Iic N → 𝒳 × ℝ) → ℝ := fun h ↦
-    (∑ s ∈ range m, (h ⟨min (n + 1 + s) N, Finset.mem_Iic.2 (min_le_right _ _)⟩).2) / m with hg
+  set N := n + m + 1 with hN
+  set g : (Fin N → 𝒳 × ℝ) → ℝ := fun h ↦
+    (∑ s ∈ range m, (h ⟨min (n + 1 + s) (n + m), by omega⟩).2) / m with hg
   have hg_meas : Measurable g :=
     (Finset.measurable_sum _ fun s _ ↦ (measurable_pi_apply _).snd).div_const _
   have hg_comp : g ∘ IT.hist N = phaseMean IT.feedback n m := by
@@ -128,7 +128,7 @@ theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompa
     congr 1
     refine sum_congr rfl fun s hs ↦ ?_
     rw [min_eq_left (by simp only [mem_range] at hs; omega)]
-  set E' : Set (Iic N → 𝒳 × ℝ) := {h | ε < g h} with hE'
+  set E' : Set (Fin N → 𝒳 × ℝ) := {h | ε < g h} with hE'
   have hE'm : MeasurableSet E' := measurableSet_lt measurable_const hg_meas
   have hpre : IT.hist N ⁻¹' E' = {ω | ε < phaseMean IT.feedback n m ω} := by
     rw [← hg_comp]
@@ -149,12 +149,12 @@ theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompa
     linarith
   -- Step 5: the testing lower bound
   have hbh := hw.exp_neg_le_of_mixture alg N hR ε hE'm (by positivity) hα hβ
-  have hexp : exp (-((N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤ 8 * δ := by linarith
-  have hlog : log (1 / (8 * δ)) ≤ (N + 1) * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by
+  have hexp : exp (-(N * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤ 8 * δ := by linarith
+  have hlog : log (1 / (8 * δ)) ≤ N * (9 * ε ^ 2 / (2 * Fintype.card ι)) := by
     rw [one_div, log_inv, neg_le]
     exact (le_log_iff_exp_le (by positivity)).2 hexp
   have hd0 : (0 : ℝ) < Fintype.card ι := by positivity
-  have hi : Fintype.card ι * L ≤ 18 * (ε ^ 2 * (N + 1)) := by
+  have hi : Fintype.card ι * L ≤ 18 * (ε ^ 2 * N) := by
     rw [hlog8, mul_div_assoc', le_div_iff₀ (by positivity)] at hlog
     have h1 : Fintype.card ι * L / 2 ≤ (L - 3 * log 2) * (2 * Fintype.card ι) := by
       nlinarith [mul_nonneg (by linarith : 0 ≤ L - 3 * log 2 - L / 4) hd0.le]

@@ -170,9 +170,9 @@ theorem one_sub_le_seedMeasure_real_output (hd : 0 < d) (θ : EuclideanSpace ℝ
     simp only [hE₁, hE₂, hS_def, hS₂, Set.mem_compl_iff, Set.mem_union, not_or, Set.mem_iUnion,
       not_exists, Set.mem_preimage, Set.mem_ofPred_eq, not_lt] at hω
     refine Q.regret_le θ _ (fun i ↦ ?_) ?_
-    · rw [Q.estN_eq hd θ ω i]
+    · rw [Q.estN_eq θ ω i]
       exact hω.1 i
-    · rw [Q.thetaHat_eq hd θ ω, add_sub_cancel_left]
+    · rw [Q.thetaHat_eq θ ω, add_sub_cancel_left]
       exact hω.2
   -- the probabilities of the failure events
   have h1 : (nsMeasure (Fin d)).real E₁ ≤ 7 * Q.δ / 16 := by

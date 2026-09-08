@@ -1,71 +1,33 @@
 import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
-import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.Continuous
 import Mathlib.Data.Fintype.Order
-import Mathlib.Analysis.Convex.Function
-import Mathlib.Analysis.Normed.Group.Pointwise
-import Mathlib.Topology.Order.Compact
-import Mathlib.Analysis.InnerProductSpace.Adjoint
-import Mathlib.MeasureTheory.Group.Convolution
-import Mathlib.MeasureTheory.Group.IntegralConvolution
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.LinearAlgebra.Matrix.PosDef
-import Mathlib.Topology.Instances.Matrix
-import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.Analysis.Matrix.Order
-import Mathlib.Analysis.Convex.Hull
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
-import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.MeasureTheory.Integral.IntegralEqImproper
-import Mathlib.MeasureTheory.Integral.Pi
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecialFunctions.Exp
-import Mathlib.Data.Fintype.Lattice
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Order.ConditionallyCompleteLattice.Finset
 import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Analysis.Calculus.Gradient.Basic
 import Mathlib.Analysis.Calculus.MeanValue
-import Mathlib.Analysis.Calculus.ContDiff.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Comp
 import Mathlib.Data.Matrix.ColumnRowPartitioned
-import Mathlib.Analysis.Calculus.Deriv.MeanValue
-import Mathlib.Analysis.InnerProductSpace.Calculus
-import Mathlib.Analysis.Calculus.ContDiff.Operations
 import Mathlib.Algebra.BigOperators.Field
-import Mathlib.Analysis.Calculus.FDeriv.Prod
-import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
-import Mathlib.Algebra.Order.Ring.Abs
-import Mathlib.Analysis.Calculus.ParametricIntegral
-import Mathlib.Analysis.SpecialFunctions.Sqrt
-import Mathlib.Analysis.Calculus.FDeriv.Equiv
-import Mathlib.Analysis.Calculus.FDeriv.CompCLM
-import Mathlib.Analysis.Calculus.Deriv.Prod
-import Mathlib.Analysis.Calculus.Deriv.Comp
-import Mathlib.MeasureTheory.Integral.Prod
-import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Analysis.Convex.Caratheodory
 import Mathlib.Analysis.Convex.StdSimplex
 import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-import Mathlib.Topology.Algebra.Module.FiniteDimension
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.Analysis.Convex.Integral
-import Mathlib.Logic.Equiv.Prod
 import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Data.Fintype.Prod
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
-import Mathlib.Probability.Process.HittingTime
-import Mathlib.MeasureTheory.MeasurableSpace.Constructions
-import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
 /-! # Standalone extraction for `Maiti2026Power.width_separation`
 Definitions are copied verbatim; theorem proofs are replaced by `sorry`.
@@ -101,43 +63,44 @@ variable {𝓐 𝓨 Ω : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : Measurab
 
 /-- A stochastic, sequential algorithm. -/
 structure Algorithm (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Policy or sampling rule: distribution of the next action. -/
-  policy : (n : ℕ) → Kernel (Iic n → 𝓐 × 𝓨) 𝓐
+  /-- Policy or sampling rule: distribution of the action at time `n` given the history of the
+  `n` previous action-feedback pairs. -/
+  policy : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓐
   /-- The policy is a Markov kernel. -/
   [h_policy : ∀ n, IsMarkovKernel (policy n)]
-  /-- Distribution of the first action. -/
-  p0 : Measure 𝓐
-  /-- The first action distribution is a probability measure. -/
-  [hp0 : IsProbabilityMeasure p0]
 
 instance (alg : Algorithm 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (alg.policy n) := alg.h_policy n
-instance (alg : Algorithm 𝓐 𝓨) : IsProbabilityMeasure alg.p0 := alg.hp0
+
+/-- Distribution of the first action: the policy at time `0` applied to the empty history. -/
+def Algorithm.p0 (alg : Algorithm 𝓐 𝓨) : Measure 𝓐 :=
+  alg.policy 0 default
+deriving IsProbabilityMeasure
 
 /-- A stochastic environment. -/
 structure Environment (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Distribution of the next observation as function of the past history. -/
-  feedback : (n : ℕ) → Kernel ((Iic n → 𝓐 × 𝓨) × 𝓐) 𝓨
+  /-- Distribution of the feedback at time `n` as function of the history of the `n` previous
+  action-feedback pairs and of the action at time `n`. -/
+  feedback : (n : ℕ) → Kernel ((Fin n → 𝓐 × 𝓨) × 𝓐) 𝓨
   /-- The feedback kernels are Markov kernels. -/
   [h_feedback : ∀ n, IsMarkovKernel (feedback n)]
-  /-- Distribution of the first observation given the first action. -/
-  ν0 : Kernel 𝓐 𝓨
-  /-- The initial observation kernel is a Markov kernel. -/
-  [hp0 : IsMarkovKernel ν0]
 
 instance (env : Environment 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.feedback n) := env.h_feedback n
-instance (env : Environment 𝓐 𝓨) : IsMarkovKernel env.ν0 := env.hp0
+
+/-- Distribution of the first feedback given the first action: the feedback kernel at time `0`
+applied to the empty history. -/
+noncomputable def Environment.ν0 (env : Environment 𝓐 𝓨) : Kernel 𝓐 𝓨 :=
+  (env.feedback 0).sectR default
+deriving IsMarkovKernel
 
 section IsAlgEnvSeq
 
 variable {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨}
     {P : Measure Ω} [IsFiniteMeasure P] {N : ℕ}
 
-/-- History of the algorithm-environment sequence up to time `n`. -/
-def history (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Iic n → 𝓐 × 𝓨 :=
+/-- History of the algorithm-environment sequence before time `n`: the action-feedback pairs at
+times `0, ..., n - 1`. -/
+def history (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Fin n → 𝓐 × 𝓨 :=
   fun i ↦ (A i ω, Y i ω)
-
-section IsAlgEnvSeq
-
 
 /-- An algorithm-environment sequence: a sequence of actions and feedbacks generated
 by an algorithm interacting with an environment. -/
@@ -148,20 +111,13 @@ structure IsAlgEnvSeq
   measurable_action n : Measurable (A n) := by fun_prop
   /-- The feedback sequence is measurable. -/
   measurable_feedback n : Measurable (Y n) := by fun_prop
-  /-- The first action has the correct law. -/
-  hasLaw_action_zero : HasLaw (fun ω ↦ (A 0 ω)) alg.p0 P
-  /-- The first feedback has the correct conditional distribution. -/
-  hasCondDistrib_feedback_zero : HasCondDistrib (Y 0) (A 0) env.ν0 P
-  /-- The next action has the correct conditional distribution given the history. -/
+  /-- The action at time `n` has the correct conditional distribution given the history. -/
   hasCondDistrib_action n :
-    HasCondDistrib (A (n + 1)) (history A Y n) (alg.policy n) P
-  /-- The next feedback has the correct conditional distribution given the history and
-  next action. -/
+    HasCondDistrib (A n) (history A Y n) (alg.policy n) P
+  /-- The feedback at time `n` has the correct conditional distribution given the history and
+  the action at time `n`. -/
   hasCondDistrib_feedback n :
-    HasCondDistrib (Y (n + 1)) (fun ω ↦ (history A Y n ω, A (n + 1) ω))
-      (env.feedback n) P
-
-end IsAlgEnvSeq
+    HasCondDistrib (Y n) (fun ω ↦ (history A Y n ω, A n ω)) (env.feedback n) P
 
 end IsAlgEnvSeq
 
@@ -179,8 +135,7 @@ variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableS
 the last action, but in a possibly time-dependent manner. -/
 @[simps]
 def obliviousEnv (ν : ℕ → Kernel 𝓐 𝓨) [∀ n, IsMarkovKernel (ν n)] : Environment 𝓐 𝓨 where
-  feedback n := (ν (n + 1)).prodMkLeft _
-  ν0 := ν 0
+  feedback n := (ν n).prodMkLeft _
 
 /-- A stationary environment, in which the distribution of the next feedback depends only on the
 last action. -/
@@ -196,14 +151,14 @@ open scoped ENNReal NNReal
 namespace Learning
 variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
 
-/-- A deterministic algorithm, which chooses the action given by the function `nextAction`. -/
+/-- A deterministic algorithm, which chooses the action given by the function `nextA`.
+The initial action is `nextA 0 default`. -/
 @[simps]
 noncomputable
-def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
-    (h_next : ∀ n, Measurable (nextA n)) (action0 : 𝓐) :
+def detAlgorithm (nextA : (n : ℕ) → (Fin n → 𝓐 × 𝓨) → 𝓐)
+    (h_next : ∀ n, Measurable (nextA n)) :
     Algorithm 𝓐 𝓨 where
   policy n := Kernel.deterministic (nextA n) (h_next n)
-  p0 := Measure.dirac action0
 
 end Learning
 end

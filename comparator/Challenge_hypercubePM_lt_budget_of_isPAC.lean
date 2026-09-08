@@ -1,106 +1,54 @@
 import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
-import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
-import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Card
 import Mathlib.Data.Set.Finite.Lemmas
 import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.LinearAlgebra.Finsupp.LinearCombination
-import Mathlib.Analysis.CStarAlgebra.Matrix
-import Mathlib.Analysis.InnerProductSpace.Adjoint
-import Mathlib.LinearAlgebra.Matrix.PosDef
-import Mathlib.Topology.Instances.Matrix
-import Mathlib.Analysis.Convex.Caratheodory
-import Mathlib.Analysis.Convex.StdSimplex
-import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
-import Mathlib.Topology.Algebra.Module.FiniteDimension
-import Mathlib.Analysis.Convex.Hull
-import Mathlib.LinearAlgebra.Matrix.SchurComplement
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.Data.Fintype.Order
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Probability.Distributions.Gaussian.Fernique
 import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Mathlib.MeasureTheory.Group.Convolution
-import Mathlib.MeasureTheory.Group.IntegralConvolution
-import Mathlib.Analysis.InnerProductSpace.Basic
-import Mathlib.Analysis.InnerProductSpace.Continuous
-import Mathlib.Data.Fintype.Order
-import Mathlib.Analysis.Convex.Function
-import Mathlib.Analysis.Normed.Group.Pointwise
-import Mathlib.Topology.Order.Compact
-import Mathlib.Analysis.Calculus.Deriv.Slope
-import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
-import Mathlib.Analysis.Matrix.PosDef
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.StdSimplex
+import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
+import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Positivity
-import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
-import Mathlib.Analysis.Calculus.Gradient.Basic
-import Mathlib.Analysis.InnerProductSpace.Calculus
-import Mathlib.Analysis.Calculus.ContDiff.Operations
-import Mathlib.Algebra.BigOperators.Field
-import Mathlib.Analysis.Calculus.FDeriv.Prod
-import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.Algebra.Order.Ring.Abs
-import Mathlib.Analysis.Calculus.MeanValue
-import Mathlib.Analysis.Convex.Integral
-import Mathlib.MeasureTheory.Integral.Prod
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import Mathlib.Probability.Moments.SubGaussian
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
-import Mathlib.Analysis.Calculus.ContDiff.Basic
-import Mathlib.Analysis.Calculus.ContDiff.Comp
-import Mathlib.Analysis.Normed.Lp.MeasurableSpace
-import Mathlib.Probability.Independence.Basic
-import Mathlib.MeasureTheory.Constructions.Pi
-import Mathlib.Probability.Kernel.Composition.MeasureComp
-import Mathlib.Probability.Kernel.Composition.Comp
 import Mathlib.InformationTheory.KullbackLeibler.Basic
-import Mathlib.Analysis.Convex.SpecificFunctions.Basic
-import Mathlib.MeasureTheory.Integral.MeanInequalities
-import Mathlib.InformationTheory.KullbackLeibler.ChainRule
 import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
-import Mathlib.Probability.Kernel.Composition.AbsolutelyContinuous
-import Mathlib.Probability.Kernel.Composition.RadonNikodym
-import Mathlib.Probability.Kernel.MeasurableLIntegral
-import Mathlib.Probability.Kernel.RadonNikodym
-import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
-import Mathlib.MeasureTheory.Integral.IntegralEqImproper
-import Mathlib.Analysis.Calculus.FDeriv.Equiv
-import Mathlib.Analysis.Calculus.FDeriv.CompCLM
-import Mathlib.Analysis.Calculus.Deriv.Prod
-import Mathlib.Analysis.Calculus.Deriv.Comp
-import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.MeasureTheory.Function.ConditionalExpectation.RadonNikodym
+import Mathlib.MeasureTheory.Integral.Indicator
+import Mathlib.Probability.Martingale.Convergence
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Probability.Distributions.Bernoulli
 import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
-import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
+import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Analysis.Real.Sqrt
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Data.Nat.Cast.Order.Field
-import Mathlib.Analysis.SpecialFunctions.Exp
-import Mathlib.Data.Fintype.Lattice
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.Order.ConditionallyCompleteLattice.Finset
-import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Data.Finset.Sort
-import Mathlib.Data.Prod.Lex
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 import Mathlib.Algebra.Order.Field.GeomSum
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Logic.Equiv.Prod
+import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Data.Fintype.Prod
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.BigOperators.Sym
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Data.Finset.Powerset
 
@@ -113,10 +61,14 @@ statement rests on vendored in below, so that this file is self-contained over M
 set_option quotPrecheck false
 
 -- Namespace stubs (so later `open`s resolve).
+namespace MeasurableSpace
+end MeasurableSpace
 namespace MeasureTheory
 end MeasureTheory
 namespace ProbabilityTheory
 end ProbabilityTheory
+namespace Finset
+end Finset
 namespace Learning
 end Learning
 namespace Learning.IdentAlg
@@ -144,43 +96,44 @@ variable {𝓐 𝓨 Ω : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : Measurab
 
 /-- A stochastic, sequential algorithm. -/
 structure Algorithm (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Policy or sampling rule: distribution of the next action. -/
-  policy : (n : ℕ) → Kernel (Iic n → 𝓐 × 𝓨) 𝓐
+  /-- Policy or sampling rule: distribution of the action at time `n` given the history of the
+  `n` previous action-feedback pairs. -/
+  policy : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓐
   /-- The policy is a Markov kernel. -/
   [h_policy : ∀ n, IsMarkovKernel (policy n)]
-  /-- Distribution of the first action. -/
-  p0 : Measure 𝓐
-  /-- The first action distribution is a probability measure. -/
-  [hp0 : IsProbabilityMeasure p0]
 
 instance (alg : Algorithm 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (alg.policy n) := alg.h_policy n
-instance (alg : Algorithm 𝓐 𝓨) : IsProbabilityMeasure alg.p0 := alg.hp0
+
+/-- Distribution of the first action: the policy at time `0` applied to the empty history. -/
+def Algorithm.p0 (alg : Algorithm 𝓐 𝓨) : Measure 𝓐 :=
+  alg.policy 0 default
+deriving IsProbabilityMeasure
 
 /-- A stochastic environment. -/
 structure Environment (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Distribution of the next observation as function of the past history. -/
-  feedback : (n : ℕ) → Kernel ((Iic n → 𝓐 × 𝓨) × 𝓐) 𝓨
+  /-- Distribution of the feedback at time `n` as function of the history of the `n` previous
+  action-feedback pairs and of the action at time `n`. -/
+  feedback : (n : ℕ) → Kernel ((Fin n → 𝓐 × 𝓨) × 𝓐) 𝓨
   /-- The feedback kernels are Markov kernels. -/
   [h_feedback : ∀ n, IsMarkovKernel (feedback n)]
-  /-- Distribution of the first observation given the first action. -/
-  ν0 : Kernel 𝓐 𝓨
-  /-- The initial observation kernel is a Markov kernel. -/
-  [hp0 : IsMarkovKernel ν0]
 
 instance (env : Environment 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.feedback n) := env.h_feedback n
-instance (env : Environment 𝓐 𝓨) : IsMarkovKernel env.ν0 := env.hp0
+
+/-- Distribution of the first feedback given the first action: the feedback kernel at time `0`
+applied to the empty history. -/
+noncomputable def Environment.ν0 (env : Environment 𝓐 𝓨) : Kernel 𝓐 𝓨 :=
+  (env.feedback 0).sectR default
+deriving IsMarkovKernel
 
 section IsAlgEnvSeq
 
 variable {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨}
     {P : Measure Ω} [IsFiniteMeasure P] {N : ℕ}
 
-/-- History of the algorithm-environment sequence up to time `n`. -/
-def history (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Iic n → 𝓐 × 𝓨 :=
+/-- History of the algorithm-environment sequence before time `n`: the action-feedback pairs at
+times `0, ..., n - 1`. -/
+def history (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Fin n → 𝓐 × 𝓨 :=
   fun i ↦ (A i ω, Y i ω)
-
-section IsAlgEnvSeq
-
 
 /-- An algorithm-environment sequence: a sequence of actions and feedbacks generated
 by an algorithm interacting with an environment. -/
@@ -191,20 +144,13 @@ structure IsAlgEnvSeq
   measurable_action n : Measurable (A n) := by fun_prop
   /-- The feedback sequence is measurable. -/
   measurable_feedback n : Measurable (Y n) := by fun_prop
-  /-- The first action has the correct law. -/
-  hasLaw_action_zero : HasLaw (fun ω ↦ (A 0 ω)) alg.p0 P
-  /-- The first feedback has the correct conditional distribution. -/
-  hasCondDistrib_feedback_zero : HasCondDistrib (Y 0) (A 0) env.ν0 P
-  /-- The next action has the correct conditional distribution given the history. -/
+  /-- The action at time `n` has the correct conditional distribution given the history. -/
   hasCondDistrib_action n :
-    HasCondDistrib (A (n + 1)) (history A Y n) (alg.policy n) P
-  /-- The next feedback has the correct conditional distribution given the history and
-  next action. -/
+    HasCondDistrib (A n) (history A Y n) (alg.policy n) P
+  /-- The feedback at time `n` has the correct conditional distribution given the history and
+  the action at time `n`. -/
   hasCondDistrib_feedback n :
-    HasCondDistrib (Y (n + 1)) (fun ω ↦ (history A Y n ω, A (n + 1) ω))
-      (env.feedback n) P
-
-end IsAlgEnvSeq
+    HasCondDistrib (Y n) (fun ω ↦ (history A Y n ω, A n ω)) (env.feedback n) P
 
 end IsAlgEnvSeq
 
@@ -222,8 +168,7 @@ variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableS
 the last action, but in a possibly time-dependent manner. -/
 @[simps]
 def obliviousEnv (ν : ℕ → Kernel 𝓐 𝓨) [∀ n, IsMarkovKernel (ν n)] : Environment 𝓐 𝓨 where
-  feedback n := (ν (n + 1)).prodMkLeft _
-  ν0 := ν 0
+  feedback n := (ν n).prodMkLeft _
 
 /-- A stationary environment, in which the distribution of the next feedback depends only on the
 last action. -/
@@ -239,14 +184,14 @@ open scoped ENNReal NNReal
 namespace Learning
 variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
 
-/-- A deterministic algorithm, which chooses the action given by the function `nextAction`. -/
+/-- A deterministic algorithm, which chooses the action given by the function `nextA`.
+The initial action is `nextA 0 default`. -/
 @[simps]
 noncomputable
-def detAlgorithm (nextA : (n : ℕ) → (Iic n → 𝓐 × 𝓨) → 𝓐)
-    (h_next : ∀ n, Measurable (nextA n)) (action0 : 𝓐) :
+def detAlgorithm (nextA : (n : ℕ) → (Fin n → 𝓐 × 𝓨) → 𝓐)
+    (h_next : ∀ n, Measurable (nextA n)) :
     Algorithm 𝓐 𝓨 where
   policy n := Kernel.deterministic (nextA n) (h_next n)
-  p0 := Measure.dirac action0
 
 end Learning
 end
@@ -262,6 +207,30 @@ lemma measurable_sigma_of_measurable_comp_mk {f : (Σ a, β a) → γ}
 
 end
 
+-- ═══ LeanMachineLearning.StoppedHistory ═══
+section
+open MeasureTheory ProbabilityTheory Finset
+open scoped ENat
+namespace Learning
+variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {Ω : Type*} {mΩ : MeasurableSpace Ω}
+
+/-- The stopping time of the stopping rule `S` on the action and feedback processes `X`, `Y`:
+the number of rounds played, that is the first `n` such that the history of the first `n` rounds
+belongs to `S` (`⊤` if there is none). -/
+noncomputable def stoppingTime (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
+    (S : Set (Σ n : ℕ, (Fin n → 𝓐 × 𝓨))) : Ω → ℕ∞ :=
+  hittingAfter (fun n ω ↦ (⟨n, history X Y n ω⟩ : Σ n : ℕ, (Fin n → 𝓐 × 𝓨))) S 0
+
+/-- The history of the first `τ ω` rounds, as a history of variable length (of length `0` if
+`τ ω = ⊤`). -/
+noncomputable def stoppedHist (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (τ : Ω → ℕ∞) (ω : Ω) :
+    Σ n : ℕ, (Fin n → 𝓐 × 𝓨) :=
+  ⟨(τ ω).toNat, history X Y _ ω⟩
+
+variable {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {S : Set (Σ n : ℕ, (Fin n → 𝓐 × 𝓨))} {τ : Ω → ℕ∞} {ω : Ω} {n M : ℕ}
+end Learning
+end
+
 -- ═══ LeanMachineLearning.IdentAlg ═══
 section
 open MeasureTheory ProbabilityTheory
@@ -269,10 +238,6 @@ open scoped ENat
 universe u
 namespace Learning
 variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {m𝓞 : MeasurableSpace 𝓞} {Ω : Type*} {mΩ : MeasurableSpace Ω}
-
-/-- The history of the first `n` rounds of the action and feedback processes `X`, `Y`. -/
-def finHistory (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Fin n → 𝓐 × 𝓨 :=
-  fun i ↦ (X i ω, Y i ω)
 
 /-- An identification algorithm with outputs in `𝓞`: a sampling rule `alg`, a stopping rule
 `stop` (`stop n h`: stop after `n` rounds when their history is `h`) and an output rule `output`
@@ -303,15 +268,14 @@ def stopSet : Set (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) := {h | A.stop h.1 h.2}
 
 /-- The stopping time of `A` on the action and feedback processes `X`, `Y`: the number of rounds
 played, that is the first `n` such that the stopping rule fires on the history of the first `n`
-rounds (`⊤` if it never does). It is the hitting time of `stopSet` by the process
-`n ↦ ⟨n, finHistory X Y n⟩` of histories. -/
-noncomputable def stoppingTime : Ω → ℕ∞ :=
-  hittingAfter (fun n ω ↦ (⟨n, finHistory X Y n ω⟩ : Σ n : ℕ, (Fin n → 𝓐 × 𝓨))) A.stopSet 0
+rounds (`⊤` if it never does). It is the stopping time `Learning.stoppingTime` of the stopping
+rule `A.stopSet`. -/
+noncomputable def stoppingTime : Ω → ℕ∞ := Learning.stoppingTime X Y A.stopSet
 
 /-- The history of the rounds played by `A`, as a history of variable length (of length `0` if
-`A` never stops). -/
-noncomputable def stoppedHist (ω : Ω) : Σ n : ℕ, (Fin n → 𝓐 × 𝓨) :=
-  ⟨(A.stoppingTime X Y ω).toNat, finHistory X Y _ ω⟩
+`A` never stops): the history stopped at `A.stoppingTime X Y`. -/
+noncomputable def stoppedHist : Ω → Σ n : ℕ, (Fin n → 𝓐 × 𝓨) :=
+  Learning.stoppedHist X Y (A.stoppingTime X Y)
 
 /-- The output rule of `A` as a single kernel on histories of variable length. -/
 noncomputable def outputKernel : Kernel (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) 𝓞 where

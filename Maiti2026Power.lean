@@ -9,6 +9,7 @@ public import Maiti2026Power.LeanMachineLearning.FixedDesignLaw
 public import Maiti2026Power.LeanMachineLearning.FixedDesignRun
 public import Maiti2026Power.LeanMachineLearning.FixedDesignTransport
 public import Maiti2026Power.LeanMachineLearning.GaussianNoise
+public import Maiti2026Power.LeanMachineLearning.HistoryLaw
 public import Maiti2026Power.LeanMachineLearning.IdentAlg
 public import Maiti2026Power.LeanMachineLearning.LinearBandit
 public import Maiti2026Power.LeanMachineLearning.MedianElimination
@@ -18,7 +19,9 @@ public import Maiti2026Power.LeanMachineLearning.Phased
 public import Maiti2026Power.LeanMachineLearning.RepeatTest
 public import Maiti2026Power.LeanMachineLearning.RepeatTestGaussian
 public import Maiti2026Power.LeanMachineLearning.Run
+public import Maiti2026Power.LeanMachineLearning.RunDivergence
 public import Maiti2026Power.LeanMachineLearning.Seeded
+public import Maiti2026Power.LeanMachineLearning.StoppedHistory
 public import Maiti2026Power.LeanMachineLearning.TwoPoint
 public import Maiti2026Power.MXJ2026.BayesKernel
 public import Maiti2026Power.MXJ2026.BayesModel
@@ -96,7 +99,9 @@ public import Maiti2026Power.Mathlib.Data.Fintype.PiSplitAt
 public import Maiti2026Power.Mathlib.Data.Set.CoverSmall
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
 public import Maiti2026Power.Mathlib.InformationTheory.KLCompProd
+public import Maiti2026Power.Mathlib.InformationTheory.KLFiltration
 public import Maiti2026Power.Mathlib.InformationTheory.KLMixture
+public import Maiti2026Power.Mathlib.InformationTheory.KLRestrict
 public import Maiti2026Power.Mathlib.InformationTheory.Pinsker
 public import Maiti2026Power.Mathlib.Matrix.HermitianCFC
 public import Maiti2026Power.Mathlib.Matrix.Loewner

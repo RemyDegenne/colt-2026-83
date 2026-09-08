@@ -17,8 +17,8 @@ In the linear Gaussian bandit with reward vector `θ`, the observation kernel at
 (`linearGaussianKernel_eq_withDensity`). Hence, for any algorithm, the law of the history of `T`
 rounds under `θ` is the law under pure noise (`θ = 0`) with density the likelihood ratio
 `likelihood θ h = exp (∑ t, (y t ⟪x t, θ⟫ - ⟪x t, θ⟫² / 2))`
-(`IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood`, blueprint `cor:pb_gaussian_likelihood`),
-by the environment likelihood ratio `IsAlgEnvSeq.map_finHistory_eq_withDensity_env`.
+(`IsAlgEnvSeq.map_history_eq_withDensity_likelihood`, blueprint `cor:pb_gaussian_likelihood`),
+by the environment likelihood ratio `IsAlgEnvSeq.map_history_eq_withDensity_env`.
 -/
 
 @[expose] public section
@@ -93,14 +93,14 @@ variable {Ω Ω₀ : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω₀] {P : Me
 /-- **Likelihood ratio of a linear Gaussian history** (blueprint `cor:pb_gaussian_likelihood`):
 for any algorithm, the law of the history of `T` rounds under the reward vector `θ` is the law
 under pure noise with density `likelihood θ`. -/
-lemma _root_.Learning.IsAlgEnvSeq.map_finHistory_eq_withDensity_likelihood
+lemma _root_.Learning.IsAlgEnvSeq.map_history_eq_withDensity_likelihood
     (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
     (h₀ : IsAlgEnvSeq X₀ Y₀ alg (linearGaussianEnv 𝒳 0) P₀) (T : ℕ) :
-    P.map (finHistory X Y T) =
-      (P₀.map (finHistory X₀ Y₀ T)).withDensity fun h ↦ ENNReal.ofReal (likelihood θ h) := by
+    P.map (history X Y T) =
+      (P₀.map (history X₀ Y₀ T)).withDensity fun h ↦ ENNReal.ofReal (likelihood θ h) := by
   have h' : IsAlgEnvSeq X Y alg (stationaryEnv (linearGaussianKernel 𝒳 θ)) P := h
   have h₀' : IsAlgEnvSeq X₀ Y₀ alg (stationaryEnv (linearGaussianKernel 𝒳 0)) P₀ := h₀
-  rw [h'.map_finHistory_eq_withDensity_env (measurable_uncurry_stepLR θ)
+  rw [h'.map_history_eq_withDensity_env (measurable_uncurry_stepLR θ)
     (linearGaussianKernel_eq_withDensity θ) h₀' T]
   congr 1
   funext hh

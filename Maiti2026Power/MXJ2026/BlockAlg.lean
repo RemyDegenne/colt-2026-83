@@ -208,53 +208,53 @@ lemma measurable_recommend : Measurable (Q.recommend d) := by
 
 /-! ### The seeded algorithm -/
 
-/-- The past actions of block `i` in a history of rounds `0..n`, extended by `0`. -/
+/-- The past actions of block `i` in a history of the first `n` rounds, extended by `0`. -/
 noncomputable def pastOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ}
-    (h : Iic n → blockBallSet Q.k d × ℝ) : ℕ → unitBall (Fin d) :=
-  fun r ↦ if hr : i * Q.N d + r ∈ Iic n then blockProjBall i (h ⟨i * Q.N d + r, hr⟩).1
+    (h : Fin n → blockBallSet Q.k d × ℝ) : ℕ → unitBall (Fin d) :=
+  fun r ↦ if hr : i * Q.N d + r < n then blockProjBall i (h ⟨i * Q.N d + r, hr⟩).1
     else unitBallZero
 
-/-- The observations of block `i` in a history of rounds `0..n`, extended by `0`. -/
-noncomputable def yOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ} (h : Iic n → blockBallSet Q.k d × ℝ) :
+/-- The observations of block `i` in a history of the first `n` rounds, extended by `0`. -/
+noncomputable def yOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ} (h : Fin n → blockBallSet Q.k d × ℝ) :
     ℕ → ℝ :=
-  fun r ↦ if hr : i * Q.N d + r ∈ Iic n then (h ⟨i * Q.N d + r, hr⟩).2 else 0
+  fun r ↦ if hr : i * Q.N d + r < n then (h ⟨i * Q.N d + r, hr⟩).2 else 0
 
 lemma measurable_pastOfBlock_apply (i : Fin Q.k) {n : ℕ} (r : ℕ) :
-    Measurable fun h : Iic n → blockBallSet Q.k d × ℝ ↦ Q.pastOfBlock d i h r := by
+    Measurable fun h : Fin n → blockBallSet Q.k d × ℝ ↦ Q.pastOfBlock d i h r := by
   unfold pastOfBlock
   split_ifs
   exacts [(measurable_blockProjBall i).comp (measurable_pi_apply _).fst, measurable_const]
 
 lemma measurable_yOfBlock (i : Fin Q.k) {n : ℕ} :
-    Measurable fun h : Iic n → blockBallSet Q.k d × ℝ ↦ Q.yOfBlock d i h := by
+    Measurable fun h : Fin n → blockBallSet Q.k d × ℝ ↦ Q.yOfBlock d i h := by
   refine measurable_pi_lambda _ fun r ↦ ?_
   unfold yOfBlock
   split_ifs
   exacts [(measurable_pi_apply _).snd, measurable_const]
 
-/-- The action of round `t` computed from the history of rounds `0..n` and the fresh seed `u`:
-in phase 1, the action of the meta-algorithm of the block of `t` embedded on that block; in
+/-- The action of round `t` computed from the history of the first `n` rounds and the fresh seed
+`u`: in phase 1, the action of the meta-algorithm of the block of `t` embedded on that block; in
 phase 2, the basis vector of the round on the selected block. -/
-noncomputable def nextAction (d : ℕ) (t : ℕ) {n : ℕ} (h : Iic n → blockBallSet Q.k d × ℝ)
+noncomputable def nextAction (d : ℕ) (t : ℕ) {n : ℕ} (h : Fin n → blockBallSet Q.k d × ℝ)
     (u : Fin d → Bool) : blockBallSet Q.k d :=
   if t < Q.T₂ d then
     blockEmbBall (Q.blockOf d t) (Q.P.nextAction (t % Q.N d) (Q.pastOfBlock d (Q.blockOf d t) h)
       (Q.P.jStar (Fin d) (Q.yOfBlock d (Q.blockOf d t) h)) u)
   else match Q.basisRound d t with
-    | some m => blockEmbBall (Q.iHat d (NormEstParam.yOfIic h))
+    | some m => blockEmbBall (Q.iHat d (NormEstParam.yOf h))
         ⟨EuclideanSpace.single m 1, single_mem_unitBall m⟩
     | none => Q.zeroBB d
 
 lemma measurable_nextAction (t : ℕ) {n : ℕ} :
-    Measurable fun p : (Iic n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
+    Measurable fun p : (Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
       Q.nextAction d t p.1 p.2 := by
   unfold nextAction
   split_ifs with ht
-  · have h1 : Measurable fun q : ℕ × ((Iic n → blockBallSet Q.k d × ℝ) × (Fin d → Bool)) ↦
+  · have h1 : Measurable fun q : ℕ × ((Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool)) ↦
         Q.P.nextAction (t % Q.N d) (Q.pastOfBlock d (Q.blockOf d t) q.2.1) q.1 q.2.2 :=
       measurable_from_prod_countable_right fun js ↦
         Q.P.measurable_nextAction_of (t % Q.N d) js (Q.measurable_pastOfBlock_apply (Q.blockOf d t))
-    have h2 : Measurable fun p : (Iic n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
+    have h2 : Measurable fun p : (Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
         (Q.P.jStar (Fin d) (Q.yOfBlock d (Q.blockOf d t) p.1), p) :=
       ((Q.P.measurable_jStar).comp ((Q.measurable_yOfBlock (Q.blockOf d t)).comp
         measurable_fst)).prodMk measurable_id
@@ -263,15 +263,13 @@ lemma measurable_nextAction (t : ℕ) {n : ℕ} :
     · exact measurable_const
     · exact (measurable_of_countable fun i : Fin Q.k ↦
         blockEmbBall i ⟨EuclideanSpace.single m 1, single_mem_unitBall m⟩).comp
-        ((Q.measurable_iHat).comp ((NormEstParam.measurable_yOfIic n).comp measurable_fst))
+        ((Q.measurable_iHat).comp ((NormEstParam.measurable_yOf n).comp measurable_fst))
 
 /-- The block algorithm as a seeded algorithm on the block-ball set, with uniform Boolean seeds. -/
 noncomputable def alg (d : ℕ) : SeededAlg (blockBallSet Q.k d) ℝ (Fin d → Bool) where
   seed := uniformBoolVec (Fin d)
-  act0 u := blockEmbBall ⟨0, Q.hk⟩ ((Q.P.alg (Fin d)).act0 u)
-  measurable_act0 := (measurable_blockEmbBall _).comp (Q.P.alg (Fin d)).measurable_act0
-  next n h u := Q.nextAction d (n + 1) h u
-  measurable_next n := Q.measurable_nextAction (n + 1)
+  next n h u := Q.nextAction d n h u
+  measurable_next n := Q.measurable_nextAction n
 
 /-- The deterministic output: the recommendation computed from the observations of the
 history of the `T` rounds. -/

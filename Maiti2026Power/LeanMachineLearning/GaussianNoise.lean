@@ -13,8 +13,8 @@ public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 # Sub-Gaussian noise of linear Gaussian environments
 
 For an algorithm-environment sequence `(X, Y)` in the linear Gaussian environment
-`linearGaussianEnv 𝒳 θ`, the *noise* `η t := Y t - ⟪X t, θ⟫` has, conditionally on the history up
-to time `t - 1` and the action `X t`, the law `N(0, 1)`
+`linearGaussianEnv 𝒳 θ`, the *noise* `η t := Y t - ⟪X t, θ⟫` has, conditionally on the history of
+the first `t` rounds and the action `X t`, the law `N(0, 1)`
 (`IsAlgEnvSeq.hasCondDistrib_noise`, `IsAlgEnvSeq.hasCondDistrib_noise_zero`). It is therefore
 conditionally sub-Gaussian with variance proxy `1` with respect to the filtration
 `filtrationAction` (`IsAlgEnvSeq.hasCondSubgaussianMGF_noise`), and Mathlib's Azuma–Hoeffding
@@ -77,10 +77,10 @@ lemma hasCondDistrib_sub_inner_of_hasCondDistrib {𝓧 : Type*} {m𝓧 : Measura
 variable (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
 include h
 
-/-- Conditionally on the history up to time `n` and the action at time `n + 1`, the noise at time
-`n + 1` has the law `N(0, 1)`. -/
+/-- Conditionally on the history of the first `n` rounds and the action at round `n`, the noise
+at round `n` has the law `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise (n : ℕ) :
-    HasCondDistrib (noise θ X Y (n + 1)) (fun ω ↦ (history X Y n ω, X (n + 1) ω))
+    HasCondDistrib (noise θ X Y n) (fun ω ↦ (history X Y n ω, X n ω))
       (Kernel.const _ (gaussianReal 0 1)) P :=
   hasCondDistrib_sub_inner_of_hasCondDistrib measurable_snd (h.hasCondDistrib_feedback n)
 
@@ -96,10 +96,8 @@ lemma _root_.Learning.IsAlgEnvSeq.measurable_noise (t : ℕ) : Measurable (noise
 
 /-- The noise at time `t` has the law `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasLaw_noise (t : ℕ) :
-    HasLaw (noise θ X Y t) (gaussianReal 0 1) P := by
-  cases t with
-  | zero => exact h.hasCondDistrib_noise_zero.hasLaw_of_const
-  | succ n => exact (h.hasCondDistrib_noise n).hasLaw_of_const
+    HasLaw (noise θ X Y t) (gaussianReal 0 1) P :=
+  (h.hasCondDistrib_noise t).hasLaw_of_const
 
 /-- The noise at time `t` is sub-Gaussian with variance proxy `1`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasSubgaussianMGF_noise (t : ℕ) :
@@ -109,21 +107,21 @@ lemma _root_.Learning.IsAlgEnvSeq.hasSubgaussianMGF_noise (t : ℕ) :
 
 variable [StandardBorelSpace Ω]
 
-/-- The noise at time `n + 1` is conditionally sub-Gaussian with variance proxy `1` given the
-history up to time `n` and the action at time `n + 1`. -/
+/-- The noise at round `n` is conditionally sub-Gaussian with variance proxy `1` given the
+history of the first `n` rounds and the action at round `n`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondSubgaussianMGF_noise (n : ℕ) :
-    HasCondSubgaussianMGF (h.filtrationAction (n + 1)) (h.filtrationAction.le (n + 1))
-      (noise θ X Y (n + 1)) 1 P := by
-  have hZ : Measurable fun ω ↦ (history X Y n ω, X (n + 1) ω) :=
-    (h.measurable_history n).prodMk (h.measurable_action (n + 1))
-  have key := (h.hasCondDistrib_noise n).hasCondSubgaussianMGF_of_const (h.measurable_noise (n + 1))
+    HasCondSubgaussianMGF (h.filtrationAction n) (h.filtrationAction.le n)
+      (noise θ X Y n) 1 P := by
+  have hZ : Measurable fun ω ↦ (history X Y n ω, X n ω) :=
+    (h.measurable_history n).prodMk (h.measurable_action n)
+  have key := (h.hasCondDistrib_noise n).hasCondSubgaussianMGF_of_const (h.measurable_noise n)
     hZ (hasSubgaussianMGF_fun_id_gaussianReal 1)
-  have heq : h.filtrationAction (n + 1) =
-      MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X (n + 1) ω)) inferInstance :=
-    h.filtrationAction_eq_comap (n + 1) n.succ_ne_zero
+  have heq : h.filtrationAction n =
+      MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X n ω)) inferInstance :=
+    h.filtrationAction_eq_comap n
   have hgen : ∀ (m : MeasurableSpace Ω) (hm : m ≤ mΩ),
-      m = MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X (n + 1) ω)) inferInstance →
-      HasCondSubgaussianMGF m hm (noise θ X Y (n + 1)) 1 P := by
+      m = MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X n ω)) inferInstance →
+      HasCondSubgaussianMGF m hm (noise θ X Y n) 1 P := by
     rintro m hm rfl
     exact key
   exact hgen _ _ heq
@@ -150,7 +148,7 @@ lemma _root_.Learning.IsAlgEnvSeq.stronglyAdapted_noise_shifted (n : ℕ) :
 lemma _root_.Learning.IsAlgEnvSeq.hasCondSubgaussianMGF_noise_shifted (n i : ℕ) :
     HasCondSubgaussianMGF (h.shiftedFiltrationAction n i) ((h.shiftedFiltrationAction n).le i)
       (noise θ X Y (n + (i + 1))) 1 P :=
-  h.hasCondSubgaussianMGF_noise (n + i)
+  h.hasCondSubgaussianMGF_noise (n + i + 1)
 
 /-- **Azuma–Hoeffding for the noise**: the sum of the noises of the rounds `n, …, n + m - 1`
 exceeds `ε ≥ 0` with probability at most `exp (-ε² / (2 m))`. -/

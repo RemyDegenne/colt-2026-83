@@ -15,7 +15,7 @@ For a fixed-budget identification algorithm `A` (budget `T`) with the fixed desi
 linear Gaussian environment with reward vector `θ`, the pair (history of the `T` rounds, output)
 has the explicit law
 `fixedDesignPairLaw A x θ = (N(0,1)^T).map (η ↦ (x t, ⟪x t, θ⟫ + η t)_t) ⊗ₘ A.output T`
-(`IsRun.hasLaw_finHistory_out_of_fixedDesign`, blueprint `lem:fixed_design_law` and
+(`IsRun.hasLaw_history_out_of_fixedDesign`, blueprint `lem:fixed_design_law` and
 `def:bayes_prior`). Consequently the PAC property of `A` is a statement about this law
 (`IsPAC.le_measureReal_fixedDesignPairLaw`), which is what the Bayesian lower bound of
 Theorem 3 uses.
@@ -78,9 +78,9 @@ variable [OpensMeasurableSpace E] [MeasurableEq 𝒳] {Ω : Type*} {mΩ : Measur
 
 /-- Under a fixed-design run, the history of the first `T` rounds has law
 `fixedDesignHistLaw`. -/
-lemma _root_.Learning.IsAlgEnvSeq.hasLaw_finHistory_of_fixedDesign
+lemma _root_.Learning.IsAlgEnvSeq.hasLaw_history_of_fixedDesign
     (h : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ) :
-    HasLaw (finHistory X Y T) (fixedDesignHistLaw (fun t : Fin T ↦ x t) θ) P := by
+    HasLaw (history X Y T) (fixedDesignHistLaw (fun t : Fin T ↦ x t) θ) P := by
   have hY := h.hasLaw_feedback_finVec_of_fixedDesign T
   have hm : Measurable fun y : Fin T → ℝ ↦ fun t : Fin T ↦ (x t, y t) :=
     measurable_pi_lambda _ fun t ↦ measurable_const.prodMk (measurable_pi_apply t)
@@ -98,22 +98,22 @@ lemma _root_.Learning.IsAlgEnvSeq.hasLaw_finHistory_of_fixedDesign
   refine h1.congr ?_
   filter_upwards [h.ae_action_eq_of_fixedDesign] with ω hω
   funext t
-  simp [finHistory, hω t]
+  simp [history, hω t]
 
 /-- **Law of a fixed-design run** (blueprint `lem:fixed_design_law`, `def:bayes_prior`): the
 pair (history of the `T` rounds, output) of a run of the fixed-budget algorithm `A` (budget `T`)
 with the fixed design `x` in the linear Gaussian environment with reward vector `θ` has law
 `fixedDesignPairLaw A x θ`. -/
-lemma _root_.Learning.IdentAlg.IsRun.hasLaw_finHistory_out_of_fixedDesign
+lemma _root_.Learning.IdentAlg.IsRun.hasLaw_history_out_of_fixedDesign
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (hdes : A.alg = fixedDesignAlg x) :
-    HasLaw (fun ω ↦ (finHistory X Y T ω, out ω)) (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ)
+    HasLaw (fun ω ↦ (history X Y T ω, out ω)) (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ)
       P := by
   have hseq : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P := by
     have := h.isAlgEnvSeq
     rwa [hdes] at this
-  exact (hseq.hasLaw_finHistory_of_fixedDesign T).prodMk_of_hasCondDistrib
-    (h.hasCondDistrib_output_finHistory hA)
+  exact (hseq.hasLaw_history_of_fixedDesign T).prodMk_of_hasCondDistrib
+    (h.hasCondDistrib_output_history hA)
 
 end run
 
@@ -133,7 +133,7 @@ lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_fixedDesignPairLaw
       {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
   have := hA.isMarkovKernel_output
   have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
-  have hlaw := hrun.hasLaw_finHistory_out_of_fixedDesign hA hdes
+  have hlaw := hrun.hasLaw_history_out_of_fixedDesign hA hdes
   have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ hrun
   have hmeas : MeasurableSet {p : (Fin T → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ p.2 ≤ ε} := by
     refine measurableSet_le ?_ measurable_const

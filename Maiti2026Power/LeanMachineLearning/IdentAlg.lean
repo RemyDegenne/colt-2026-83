@@ -5,7 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.Mathlib.MeasureTheory.MeasurableSpace.Sigma
+public import Maiti2026Power.LeanMachineLearning.StoppedHistory
 public import LeanMachineLearning.SequentialLearning.Deterministic
 
 /-!
@@ -23,8 +23,9 @@ A *run* of the algorithm in an environment `env`, on a probability space `(Ω, P
 action and feedback processes `X, Y` forming an algorithm-environment sequence for `alg` and `env`
 (LML `IsAlgEnvSeq`) and an output `out : Ω → 𝓞` whose conditional law given the history at the
 stopping time is the output rule (`IdentAlg.IsRun`). The stopping time `IdentAlg.stoppingTime`
-is the hitting time (Mathlib `hittingAfter`) of the stopping rule by the process of histories,
-a stopping time of the history filtration.
+is the stopping time `Learning.stoppingTime` of the stopping rule `A.stopSet` (the hitting time,
+Mathlib `hittingAfter`, of the stopping rule by the process of histories), a stopping time of
+the history filtration, and the history at the stopping time is `Learning.stoppedHist`.
 
 Examples: best-arm identification (`𝓞 = 𝓐`, output = recommended arm), hypothesis tests
 (`𝓞 = Bool`), estimation (`𝓞 = ℝ`).
@@ -61,14 +62,10 @@ namespace Learning
 variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
   {m𝓞 : MeasurableSpace 𝓞} {Ω : Type*} {mΩ : MeasurableSpace Ω}
 
-/-- The history of the first `n` rounds of the action and feedback processes `X`, `Y`. -/
-def finHistory (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Fin n → 𝓐 × 𝓨 :=
-  fun i ↦ (X i ω, Y i ω)
-
 /-- The deterministic algorithm that plays the fixed sequence `x : ℕ → 𝓐` regardless of the
 observations (a *fixed design*). -/
 noncomputable def fixedDesignAlg (x : ℕ → 𝓐) : Algorithm 𝓐 𝓨 :=
-  detAlgorithm (fun n _ ↦ x (n + 1)) (fun _ ↦ measurable_const) (x 0)
+  detAlgorithm (fun n _ ↦ x n) fun _ ↦ measurable_const
 
 /-- An identification algorithm with outputs in `𝓞`: a sampling rule `alg`, a stopping rule
 `stop` (`stop n h`: stop after `n` rounds when their history is `h`) and an output rule `output`
@@ -102,39 +99,34 @@ def stopSet : Set (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) := {h | A.stop h.1 h.2}
 
 /-- The stopping time of `A` on the action and feedback processes `X`, `Y`: the number of rounds
 played, that is the first `n` such that the stopping rule fires on the history of the first `n`
-rounds (`⊤` if it never does). It is the hitting time of `stopSet` by the process
-`n ↦ ⟨n, finHistory X Y n⟩` of histories. -/
-noncomputable def stoppingTime : Ω → ℕ∞ :=
-  hittingAfter (fun n ω ↦ (⟨n, finHistory X Y n ω⟩ : Σ n : ℕ, (Fin n → 𝓐 × 𝓨))) A.stopSet 0
+rounds (`⊤` if it never does). It is the stopping time `Learning.stoppingTime` of the stopping
+rule `A.stopSet`. -/
+noncomputable def stoppingTime : Ω → ℕ∞ := Learning.stoppingTime X Y A.stopSet
+
+lemma stoppingTime_def : A.stoppingTime X Y = Learning.stoppingTime X Y A.stopSet := rfl
 
 lemma measurableSet_stopSet : MeasurableSet A.stopSet :=
   measurableSet_sigma_iff.2 A.measurableSet_stop
-
-omit m𝓐 m𝓨 in
-/-- The history of the first `n` rounds is a function of the history up to time `n`. -/
-lemma finHistory_eq_comp_history (n : ℕ) :
-    finHistory X Y n =
-      (fun h : Finset.Iic n → 𝓐 × 𝓨 ↦ fun i : Fin n ↦ h ⟨i, Finset.mem_Iic.2 i.2.le⟩) ∘
-        history X Y n := rfl
-
-lemma adapted_finHistory {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨}
-    {P : Measure Ω} [IsFiniteMeasure P] (h : IsAlgEnvSeq X Y alg env P) :
-    Adapted h.filtration (fun n ω ↦ (⟨n, finHistory X Y n ω⟩ : Σ n : ℕ, (Fin n → 𝓐 × 𝓨))) := by
-  refine fun n ↦ (measurable_sigma_mk n).comp ?_
-  rw [finHistory_eq_comp_history]
-  exact measurable_comp_comap _ (by fun_prop)
 
 /-- The stopping time of an identification algorithm is a stopping time of the history
 filtration of any algorithm-environment sequence `X`, `Y`. -/
 lemma isStoppingTime_stoppingTime {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨}
     {P : Measure Ω} [IsFiniteMeasure P] (h : IsAlgEnvSeq X Y alg env P) :
     IsStoppingTime h.filtration (A.stoppingTime X Y) :=
-  (adapted_finHistory _ _ h).isStoppingTime_hittingAfter A.measurableSet_stopSet
+  h.isStoppingTime_stoppingTime A.measurableSet_stopSet
 
 /-- The history of the rounds played by `A`, as a history of variable length (of length `0` if
-`A` never stops). -/
-noncomputable def stoppedHist (ω : Ω) : Σ n : ℕ, (Fin n → 𝓐 × 𝓨) :=
-  ⟨(A.stoppingTime X Y ω).toNat, finHistory X Y _ ω⟩
+`A` never stops): the history stopped at `A.stoppingTime X Y`. -/
+noncomputable def stoppedHist : Ω → Σ n : ℕ, (Fin n → 𝓐 × 𝓨) :=
+  Learning.stoppedHist X Y (A.stoppingTime X Y)
+
+lemma stoppedHist_def : A.stoppedHist X Y = Learning.stoppedHist X Y (A.stoppingTime X Y) := rfl
+
+/-- When the stopping time is finite, the history at the stopping time belongs to the stopping
+rule. -/
+lemma stoppedHist_mem_stopSet_of_ne_top {ω : Ω} (h : A.stoppingTime X Y ω ≠ ⊤) :
+    A.stoppedHist X Y ω ∈ A.stopSet :=
+  Learning.stoppedHist_mem_of_ne_top h
 
 /-- The output rule of `A` as a single kernel on histories of variable length. -/
 noncomputable def outputKernel : Kernel (Σ n : ℕ, (Fin n → 𝓐 × 𝓨)) 𝓞 where

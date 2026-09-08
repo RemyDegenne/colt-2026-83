@@ -839,7 +839,8 @@ round $t$.
 $(j_*, t)$: \texttt{rbBlock} returns the start of the Rademacher block of round $t$ (if any)
 and \texttt{basisRound} the basis vector of round $t$ (if any); \texttt{planAction} is the
 plan and \texttt{nextAction} its computation from the past, so that the seeded algorithm
-\texttt{alg} has \texttt{next}$_n(h, u) = \mathrm{nextAction}(n+1, \mathrm{past}(h), j_*(h), u)$.
+\texttt{alg} has \texttt{next}$_n(h, u) = \mathrm{nextAction}(n, \mathrm{past}(h), j_*(h), u)$,
+where $h$ is the history of the first $n$ rounds.
 The estimate is the measurable function \texttt{estimate} of the observation sequence
 (\texttt{output} on histories of length $N_{\mathrm{norm}}$), and the identification
 algorithm is the fixed-budget algorithm with this deterministic output. The paper composes

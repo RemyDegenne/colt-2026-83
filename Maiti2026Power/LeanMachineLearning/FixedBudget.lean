@@ -5,7 +5,7 @@ Authors: Rémy Degenne
 -/
 module
 
-public import Maiti2026Power.LeanMachineLearning.DivergenceDecomposition
+public import Maiti2026Power.LeanMachineLearning.RunDivergence
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
 
 /-!
@@ -17,7 +17,7 @@ stopping time is the history of the first `T` rounds (`IsFixedBudget.stoppedHist
 
 Consequently, for two runs of `A` (on arbitrary probability spaces) in two environments, the
 divergence between the laws of the outputs is at most the divergence between the laws of the
-histories of the `T` rounds played, by the data-processing inequality (`IsRun.klDiv_map_out_le`):
+histories of the first `T` rounds, by the data-processing inequality (`IsRun.klDiv_map_out_le`):
 appending the recommendation does not increase the divergence. Combined with the divergence
 decomposition for linear Gaussian environments, the divergence between the laws of the outputs
 under `θ` and `θ'` is at most `T R ^ 2 ‖θ - θ'‖ ^ 2 / 2` (`LinearBandit.klDiv_map_out_le`), and the
@@ -41,32 +41,20 @@ variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : Measur
 /-- The stopping time of a fixed-budget algorithm with budget `T` is `T`. -/
 lemma IsFixedBudget.stoppingTime_eq (hA : A.IsFixedBudget T) (ω : Ω) :
     A.stoppingTime X Y ω = T := by
-  have hmem : ∀ n, (⟨n, finHistory X Y n ω⟩ : Σ n, Fin n → 𝓐 × 𝓨) ∈ A.stopSet ↔ n = T := by
+  have hmem : ∀ n, (⟨n, history X Y n ω⟩ : Σ n, Fin n → 𝓐 × 𝓨) ∈ A.stopSet ↔ n = T := by
     intro n
     unfold IsFixedBudget at hA
     simp only [stopSet, Set.mem_ofPred_eq, hA]
-  refine le_antisymm (hittingAfter_le_of_mem (Nat.zero_le T) ((hmem T).2 rfl)) ?_
-  by_contra! hlt
-  obtain ⟨i, hi⟩ := ENat.ne_top_iff_exists.1 (ne_top_of_lt hlt)
-  rw [← hi, Nat.cast_lt] at hlt
-  obtain ⟨j, hj, hjs⟩ := hittingAfter_le_iff.1 hi.symm.le
-  rw [hmem] at hjs
-  subst hjs
-  exact absurd hj.2 (not_le.2 hlt)
+  exact stoppingTime_eq_coe_iff.2
+    ⟨(hmem T).2 rfl, fun j hj hjS ↦ hj.ne ((hmem j).1 hjS)⟩
 
 /-- The history at the stopping time of a fixed-budget algorithm with budget `T` is the history
 of the first `T` rounds. -/
 lemma IsFixedBudget.stoppedHist_eq (hA : A.IsFixedBudget T) (ω : Ω) :
-    A.stoppedHist X Y ω = ⟨T, finHistory X Y T ω⟩ := by
-  unfold stoppedHist
-  rw [hA.stoppingTime_eq, ENat.toNat_natCast]
-
-omit m𝓐 m𝓨 in
-/-- The history of the first `n + 1` rounds is a function of the history up to time `n`. -/
-lemma finHistory_succ_eq_comp_history (n : ℕ) :
-    finHistory X Y (n + 1) =
-      (fun h : Finset.Iic n → 𝓐 × 𝓨 ↦ fun i : Fin (n + 1) ↦
-        h ⟨i, Finset.mem_Iic.2 (Nat.lt_succ_iff.1 i.2)⟩) ∘ history X Y n := rfl
+    A.stoppedHist X Y ω = ⟨T, history X Y T ω⟩ := by
+  rw [stoppedHist_def,
+    stoppedHist_congr (A.stoppingTime X Y) (fun _ ↦ (T : ℕ∞)) (hA.stoppingTime_eq ω),
+    stoppedHist_coe]
 
 variable {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
   {X' : ℕ → Ω' → 𝓐} {Y' : ℕ → Ω' → 𝓨} {out : Ω → 𝓞} {out' : Ω' → 𝓞}
@@ -79,57 +67,44 @@ lemma IsFixedBudget.stoppedHist_mem_stopSet (hA : A.IsFixedBudget T) (ω : Ω) :
   unfold IsFixedBudget at hA
   simp [stopSet, hA]
 
+/-- The stopping time of a fixed-budget algorithm is finite. -/
+lemma IsFixedBudget.stoppingTime_ne_top (hA : A.IsFixedBudget T) (ω : Ω) :
+    A.stoppingTime X Y ω ≠ ⊤ := by
+  rw [hA.stoppingTime_eq]
+  exact ENat.natCast_ne_top T
+
 /-- **Data processing for runs**: for two runs of the same fixed-budget identification algorithm,
 the divergence between the laws of the pairs (history at the stopping time, output) is the
 divergence between the laws of the histories at the stopping time. -/
-lemma IsRun.klDiv_map_stoppedHist_out (hA : A.IsFixedBudget T) (h : A.IsRun env X Y out P)
-    (h' : A.IsRun env' X' Y' out' P') :
+lemma IsRun.klDiv_map_stoppedHist_out_of_isFixedBudget (hA : A.IsFixedBudget T)
+    (h : A.IsRun env X Y out P) (h' : A.IsRun env' X' Y' out' P') :
     klDiv (P.map fun ω ↦ (A.stoppedHist X Y ω, out ω))
         (P'.map fun ω ↦ (A.stoppedHist X' Y' ω, out' ω)) =
-      klDiv (P.map (A.stoppedHist X Y)) (P'.map (A.stoppedHist X' Y')) := by
-  have hne : Nonempty 𝓞 := ⟨out (Measure.nonempty_of_neZero P).some⟩
-  rw [h.hasCondDistrib_output.map_eq, h'.hasCondDistrib_output.map_eq]
-  refine klDiv_compProd_left_of_ae _ _ _ A.measurableSet_stopSet
-    (fun s hs ↦ A.isProbabilityMeasure_output s.1 s.2 hs) ?_ ?_
-  · rw [ae_map_iff (p := fun a ↦ a ∈ A.stopSet) h.hasCondDistrib_output.aemeasurable_fst
-      A.measurableSet_stopSet]
-    exact Filter.Eventually.of_forall hA.stoppedHist_mem_stopSet
-  · rw [ae_map_iff (p := fun a ↦ a ∈ A.stopSet) h'.hasCondDistrib_output.aemeasurable_fst
-      A.measurableSet_stopSet]
-    exact Filter.Eventually.of_forall hA.stoppedHist_mem_stopSet
+      klDiv (P.map (A.stoppedHist X Y)) (P'.map (A.stoppedHist X' Y')) :=
+  h.klDiv_map_stoppedHist_out h' (Filter.Eventually.of_forall hA.stoppingTime_ne_top)
+    (Filter.Eventually.of_forall hA.stoppingTime_ne_top)
 
 /-- **Data processing for runs of a fixed-budget algorithm**: for two runs (in two environments)
-of a fixed-budget algorithm with budget `n + 1`, the divergence between the laws of the outputs is
-at most the divergence between the laws of the histories up to time `n`. -/
-lemma IsRun.klDiv_map_out_le {n : ℕ} (hA : A.IsFixedBudget (n + 1)) (h : A.IsRun env X Y out P)
+of a fixed-budget algorithm with budget `T`, the divergence between the laws of the outputs is
+at most the divergence between the laws of the histories of the first `T` rounds. -/
+lemma IsRun.klDiv_map_out_le (hA : A.IsFixedBudget T) (h : A.IsRun env X Y out P)
     (h' : A.IsRun env' X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤
-      klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) := by
-  have hX := h.isAlgEnvSeq.measurable_action
-  have hY := h.isAlgEnvSeq.measurable_feedback
-  have hX' := h'.isAlgEnvSeq.measurable_action
-  have hY' := h'.isAlgEnvSeq.measurable_feedback
+      klDiv (P.map (history X Y T)) (P'.map (history X' Y' T)) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hout' : AEMeasurable out' P' := h'.hasCondDistrib_output.aemeasurable_snd
-  have hfin : Measurable (finHistory X Y (n + 1)) := by unfold finHistory; fun_prop
-  have hfin' : Measurable (finHistory X' Y' (n + 1)) := by unfold finHistory; fun_prop
-  let ι : (Fin (n + 1) → 𝓐 × 𝓨) → Σ n, Fin n → 𝓐 × 𝓨 :=
-    Sigma.mk (β := fun n ↦ Fin n → 𝓐 × 𝓨) (n + 1)
+  have hfin : Measurable (history X Y T) := h.isAlgEnvSeq.measurable_history T
+  have hfin' : Measurable (history X' Y' T) := h'.isAlgEnvSeq.measurable_history T
+  let ι : (Fin T → 𝓐 × 𝓨) → Σ n, Fin n → 𝓐 × 𝓨 := Sigma.mk (β := fun n ↦ Fin n → 𝓐 × 𝓨) T
   have hι : Measurable ι := measurable_sigma_mk _
-  let f : (Finset.Iic n → 𝓐 × 𝓨) → (Fin (n + 1) → 𝓐 × 𝓨) :=
-    fun h i ↦ h ⟨i, Finset.mem_Iic.2 (Nat.lt_succ_iff.1 i.2)⟩
-  have hf : Measurable f := measurable_pi_lambda _ fun i ↦ measurable_pi_apply _
   have hsh : Measurable (A.stoppedHist X Y) := by
-    have : A.stoppedHist X Y = fun ω ↦ (⟨n + 1, finHistory X Y (n + 1) ω⟩ : Σ n, Fin n → 𝓐 × 𝓨) :=
-      funext hA.stoppedHist_eq
+    have : A.stoppedHist X Y = ι ∘ history X Y T := funext hA.stoppedHist_eq
     rw [this]
-    exact (measurable_sigma_mk _).comp hfin
+    exact hι.comp hfin
   have hsh' : Measurable (A.stoppedHist X' Y') := by
-    have : A.stoppedHist X' Y' =
-        fun ω ↦ (⟨n + 1, finHistory X' Y' (n + 1) ω⟩ : Σ n, Fin n → 𝓐 × 𝓨) :=
-      funext hA.stoppedHist_eq
+    have : A.stoppedHist X' Y' = ι ∘ history X' Y' T := funext hA.stoppedHist_eq
     rw [this]
-    exact (measurable_sigma_mk _).comp hfin'
+    exact hι.comp hfin'
   calc klDiv (P.map out) (P'.map out')
       = klDiv ((P.map fun ω ↦ (A.stoppedHist X Y ω, out ω)).map Prod.snd)
           ((P'.map fun ω ↦ (A.stoppedHist X' Y' ω, out' ω)).map Prod.snd) := by
@@ -140,18 +115,11 @@ lemma IsRun.klDiv_map_out_le {n : ℕ} (hA : A.IsFixedBudget (n + 1)) (h : A.IsR
     _ ≤ klDiv (P.map fun ω ↦ (A.stoppedHist X Y ω, out ω))
           (P'.map fun ω ↦ (A.stoppedHist X' Y' ω, out' ω)) := klDiv_map_le _ _ measurable_snd
     _ = klDiv (P.map (A.stoppedHist X Y)) (P'.map (A.stoppedHist X' Y')) :=
-        h.klDiv_map_stoppedHist_out hA h'
-    _ = klDiv ((P.map (finHistory X Y (n + 1))).map ι)
-          ((P'.map (finHistory X' Y' (n + 1))).map ι) := by
+        h.klDiv_map_stoppedHist_out_of_isFixedBudget hA h'
+    _ = klDiv ((P.map (history X Y T)).map ι) ((P'.map (history X' Y' T)).map ι) := by
         rw [Measure.map_map hι hfin, Measure.map_map hι hfin']
-        congr 2 <;> exact funext fun ω ↦ by rw [hA.stoppedHist_eq]; rfl
-    _ ≤ klDiv (P.map (finHistory X Y (n + 1))) (P'.map (finHistory X' Y' (n + 1))) :=
-        klDiv_map_le _ _ hι
-    _ = klDiv ((P.map (history X Y n)).map f) ((P'.map (history X' Y' n)).map f) := by
-        rw [Measure.map_map hf (h.isAlgEnvSeq.measurable_history n),
-          Measure.map_map hf (h'.isAlgEnvSeq.measurable_history n)]
-        rfl
-    _ ≤ klDiv (P.map (history X Y n)) (P'.map (history X' Y' n)) := klDiv_map_le _ _ hf
+        congr 2 <;> exact funext fun ω ↦ hA.stoppedHist_eq ω
+    _ ≤ klDiv (P.map (history X Y T)) (P'.map (history X' Y' T)) := klDiv_map_le _ _ hι
 
 /-- For a run of a fixed-budget algorithm with budget `0`, the law of the output is the output
 rule applied to the empty history. -/
@@ -195,7 +163,7 @@ namespace LinearBandit
 open IdentAlg
 
 variable {E 𝓞 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
-  [OpensMeasurableSpace E] [MeasurableSpace.CountablyGenerated E] {m𝓞 : MeasurableSpace 𝓞}
+  [OpensMeasurableSpace E] {m𝓞 : MeasurableSpace 𝓞}
   {𝒳 : Set E} {θ θ' : E} {A : IdentAlg 𝒳 ℝ 𝓞} {T : ℕ} {R : ℝ}
   {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
@@ -208,16 +176,9 @@ between the laws of the outputs is at most `T C / 2`. -/
 lemma IsRun.klDiv_map_out_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
     (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') :
-    klDiv (P.map out) (P'.map out') ≤ ENNReal.ofReal (T * (C / 2)) := by
-  rcases Nat.eq_zero_or_eq_succ_pred T with hT | hT
-  · subst hT
-    rw [IdentAlg.IsRun.klDiv_map_out_eq_zero hA h h']
-    exact bot_le
-  · rw [hT] at hA ⊢
-    refine (IdentAlg.IsRun.klDiv_map_out_le hA h h').trans ?_
-    have := klDiv_map_history_le_of_sq_le h.isAlgEnvSeq h'.isAlgEnvSeq hC (T - 1)
-    push_cast
-    exact this
+    klDiv (P.map out) (P'.map out') ≤ ENNReal.ofReal (T * (C / 2)) :=
+  (IdentAlg.IsRun.klDiv_map_out_le hA h h').trans
+    (klDiv_map_history_le_of_sq_le h.isAlgEnvSeq h'.isAlgEnvSeq hC T)
 
 /-- For two runs of a fixed-budget algorithm with budget `T` in the linear Gaussian environments
 with reward vectors `θ` and `θ'` on an action set contained in the ball of radius `R`, the
@@ -274,28 +235,28 @@ lemma outputKernel_comap_sigma_mk (A : IdentAlg 𝓐 𝓨 𝓞) (T : ℕ) :
 
 /-- **The output of a run of a fixed-budget algorithm has conditional law `A.output T` given the
 history of the first `T` rounds.** -/
-lemma IsRun.hasCondDistrib_output_finHistory (hA : A.IsFixedBudget T)
+lemma IsRun.hasCondDistrib_output_history (hA : A.IsFixedBudget T)
     (h : A.IsRun env X Y out P) :
-    HasCondDistrib out (finHistory X Y T) (A.output T) P := by
+    HasCondDistrib out (history X Y T) (A.output T) P := by
   have hX := h.isAlgEnvSeq.measurable_action
   have hY := h.isAlgEnvSeq.measurable_feedback
-  have hfin : Measurable (finHistory X Y T) := by unfold finHistory; fun_prop
+  have hfin : Measurable (history X Y T) := h.isAlgEnvSeq.measurable_history T
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   set ι : (Fin T → 𝓐 × 𝓨) → Σ n, Fin n → 𝓐 × 𝓨 := Sigma.mk (β := fun n ↦ Fin n → 𝓐 × 𝓨) T
     with hι_def
   have hι : MeasurableEmbedding ι := measurableEmbedding_sigma_mk T
-  have hsh : A.stoppedHist X Y = ι ∘ finHistory X Y T := funext hA.stoppedHist_eq
+  have hsh : A.stoppedHist X Y = ι ∘ history X Y T := funext hA.stoppedHist_eq
   have hg : MeasurableEmbedding (Prod.map ι (id : 𝓞 → 𝓞)) := hι.prodMap MeasurableEmbedding.id
   have h1 := h.hasCondDistrib_output.map_eq
   rw [hsh] at h1
   -- both sides of `h1` are images under `Prod.map ι id`
-  have h2 : (P.map fun ω ↦ ((ι ∘ finHistory X Y T) ω, out ω)) =
-      (P.map fun ω ↦ (finHistory X Y T ω, out ω)).map (Prod.map ι id) := by
+  have h2 : (P.map fun ω ↦ ((ι ∘ history X Y T) ω, out ω)) =
+      (P.map fun ω ↦ (history X Y T ω, out ω)).map (Prod.map ι id) := by
     rw [AEMeasurable.map_map_of_aemeasurable hg.measurable.aemeasurable
       (hfin.aemeasurable.prodMk hout)]
     rfl
-  have h3 : P.map (ι ∘ finHistory X Y T) ⊗ₘ A.outputKernel =
-      (P.map (finHistory X Y T) ⊗ₘ A.output T).map (Prod.map ι id) := by
+  have h3 : P.map (ι ∘ history X Y T) ⊗ₘ A.outputKernel =
+      (P.map (history X Y T) ⊗ₘ A.output T).map (Prod.map ι id) := by
     rw [← outputKernel_comap_sigma_mk A T, ← Measure.map_map hι.measurable hfin]
     ext s hs
     rw [Measure.map_apply hg.measurable hs, Measure.compProd_apply (hg.measurable hs),
@@ -304,24 +265,24 @@ lemma IsRun.hasCondDistrib_output_finHistory (hA : A.IsFixedBudget T)
     rfl
   rw [h2, h3] at h1
   refine ⟨hfin.aemeasurable.prodMk hout, ?_⟩
-  calc P.map (fun ω ↦ (finHistory X Y T ω, out ω))
-      = ((P.map fun ω ↦ (finHistory X Y T ω, out ω)).map (Prod.map ι id)).comap
+  calc P.map (fun ω ↦ (history X Y T ω, out ω))
+      = ((P.map fun ω ↦ (history X Y T ω, out ω)).map (Prod.map ι id)).comap
           (Prod.map ι id) := (hg.comap_map _).symm
-    _ = ((P.map (finHistory X Y T) ⊗ₘ A.output T).map (Prod.map ι id)).comap (Prod.map ι id) := by
+    _ = ((P.map (history X Y T) ⊗ₘ A.output T).map (Prod.map ι id)).comap (Prod.map ι id) := by
         rw [h1]
-    _ = P.map (finHistory X Y T) ⊗ₘ A.output T := hg.comap_map _
+    _ = P.map (history X Y T) ⊗ₘ A.output T := hg.comap_map _
 
 /-- For a fixed-budget algorithm whose output rule is the deterministic map `g` of the history,
 the output of a run is `g` of the history of the first `T` rounds, almost surely. -/
 lemma IsRun.output_ae_eq_of_output_eq_deterministic [MeasurableEq 𝓞] (hA : A.IsFixedBudget T)
     (h : A.IsRun env X Y out P) {g : (Fin T → 𝓐 × 𝓨) → 𝓞} (hg : Measurable g)
     (hout : A.output T = Kernel.deterministic g hg) :
-    out =ᵐ[P] fun ω ↦ g (finHistory X Y T ω) := by
-  have h1 := h.hasCondDistrib_output_finHistory hA
+    out =ᵐ[P] fun ω ↦ g (history X Y T ω) := by
+  have h1 := h.hasCondDistrib_output_history hA
   rw [hout] at h1
   have hX := h.isAlgEnvSeq.measurable_action
   have hY := h.isAlgEnvSeq.measurable_feedback
-  have hfin : Measurable (finHistory X Y T) := by unfold finHistory; fun_prop
+  have hfin : Measurable (history X Y T) := h.isAlgEnvSeq.measurable_history T
   exact ae_eq_of_hasCondDistrib_deterministic hg hfin.aemeasurable
     h.hasCondDistrib_output.aemeasurable_snd h1
 

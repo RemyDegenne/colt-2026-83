@@ -47,13 +47,8 @@ variable {P}
 lemma seedFeedback_eq (θ : EuclideanSpace ℝ ι) (ω : ℕ → (ι → Bool) × ℝ) (t : ℕ) :
     (P.alg ι).seedFeedback (F θ) t ω
       = inner ℝ ((P.alg ι).seedAction (F θ) t ω : EuclideanSpace ℝ ι) θ + (ω t).2 := by
-  cases t with
-  | zero =>
-    rw [SeededAlg.seedFeedback, SeededAlg.seedAction, SeededAlg.seedStep_zero]
-    rfl
-  | succ t =>
-    rw [SeededAlg.seedFeedback, SeededAlg.seedAction, SeededAlg.seedStep_succ]
-    rfl
+  rw [SeededAlg.seedFeedback, SeededAlg.seedAction, SeededAlg.seedStep_eq]
+  rfl
 
 omit [DecidableEq ι] in
 lemma rbBlock_of_lt {js js' t : ℕ} (ht : t < P.T₁ ι) :
@@ -98,12 +93,12 @@ lemma T₁_pos (hd : 0 < Fintype.card ι) : 0 < P.T₁ ι := by
 /-- At round `0`, `nextAction` does not depend on the past nor on the outcome: it is the first
 action of the algorithm. -/
 lemma nextAction_zero_eq (hd : 0 < Fintype.card ι) (past : ℕ → unitBall ι) (js : ℕ)
-    (u₀ : ι → Bool) : P.nextAction (ι := ι) 0 past js u₀ = (P.alg ι).act0 u₀ := by
+    (u₀ : ι → Bool) :
+    P.nextAction (ι := ι) 0 past js u₀ = P.nextAction (ι := ι) 0 (fun _ ↦ unitBallZero) 0 u₀ := by
   have h1 := nextAction_eq_planAction (P := P) hd past js (fun _ ↦ u₀)
     fun b _ hb ↦ absurd hb (Nat.not_lt_zero b)
   have h2 := nextAction_eq_planAction (P := P) hd (fun _ ↦ unitBallZero) 0 (fun _ ↦ u₀)
     fun b _ hb ↦ absurd hb (Nat.not_lt_zero b)
-  change P.nextAction (ι := ι) 0 past js u₀ = P.nextAction (ι := ι) 0 (fun _ ↦ unitBallZero) 0 u₀
   rw [h1, h2, planAction_of_lt (js' := 0) (T₁_pos hd)]
 
 /-- **The run follows the plan**: on the seed space, the action of round `t` is the plan action
@@ -113,37 +108,29 @@ theorem seedAction_eq_planAction (hd : 0 < Fintype.card ι) (θ : EuclideanSpace
     (P.alg ι).seedAction (F θ) t ω = P.planAction (ι := ι) (P.jsω θ ω) t (seedsOf ω) := by
   induction t using Nat.strong_induction_on with
   | _ t ih =>
-    cases t with
-    | zero =>
-      rw [SeededAlg.seedAction, SeededAlg.seedStep_zero]
-      change P.nextAction (ι := ι) 0 (fun _ ↦ unitBallZero) 0 (seedsOf ω 0) = _
-      rw [planAction_of_lt (js' := 0) (T₁_pos hd)]
-      exact nextAction_eq_planAction hd _ _ _ fun b _ hb ↦ absurd hb (Nat.not_lt_zero b)
-    | succ t =>
-      rw [SeededAlg.seedAction, SeededAlg.seedStep_succ]
-      change P.nextAction (ι := ι) (t + 1) (pastOf fun i : Iic t ↦ (P.alg ι).seedStep (F θ) i ω)
-        (P.jStar ι (yOfIic fun i : Iic t ↦ (P.alg ι).seedStep (F θ) i ω)) (seedsOf ω (t + 1)) = _
-      have hpast : ∀ b, P.rbBlock (ι := ι) (P.jsω θ ω) b = some b → b < t + 1 →
-          pastOf (fun i : Iic t ↦ (P.alg ι).seedStep (F θ) i ω) b
-            = ⟨radDir (seedsOf ω b), radDir_mem_unitBall _⟩ := by
-        intro b hb hbt
-        have hbt' : b ∈ Iic t := mem_Iic.2 (Nat.lt_succ_iff.1 hbt)
-        rw [pastOf, dite_eq_left hbt']
-        change (P.alg ι).seedAction (F θ) b ω = _
-        rw [ih b hbt, planAction_of_block _ hb]
-      rcases lt_or_ge (t + 1) (P.T₁ ι) with hlt | hge
-      · rw [planAction_of_lt
-          (js' := P.jStar ι (yOfIic fun i : Iic t ↦ (P.alg ι).seedStep (F θ) i ω)) hlt]
-        refine nextAction_eq_planAction hd _ _ _ fun b hb hbt ↦ ?_
-        rw [rbBlock_of_lt (js' := P.jsω θ ω) (hbt.trans hlt)] at hb
-        exact hpast b hb hbt
-      · have hjs : P.jStar ι (yOfIic fun i : Iic t ↦ (P.alg ι).seedStep (F θ) i ω) = P.jsω θ ω := by
-          refine P.jStar_congr fun r hr ↦ ?_
-          have hr' : r ∈ Iic t := mem_Iic.2 (by omega)
-          rw [yOfIic, dite_eq_left hr']
-          rfl
-        rw [hjs]
-        exact nextAction_eq_planAction hd _ _ _ hpast
+    rw [SeededAlg.seedAction, SeededAlg.seedStep_eq]
+    change P.nextAction (ι := ι) t (pastOf fun i : Fin t ↦ (P.alg ι).seedStep (F θ) i ω)
+      (P.jStar ι (yOf fun i : Fin t ↦ (P.alg ι).seedStep (F θ) i ω)) (seedsOf ω t) = _
+    have hpast : ∀ b, P.rbBlock (ι := ι) (P.jsω θ ω) b = some b → b < t →
+        pastOf (fun i : Fin t ↦ (P.alg ι).seedStep (F θ) i ω) b
+          = ⟨radDir (seedsOf ω b), radDir_mem_unitBall _⟩ := by
+      intro b hb hbt
+      rw [pastOf, dite_eq_left hbt]
+      change (P.alg ι).seedAction (F θ) b ω = _
+      rw [ih b hbt, planAction_of_block _ hb]
+    rcases lt_or_ge t (P.T₁ ι) with hlt | hge
+    · rw [planAction_of_lt
+        (js' := P.jStar ι (yOf fun i : Fin t ↦ (P.alg ι).seedStep (F θ) i ω)) hlt]
+      refine nextAction_eq_planAction hd _ _ _ fun b hb hbt ↦ ?_
+      rw [rbBlock_of_lt (js' := P.jsω θ ω) (hbt.trans hlt)] at hb
+      exact hpast b hb hbt
+    · have hjs : P.jStar ι (yOf fun i : Fin t ↦ (P.alg ι).seedStep (F θ) i ω) = P.jsω θ ω := by
+        refine P.jStar_congr fun r hr ↦ ?_
+        have hr' : r < t := by omega
+        rw [yOf, dite_eq_left hr']
+        rfl
+      rw [hjs]
+      exact nextAction_eq_planAction hd _ _ _ hpast
 
 /-- The observation of round `t` on the seed space. -/
 lemma yω_eq (hd : 0 < Fintype.card ι) (θ : EuclideanSpace ℝ ι) (ω : ℕ → (ι → Bool) × ℝ) (t : ℕ) :

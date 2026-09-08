@@ -77,21 +77,10 @@ variable {ι : Type*} [Fintype ι] (P : NormEstParam)
 def yOf {𝓐 : Type*} {T : ℕ} (h : Fin T → 𝓐 × ℝ) : ℕ → ℝ :=
   fun t ↦ if ht : t < T then (h ⟨t, ht⟩).2 else 0
 
-/-- The observation sequence of a history of rounds `0..n`, extended by `0`. -/
-def yOfIic {𝓐 : Type*} {n : ℕ} (h : Iic n → 𝓐 × ℝ) : ℕ → ℝ :=
-  fun t ↦ if ht : t ∈ Iic n then (h ⟨t, ht⟩).2 else 0
-
 lemma measurable_yOf {𝓐 : Type*} [MeasurableSpace 𝓐] (T : ℕ) :
     Measurable (yOf : (Fin T → 𝓐 × ℝ) → ℕ → ℝ) := by
   refine measurable_pi_lambda _ fun t ↦ ?_
   unfold yOf
-  split_ifs
-  exacts [(measurable_pi_apply _).snd, measurable_const]
-
-lemma measurable_yOfIic {𝓐 : Type*} [MeasurableSpace 𝓐] (n : ℕ) :
-    Measurable (yOfIic : (Iic n → 𝓐 × ℝ) → ℕ → ℝ) := by
-  refine measurable_pi_lambda _ fun t ↦ ?_
-  unfold yOfIic
   split_ifs
   exacts [(measurable_pi_apply _).snd, measurable_const]
 

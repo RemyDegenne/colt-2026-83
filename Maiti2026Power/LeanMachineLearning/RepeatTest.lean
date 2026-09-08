@@ -22,8 +22,8 @@ the "repeat the first action" algorithm used by the adaptive lower bound
 
 For an algorithm-environment sequence `(X, Y)` of `alg.thenRepeat n ρ`:
 * `IsAlgEnvSeq.isAlgEnvSeqUntil_of_thenRepeat`: it is an algorithm-environment sequence for
-  `alg` until time `n`;
-* `IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat`: the action at time `n + 1` has
+  `alg` until time `n + 1`;
+* `IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat`: the action at round `n + 1` has
   conditional law `ρ` given the history of the first `n + 1` rounds;
 * `IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat`: `X (n + 1 + s) = X (n + 1)` almost surely.
 
@@ -45,14 +45,14 @@ namespace Algorithm
 
 variable (alg : Algorithm 𝓐 𝓨) (n : ℕ) (ρ : Kernel (Fin (n + 1) → 𝓐 × 𝓨) 𝓐) [IsMarkovKernel ρ]
 
-/-- The policy at time `t` of `Algorithm.thenRepeat alg n ρ`: the policy of `alg` for `t < n`,
-the kernel `ρ` applied to the history of the first `n + 1` rounds for `t = n`, and the
-deterministic choice of the action played at time `n + 1` for `t > n`. -/
-noncomputable def thenRepeatPolicy (t : ℕ) : Kernel (Iic t → 𝓐 × 𝓨) 𝓐 :=
-  if h : n < t then
-    Kernel.deterministic (fun x ↦ (x ⟨n + 1, Finset.mem_Iic.2 h⟩).1) (by fun_prop)
-  else if ht : t = n then
-    ρ.comap (fun x (i : Fin (n + 1)) ↦ x ⟨i, Finset.mem_Iic.2 (by omega)⟩) (by fun_prop)
+/-- The policy at round `t` of `Algorithm.thenRepeat alg n ρ`: the policy of `alg` for
+`t < n + 1`, the kernel `ρ` applied to the history of the first `n + 1` rounds for `t = n + 1`,
+and the deterministic choice of the action played at round `n + 1` for `t > n + 1`. -/
+noncomputable def thenRepeatPolicy (t : ℕ) : Kernel (Fin t → 𝓐 × 𝓨) 𝓐 :=
+  if h : n + 1 < t then
+    Kernel.deterministic (fun x ↦ (x ⟨n + 1, h⟩).1) (by fun_prop)
+  else if ht : t = n + 1 then
+    ρ.comap (fun x (i : Fin (n + 1)) ↦ x (Fin.castLE ht.ge i)) (by fun_prop)
   else alg.policy t
 
 instance (t : ℕ) : IsMarkovKernel (thenRepeatPolicy alg n ρ t) := by
@@ -63,29 +63,25 @@ instance (t : ℕ) : IsMarkovKernel (thenRepeatPolicy alg n ρ t) := by
 applied to the history of these rounds and repeats that action forever. -/
 noncomputable def thenRepeat : Algorithm 𝓐 𝓨 where
   policy := thenRepeatPolicy alg n ρ
-  p0 := alg.p0
 
-@[simp] lemma thenRepeat_p0 : (alg.thenRepeat n ρ).p0 = alg.p0 := rfl
-
-lemma thenRepeat_policy_of_lt {t : ℕ} (ht : t < n) :
+lemma thenRepeat_policy_of_lt {t : ℕ} (ht : t < n + 1) :
     (alg.thenRepeat n ρ).policy t = alg.policy t := by
   change thenRepeatPolicy alg n ρ t = _
-  rw [thenRepeatPolicy, dite_eq_right_of_eq_false (by simpa using (by omega : ¬ n < t)),
-    dite_eq_right_of_eq_false (by simpa using (by omega : t ≠ n))]
+  rw [thenRepeatPolicy, dite_eq_right_of_eq_false (by simpa using (by omega : ¬ n + 1 < t)),
+    dite_eq_right_of_eq_false (by simpa using (by omega : t ≠ n + 1))]
 
-lemma thenRepeat_policy_self :
-    (alg.thenRepeat n ρ).policy n = ρ.comap (toFinHistory n) (measurable_toFinHistory n) := by
+lemma thenRepeat_policy_self : (alg.thenRepeat n ρ).policy (n + 1) = ρ := by
   simp only [thenRepeat, thenRepeatPolicy, lt_self_iff_false, ↓reduceDIte]
   rfl
 
-lemma thenRepeat_policy_of_gt {t : ℕ} (ht : n < t) :
+lemma thenRepeat_policy_of_gt {t : ℕ} (ht : n + 1 < t) :
     (alg.thenRepeat n ρ).policy t =
-      Kernel.deterministic (fun x ↦ (x ⟨n + 1, Finset.mem_Iic.2 ht⟩).1) (by fun_prop) := by
+      Kernel.deterministic (fun x ↦ (x ⟨n + 1, ht⟩).1) (by fun_prop) := by
   simp [thenRepeat, thenRepeatPolicy, ht]
 
-/-- `thenRepeat alg n ρ` agrees with `alg` until time `n`. -/
-lemma thenRepeat_agreeUntil : (alg.thenRepeat n ρ).AgreeUntil alg n :=
-  ⟨rfl, fun _ ht ↦ thenRepeat_policy_of_lt alg n ρ ht⟩
+/-- `thenRepeat alg n ρ` agrees with `alg` until time `n + 1`. -/
+lemma thenRepeat_agreeUntil : (alg.thenRepeat n ρ).AgreeUntil alg (n + 1) :=
+  ⟨fun _ ht ↦ thenRepeat_policy_of_lt alg n ρ ht⟩
 
 end Algorithm
 
@@ -96,30 +92,28 @@ variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsFiniteMeasu
   {ρ : Kernel (Fin (n + 1) → 𝓐 × 𝓨) 𝓐} [IsMarkovKernel ρ]
 
 /-- An algorithm-environment sequence of `alg.thenRepeat n ρ` is an algorithm-environment
-sequence for `alg` until time `n`. -/
+sequence for `alg` until time `n + 1`. -/
 lemma IsAlgEnvSeq.isAlgEnvSeqUntil_of_thenRepeat
-    (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) : IsAlgEnvSeqUntil X Y alg env P n :=
+    (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) : IsAlgEnvSeqUntil X Y alg env P (n + 1) :=
   h.isAlgEnvSeqUntil_of_agreeUntil (alg.thenRepeat_agreeUntil n ρ)
 
-/-- Under `alg.thenRepeat n ρ`, the action at time `n + 1` has conditional law `ρ` given the
+/-- Under `alg.thenRepeat n ρ`, the action at round `n + 1` has conditional law `ρ` given the
 history of the first `n + 1` rounds. -/
 lemma IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat
     (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) :
-    HasCondDistrib (X (n + 1)) (finHistory X Y (n + 1)) ρ P := by
-  have h1 := h.hasCondDistrib_action n
-  rw [Algorithm.thenRepeat_policy_self] at h1
-  rw [finHistory_succ_eq_toFinHistory_comp]
-  exact h1.comp_right
+    HasCondDistrib (X (n + 1)) (history X Y (n + 1)) ρ P := by
+  have h1 := h.hasCondDistrib_action (n + 1)
+  rwa [Algorithm.thenRepeat_policy_self] at h1
 
-/-- Under `alg.thenRepeat n ρ`, the action at time `t + 1 > n + 1` is the one at time `n + 1`. -/
+/-- Under `alg.thenRepeat n ρ`, the action at round `t > n + 1` is the one at round `n + 1`. -/
 lemma IsAlgEnvSeq.action_ae_eq_of_thenRepeat [MeasurableEq 𝓐]
-    (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) {t : ℕ} (ht : n < t) :
-    X (t + 1) =ᵐ[P] X (n + 1) := by
+    (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) {t : ℕ} (ht : n + 1 < t) :
+    X t =ᵐ[P] X (n + 1) := by
   have h1 := h.hasCondDistrib_action t
   rw [Algorithm.thenRepeat_policy_of_gt alg n ρ ht] at h1
   exact ae_eq_of_hasCondDistrib_deterministic
-    (f := fun x : Iic t → 𝓐 × 𝓨 ↦ (x ⟨n + 1, Finset.mem_Iic.2 ht⟩).1) (by fun_prop)
-    (h.measurable_history t).aemeasurable (h.measurable_action (t + 1)).aemeasurable h1
+    (f := fun x : Fin t → 𝓐 × 𝓨 ↦ (x ⟨n + 1, ht⟩).1) (by fun_prop)
+    (h.measurable_history t).aemeasurable (h.measurable_action t).aemeasurable h1
 
 /-- Under `alg.thenRepeat n ρ`, the action at time `n + 1 + s` is the one at time `n + 1`. -/
 lemma IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat [MeasurableEq 𝓐]
@@ -127,7 +121,7 @@ lemma IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat [MeasurableEq 𝓐]
     X (n + 1 + s) =ᵐ[P] X (n + 1) := by
   cases s with
   | zero => rfl
-  | succ s => exact h.action_ae_eq_of_thenRepeat (t := n + 1 + s) (by omega)
+  | succ s => exact h.action_ae_eq_of_thenRepeat (t := n + 1 + (s + 1)) (by omega)
 
 lemma IsAlgEnvSeq.ae_forall_action_add_eq_of_thenRepeat [MeasurableEq 𝓐]
     (h : IsAlgEnvSeq X Y (alg.thenRepeat n ρ) env P) :
