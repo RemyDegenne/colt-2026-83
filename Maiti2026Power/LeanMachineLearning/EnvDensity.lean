@@ -17,8 +17,8 @@ stationary environment with reward kernel `κ` is the law under the environment 
 with density `envDensity ρ n h = ∏ t, ρ (x t) (y t)`
 (`IsAlgEnvSeq.map_history_eq_withDensity_env`, blueprint `lem:env_likelihood_ratio`). This is
 the environment analogue of LML's `Algorithm.density` / `IsAlgEnvSeq.hasLaw_history_withDensity`,
-and the proof follows the same
-induction, with the kernel-level identity `Kernel.compProd_withDensity_right` (a density on the
+and the proof follows the same induction,
+with the kernel-level identity `Kernel.compProd_withDensity_right` (a density on the
 right factor of a composition-product of kernels, blueprint
 `lem:pb_kernel_compProd_withDensity_right`).
 -/
