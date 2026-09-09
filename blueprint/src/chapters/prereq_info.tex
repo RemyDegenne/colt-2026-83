@@ -136,7 +136,7 @@ $q = 1$ is symmetric.
 \end{proof}
 
 \begin{lemma}[Pinsker's inequality for Bernoulli measures]\label{lem:kl_bernoulli_pinsker}
-\lean{InformationTheory.klBerReal_pinsker, InformationTheory.klBer_pinsker}\leanok
+\lean{InformationTheory.sq_sub_le_klBerReal, InformationTheory.sq_sub_le_klBer}\leanok
 \uses{lem:pi_kl_bernoulli}
 For $p \in [0,1]$ and $q \in (0,1)$, $\mathrm{kl}(p,q) \ge 2(p-q)^2$.
 \end{lemma}
@@ -159,7 +159,7 @@ so $h \ge 0$ on $(0,1]$. The case $p = 0$ is the case $p = 1$ with $q$ replaced 
 \end{proof}
 
 \begin{lemma}[Pinsker's inequality]\label{lem:pinsker}
-\lean{InformationTheory.pinsker_measureReal, InformationTheory.abs_sub_le_sqrt_klDiv}\leanok
+\lean{InformationTheory.sq_sub_le_klDiv, InformationTheory.abs_sub_le_sqrt_klDiv}\leanok
 \uses{lem:pi_kl_bernoulli, lem:kl_bernoulli_pinsker}
 Let $\mu, \nu$ be probability measures on a measurable space and $A$ a measurable set. Then
 \[

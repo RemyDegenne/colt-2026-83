@@ -17,20 +17,22 @@ measures `μ ν` and a measurable set `A`.
 
 The proof goes through the Bernoulli case: for the Bernoulli measures `Ber(x, y, p)` and
 `Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`, `p q : unitInterval`), the
-Kullback-Leibler divergence is the binary divergence `klBerReal p q`
+Kullback-Leibler divergence is the binary divergence `klBer p q`
 (`Maiti2026Power/Mathlib/InformationTheory/KLBer.lean`), which dominates `2 (p - q)²` by a
 calculus argument. The general case follows from the data processing inequality
-`klDiv_map_le` applied to the map `ω ↦ decide (ω ∈ A)`, whose image measure is the Bernoulli
-measure `Ber(true, false, μ.real A)` (`map_decide_mem_eq_bernoulliMeasure`).
+`klDiv_map_le` applied to the map `ω ↦ (ω ∈ A)`, whose image measure is the Bernoulli
+measure `Ber(True, False, μ.real A)` (`map_mem_eq_bernoulliMeasure`).
 
 ## Main results
 
-* `klBerReal_pinsker`: `2 * (p - q) ^ 2 ≤ klBerReal p q` for `p ∈ [0, 1]` and `q ∈ (0, 1)`.
-* `klDiv_bernoulliMeasure`: `klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBerReal p q)` for
-  `x ≠ y` and `0 < q < 1`.
+* `sq_sub_le_klBerReal`: `2 * (p - q) ^ 2 ≤ klBerReal p q` for `p ∈ [0, 1]` and `q ∈ (0, 1)`;
+  `sq_sub_le_klBer`: `ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klBer p q` for `p, q ∈ [0, 1]`.
+* `klDiv_bernoulliMeasure`: `klDiv Ber(x, y, p) Ber(x, y, q) = klBer p q` for `x ≠ y`, and
+  `klDiv_bernoulliMeasure_eq_klBerReal`, its `ENNReal.ofReal (klBerReal p q)` form for
+  `0 < q < 1`.
 * `ofReal_le_klDiv_bernoulliMeasure`: `ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p)
   Ber(x, y, q)` for all `p q : unitInterval`.
-* `pinsker_measureReal`: `ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2) ≤ klDiv μ ν`.
+* `sq_sub_le_klDiv`: `ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2) ≤ klDiv μ ν`.
 * `abs_sub_le_sqrt_klDiv`: `|μ.real A - ν.real A| ≤ √((klDiv μ ν).toReal / 2)`.
 -/
 
@@ -103,7 +105,7 @@ lemma sq_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q 
 
 /-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBerReal p q` for `p ∈ [0, 1]` and
 `q ∈ (0, 1)`. -/
-lemma klBerReal_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) (hq1 : q < 1) :
+lemma sq_sub_le_klBerReal {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) (hq1 : q < 1) :
     2 * (p - q) ^ 2 ≤ klBerReal p q := by
   rcases le_or_gt p q with hpq | hpq
   · exact sq_le_klBerReal_of_le hp hpq hq1
@@ -112,7 +114,7 @@ lemma klBerReal_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) 
     linarith [this, show (p - q) ^ 2 = (q - p) ^ 2 by ring]
 
 /-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBer p q` for `p, q ∈ [0, 1]`. -/
-lemma klBer_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 ≤ q) (hq1 : q ≤ 1) :
+lemma sq_sub_le_klBer {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 ≤ q) (hq1 : q ≤ 1) :
     ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klBer p q := by
   by_cases hq0 : q = 0
   · by_cases hp0 : p = 0
@@ -125,7 +127,7 @@ lemma klBer_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 ≤ q) (h
   have hq0' : 0 < q := lt_of_le_of_ne' hq hq0
   have hq1' : q < 1 := lt_of_le_of_ne hq1 hq1'
   rw [klBer_eq_ofReal hq0'.ne' hq1'.ne]
-  exact ENNReal.ofReal_le_ofReal (klBerReal_pinsker hp hp1 hq0' hq1')
+  exact ENNReal.ofReal_le_ofReal (sq_sub_le_klBerReal hp hp1 hq0' hq1')
 
 /-! ### Bernoulli measures -/
 
@@ -190,7 +192,7 @@ lemma klDiv_bernoulliMeasure (hxy : x ≠ y) (p q : I) :
 and `p ≠ q`). -/
 lemma ofReal_le_klDiv_bernoulliMeasure (hxy : x ≠ y) (p q : I) :
     ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p) Ber(x, y, q) :=
-  (klBer_pinsker p.2.1 p.2.2 q.2.1 q.2.2).trans_eq (klDiv_bernoulliMeasure hxy p q).symm
+  (sq_sub_le_klBer p.2.1 p.2.2 q.2.1 q.2.2).trans_eq (klDiv_bernoulliMeasure hxy p q).symm
 
 end bernoulli
 
