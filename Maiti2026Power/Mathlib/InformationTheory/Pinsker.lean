@@ -203,36 +203,28 @@ end bernoulli
 
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ ν : Measure Ω} {A : Set Ω}
 
-/-- The preimage of `{true}` by the indicator `ω ↦ decide (ω ∈ A)` is `A`. -/
-lemma preimage_decide_mem_singleton_true [DecidablePred (· ∈ A)] :
-    (fun ω ↦ decide (ω ∈ A)) ⁻¹' {true} = A := by ext; simp
-
-/-- The preimage of `{false}` by the indicator `ω ↦ decide (ω ∈ A)` is `Aᶜ`. -/
-lemma preimage_decide_mem_singleton_false [DecidablePred (· ∈ A)] :
-    (fun ω ↦ decide (ω ∈ A)) ⁻¹' {false} = Aᶜ := by ext; simp
-
-/-- The indicator `ω ↦ decide (ω ∈ A)` of a measurable set is measurable. -/
-lemma measurable_decide_mem [DecidablePred (· ∈ A)] (hA : MeasurableSet A) :
-    Measurable fun ω ↦ decide (ω ∈ A) :=
-  measurable_to_bool (by rw [preimage_decide_mem_singleton_true]; exact hA)
-
-/-- The pushforward of a probability measure by the indicator of a set `A` is the Bernoulli
-measure `Ber(true, false, μ.real A)`. -/
-lemma map_decide_mem_eq_bernoulliMeasure [IsProbabilityMeasure μ] [DecidablePred (· ∈ A)]
-    (hA : MeasurableSet A) :
-    μ.map (fun ω ↦ decide (ω ∈ A)) =
-      Ber(true, false, ⟨μ.real A, measureReal_nonneg, measureReal_le_one⟩) := by
-  have htf : (true : Bool) ≠ false := by decide
+/-- The pushforward of a probability measure by the `Prop`-valued membership map `ω ↦ ω ∈ A` is
+the Bernoulli measure `Ber(True, False, μ.real A)`. -/
+lemma map_mem_eq_bernoulliMeasure [IsProbabilityMeasure μ] (hA : MeasurableSet A) :
+    μ.map (· ∈ A) =
+      Ber(True, False, ⟨μ.real A, measureReal_nonneg, measureReal_le_one⟩) := by
   refine Measure.ext_of_singleton fun b ↦ ?_
-  rw [Measure.map_apply (measurable_decide_mem hA) (measurableSet_singleton b)]
-  cases b
-  · rw [preimage_decide_mem_singleton_false, bernoulliMeasure_apply_singleton_right htf]
+  rw [Measure.map_apply hA.mem (measurableSet_singleton b)]
+  by_cases hb : b
+  · simp only [hb, preimage_singleton_true, ofPred_mem_eq, MeasurableSpace.measurableSet_top,
+      mem_singleton_iff, eq_iff_iff, iff_true, not_false_eq_true,
+      bernoulliMeasure_apply_of_mem_of_notMem]
+    rw [coe_toNNReal_eq_ofReal]
+    dsimp only
+    rw [measureReal_def, ENNReal.ofReal_toReal (measure_ne_top _ _)]
+  · simp only [hb, preimage_singleton_false, MeasurableSpace.measurableSet_top, mem_singleton_iff,
+      eq_iff_iff, iff_false, not_true_eq_false, not_false_eq_true,
+      bernoulliMeasure_apply_of_notMem_of_mem]
+    change μ Aᶜ = _
+    rw [coe_toNNReal_eq_ofReal, coe_symm_eq]
     dsimp only
     rw [← probReal_univ (μ := μ), ← measureReal_compl hA, measureReal_def,
       ENNReal.ofReal_toReal (measure_ne_top _ _)]
-  · rw [preimage_decide_mem_singleton_true, bernoulliMeasure_apply_singleton_left htf]
-    dsimp only
-    rw [measureReal_def, ENNReal.ofReal_toReal (measure_ne_top _ _)]
 
 /-- **Pinsker's inequality** for a single event: `2 (μ A - ν A)² ≤ KL(μ ‖ ν)`. -/
 theorem pinsker_measureReal [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
@@ -240,10 +232,10 @@ theorem pinsker_measureReal [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2) ≤ klDiv μ ν := by
   classical
   calc ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2)
-      ≤ klDiv (μ.map fun ω ↦ decide (ω ∈ A)) (ν.map fun ω ↦ decide (ω ∈ A)) := by
-        rw [map_decide_mem_eq_bernoulliMeasure hA, map_decide_mem_eq_bernoulliMeasure hA]
+      ≤ klDiv (μ.map (· ∈ A)) (ν.map (· ∈ A)) := by
+        rw [map_mem_eq_bernoulliMeasure hA, map_mem_eq_bernoulliMeasure hA]
         exact ofReal_le_klDiv_bernoulliMeasure (by decide) _ _
-    _ ≤ klDiv μ ν := klDiv_map_le μ ν (measurable_decide_mem hA)
+    _ ≤ klDiv μ ν := klDiv_map_le μ ν hA.mem
 
 /-- **Pinsker's inequality** for a single event, real form:
 `|μ A - ν A| ≤ √(KL(μ ‖ ν) / 2)`. -/

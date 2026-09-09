@@ -56,35 +56,41 @@ lemma klDiv_map_of_leftInverse {f : α → β} {g : β → α} (hf : Measurable 
   rwa [Measure.map_map hg hf, Measure.map_map hg hf, hgf.comp_eq_id, Measure.map_id,
     Measure.map_id] at h
 
+omit [IsFiniteMeasure ν] in
+lemma _root_.MeasureTheory.Measure.map_withDensity_comp
+    {f : β → ℝ≥0∞} (hf : Measurable f) {g : α → β} (hg : Measurable g) :
+    (ν.withDensity (f ∘ g)).map g = (ν.map g).withDensity f := by
+  ext s hs
+  rw [Measure.map_apply hg hs, withDensity_apply _ (hg hs), withDensity_apply _ hs,
+    ← lintegral_indicator hs, ← lintegral_indicator (hg hs), lintegral_map (hf.indicator hs) hg]
+  rfl
+
+lemma klDiv_withDensity_comp_map {f : β → ℝ≥0∞} (hf : Measurable f) {g : α → β} (hg : Measurable g)
+    [IsFiniteMeasure (ν.withDensity (f ∘ g))] :
+    klDiv ((ν.withDensity (f ∘ g)).map g) (ν.map g) = klDiv (ν.withDensity (f ∘ g)) ν := by
+  have hac : ν.withDensity (f ∘ g) ≪ ν := withDensity_absolutelyContinuous ν (f ∘ g)
+  have h_rnDeriv : ((ν.withDensity (f ∘ g)).map g).rnDeriv (ν.map g) =ᵐ[ν.map g] f := by
+    rw [Measure.map_withDensity_comp hf hg]
+    exact Measure.rnDeriv_withDensity _ hf
+  have hmeas : Measurable fun x : β ↦
+      ENNReal.ofReal (klFun (((ν.withDensity (f ∘ g)).map g).rnDeriv (ν.map g) x).toReal) :=
+    (measurable_klFun.comp (Measure.measurable_rnDeriv _ _).ennreal_toReal).ennreal_ofReal
+  rw [klDiv_eq_lintegral_klFun_of_ac (hac.map hg), klDiv_eq_lintegral_klFun_of_ac hac,
+    lintegral_map hmeas hg]
+  refine lintegral_congr_ae ?_
+  filter_upwards [Measure.rnDeriv_withDensity ν (hf.comp hg),
+    ae_of_ae_map hg.aemeasurable h_rnDeriv] with x hx1 hx2
+  rw [hx1, hx2]
+  rfl
+
 /-- If `μ` has density `f ∘ g` with respect to `ν`, then the divergence of the images by `g` is
 the divergence of `μ` and `ν`: `g` is a sufficient statistic. -/
 lemma klDiv_map_of_eq_withDensity_comp {f : β → ℝ≥0∞} (hf : Measurable f) {g : α → β}
     (hg : Measurable g) (hμ : μ = ν.withDensity (f ∘ g)) :
     klDiv (μ.map g) (ν.map g) = klDiv μ ν := by
-  have h_map : μ.map g = (ν.map g).withDensity f := by
-    rw [hμ]
-    ext s hs
-    rw [Measure.map_apply hg hs, withDensity_apply _ (hg hs), withDensity_apply _ hs,
-      ← lintegral_indicator hs, ← lintegral_indicator (hg hs), lintegral_map (hf.indicator hs) hg]
-    congr with x
-  have hac : μ ≪ ν := by
-    rw [hμ]
-    exact withDensity_absolutelyContinuous _ _
-  have h1 : μ.rnDeriv ν =ᵐ[ν] f ∘ g := by
-    rw [hμ]
-    exact Measure.rnDeriv_withDensity ν (hf.comp hg)
-  have h2 : (μ.map g).rnDeriv (ν.map g) =ᵐ[ν.map g] f := by
-    rw [h_map]
-    exact Measure.rnDeriv_withDensity _ hf
-  have hmeas : Measurable fun x : β ↦
-      ENNReal.ofReal (klFun ((μ.map g).rnDeriv (ν.map g) x).toReal) :=
-    (measurable_klFun.comp (Measure.measurable_rnDeriv _ _).ennreal_toReal).ennreal_ofReal
-  rw [klDiv_eq_lintegral_klFun_of_ac (hac.map hg), klDiv_eq_lintegral_klFun_of_ac hac,
-    lintegral_map hmeas hg]
-  refine lintegral_congr_ae ?_
-  filter_upwards [h1, ae_of_ae_map hg.aemeasurable h2] with x hx1 hx2
-  rw [hx1, hx2]
-  rfl
+  rw [hμ]
+  have : IsFiniteMeasure (ν.withDensity (f ∘ g)) := by rw [← hμ]; infer_instance
+  exact klDiv_withDensity_comp_map hf hg
 
 end map
 
@@ -102,18 +108,16 @@ lemma klDiv_compProd_comap (μ : Measure α) [IsFiniteMeasure μ] (κ η : Kerne
   by_cases hac : μ.map f ⊗ₘ κ ≪ μ.map f ⊗ₘ η
   swap
   · rw [klDiv_of_not_ac hac, klDiv_of_not_ac]
-    intro h
+    refine fun h ↦ hac ?_
     have := h.map hg
-    rw [Measure.map_compProd_comap, Measure.map_compProd_comap] at this
-    exact hac this
-  set D := (μ.map f ⊗ₘ κ).rnDeriv (μ.map f ⊗ₘ η) with hD_def
+    rwa [Measure.map_compProd_comap, Measure.map_compProd_comap] at this
+  let D := (μ.map f ⊗ₘ κ).rnDeriv (μ.map f ⊗ₘ η)
   have hD : Measurable D := Measure.measurable_rnDeriv _ _
   have hDκ : μ.map f ⊗ₘ κ = (μ.map f ⊗ₘ η).withDensity D :=
     (Measure.withDensity_rnDeriv_eq _ _ hac).symm
   -- for every measurable `t`, the sections of the density integrate to `κ (f a) t`, `μ`-a.e.
-  have h_sect : ∀ {t : Set γ}, MeasurableSet t →
+  have h_sect {t : Set γ} (ht : MeasurableSet t) :
       ∀ᵐ a ∂μ, ∫⁻ c in t, D (f a, c) ∂(η (f a)) = κ (f a) t := by
-    intro t ht
     refine ae_of_ae_map (p := fun b ↦ ∫⁻ c in t, D (b, c) ∂(η b) = κ b t) hf.aemeasurable ?_
     refine ae_eq_of_forall_setLIntegral_eq_of_sigmaFinite
       (Measurable.setLIntegral_kernel_prod_right (f := fun b c ↦ D (b, c)) hD ht)
@@ -122,10 +126,9 @@ lemma klDiv_compProd_comap (μ : Measure α) [IsFiniteMeasure μ] (κ η : Kerne
     rw [Measure.compProd_apply_prod hu ht, withDensity_apply _ (hu.prod ht),
       Measure.setLIntegral_compProd hD hu ht] at h1
     exact h1.symm
-  have h_rect : ∀ s t, MeasurableSet s → MeasurableSet t →
+  have h_rect s t (hs : MeasurableSet s) (ht : MeasurableSet t) :
       (μ ⊗ₘ κ.comap f hf) (s ×ˢ t) =
         ((μ ⊗ₘ η.comap f hf).withDensity (D ∘ fun p ↦ (f p.1, p.2))) (s ×ˢ t) := by
-    intro s t hs ht
     rw [Measure.compProd_apply_prod hs ht, withDensity_apply _ (hs.prod ht),
       Measure.setLIntegral_compProd (hD.comp hg) hs ht]
     refine setLIntegral_congr_fun_ae hs ?_

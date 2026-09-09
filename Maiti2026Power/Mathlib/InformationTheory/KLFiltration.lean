@@ -44,7 +44,9 @@ variable {α : Type*} {m0 : MeasurableSpace α} {μ ν : Measure α} [IsFiniteMe
   [IsFiniteMeasure ν]
 
 /-- The divergence of the images of `μ ≪ ν` by a measurable map `g`, as the integral of `klFun`
-of the conditional expectation of the density `∂μ/∂ν` given `g`. -/
+of the conditional expectation of the density `∂μ/∂ν` given `g`.
+
+See `klDIv_map_of_ac` for a version of this lemma with a Bochner integral. -/
 lemma klDiv_map_eq_lintegral_klFun_condExp {β : Type*} {mβ : MeasurableSpace β} (hμν : μ ≪ ν)
     {g : α → β} (hg : Measurable g) :
     klDiv (μ.map g) (ν.map g) =
@@ -188,7 +190,7 @@ lemma klDiv_eq_iSup_map {β : ℕ → Type*} [mβ : ∀ n, MeasurableSpace (β n
           linarith
         exact mul_le_mul_of_nonneg_right hna hlog
       rw [Real.log_div hμpos.ne' hνpos.ne']
-      nlinarith [mul_le_mul_of_nonneg_left (neg_le_neg h2) (by linarith : (0 : ℝ) ≤ a / 2),
+      nlinarith [mul_le_mul_of_nonneg_left (neg_le_neg h2) (by positivity : (0 : ℝ) ≤ a / 2),
         measureReal_nonneg (μ := ν) (s := B n)]
 
 end InformationTheory

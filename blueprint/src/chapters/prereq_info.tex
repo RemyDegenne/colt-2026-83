@@ -4,7 +4,7 @@
 This chapter collects the information-theoretic facts used by the lower bounds of
 Chapters~\ref{chap:lower_adaptive} and~\ref{chap:log_gains}: the Kullback--Leibler divergence
 of two Gaussians, the Pinsker and Bretagnolle--Huber inequalities, convexity of the divergence
-in its second argument, and, most importantly, the \emph{divergence decomposition} for
+in the pair of measures (hence in its second argument), and, most importantly, the \emph{divergence decomposition} for
 algorithm-environment sequences (the ``chain rule'' of the paper, Appendix~A): the divergence
 between the laws of the histories produced by one algorithm against two stationary
 environments is the expected sum of the one-step divergences along the trajectory. The
@@ -44,8 +44,8 @@ stationary environments \texttt{stationaryEnv} (feedback kernel
 history (\texttt{IsAlgEnvSeqUntil.map\_history}).
 
 \textbf{What is missing.} Mathlib has neither the divergence of two Gaussians, nor Pinsker's
-inequality, nor the Bretagnolle--Huber inequality, nor convexity of $\KL$ in its second
-argument, nor the ``integrated'' form of the chain rule
+inequality, nor the Bretagnolle--Huber inequality, nor convexity of $\KL$ in the pair of
+measures, nor the ``integrated'' form of the chain rule
 $\KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta) = \int \KL(\kappa_x\|\eta_x)\,\mu(dx)$ (the Mathlib file
 explicitly avoids it because $x \mapsto \KL(\kappa_x\|\eta_x)$ need not be measurable in
 general; it is measurable when the target space is countably generated, which is all we need).
@@ -227,41 +227,55 @@ Combining, $\mu(A) + \nu(A^c) \ge \int\min(p,q)\,d\lambda \ge \tfrac12 (\int\sqr
 \cite{tsybakov2009introduction}.
 \end{proof}
 
-\begin{lemma}[Convexity of the divergence in its second argument]\label{lem:kl_mixture_convex}
-\lean{MeasureTheory.isProbabilityMeasure_sum_smul, InformationTheory.klDiv_finsetSum_smul_le, InformationTheory.klDiv_sum_smul_le}\leanok
-Let $\mu$ be a probability measure, $\nu_1,\dots,\nu_J$ probability measures on the same space,
-$c_1,\dots,c_J \ge 0$ with $\sum_j c_j = 1$, and $\nu := \sum_j c_j\nu_j$. Then
+\begin{lemma}[Convexity of the divergence in the pair of measures]\label{lem:kl_joint_convex}
+\lean{InformationTheory.klDiv_finsetSum_smul_le, InformationTheory.klDiv_sum_smul_le, InformationTheory.klDiv_smul_add_smul_le}\leanok
+Let $\mu_1,\dots,\mu_J$ and $\nu_1,\dots,\nu_J$ be finite measures on the same space and let
+$c_1,\dots,c_J \ge 0$. Then
 \[
-  \KL(\mu\|\nu) \le \sum_{j=1}^J c_j\,\KL(\mu\|\nu_j) \quad\text{in } [0,\infty].
+  \KL\Big(\sum_{j=1}^J c_j\mu_j \,\Big\|\, \sum_{j=1}^J c_j\nu_j\Big)
+  \le \sum_{j=1}^J c_j\,\KL(\mu_j\|\nu_j) \quad\text{in } [0,\infty].
 \]
+With $\sum_j c_j = 1$ this is the convexity of $\KL$ in the pair of measures; that hypothesis is
+not needed, since $\KL$ is positively homogeneous.
 \end{lemma}
 
 \begin{proof}
 \leanok
-If some $j$ with $c_j > 0$ has $\KL(\mu\|\nu_j) = \infty$ the right-hand side is $\infty$.
-Otherwise, for every $j$ with $c_j > 0$ we have $\mu \ll \nu_j$ and $\mathrm{llr}(\mu,\nu_j)$ is
-$\mu$-integrable; drop the indices with $c_j = 0$. Then $\mu \ll \nu$ (a $\nu$-null set is
-$\nu_j$-null for all $j$). Let $g_j := d\nu_j/d\mu$ and $g := d\nu/d\mu$ (Radon--Nikodym
-derivatives with respect to $\mu$; they exist for $\sigma$-finite measures without absolute
-continuity, as the density of the absolutely continuous part). By linearity of the Lebesgue
-decomposition, $g = \sum_j c_j g_j$ $\mu$-a.e.\ (Mathlib \texttt{Measure.rnDeriv\_add},
-\texttt{Measure.rnDeriv\_smul\_left}). Since $\mu \ll \nu_j$, Mathlib
-\texttt{Measure.inv\_rnDeriv} gives $g_j = (d\mu/d\nu_j)^{-1}$ $\mu$-a.e., and
-$d\mu/d\nu_j$ is finite $\mu$-a.e.\ (\texttt{Measure.rnDeriv\_lt\_top}) and positive $\mu$-a.e.\
-(\texttt{Measure.rnDeriv\_pos}), so $0 < g_j < \infty$ $\mu$-a.e.\ and
-$\mathrm{llr}(\mu,\nu_j) = -\log g_j$ $\mu$-a.e.; likewise $\mathrm{llr}(\mu,\nu) = -\log g$.
-By concavity of $\log$ on $(0,\infty)$ (Mathlib \texttt{strictConcaveOn\_log\_Ioi},
-\texttt{ConcaveOn.le\_map\_sum}),
+\uses{lem:kl_compProd_kernel}
+Let $\beta := \sum_j c_j\delta_j$ be the measure with weights $c$ on the index set
+$\{1,\dots,J\}$, equipped with the discrete $\sigma$-algebra, and let $\kappa,\eta$ be the kernels
+from the index set with $\kappa_j = \mu_j$ and $\eta_j = \nu_j$ (any function on a countable space
+with measurable singletons is a kernel, Mathlib \texttt{Kernel.ofFunOfCountable}; they are finite
+kernels because $\kappa_j(\Omega) \le \sum_i \mu_i(\Omega) < \infty$). Then
+$\kappa\circ\beta = \sum_j c_j\mu_j$ and $\eta\circ\beta = \sum_j c_j\nu_j$, and $\kappa\circ\beta$
+is the image of $\beta\otimes\kappa$ under the second projection (Mathlib
+\texttt{Measure.snd\_compProd}). The data-processing inequality (Mathlib \texttt{klDiv\_map\_le})
+therefore gives
 \[
-  \mathrm{llr}(\mu,\nu) = -\log\Big(\sum_j c_j g_j\Big) \le \sum_j c_j(-\log g_j)
-  = \sum_j c_j\,\mathrm{llr}(\mu,\nu_j) \qquad \mu\text{-a.e.}
+  \KL(\kappa\circ\beta \,\|\, \eta\circ\beta) \le \KL(\beta\otimes\kappa \,\|\, \beta\otimes\eta) ,
 \]
-Integrability of $\mathrm{llr}(\mu,\nu)$: its positive part is dominated by the integrable
-$\sum_j c_j\,\mathrm{llr}(\mu,\nu_j)^+$, and its negative part is always integrable for
-probability measures, because $\log^-(d\mu/d\nu) = \log^+(g) \le g$ and
-$\int g\,d\mu \le \nu(\Omega) = 1$ (Mathlib \texttt{Measure.lintegral\_rnDeriv\_le}).
-Integrating the inequality gives the claim, using
-\texttt{klDiv\_of\_ac\_of\_integrable} on both sides (all measures are probability measures).
+and, the index set being countable, Lemma~\ref{lem:kl_compProd_kernel} (stated in the next
+section) identifies the right-hand side with
+\[
+  \int^{-} \KL(\kappa_j\|\eta_j)\,\beta(dj) = \sum_{j=1}^J c_j\,\KL(\mu_j\|\nu_j) .
+\]
+\end{proof}
+
+\begin{lemma}[Convexity of the divergence in its second argument]\label{lem:kl_mixture_convex}
+\lean{MeasureTheory.isProbabilityMeasure_sum_smul, InformationTheory.klDiv_finsetSum_smul_right_le, InformationTheory.klDiv_sum_smul_right_le}\leanok
+Let $\mu$ be a finite measure, $\nu_1,\dots,\nu_J$ finite measures on the same space,
+$c_1,\dots,c_J \ge 0$ with $\sum_j c_j = 1$, and $\nu := \sum_j c_j\nu_j$. Then
+\[
+  \KL(\mu\|\nu) \le \sum_{j=1}^J c_j\,\KL(\mu\|\nu_j) \quad\text{in } [0,\infty].
+\]
+If moreover the $\nu_j$ are probability measures, then so is $\nu$.
+\end{lemma}
+
+\begin{proof}
+\leanok
+\uses{lem:kl_joint_convex}
+Apply Lemma~\ref{lem:kl_joint_convex} with $\mu_j := \mu$ for every $j$: the mixture on the left
+is $\sum_j c_j\mu = \big(\sum_j c_j\big)\mu = \mu$. The mass of $\nu$ is $\sum_j c_j = 1$.
 \end{proof}
 
 \textbf{Lean remark.} In Mathlib, $\KL$ takes values in \texttt{ℝ≥0∞}; the statements above

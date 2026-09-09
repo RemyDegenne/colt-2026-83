@@ -10,6 +10,7 @@ public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
 public import Maiti2026Power.MXJ2026.NormalizedDesign
 public import Maiti2026Power.Mathlib.InformationTheory.KLMixture
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
+public import Maiti2026Power.Mathlib.MeasureTheory.MixtureMeasure
 
 /-!
 # The mixture testing problem
@@ -160,7 +161,7 @@ lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
       (R ^ 2 * ‖0 - mixtureParam w ε x‖ ^ 2 / 2) (Filter.Eventually.of_forall fun h ↦ by
         rw [Real.norm_of_nonneg (hf_nonneg _ _ _)]
         exact div_le_div_of_nonneg_right (inner_sq_le hR _ _) (by norm_num))
-  refine (klDiv_finsetSum_smul_le hwd.sum_designWeight).trans ?_
+  refine (klDiv_finsetSum_smul_right_le hwd.sum_designWeight).trans ?_
   have hhist : ∀ θ, histLaw alg N θ =
       (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (history IT.action IT.feedback N) :=
     fun _ ↦ rfl
