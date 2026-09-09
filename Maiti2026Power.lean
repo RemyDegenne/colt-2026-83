@@ -98,6 +98,7 @@ public import Maiti2026Power.Mathlib.Data.Finset.TopBy
 public import Maiti2026Power.Mathlib.Data.Fintype.PiSplitAt
 public import Maiti2026Power.Mathlib.Data.Set.CoverSmall
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
+public import Maiti2026Power.Mathlib.InformationTheory.KLBer
 public import Maiti2026Power.Mathlib.InformationTheory.KLCompProd
 public import Maiti2026Power.Mathlib.InformationTheory.KLFiltration
 public import Maiti2026Power.Mathlib.InformationTheory.KLMixture

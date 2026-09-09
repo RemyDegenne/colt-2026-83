@@ -110,7 +110,7 @@ term $\nu(\Omega)-\mu(\Omega)$ vanishes).
 \end{proof}
 
 \begin{lemma}[Divergence of two Bernoulli measures]\label{lem:pi_kl_bernoulli}
-\lean{InformationTheory.klBin, InformationTheory.klDiv_bernoulliMeasure, InformationTheory.ofReal_le_klDiv_bernoulliMeasure, ProbabilityTheory.lintegral_bernoulliMeasure, ProbabilityTheory.bernoulliMeasure_eq_withDensity, ProbabilityTheory.rnDeriv_bernoulliMeasure}\leanok
+\lean{InformationTheory.klBerReal, InformationTheory.klBer, InformationTheory.klDiv_bernoulliMeasure_eq_klBerReal, InformationTheory.klDiv_bernoulliMeasure, InformationTheory.ofReal_le_klDiv_bernoulliMeasure, ProbabilityTheory.lintegral_bernoulliMeasure, ProbabilityTheory.bernoulliMeasure_eq_withDensity, ProbabilityTheory.rnDeriv_bernoulliMeasure}\leanok
 For $p \in [0,1]$ write $\mathrm{B}(p) := p\,\delta_1 + (1-p)\,\delta_0$ for the Bernoulli
 measure on $\{0,1\}$. Let $p \in [0,1]$ and $q \in (0,1)$. Then
 \[
@@ -136,7 +136,7 @@ $q = 1$ is symmetric.
 \end{proof}
 
 \begin{lemma}[Pinsker's inequality for Bernoulli measures]\label{lem:kl_bernoulli_pinsker}
-\lean{InformationTheory.klBin_pinsker}\leanok
+\lean{InformationTheory.klBerReal_pinsker, InformationTheory.klBer_pinsker}\leanok
 \uses{lem:pi_kl_bernoulli}
 For $p \in [0,1]$ and $q \in (0,1)$, $\mathrm{kl}(p,q) \ge 2(p-q)^2$.
 \end{lemma}

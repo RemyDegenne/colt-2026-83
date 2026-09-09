@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+public import Maiti2026Power.Mathlib.InformationTheory.KLBer
 public import Maiti2026Power.Mathlib.Probability.Distributions.Bernoulli
 
 /-!
@@ -16,16 +17,16 @@ measures `μ ν` and a measurable set `A`.
 
 The proof goes through the Bernoulli case: for the Bernoulli measures `Ber(x, y, p)` and
 `Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`, `p q : unitInterval`), the
-Kullback-Leibler divergence is the binary divergence
-`klBin p q = p * log (p / q) + (1 - p) * log ((1 - p) / (1 - q))`, which dominates `2 (p - q)²`
-by a calculus argument. The general case follows from the data processing inequality
+Kullback-Leibler divergence is the binary divergence `klBerReal p q`
+(`Maiti2026Power/Mathlib/InformationTheory/KLBer.lean`), which dominates `2 (p - q)²` by a
+calculus argument. The general case follows from the data processing inequality
 `klDiv_map_le` applied to the map `ω ↦ decide (ω ∈ A)`, whose image measure is the Bernoulli
 measure `Ber(true, false, μ.real A)` (`map_decide_mem_eq_bernoulliMeasure`).
 
 ## Main results
 
-* `klBin_pinsker`: `2 * (p - q) ^ 2 ≤ klBin p q` for `p ∈ [0, 1]` and `q ∈ (0, 1)`.
-* `klDiv_bernoulliMeasure`: `klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBin p q)` for
+* `klBerReal_pinsker`: `2 * (p - q) ^ 2 ≤ klBerReal p q` for `p ∈ [0, 1]` and `q ∈ (0, 1)`.
+* `klDiv_bernoulliMeasure`: `klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBerReal p q)` for
   `x ≠ y` and `0 < q < 1`.
 * `ofReal_le_klDiv_bernoulliMeasure`: `ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p)
   Ber(x, y, q)` for all `p q : unitInterval`.
@@ -40,50 +41,18 @@ open scoped ENNReal
 
 namespace InformationTheory
 
-/-! ### The binary Kullback-Leibler divergence -/
-
-/-- The Kullback-Leibler divergence between Bernoulli distributions with parameters `p` and `q`,
-`p * log (p / q) + (1 - p) * log ((1 - p) / (1 - q))`. -/
-noncomputable def klBin (p q : ℝ) : ℝ := p * log (p / q) + (1 - p) * log ((1 - p) / (1 - q))
-
-/-- Unfolding lemma for `klBin`. -/
-lemma klBin_apply (p q : ℝ) :
-    klBin p q = p * log (p / q) + (1 - p) * log ((1 - p) / (1 - q)) := rfl
-
-/-- The binary divergence is invariant under the swap of the two outcomes. -/
-lemma klBin_one_sub (p q : ℝ) : klBin (1 - p) (1 - q) = klBin p q := by
-  simp only [klBin, sub_sub_cancel]
-  ring
-
-/-- The binary divergence between identical parameters vanishes. -/
-@[simp] lemma klBin_self (p : ℝ) : klBin p p = 0 := by
-  rcases eq_or_ne p 0 with rfl | hp
-  · simp [klBin]
-  rcases eq_or_ne p 1 with rfl | hp1
-  · simp [klBin]
-  simp [klBin, div_self hp, sub_ne_zero.2 hp1.symm]
-
-/-- `a * log (a / b) = a * (log a - log b)`, also when `a = 0` thanks to `log 0 = 0`. -/
-lemma mul_log_div_eq_mul_sub {a b : ℝ} (hb : b ≠ 0) : a * log (a / b) = a * (log a - log b) := by
-  rcases eq_or_ne a 0 with rfl | ha
-  · simp
-  · rw [log_div ha hb]
-
-/-- The binary divergence written without divisions inside the logarithms. -/
-lemma klBin_eq_of_ne {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
-    klBin p q = p * (log p - log q) + (1 - p) * (log (1 - p) - log (1 - q)) := by
-  rw [klBin, mul_log_div_eq_mul_sub hq, mul_log_div_eq_mul_sub (sub_ne_zero.2 hq1.symm)]
+/-! ### The binary Pinsker inequality -/
 
 /-- Auxiliary function for the proof of the binary Pinsker inequality: the difference
-`klBin p q - 2 * (p - q) ^ 2`, written as a function of `q` without divisions inside
+`klBerReal p q - 2 * (p - q) ^ 2`, written as a function of `q` without divisions inside
 the logarithms. -/
-noncomputable def klBinGap (p q : ℝ) : ℝ :=
+noncomputable def klBerRealGap (p q : ℝ) : ℝ :=
   p * (log p - log q) + (1 - p) * (log (1 - p) - log (1 - q)) - 2 * (p - q) ^ 2
 
-/-- Derivative of `klBinGap p` in the second variable, in factored form: its sign is the sign
+/-- Derivative of `klBerRealGap p` in the second variable, in factored form: its sign is the sign
 of `q - p` on `(0, 1)`. -/
-lemma hasDerivAt_klBinGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
-    HasDerivAt (klBinGap p) ((q - p) * (1 - 2 * q) ^ 2 / (q * (1 - q))) q := by
+lemma hasDerivAt_klBerRealGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
+    HasDerivAt (klBerRealGap p) ((q - p) * (1 - 2 * q) ^ 2 / (q * (1 - q))) q := by
   have hq1' : 1 - q ≠ 0 := sub_ne_zero.2 hq1.symm
   have h1 : HasDerivAt (fun x ↦ p * (log p - log x)) (p * (-q⁻¹)) q :=
     ((hasDerivAt_log hq).const_sub (log p)).const_mul p
@@ -96,9 +65,9 @@ lemma hasDerivAt_klBinGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
   field_simp
   ring
 
-/-- `klBinGap p` is continuous on `[p, 1)` for `0 ≤ p` (including at `p = 0`, where the
+/-- `klBerRealGap p` is continuous on `[p, 1)` for `0 ≤ p` (including at `p = 0`, where the
 logarithmic term has a zero coefficient). -/
-lemma continuousOn_klBinGap {p : ℝ} (hp : 0 ≤ p) : ContinuousOn (klBinGap p) (Ico p 1) := by
+lemma continuousOn_klBerRealGap {p : ℝ} (hp : 0 ≤ p) : ContinuousOn (klBerRealGap p) (Ico p 1) := by
   have h1 : ContinuousOn (fun x ↦ p * (log p - log x)) (Ico p 1) := by
     rcases hp.eq_or_lt with rfl | hp
     · simp [continuousOn_const]
@@ -109,37 +78,54 @@ lemma continuousOn_klBinGap {p : ℝ} (hp : 0 ≤ p) : ContinuousOn (klBinGap p)
       ((continuousOn_const.sub continuousOn_id).log fun x hx ↦ (sub_pos.2 hx.2).ne'))
   exact (h1.add h2).sub (by fun_prop)
 
-/-- `klBinGap p` vanishes at `q = p`. -/
-lemma klBinGap_self (p : ℝ) : klBinGap p p = 0 := by simp [klBinGap]
+/-- `klBerRealGap p` vanishes at `q = p`. -/
+lemma klBerRealGap_self (p : ℝ) : klBerRealGap p p = 0 := by simp [klBerRealGap]
 
 /-- Binary Pinsker inequality when `p ≤ q`. -/
-lemma sq_le_klBin_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q < 1) :
-    2 * (p - q) ^ 2 ≤ klBin p q := by
+lemma sq_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q < 1) :
+    2 * (p - q) ^ 2 ≤ klBerReal p q := by
   rcases (hp.trans hpq).eq_or_lt with rfl | hq0
   · obtain rfl : p = 0 := le_antisymm hpq hp
     simp
-  have hmono : MonotoneOn (klBinGap p) (Ico p 1) := by
-    refine monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ico p 1) (continuousOn_klBinGap hp)
+  have hmono : MonotoneOn (klBerRealGap p) (Ico p 1) := by
+    refine monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ico p 1) (continuousOn_klBerRealGap hp)
       (f' := fun q ↦ (q - p) * (1 - 2 * q) ^ 2 / (q * (1 - q))) (fun x hx ↦ ?_) fun x hx ↦ ?_
     · rw [interior_Ico] at hx ⊢
-      exact (hasDerivAt_klBinGap (hp.trans_lt hx.1).ne' hx.2.ne).hasDerivWithinAt
+      exact (hasDerivAt_klBerRealGap (hp.trans_lt hx.1).ne' hx.2.ne).hasDerivWithinAt
     · rw [interior_Ico] at hx
       exact div_nonneg (mul_nonneg (sub_nonneg.2 hx.1.le) (sq_nonneg _))
         (mul_pos (hp.trans_lt hx.1) (sub_pos.2 hx.2)).le
   have h := hmono ⟨le_rfl, hpq.trans_lt hq1⟩ ⟨hpq, hq1⟩ hpq
-  rw [klBinGap_self] at h
-  unfold klBinGap at h
-  rw [klBin_eq_of_ne hq0.ne' hq1.ne]
+  rw [klBerRealGap_self] at h
+  unfold klBerRealGap at h
+  rw [klBerReal_eq_of_ne hq0.ne' hq1.ne]
   linarith
 
-/-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBin p q` for `p ∈ [0, 1]`, `q ∈ (0, 1)`. -/
-lemma klBin_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) (hq1 : q < 1) :
-    2 * (p - q) ^ 2 ≤ klBin p q := by
+/-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBerReal p q` for `p ∈ [0, 1]` and
+`q ∈ (0, 1)`. -/
+lemma klBerReal_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) (hq1 : q < 1) :
+    2 * (p - q) ^ 2 ≤ klBerReal p q := by
   rcases le_or_gt p q with hpq | hpq
-  · exact sq_le_klBin_of_le hp hpq hq1
-  · have := sq_le_klBin_of_le (sub_nonneg.2 hp1) (sub_le_sub_left hpq.le 1) (by linarith)
-    rw [klBin_one_sub, sub_sub_sub_cancel_left] at this
+  · exact sq_le_klBerReal_of_le hp hpq hq1
+  · have := sq_le_klBerReal_of_le (sub_nonneg.2 hp1) (sub_le_sub_left hpq.le 1) (by linarith)
+    rw [klBerReal_one_sub, sub_sub_sub_cancel_left] at this
     linarith [this, show (p - q) ^ 2 = (q - p) ^ 2 by ring]
+
+/-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBer p q` for `p, q ∈ [0, 1]`. -/
+lemma klBer_pinsker {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 ≤ q) (hq1 : q ≤ 1) :
+    ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klBer p q := by
+  by_cases hq0 : q = 0
+  · by_cases hp0 : p = 0
+    · simp [hq0, hp0]
+    · simp [hq0, klBer_zero_right, hp0]
+  by_cases hq1' : q = 1
+  · by_cases hp1' : p = 1
+    · simp [hq1', hp1']
+    · simp [hq1', klBer_one_right, hp1']
+  have hq0' : 0 < q := lt_of_le_of_ne' hq hq0
+  have hq1' : q < 1 := lt_of_le_of_ne hq1 hq1'
+  rw [klBer_eq_ofReal hq0'.ne' hq1'.ne]
+  exact ENNReal.ofReal_le_ofReal (klBerReal_pinsker hp hp1 hq0' hq1')
 
 /-! ### Bernoulli measures -/
 
@@ -149,10 +135,10 @@ variable {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X] {x y : X}
 
 /-- The Kullback-Leibler divergence between two Bernoulli measures `Ber(x, y, p)` and
 `Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`), for `x ≠ y` and `0 < q < 1`, is
-the binary divergence `klBin p q`. -/
-lemma klDiv_bernoulliMeasure (hxy : x ≠ y) (p : I) {q : I} (hq : (q : ℝ) ≠ 0)
+the binary divergence `klBerReal p q`. -/
+lemma klDiv_bernoulliMeasure_eq_klBerReal (hxy : x ≠ y) (p : I) {q : I} (hq : (q : ℝ) ≠ 0)
     (hq1 : (q : ℝ) ≠ 1) :
-    klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBin p q) := by
+    klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBerReal p q) := by
   classical
   have hq0 : (0 : ℝ) < q := lt_of_le_of_ne q.2.1 hq.symm
   have hq1' : (0 : ℝ) < 1 - q := sub_pos.2 (lt_of_le_of_ne q.2.2 hq1)
@@ -167,35 +153,44 @@ lemma klDiv_bernoulliMeasure (hxy : x ≠ y) (p : I) {q : I} (hq : (q : ℝ) ≠
       (mul_nonneg hq0.le (klFun_nonneg (div_nonneg hp0 hq0.le)))
       (mul_nonneg hq1'.le (klFun_nonneg (div_nonneg hp1 hq1'.le)))]
   congr 1
-  simp only [klFun, klBin]
-  field_simp
-  ring
+  simp only [klFun, klBerReal]
+  field
+
+/-- The Kullback-Leibler divergence between two Bernoulli measures `Ber(x, y, p)` and
+`Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`), for `x ≠ y`, is
+the binary divergence `klBer p q`. -/
+lemma klDiv_bernoulliMeasure (hxy : x ≠ y) (p q : I) :
+    klDiv Ber(x, y, p) Ber(x, y, q) = klBer p q := by
+  by_cases hq0 : (q : ℝ) = 0
+  · simp only [Icc.coe_eq_zero] at hq0
+    simp only [hq0, bernoulliMeasure_zero, Icc.coe_zero, klBer_zero_right, Icc.coe_eq_zero]
+    split_ifs with hp0
+    · simp [hp0]
+    · rw [klDiv_of_not_ac]
+      intro h
+      have hdx : Measure.dirac y {x} = 0 := by simp [hxy.symm]
+      have hx := h hdx
+      rw [bernoulliMeasure_apply_singleton_left hxy, ENNReal.ofReal_eq_zero] at hx
+      exact hp0 (Icc.coe_eq_zero.mp (le_antisymm hx p.2.1))
+  by_cases hq1 : (q : ℝ) = 1
+  · simp only [Icc.coe_eq_one] at hq1
+    simp only [hq1, bernoulliMeasure_one, Icc.coe_one, klBer_one_right, Icc.coe_eq_one]
+    split_ifs with hp1
+    · simp [hp1]
+    · rw [klDiv_of_not_ac]
+      intro h
+      have hdy : Measure.dirac x {y} = 0 := by simp [hxy]
+      have hy := h hdy
+      rw [bernoulliMeasure_apply_singleton_right hxy, ENNReal.ofReal_eq_zero, sub_nonpos] at hy
+      exact hp1 (Icc.coe_eq_one.mp (le_antisymm p.2.2 hy))
+  rw [klDiv_bernoulliMeasure_eq_klBerReal hxy p hq0 hq1, klBer_eq_ofReal hq0 hq1]
 
 /-- Bernoulli Pinsker inequality in `ℝ≥0∞`, for all parameters in `[0, 1]`:
 `2 (p - q) ^ 2 ≤ KL(Ber(x, y, p) ‖ Ber(x, y, q))` (the divergence is infinite when `q ∈ {0, 1}`
 and `p ≠ q`). -/
 lemma ofReal_le_klDiv_bernoulliMeasure (hxy : x ≠ y) (p q : I) :
-    ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p) Ber(x, y, q) := by
-  rcases eq_or_ne p q with rfl | hpq
-  · simp
-  have hpq' : (p : ℝ) ≠ q := fun h ↦ hpq (Subtype.ext h)
-  rcases eq_or_ne (q : ℝ) 0 with hq | hq
-  · rw [klDiv_of_not_ac]
-    · exact le_top
-    · intro h
-      have := h (s := {x}) (by rw [bernoulliMeasure_apply_singleton_left hxy, hq]; simp)
-      rw [bernoulliMeasure_apply_singleton_left hxy, ENNReal.ofReal_eq_zero] at this
-      exact hpq' (by rw [hq]; exact le_antisymm this p.2.1)
-  rcases eq_or_ne (q : ℝ) 1 with hq1 | hq1
-  · rw [klDiv_of_not_ac]
-    · exact le_top
-    · intro h
-      have := h (s := {y}) (by rw [bernoulliMeasure_apply_singleton_right hxy, hq1]; simp)
-      rw [bernoulliMeasure_apply_singleton_right hxy, ENNReal.ofReal_eq_zero, sub_nonpos] at this
-      exact hpq' (by rw [hq1]; exact le_antisymm p.2.2 this)
-  rw [klDiv_bernoulliMeasure hxy p hq hq1]
-  exact ENNReal.ofReal_le_ofReal
-    (klBin_pinsker p.2.1 p.2.2 (lt_of_le_of_ne q.2.1 hq.symm) (lt_of_le_of_ne q.2.2 hq1))
+    ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p) Ber(x, y, q) :=
+  (klBer_pinsker p.2.1 p.2.2 q.2.1 q.2.2).trans_eq (klDiv_bernoulliMeasure hxy p q).symm
 
 end bernoulli
 
@@ -227,22 +222,22 @@ lemma map_mem_eq_bernoulliMeasure [IsProbabilityMeasure μ] (hA : MeasurableSet 
       ENNReal.ofReal_toReal (measure_ne_top _ _)]
 
 /-- **Pinsker's inequality** for a single event: `2 (μ A - ν A)² ≤ KL(μ ‖ ν)`. -/
-theorem pinsker_measureReal [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+theorem sq_sub_le_klDiv [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (hA : MeasurableSet A) :
     ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2) ≤ klDiv μ ν := by
   classical
   calc ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2)
-      ≤ klDiv (μ.map (· ∈ A)) (ν.map (· ∈ A)) := by
-        rw [map_mem_eq_bernoulliMeasure hA, map_mem_eq_bernoulliMeasure hA]
-        exact ofReal_le_klDiv_bernoulliMeasure (by decide) _ _
-    _ ≤ klDiv μ ν := klDiv_map_le μ ν hA.mem
+  _ ≤ klDiv (μ.map (· ∈ A)) (ν.map (· ∈ A)) := by
+      rw [map_mem_eq_bernoulliMeasure hA, map_mem_eq_bernoulliMeasure hA]
+      exact ofReal_le_klDiv_bernoulliMeasure (by decide) ⟨μ.real A, _⟩ ⟨ν.real A, _⟩
+  _ ≤ klDiv μ ν := klDiv_map_le μ ν hA.mem
 
 /-- **Pinsker's inequality** for a single event, real form:
 `|μ A - ν A| ≤ √(KL(μ ‖ ν) / 2)`. -/
 lemma abs_sub_le_sqrt_klDiv [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (hA : MeasurableSet A) (h : klDiv μ ν ≠ ∞) :
     |μ.real A - ν.real A| ≤ √((klDiv μ ν).toReal / 2) := by
-  have := pinsker_measureReal (μ := μ) (ν := ν) hA
+  have := sq_sub_le_klDiv (μ := μ) (ν := ν) hA
   rw [ENNReal.ofReal_le_iff_le_toReal h] at this
   rw [← Real.sqrt_sq_eq_abs]
   exact Real.sqrt_le_sqrt (by linarith)
