@@ -8,7 +8,7 @@ module
 public import Maiti2026Power.LeanMachineLearning.DivergenceDecomposition
 public import LeanMachineLearning.SequentialLearning.IonescuTulceaSpace
 public import Maiti2026Power.MXJ2026.NormalizedDesign
-public import Maiti2026Power.Mathlib.InformationTheory.KLMixture
+public import LeanMachineLearning.ForMathlib.InformationTheory.KullbackLeibler.Convex
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
 public import Maiti2026Power.Mathlib.MeasureTheory.MixtureMeasure
 

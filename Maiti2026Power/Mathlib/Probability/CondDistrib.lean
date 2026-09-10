@@ -124,16 +124,6 @@ lemma map_prodMk_compProd_comap (μ : Measure α) [SFinite μ] (η : Kernel β �
           Measure.fst_compProd]
   rwa [hfst] at h
 
-/-- Transporting `μ ⊗ₘ η.comap f` along `f` in the first coordinate gives `μ.map f ⊗ₘ η`, for
-any s-finite kernel `η`. -/
-lemma _root_.MeasureTheory.Measure.map_compProd_comap (μ : Measure α) [SFinite μ]
-    (η : Kernel β γ) [IsSFiniteKernel η] {f : α → β} (hf : Measurable f) :
-    (μ ⊗ₘ η.comap f hf).map (fun p : α × γ ↦ (f p.1, p.2)) = μ.map f ⊗ₘ η := by
-  ext s hs
-  rw [Measure.map_apply (by fun_prop) hs, Measure.compProd_apply (hs.preimage (by fun_prop)),
-    Measure.compProd_apply hs, lintegral_map (Kernel.measurable_kernel_prodMk_left hs) hf]
-  rfl
-
 /-- The image of `μ ⊗ₘ κ` by `(a, b) ↦ (G a, F a b)` is `μ.map G ⊗ₘ K` as soon as `K (G a)` is
 the image of `κ a` by `F a` for every `a`. -/
 lemma _root_.MeasureTheory.Measure.map_compProd_of_forall_map_eq {δ : Type*}

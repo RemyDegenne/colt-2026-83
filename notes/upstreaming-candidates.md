@@ -2,11 +2,15 @@
 
 Assessment of the library layers `Maiti2026Power/Mathlib/` and `Maiti2026Power/LeanMachineLearning/` as
 contributions to Mathlib and to LML (LeanMachineLearning), written on 2026-09-06 after phase 2
-was completed (every headline result proved, comparator green), and updated on 2026-09-07 after
+was completed (every headline result proved, comparator green), updated on 2026-09-07 after
 the LML bump to `21d7e67`, which removed the entries that have since been upstreamed to LML
 (the sub-exponential file, the integrated chain rule for `klDiv`, `IndepFun.hasCondDistrib_const`,
-`Kernel.compProd_prodMkLeft_apply`). Overlaps were checked against the Mathlib revision pinned in
-`lake-manifest.json` (`cf65d43b4f5e1a79482e8c488d121853b9d7ca05`, toolchain `v4.34.0-rc2`): none of
+`Kernel.compProd_prodMkLeft_apply`), and again on 2026-09-10 after the bump to `c33199e`, which
+removed the `klDiv` files (convexity, restrictions, the generating sequence of maps, the
+sufficient-statistic lemmas, `Measure.map_compProd_comap`) and the divergence decomposition for a
+fixed number of rounds and for whole trajectories. Overlaps were checked against the Mathlib
+revision pinned in `lake-manifest.json` (`cf65d43b4f5e1a79482e8c488d121853b9d7ca05`, toolchain
+`v4.34.0-rc2`): none of
 the results listed below exist in Mathlib at that revision; the only near-miss is
 `Set.Finite.isCompact_convexHull`, which covers finite sets only. Recheck before opening a PR,
 since the probability library moves quickly.
@@ -18,8 +22,8 @@ Classical results, self-contained, already stated in Mathlib namespaces and Math
 | File | Result | Notes |
 |---|---|---|
 | `InformationTheory/KLBer.lean`, `InformationTheory/Pinsker.lean`, `InformationTheory/BretagnolleHuber.lean` | The binary divergence `klBerReal` and its basic properties; Pinsker's inequality for one event (through the Bernoulli case), the Bretagnolle–Huber inequality | Absent from Mathlib although `klDiv` is there. `KLBer.lean` needs only `Real.log`. The rest needs `Probability/Distributions/Bernoulli.lean` (Lebesgue integrals and densities of `bernoulliMeasure`), small and upstreamable. |
-| `InformationTheory/KLMixture.lean` | Convexity of `klDiv` in the pair of measures, for finite mixtures (hence convexity in the second argument) | Extends the existing `klDiv` API. Proved from the data processing inequality and the integral form of the conditional divergence (LML's `klDiv_compProd_right_eq_lintegral`), so it only needs `isProbabilityMeasure_finsetSum_smul` from `MeasureTheory/MixtureMeasure.lean`; the Radon–Nikodym lemmas of that file are no longer used here. Small and upstreamable. |
-| `InformationTheory/KLRestrict.lean`, `InformationTheory/KLFiltration.lean`, `InformationTheory/KLCompProd.lean` (added 2026-09-08) | `klDiv` and restrictions (additivity over a measurable set and its complement, monotone convergence along an increasing sequence of sets); `klDiv` is the supremum of the divergences of the images along maps whose σ-algebras increase to the whole one (Lévy's upward theorem + Fatou, and a lower bound on approximating sets in the non-absolutely-continuous case); invariance under a sufficient statistic (`klDiv_compProd_comap`, `klDiv_map_of_eq_withDensity_comp`) and the composition-product form of the one-step policy/reward divergence | All stated in Mathlib namespaces with only Mathlib prerequisites (except the LML integrated chain rule for the integral forms). The filtration theorem is the natural companion of Mathlib's `klDiv_trim_le`. |
+| `InformationTheory/KLMap.lean` | Invariance of `klDiv` under a measurable map with a measurable left inverse | All that is left of the `klDiv` files of 2026-09-08 after the LML bump of 2026-09-10; a two-line companion of LML's `klDiv_map_measurableEmbedding`. |
+| `MeasureTheory/MixtureMeasure.lean` | A finite mixture `∑ i, c i • ν i` of probability measures with weights summing to `1` is a probability measure; the Radon–Nikodym derivative of a finite mixture is the mixture of the derivatives | Small API lemmas about `Measure.finsetSum`. Its convexity consumer `KLMixture.lean` left for LML on 2026-09-10; the file is still used by `MXJ2026/MixtureKL.lean`. |
 | `Probability/CondDistrib.lean` additions, `MeasureTheory/MeasurableSpace/Sigma.lean` additions (2026-09-08) | Images of composition-products by maps of the form `(a, b) ↦ (G a, F a b)`; conditional laws are preserved by restriction to an event determined by the conditioning variable; `(μ ⊗ₘ κ).restrict (s ×ˢ univ)`; measurability of `x ↦ ⟨n x, f (n x) x⟩` into a sigma type | Small API lemmas. |
 | `Probability/SudakovFernique.lean` with `Probability/GaussianInterpolation.lean`, `Probability/SteinIdentity.lean`, `Probability/SteinReal.lean`, `Probability/SteinExpGrowth.lean`, `Analysis/SpecialFunctions/LogSumExp.lean`, `Analysis/InnerProductSpace/LogSumExp.lean` | Sudakov–Fernique inequality; Gaussian interpolation formula; Stein's identity (real and vector); log-sum-exp and softmax as a smoothing of the maximum | A coherent package. Log-sum-exp/softmax and Stein's identity are independently useful and can go first. |
 | `Probability/MaureyPisier.lean`, `Probability/BorellTIS.lean`, `Analysis/Calculus/QuarterCircle.lean` | Gaussian concentration of smooth Lipschitz functions (Maurey–Pisier); Borell–TIS for finite maxima of linear forms and for compact sets | The compact-set version needs the support function (see below); the finite-max version is self-contained. |
@@ -48,7 +52,7 @@ the natural next layer of LML.
 * `IdentAlg.lean`, `Run.lean`, `FixedBudget.lean`, `AlgorithmPrefix.lean`: identification algorithms with a stopping rule and an output rule, runs, transport and existence of runs, the PAC property, fixed budgets and fixed designs, the stopped history and data processing. This is the core abstraction of the project.
 * `Seeded.lean` with `Probability/CondDistribConst.lean`: seeded algorithms (internal randomness as fresh seeds), noise environments, the seed representation of every run through the uniqueness of the law of the history, and the PAC transfer lemma for fixed-budget seeded algorithms with a deterministic output. This was the workhorse for both adaptive upper bounds (Theorems 7 and 8).
 * `Phased.lean`, `MedianEliminationSchedule.lean`, `MedianEliminationRound.lean`, `MedianElimination.lean`: phased deterministic algorithms and a verified Median Elimination.
-* `DivergenceDecomposition.lean`, `RunDivergence.lean`, `HistoryLaw.lean`, `StoppedHistory.lean` (the last three added 2026-09-08), `EnvDensity.lean`, `TwoPoint.lean`, `RepeatTest.lean`, `RepeatTestGaussian.lean`: the divergence decomposition for a fixed number of rounds, for histories stopped at a (bounded, or almost surely finite) stopping time and for whole trajectories, each in composition-product and integral forms and for arbitrary environments (chain rule with LML's step kernels `stepKernel`); the change of measure at a stopping time for runs of identification algorithms; stopping rules, stopping times and stopped histories, on top of LML's `Fin`-indexed histories; environment densities along a history, the two- and three-point methods, the repeated-action test. The standard lower-bound toolkit for bandits, for both fixed-budget and fixed-confidence settings.
+* `DivergenceDecomposition.lean`, `RunDivergence.lean`, `HistoryLaw.lean`, `StoppedHistory.lean` (the last three added 2026-09-08), `EnvDensity.lean`, `TwoPoint.lean`, `RepeatTest.lean`, `RepeatTestGaussian.lean`: the divergence decomposition for histories stopped at a (bounded, or almost surely finite) stopping time, in composition-product and integral forms and for arbitrary environments (chain rule with LML's step kernels `stepKernel`) — the fixed-number-of-rounds and trajectory versions were upstreamed on 2026-09-10 and now live in LML's `SequentialLearning/DivergenceDecomposition.lean`; the change of measure at a stopping time for runs of identification algorithms; stopping rules, stopping times and stopped histories, on top of LML's `Fin`-indexed histories; environment densities along a history, the two- and three-point methods, the repeated-action test. The standard lower-bound toolkit for bandits, for both fixed-budget and fixed-confidence settings.
 * `LinearBandit.lean`, `GaussianNoise.lean`, `FixedDesignRun.lean`, `FixedDesignLaw.lean`, `FixedDesignTransport.lean`, `CondSubgaussian.lean`: the linear Gaussian environment, its noise structure (i.i.d. noise for any algorithm, conditionally sub-Gaussian), the law of fixed-design runs and their transport through linear maps.
 
 ## Not worth upstreaming
@@ -64,8 +68,11 @@ which is the paper itself.
 ## Suggested order
 
 A first PR with the best effort-to-value ratio: the two information-theory inequalities. Each is a
-single file, classical, and plugs into an existing Mathlib API. Then the KL convexity file and the
-Gaussian toolbox files (`GaussianSquareMGF`, `SubgaussianSquare`, `Rademacher`, `GaussianSum`).
+single file, classical, and plugs into an existing Mathlib API. Then the Gaussian toolbox files
+(`GaussianSquareMGF`, `SubgaussianSquare`, `Rademacher`, `GaussianSum`). The KL convexity file
+left this repository for LML on 2026-09-10, together with the restriction, generating-sequence
+and sufficient-statistic files, so those PRs now start from
+`LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/`.
 The sub-exponential file left this repository for LML on 2026-09-07 and is the strongest Mathlib
 candidate of all, but the PR now starts from
 `LeanMachineLearning/ForMathlib/Probability/Moments/SubExponential.lean`. The Sudakov–Fernique

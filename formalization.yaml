@@ -132,9 +132,12 @@ status:
     traces and inverses of functions of a symmetric matrix through the continuous functional
     calculus (`Maiti2026Power/Mathlib/Matrix/HermitianCFC.lean`) and the Sherman–Morrison formula.
     Fourth area: the information-theoretic prerequisites
-    (`Maiti2026Power/Mathlib/InformationTheory/{KLCompProd,Pinsker,BretagnolleHuber}.lean`,
+    (`Maiti2026Power/Mathlib/InformationTheory/{Pinsker,BretagnolleHuber}.lean`,
     `Maiti2026Power/Mathlib/Probability/KLGaussian.lean`,
-    `Maiti2026Power/LeanMachineLearning/{DivergenceDecomposition,FixedBudget}.lean`): the integrated
+    `Maiti2026Power/LeanMachineLearning/{DivergenceDecomposition,FixedBudget}.lean`, and — since
+    the LML bump of 2026-09-10 —
+    `LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/` and
+    `LeanMachineLearning/SequentialLearning/DivergenceDecomposition.lean`): the integrated
     chain rule `klDiv (μ ⊗ₘ κ) (ν ⊗ₘ η) = klDiv μ ν + ∫⁻ klDiv (κ a) (η a) ∂μ` (with the
     measurability of `a ↦ klDiv (κ a) (η a)`), the divergence of two Gaussians, Pinsker's and
     the Bretagnolle–Huber inequalities, the divergence decomposition for an algorithm run against
@@ -149,7 +152,8 @@ status:
     transported along maps of the sample space), the geometry of the normalized `G`-optimal
     design (`Maiti2026Power/MXJ2026/NormalizedDesign.lean`: `∑ λ_x ⟪v₁, v_x⟫² = 1/d` and a
     well-separated pair of unit arms), convexity of the divergence in its second argument
-    (`Maiti2026Power/Mathlib/InformationTheory/KLMixture.lean`), and the **baseline adaptive lower bound**
+    (`LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/Convex.lean`, upstreamed
+    on 2026-09-10), and the **baseline adaptive lower bound**
     `T ≥ (2 - √2)/(32 ε²) log(1/(4δ))` for `(ε, δ)`-PAC fixed-budget algorithms on spanning sets in
     dimension `d ≥ 2`, `δ < 1/4` (`Maiti2026Power/MXJ2026/LowerAdaptiveBaseline.lean`,
     `baseline_le_budget_of_isPAC`, blueprint `lem:baseline_lower`) — the two-point half of

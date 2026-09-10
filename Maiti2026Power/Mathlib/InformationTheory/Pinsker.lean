@@ -48,12 +48,12 @@ namespace InformationTheory
 /-- Auxiliary function for the proof of the binary Pinsker inequality: the difference
 `klBerReal p q - 2 * (p - q) ^ 2`, written as a function of `q` without divisions inside
 the logarithms. -/
-noncomputable def klBerRealGap (p q : ℝ) : ℝ :=
+private noncomputable def klBerRealGap (p q : ℝ) : ℝ :=
   p * (log p - log q) + (1 - p) * (log (1 - p) - log (1 - q)) - 2 * (p - q) ^ 2
 
 /-- Derivative of `klBerRealGap p` in the second variable, in factored form: its sign is the sign
 of `q - p` on `(0, 1)`. -/
-lemma hasDerivAt_klBerRealGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
+private lemma hasDerivAt_klBerRealGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
     HasDerivAt (klBerRealGap p) ((q - p) * (1 - 2 * q) ^ 2 / (q * (1 - q))) q := by
   have hq1' : 1 - q ≠ 0 := sub_ne_zero.2 hq1.symm
   have h1 : HasDerivAt (fun x ↦ p * (log p - log x)) (p * (-q⁻¹)) q :=
@@ -69,7 +69,8 @@ lemma hasDerivAt_klBerRealGap {p q : ℝ} (hq : q ≠ 0) (hq1 : q ≠ 1) :
 
 /-- `klBerRealGap p` is continuous on `[p, 1)` for `0 ≤ p` (including at `p = 0`, where the
 logarithmic term has a zero coefficient). -/
-lemma continuousOn_klBerRealGap {p : ℝ} (hp : 0 ≤ p) : ContinuousOn (klBerRealGap p) (Ico p 1) := by
+private lemma continuousOn_klBerRealGap {p : ℝ} (hp : 0 ≤ p) :
+    ContinuousOn (klBerRealGap p) (Ico p 1) := by
   have h1 : ContinuousOn (fun x ↦ p * (log p - log x)) (Ico p 1) := by
     rcases hp.eq_or_lt with rfl | hp
     · simp [continuousOn_const]
@@ -81,7 +82,7 @@ lemma continuousOn_klBerRealGap {p : ℝ} (hp : 0 ≤ p) : ContinuousOn (klBerRe
   exact (h1.add h2).sub (by fun_prop)
 
 /-- `klBerRealGap p` vanishes at `q = p`. -/
-lemma klBerRealGap_self (p : ℝ) : klBerRealGap p p = 0 := by simp [klBerRealGap]
+private lemma klBerRealGap_self (p : ℝ) : klBerRealGap p p = 0 := by simp [klBerRealGap]
 
 /-- Binary Pinsker inequality when `p ≤ q`. -/
 lemma sq_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q < 1) :

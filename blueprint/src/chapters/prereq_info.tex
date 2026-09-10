@@ -49,14 +49,18 @@ measures, nor the ``integrated'' form of the chain rule
 $\KL(\mu\otimes\kappa\,\|\,\mu\otimes\eta) = \int \KL(\kappa_x\|\eta_x)\,\mu(dx)$ (the Mathlib file
 explicitly avoids it because $x \mapsto \KL(\kappa_x\|\eta_x)$ need not be measurable in
 general; it is measurable when the target space is countably generated, which is all we need).
-The integrated chain rule and the invariance of $\KL$ under measurable embeddings now live in LML
-(\texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/ChainRule.lean}); the
-policy/reward specialization of Lemma~\ref{lem:pi_kl_step} and the divergence decomposition for
-algorithm-environment sequences are new to LML. Mathlib also lacks the behaviour of $\KL$ under
-restrictions (Lemma~\ref{lem:kl_restrict}), the invariance under sufficient statistics
-(Lemma~\ref{lem:kl_sufficient_statistic}) and the continuity of $\KL$ along a generating
-sequence of $\sigma$-algebras (Lemma~\ref{lem:kl_iSup_map}), which the stopping-time and
-trajectory versions of the decomposition (Section~\ref{sec:pre_info_stopping}) rely on.
+Mathlib also lacks the behaviour of $\KL$ under restrictions (Lemma~\ref{lem:kl_restrict}), the
+invariance under sufficient statistics (Lemma~\ref{lem:kl_sufficient_statistic}) and the
+continuity of $\KL$ along a generating sequence of $\sigma$-algebras
+(Lemma~\ref{lem:kl_iSup_map}), which the stopping-time and trajectory versions of the
+decomposition (Section~\ref{sec:pre_info_stopping}) rely on. All of these now live in LML
+(\texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/\{ChainRule, CompProd,
+Convex, DataProcessing, MapSequence, Restrict\}.lean}), together with the policy/reward
+specialization of Lemma~\ref{lem:pi_kl_step} and the divergence decomposition for
+algorithm-environment sequences, for a fixed number of rounds and for whole trajectories
+(\texttt{LeanMachineLearning/SequentialLearning/DivergenceDecomposition.lean}). What is left in
+this repository is the divergence of two Gaussians, the two inequalities, and the versions of
+the decomposition for stopped histories (Section~\ref{sec:pre_info_stopping}).
 
 \section{Basic inequalities}
 \label{sec:pre_info_basic}
@@ -373,7 +377,7 @@ agree on rectangles, hence everywhere, and (ii) applies with $g = f\times\mathrm
 \end{proof}
 
 \begin{lemma}[One step of an algorithm-environment pair]\label{lem:pi_kl_step}
-\lean{ProbabilityTheory.Kernel.compProd_prodMkLeft_apply, InformationTheory.klDiv_compProd_compProd_prodMkLeft_eq_klDiv_comp_compProd, InformationTheory.klDiv_compProd_compProd_prodMkLeft}\leanok
+\lean{ProbabilityTheory.Kernel.compProd_prodMkLeft_apply, Learning.klDiv_compProd_compProd_prodMkLeft_eq_klDiv_comp_compProd, Learning.klDiv_compProd_compProd_prodMkLeft}\leanok
 \uses{lem:kl_compProd_kernel, lem:kl_sufficient_statistic}
 Let $P$ be a probability measure on a measurable space $\mathcal{H}$ (``histories''), $\pi$ a
 Markov kernel from $\mathcal{H}$ to a countably generated space $\mathcal{A}$ (``policy''),
@@ -575,8 +579,10 @@ The paper only needs the divergence decomposition for a fixed number of rounds. 
 we also prove it for histories stopped at a stopping time (the change-of-measure lemma of
 fixed-confidence lower bounds, Kaufmann, Capp\'e and Garivier 2016) and for whole trajectories.
 The results below are formalized in \texttt{Maiti2026Power/LeanMachineLearning/\{HistoryLaw,
-StoppedHistory, DivergenceDecomposition, RunDivergence\}.lean} and
-\texttt{Maiti2026Power/Mathlib/InformationTheory/\{KLCompProd, KLRestrict, KLFiltration\}.lean}.
+StoppedHistory, DivergenceDecomposition, RunDivergence\}.lean}, on top of the $\KL$ lemmas of
+\texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/\{CompProd,
+DataProcessing, MapSequence, Restrict\}.lean} and of the fixed-round and trajectory
+decompositions of \texttt{LeanMachineLearning/SequentialLearning/DivergenceDecomposition.lean}.
 
 \begin{definition}[Histories of the first $n$ rounds, step kernels]\label{def:fin_history}
 \lean{Learning.history, Learning.stepKernel, Learning.IsAlgEnvSeq.hasCondDistrib_action, Learning.IsAlgEnvSeq.hasCondDistrib_feedback, Learning.IsAlgEnvSeq.hasCondDistrib_step, Learning.IsAlgEnvSeq.map_history_succ, Learning.map_history_succ_of_hasCondDistrib, Learning.feedback_stationaryEnv, Learning.stepKernel_stationaryEnv}\leanok

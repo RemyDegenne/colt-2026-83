@@ -25,7 +25,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "b743f311ab71620773614ba0fed681b0ee0142d5",
+   "rev": "c33199e70393756ef7bc6ac0cd519a8e6a13b710",
    "name": "LeanMachineLearning",
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",

@@ -99,10 +99,7 @@ public import Maiti2026Power.Mathlib.Data.Fintype.PiSplitAt
 public import Maiti2026Power.Mathlib.Data.Set.CoverSmall
 public import Maiti2026Power.Mathlib.InformationTheory.BretagnolleHuber
 public import Maiti2026Power.Mathlib.InformationTheory.KLBer
-public import Maiti2026Power.Mathlib.InformationTheory.KLCompProd
-public import Maiti2026Power.Mathlib.InformationTheory.KLFiltration
-public import Maiti2026Power.Mathlib.InformationTheory.KLMixture
-public import Maiti2026Power.Mathlib.InformationTheory.KLRestrict
+public import Maiti2026Power.Mathlib.InformationTheory.KLMap
 public import Maiti2026Power.Mathlib.InformationTheory.Pinsker
 public import Maiti2026Power.Mathlib.Matrix.HermitianCFC
 public import Maiti2026Power.Mathlib.Matrix.Loewner
