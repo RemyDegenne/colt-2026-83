@@ -114,21 +114,22 @@ theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompa
   have : StandardBorelSpace 𝒳 := h𝒳.isClosed.measurableSet.standardBorel
   have := hA.isMarkovKernel_output
   set alg := A.testAlg n with halg
-  have hrun : ∀ θ, IsAlgEnvSeq IT.action IT.feedback alg (linearGaussianEnv 𝒳 θ)
+  have hrun : ∀ θ, IsAlgEnvSeq IT.obs IT.action IT.feedback alg (linearGaussianEnv 𝒳 θ)
       (trajMeasure alg (linearGaussianEnv 𝒳 θ)) := fun θ ↦ IT.isAlgEnvSeq_trajMeasure alg _
   obtain ⟨w, hw⟩ := exists_isGOptimalDesign h𝒳 hspan
   set N := n + m + 1 with hN
-  set g : (Fin N → 𝒳 × ℝ) → ℝ := fun h ↦
-    (∑ s ∈ range m, (h ⟨min (n + 1 + s) (n + m), by omega⟩).2) / m with hg
+  set g : Hist Unit 𝒳 ℝ N → ℝ := fun h ↦
+    (∑ s ∈ range m, (h ⟨min (n + 1 + s) (n + m), by omega⟩).feedback) / m with hg
   have hg_meas : Measurable g :=
-    (Finset.measurable_sum _ fun s _ ↦ (measurable_pi_apply _).snd).div_const _
+    (Finset.measurable_sum _ fun s _ ↦
+      Round.measurable_feedback.comp (measurable_pi_apply _)).div_const _
   have hg_comp : g ∘ IT.hist N = phaseMean IT.feedback n m := by
     ext ω
     simp only [Function.comp_apply, hg, phaseMean, IT.hist, IT.feedback]
     congr 1
     refine sum_congr rfl fun s hs ↦ ?_
     rw [min_eq_left (by simp only [mem_range] at hs; omega)]
-  set E' : Set (Fin N → 𝒳 × ℝ) := {h | ε < g h} with hE'
+  set E' : Set (Hist Unit 𝒳 ℝ N) := {h | ε < g h} with hE'
   have hE'm : MeasurableSet E' := measurableSet_lt measurable_const hg_meas
   have hpre : IT.hist N ⁻¹' E' = {ω | ε < phaseMean IT.feedback n m ω} := by
     rw [← hg_comp]

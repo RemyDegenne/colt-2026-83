@@ -55,51 +55,54 @@ lemma linearGaussianKernel_eq_withDensity (θ : E) :
 
 /-- The likelihood ratio of the history `h` of `T` rounds under the reward vector `θ` with
 respect to pure noise: `exp (∑ t, (y t ⟪x t, θ⟫ - ⟪x t, θ⟫² / 2))`. -/
-noncomputable def likelihood (θ : E) {T : ℕ} (h : Fin T → 𝒳 × ℝ) : ℝ :=
-  rexp (∑ t, stepLogLR θ (h t).1 (h t).2)
+noncomputable def likelihood (θ : E) {T : ℕ} (h : Hist Unit 𝒳 ℝ T) : ℝ :=
+  rexp (∑ t, stepLogLR θ (h t).action (h t).feedback)
 
 omit [MeasurableSpace E] [OpensMeasurableSpace E] in
-lemma likelihood_pos (θ : E) {T : ℕ} (h : Fin T → 𝒳 × ℝ) : 0 < likelihood θ h := exp_pos _
+lemma likelihood_pos (θ : E) {T : ℕ} (h : Hist Unit 𝒳 ℝ T) : 0 < likelihood θ h := exp_pos _
 
 omit [MeasurableSpace E] [OpensMeasurableSpace E] in
-lemma envDensity_stepLR (θ : E) {T : ℕ} (h : Fin T → 𝒳 × ℝ) :
+lemma envDensity_stepLR (θ : E) {T : ℕ} (h : Hist Unit 𝒳 ℝ T) :
     envDensity (stepLR θ) T h = ENNReal.ofReal (likelihood θ h) := by
   simp only [envDensity, stepLR, likelihood, Real.exp_sum]
   rw [ENNReal.ofReal_prod_of_nonneg fun t _ ↦ (exp_pos _).le]
 
 lemma measurable_likelihood (θ : E) (T : ℕ) : Measurable (likelihood (𝒳 := 𝒳) θ (T := T)) := by
   refine Real.measurable_exp.comp (Finset.measurable_sum _ fun t _ ↦ ?_)
-  have h1 : Measurable fun h : Fin T → 𝒳 × ℝ ↦ ⟪(((h t).1 : 𝒳) : E), θ⟫ :=
-    (continuous_subtype_val.inner continuous_const).measurable.comp (measurable_pi_apply t).fst
-  exact ((measurable_pi_apply t).snd.mul h1).sub ((h1.pow_const 2).div_const 2)
+  have h1 : Measurable fun h : Hist Unit 𝒳 ℝ T ↦ ⟪(((h t).action : 𝒳) : E), θ⟫ :=
+    (continuous_subtype_val.inner continuous_const).measurable.comp
+      (Round.measurable_action.comp (measurable_pi_apply t))
+  exact ((Round.measurable_feedback.comp (measurable_pi_apply t)).mul h1).sub
+    ((h1.pow_const 2).div_const 2)
 
 /-- Joint measurability of the likelihood ratio in `(θ, h)`. -/
 lemma measurable_likelihood_prod [SecondCountableTopology E] (T : ℕ) :
-    Measurable fun p : E × (Fin T → 𝒳 × ℝ) ↦ likelihood p.1 p.2 := by
+    Measurable fun p : E × Hist Unit 𝒳 ℝ T ↦ likelihood p.1 p.2 := by
   refine Real.measurable_exp.comp (Finset.measurable_sum _ fun t _ ↦ ?_)
-  have h1 : Measurable fun p : E × (Fin T → 𝒳 × ℝ) ↦ ⟪(((p.2 t).1 : 𝒳) : E), p.1⟫ :=
-    (measurable_subtype_coe.comp ((measurable_pi_apply t).comp measurable_snd).fst).inner
-      measurable_fst
-  exact (((measurable_pi_apply t).comp measurable_snd).snd.mul h1).sub
-    ((h1.pow_const 2).div_const 2)
+  have h1 : Measurable fun p : E × Hist Unit 𝒳 ℝ T ↦ ⟪(((p.2 t).action : 𝒳) : E), p.1⟫ :=
+    (measurable_subtype_coe.comp (Round.measurable_action.comp
+      ((measurable_pi_apply t).comp measurable_snd))).inner measurable_fst
+  exact ((Round.measurable_feedback.comp ((measurable_pi_apply t).comp measurable_snd)).mul
+    h1).sub ((h1.pow_const 2).div_const 2)
 
 section law
 
 variable {Ω Ω₀ : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω₀] {P : Measure Ω}
   {P₀ : Measure Ω₀} [IsProbabilityMeasure P] [IsProbabilityMeasure P₀]
-  {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {X₀ : ℕ → Ω₀ → 𝒳} {Y₀ : ℕ → Ω₀ → ℝ}
-  {alg : Algorithm 𝒳 ℝ} {θ : E}
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
+  {O₀ : ℕ → Ω₀ → Unit} {X₀ : ℕ → Ω₀ → 𝒳} {Y₀ : ℕ → Ω₀ → ℝ}
+  {alg : Algorithm Unit 𝒳 ℝ} {θ : E}
 
 /-- **Likelihood ratio of a linear Gaussian history** (blueprint `cor:pb_gaussian_likelihood`):
 for any algorithm, the law of the history of `T` rounds under the reward vector `θ` is the law
 under pure noise with density `likelihood θ`. -/
 lemma _root_.Learning.IsAlgEnvSeq.map_history_eq_withDensity_likelihood
-    (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
-    (h₀ : IsAlgEnvSeq X₀ Y₀ alg (linearGaussianEnv 𝒳 0) P₀) (T : ℕ) :
-    P.map (history X Y T) =
-      (P₀.map (history X₀ Y₀ T)).withDensity fun h ↦ ENNReal.ofReal (likelihood θ h) := by
-  have h' : IsAlgEnvSeq X Y alg (stationaryEnv (linearGaussianKernel 𝒳 θ)) P := h
-  have h₀' : IsAlgEnvSeq X₀ Y₀ alg (stationaryEnv (linearGaussianKernel 𝒳 0)) P₀ := h₀
+    (h : IsAlgEnvSeq O X Y alg (linearGaussianEnv 𝒳 θ) P)
+    (h₀ : IsAlgEnvSeq O₀ X₀ Y₀ alg (linearGaussianEnv 𝒳 0) P₀) (T : ℕ) :
+    P.map (history O X Y T) =
+      (P₀.map (history O₀ X₀ Y₀ T)).withDensity fun h ↦ ENNReal.ofReal (likelihood θ h) := by
+  have h' : IsAlgEnvSeq O X Y alg (stationaryEnv (linearGaussianKernel 𝒳 θ)) P := h
+  have h₀' : IsAlgEnvSeq O₀ X₀ Y₀ alg (stationaryEnv (linearGaussianKernel 𝒳 0)) P₀ := h₀
   rw [h'.map_history_eq_withDensity_env (measurable_uncurry_stepLR θ)
     (linearGaussianKernel_eq_withDensity θ) h₀' T]
   congr 1

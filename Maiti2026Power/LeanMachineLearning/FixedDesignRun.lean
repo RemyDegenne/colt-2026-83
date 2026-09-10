@@ -34,11 +34,12 @@ namespace Learning.LinearBandit
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} {θ : E} {Ω : Type*} {mΩ : MeasurableSpace Ω}
-  {P : Measure Ω} [IsProbabilityMeasure P] {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {alg : Algorithm 𝒳 ℝ}
+  {P : Measure Ω} [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
+  {alg : Algorithm Unit 𝒳 ℝ}
 
 section noise
 
-variable (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+variable (h : IsAlgEnvSeq O X Y alg (linearGaussianEnv 𝒳 θ) P)
 include h
 
 /-- Conditionally on the noises of the rounds `0, …, n`, the noise of the round `n + 1` has the
@@ -46,13 +47,14 @@ law `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise_finVec (n : ℕ) :
     HasCondDistrib (noise θ X Y (n + 1)) (fun ω (i : Fin (n + 1)) ↦ noise θ X Y i ω)
       (Kernel.const _ (gaussianReal 0 1)) P := by
-  have h1 : ∀ i : Fin (n + 1), Measurable fun p : (Fin (n + 1) → 𝒳 × ℝ) × 𝒳 ↦ p.1 i :=
-    fun i ↦ (measurable_pi_apply _).comp measurable_fst
-  have hf : Measurable fun p : (Fin (n + 1) → 𝒳 × ℝ) × 𝒳 ↦ fun i : Fin (n + 1) ↦
-      (p.1 i).2 - ⟪((p.1 i).1 : E), θ⟫ :=
-    measurable_pi_lambda _ fun i ↦ (h1 i).snd.sub
+  have h1 : ∀ i : Fin (n + 1),
+      Measurable fun p : (Hist Unit 𝒳 ℝ (n + 1) × Unit) × 𝒳 ↦ p.1.1 i :=
+    fun i ↦ (measurable_pi_apply _).comp measurable_fst.fst
+  have hf : Measurable fun p : (Hist Unit 𝒳 ℝ (n + 1) × Unit) × 𝒳 ↦ fun i : Fin (n + 1) ↦
+      (p.1.1 i).feedback - ⟪((p.1.1 i).action : E), θ⟫ :=
+    Measurable.of_eval fun i ↦ (Round.measurable_feedback.comp (h1 i)).sub
       ((continuous_id.inner continuous_const).measurable.comp
-        (measurable_subtype_coe.comp (h1 i).fst))
+        (measurable_subtype_coe.comp (Round.measurable_action.comp (h1 i))))
   exact (h.hasCondDistrib_noise (n + 1)).const_comp_right hf
 
 /-- **The noise of a linear Gaussian run is i.i.d. `N(0, 1)`**, for any algorithm: the noise
@@ -78,20 +80,23 @@ lemma _root_.Learning.IsAlgEnvSeq.hasLaw_toLp_noise_finVec (n : ℕ) :
 /-- **The future noise is independent of the past**: conditionally on the history of the first
 `m` rounds, the noises of the rounds `m, …, m + n - 1` are i.i.d. `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise_window (m n : ℕ) :
-    HasCondDistrib (fun ω (j : Fin n) ↦ noise θ X Y (m + j) ω) (history X Y m)
+    HasCondDistrib (fun ω (j : Fin n) ↦ noise θ X Y (m + j) ω) (history O X Y m)
       (Kernel.const _ (Measure.pi fun _ ↦ gaussianReal 0 1)) P := by
   refine hasCondDistrib_pi_of_hasCondDistrib_const (P := P) (ν := gaussianReal 0 1)
-    (Z := history X Y m) (W := fun k ↦ noise θ X Y (m + k))
+    (Z := history O X Y m) (W := fun k ↦ noise θ X Y (m + k))
     (h.measurable_history m).aemeasurable (fun k ↦ ?_) n
   have h1 := h.hasCondDistrib_noise (m + k)
-  have h2 : ∀ i (hi : i < m + k), Measurable fun p : (Fin (m + k) → 𝒳 × ℝ) × 𝒳 ↦ p.1 ⟨i, hi⟩ :=
-    fun i hi ↦ (measurable_pi_apply _).comp measurable_fst
-  have hf : Measurable fun p : (Fin (m + k) → 𝒳 × ℝ) × 𝒳 ↦
-      ((fun i : Fin m ↦ p.1 ⟨i, by omega⟩),
-        fun i : Fin k ↦ (p.1 ⟨m + i, by omega⟩).2 - ⟪((p.1 ⟨m + i, by omega⟩).1 : E), θ⟫) := by
-    refine (measurable_pi_lambda _ fun i ↦ h2 _ _).prodMk (measurable_pi_lambda _ fun i ↦ ?_)
-    exact (h2 _ _).snd.sub ((continuous_id.inner continuous_const).measurable.comp
-      (measurable_subtype_coe.comp (h2 _ _).fst))
+  have h2 : ∀ i (hi : i < m + k),
+      Measurable fun p : (Hist Unit 𝒳 ℝ (m + k) × Unit) × 𝒳 ↦ p.1.1 ⟨i, hi⟩ :=
+    fun i hi ↦ (measurable_pi_apply _).comp measurable_fst.fst
+  have hf : Measurable fun p : (Hist Unit 𝒳 ℝ (m + k) × Unit) × 𝒳 ↦
+      ((fun i : Fin m ↦ p.1.1 ⟨i, by omega⟩),
+        fun i : Fin k ↦ (p.1.1 ⟨m + i, by omega⟩).feedback -
+          ⟪((p.1.1 ⟨m + i, by omega⟩).action : E), θ⟫) := by
+    refine (Measurable.of_eval fun i ↦ h2 _ _).prodMk (Measurable.of_eval fun i ↦ ?_)
+    exact (Round.measurable_feedback.comp (h2 _ _)).sub
+      ((continuous_id.inner continuous_const).measurable.comp
+        (measurable_subtype_coe.comp (Round.measurable_action.comp (h2 _ _))))
   exact h1.const_comp_right hf
 
 end noise
@@ -99,13 +104,13 @@ end noise
 section fixedDesign
 
 variable [MeasurableEq 𝒳] {x : ℕ → 𝒳}
-  (h : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P)
+  (h : IsAlgEnvSeq O X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P)
 include h
 
 /-- Under the fixed design `x`, the actions are `x t` almost surely. -/
 lemma _root_.Learning.IsAlgEnvSeq.ae_action_eq_of_fixedDesign :
     ∀ᵐ ω ∂P, ∀ t, X t ω = x t := by
-  have h' : IsAlgEnvSeq X Y (detAlgorithm (fun n _ ↦ x n) fun _ ↦ measurable_const)
+  have h' : IsAlgEnvSeq O X Y (detAlgorithm (fun n _ ↦ x n) fun _ ↦ measurable_const)
       (linearGaussianEnv 𝒳 θ) P := h
   filter_upwards [h'.action_detAlgorithm_ae_all_eq] with ω hω t
   exact hω t
@@ -124,7 +129,7 @@ lemma _root_.Learning.IsAlgEnvSeq.hasLaw_feedback_finVec_of_fixedDesign (n : ℕ
       ((Measure.pi fun _ : Fin n ↦ gaussianReal 0 1).map
         (fun η (i : Fin n) ↦ ⟪(x i : E), θ⟫ + η i)) P := by
   have hm : Measurable fun η : Fin n → ℝ ↦ fun i : Fin n ↦ ⟪(x i : E), θ⟫ + η i :=
-    measurable_pi_lambda _ fun i ↦ measurable_const.add (measurable_pi_apply i)
+    Measurable.of_eval fun i ↦ measurable_const.add (measurable_pi_apply i)
   refine ((⟨hm.aemeasurable, rfl⟩ : HasLaw _ _ _).comp (h.hasLaw_noise_finVec n)).congr ?_
   filter_upwards [h.ae_feedback_eq_of_fixedDesign] with ω hω
   funext i

@@ -74,7 +74,7 @@ lemma HasLaw.hasCondDistrib_snd_const [IsFiniteMeasure P] {X : Ω → 𝓧} {Y :
   unfold HasCondDistrib
   rw [Measure.compProd_const]
   have hX : P.map X = Q := by
-    rw [← Measure.fst_map_prodMk₀ h.aemeasurable.snd, h.map_eq, Measure.fst_prod]
+    rw [← Measure.fst_map_prodMk₀ h.aemeasurable.fst h.aemeasurable.snd, h.map_eq, Measure.fst_prod]
   rw [hX]
   exact h
 

@@ -44,29 +44,29 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι] {T : ℕ}
 section stats
 
 /-- The statistic `b(h) = ∑ t, y_t x_t` of a history on the unit ball. -/
-noncomputable def histB (h : Fin T → unitBall ι × ℝ) : EuclideanSpace ℝ ι :=
-  ∑ t, (h t).2 • ((h t).1 : EuclideanSpace ℝ ι)
+noncomputable def histB (h : Hist Unit (unitBall ι) ℝ T) : EuclideanSpace ℝ ι :=
+  ∑ t, (h t).feedback • ((h t).action : EuclideanSpace ℝ ι)
 
 /-- The design matrix `S(h) = ∑ t, x_t x_tᵀ` of a history on the unit ball. -/
-noncomputable def histS (h : Fin T → unitBall ι × ℝ) : Matrix ι ι ℝ :=
-  ∑ t, outerSelf ((h t).1 : EuclideanSpace ℝ ι)
+noncomputable def histS (h : Hist Unit (unitBall ι) ℝ T) : Matrix ι ι ℝ :=
+  ∑ t, outerSelf ((h t).action : EuclideanSpace ℝ ι)
 
 omit [DecidableEq ι] in
-lemma posSemidef_histS (h : Fin T → unitBall ι × ℝ) : (histS h).PosSemidef :=
+lemma posSemidef_histS (h : Hist Unit (unitBall ι) ℝ T) : (histS h).PosSemidef :=
   posSemidef_sum_outerSelf _ _
 
 omit [DecidableEq ι] in
-lemma trace_histS_le (h : Fin T → unitBall ι × ℝ) : (histS h).trace ≤ T := by
+lemma trace_histS_le (h : Hist Unit (unitBall ι) ℝ T) : (histS h).trace ≤ T := by
   rw [histS, Matrix.trace_sum]
   simp_rw [trace_outerSelf]
-  calc ∑ t, ‖((h t).1 : EuclideanSpace ℝ ι)‖ ^ 2 ≤ ∑ _t : Fin T, (1 : ℝ) :=
+  calc ∑ t, ‖((h t).action : EuclideanSpace ℝ ι)‖ ^ 2 ≤ ∑ _t : Fin T, (1 : ℝ) :=
         Finset.sum_le_sum fun t _ ↦
-          pow_le_one₀ (norm_nonneg _) (norm_le_one_of_mem_unitBall (h t).1.2)
+          pow_le_one₀ (norm_nonneg _) (norm_le_one_of_mem_unitBall (h t).action.2)
     _ = T := by simp
 
 /-- The likelihood ratio of a history on the unit ball is the Gaussian tilt with parameters
 `b(h)`, `S(h)`. -/
-lemma likelihood_eq_gaussTilt (θ : EuclideanSpace ℝ ι) (h : Fin T → unitBall ι × ℝ) :
+lemma likelihood_eq_gaussTilt (θ : EuclideanSpace ℝ ι) (h : Hist Unit (unitBall ι) ℝ T) :
     likelihood θ h = gaussTilt (histB h) (histS h) θ := by
   unfold likelihood gaussTilt stepLogLR
   congr 1
@@ -78,7 +78,7 @@ lemma likelihood_eq_gaussTilt (θ : EuclideanSpace ℝ ι) (h : Fin T → unitBa
 
 /-- **Lower bound on the posterior trace** (blueprint `lem:trace_inv_lower`):
 `tr V(h) ≥ d² / (d σ⁻² + T)`. -/
-lemma le_trace_postCov_histS {σ : ℝ} (hσ : 0 < σ) (h : Fin T → unitBall ι × ℝ) :
+lemma le_trace_postCov_histS {σ : ℝ} (hσ : 0 < σ) (h : Hist Unit (unitBall ι) ℝ T) :
     (Fintype.card ι : ℝ) ^ 2 / (Fintype.card ι * σ⁻¹ ^ 2 + T) ≤
       (postCov σ (histS h)).trace := by
   have hP := posDef_postPrec (posSemidef_histS h) hσ.ne'
@@ -98,7 +98,7 @@ section joint
 variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (T : ℕ) [IsMarkovKernel (A.output T)] (σ : ℝ)
 
 /-- The law of (history, recommendation) of `A` under pure noise. -/
-noncomputable def noisePairLaw : Measure ((Fin T → unitBall ι × ℝ) × unitBall ι) :=
+noncomputable def noisePairLaw : Measure (Hist Unit (unitBall ι) ℝ T × unitBall ι) :=
   noiseHistLaw A.alg T ⊗ₘ A.output T
 
 instance : IsProbabilityMeasure (noisePairLaw A T) := by
@@ -107,12 +107,12 @@ instance : IsProbabilityMeasure (noisePairLaw A T) := by
 
 omit [DecidableEq ι] in
 lemma measurable_likelihood_fst (θ : EuclideanSpace ℝ ι) :
-    Measurable fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ likelihood θ p.1 :=
+    Measurable fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ likelihood θ p.1 :=
   (measurable_likelihood θ T).comp measurable_fst
 
 omit [DecidableEq ι] in
 lemma measurable_likelihood_prod_fst :
-    Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+    Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       likelihood q.1 q.2.1 :=
   (measurable_likelihood_prod T).comp (measurable_fst.prodMk measurable_snd.fst)
 
@@ -120,9 +120,9 @@ omit [DecidableEq ι] [IsMarkovKernel (A.output T)] in
 lemma pairKernel_eq_withDensity (θ : EuclideanSpace ℝ ι) :
     pairKernel A T θ =
       (noisePairLaw A T).withDensity fun p ↦ ENNReal.ofReal (likelihood θ p.1) := by
-  have hf : Measurable fun h : Fin T → unitBall ι × ℝ ↦ ENNReal.ofReal (likelihood θ h) :=
+  have hf : Measurable fun h : Hist Unit (unitBall ι) ℝ T ↦ ENNReal.ofReal (likelihood θ h) :=
     ENNReal.measurable_ofReal.comp (measurable_likelihood θ T)
-  rw [pairKernel_apply, histKernel_apply, noisePairLaw, Measure.compProd_withDensity_left hf]
+  rw [pairKernel_apply, histKernel_apply, noisePairLaw, Measure.withDensity_compProd hf]
 
 omit [DecidableEq ι] in
 /-- The likelihood integrates to `1` against the pure-noise law. -/
@@ -135,7 +135,7 @@ lemma lintegral_ofReal_likelihood_noisePairLaw (θ : EuclideanSpace ℝ ι) :
 omit [DecidableEq ι] in
 lemma integral_likelihood_noisePairLaw (θ : EuclideanSpace ℝ ι) :
     ∫ p, likelihood θ p.1 ∂noisePairLaw A T = 1 := by
-  have hf : Measurable fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hf : Measurable fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       ENNReal.ofReal (likelihood θ p.1) :=
     ENNReal.measurable_ofReal.comp (measurable_likelihood_fst T θ)
   have h := integral_withDensity_eq_integral_toReal_smul (μ := noisePairLaw A T) hf
@@ -160,7 +160,7 @@ lemma integrable_likelihood_noisePairLaw (θ : EuclideanSpace ℝ ι) :
 /-- **The Bayesian joint law** of (reward vector, history, recommendation): the prior
 `N(0, σ² I)` composed with the run kernel. -/
 noncomputable def bayesJointLaw :
-    Measure (EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι)) :=
+    Measure (EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι)) :=
   gaussPrior σ ⊗ₘ pairKernel A T
 
 instance : IsProbabilityMeasure (bayesJointLaw A T σ) := by
@@ -173,14 +173,14 @@ lemma bayesJointLaw_eq_withDensity :
     bayesJointLaw A T σ = ((gaussPrior σ).prod (noisePairLaw A T)).withDensity
       fun q ↦ ENNReal.ofReal (likelihood q.1 q.2.1) := by
   have hm : Measurable (Function.uncurry fun (θ : EuclideanSpace ℝ ι)
-      (p : (Fin T → unitBall ι × ℝ) × unitBall ι) ↦ ENNReal.ofReal (likelihood θ p.1)) :=
+      (p : Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦ ENNReal.ofReal (likelihood θ p.1)) :=
     ENNReal.measurable_ofReal.comp (measurable_likelihood_prod_fst T)
   have hk : pairKernel A T = Kernel.withDensity (Kernel.const _ (noisePairLaw A T))
       fun θ p ↦ ENNReal.ofReal (likelihood θ p.1) := by
     ext θ : 1
     rw [Kernel.withDensity_apply _ hm, Kernel.const_apply, pairKernel_eq_withDensity]
   have : IsSFiniteKernel (Kernel.withDensity (Kernel.const _ (noisePairLaw A T))
-      fun (θ : EuclideanSpace ℝ ι) (p : (Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+      fun (θ : EuclideanSpace ℝ ι) (p : Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
         ENNReal.ofReal (likelihood θ p.1)) := by
     rw [← hk]
     infer_instance
@@ -188,10 +188,10 @@ lemma bayesJointLaw_eq_withDensity :
 
 /-- Integrals against the joint law as integrals against the product measure. -/
 lemma integral_bayesJointLaw
-    (f : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) → ℝ) :
+    (f : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) → ℝ) :
     ∫ q, f q ∂bayesJointLaw A T σ =
       ∫ q, likelihood q.1 q.2.1 * f q ∂((gaussPrior σ).prod (noisePairLaw A T)) := by
-  have hf : Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hf : Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       ENNReal.ofReal (likelihood q.1 q.2.1) :=
     ENNReal.measurable_ofReal.comp (measurable_likelihood_prod_fst T)
   rw [bayesJointLaw_eq_withDensity, integral_withDensity_eq_integral_toReal_smul hf
@@ -199,10 +199,10 @@ lemma integral_bayesJointLaw
   simp only [ENNReal.toReal_ofReal (likelihood_pos _ _).le, smul_eq_mul]
 
 lemma integrable_bayesJointLaw_iff
-    (f : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) → ℝ) :
+    (f : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) → ℝ) :
     Integrable f (bayesJointLaw A T σ) ↔
       Integrable (fun q ↦ likelihood q.1 q.2.1 * f q) ((gaussPrior σ).prod (noisePairLaw A T)) := by
-  have hf : Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hf : Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       ENNReal.ofReal (likelihood q.1 q.2.1) :=
     ENNReal.measurable_ofReal.comp (measurable_likelihood_prod_fst T)
   rw [bayesJointLaw_eq_withDensity, integrable_withDensity_iff_integrable_smul' hf
@@ -213,7 +213,7 @@ lemma integrable_bayesJointLaw_iff
 lemma integrable_likelihood_mul_prod {g : EuclideanSpace ℝ ι → ℝ} (hg : Measurable g)
     (hgi : Integrable g (gaussPrior σ)) :
     Integrable (fun q ↦ likelihood q.1 q.2.1 * g q.1) ((gaussPrior σ).prod (noisePairLaw A T)) := by
-  have hmeas : Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hmeas : Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       likelihood q.1 q.2.1 * g q.1 :=
     (measurable_likelihood_prod_fst T).mul (hg.comp measurable_fst)
   refine (integrable_prod_iff hmeas.aestronglyMeasurable).2 ⟨ae_of_all _ fun θ ↦ ?_, ?_⟩
@@ -238,44 +238,44 @@ section regret
 variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) [IsMarkovKernel (A.output T)] {σ : ℝ}
 
 /-- The posterior quantities of a history: `u(h) = ∫ ℓ_θ(h) • θ dπ = Z(h) m(h)`. -/
-noncomputable def postU (σ : ℝ) (h : Fin T → unitBall ι × ℝ) : EuclideanSpace ℝ ι :=
+noncomputable def postU (σ : ℝ) (h : Hist Unit (unitBall ι) ℝ T) : EuclideanSpace ℝ ι :=
   ∫ θ, likelihood θ h • θ ∂gaussPrior σ
 
 /-- `Z(h) = ∫ ℓ_θ(h) dπ`. -/
-noncomputable def postZ (σ : ℝ) (h : Fin T → unitBall ι × ℝ) : ℝ :=
+noncomputable def postZ (σ : ℝ) (h : Hist Unit (unitBall ι) ℝ T) : ℝ :=
   ∫ θ, likelihood θ h ∂gaussPrior σ
 
 /-- `N(h) = ∫ ‖θ‖² ℓ_θ(h) dπ`. -/
-noncomputable def postN (σ : ℝ) (h : Fin T → unitBall ι × ℝ) : ℝ :=
+noncomputable def postN (σ : ℝ) (h : Hist Unit (unitBall ι) ℝ T) : ℝ :=
   ∫ θ, ‖θ‖ ^ 2 * likelihood θ h ∂gaussPrior σ
 
 omit [DecidableEq ι] in
 lemma measurable_likelihood_swap :
-    Measurable fun p : (Fin T → unitBall ι × ℝ) × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1 :=
+    Measurable fun p : Hist Unit (unitBall ι) ℝ T × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1 :=
   (measurable_likelihood_prod T).comp (measurable_snd.prodMk measurable_fst)
 
 lemma stronglyMeasurable_postU : StronglyMeasurable (postU (T := T) (ι := ι) σ) :=
   StronglyMeasurable.integral_prod_right'
-    (f := fun p : (Fin T → unitBall ι × ℝ) × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1 • p.2)
+    (f := fun p : Hist Unit (unitBall ι) ℝ T × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1 • p.2)
     ((measurable_likelihood_swap (T := T)).smul measurable_snd).stronglyMeasurable
 
 lemma stronglyMeasurable_postZ : StronglyMeasurable (postZ (T := T) (ι := ι) σ) :=
   StronglyMeasurable.integral_prod_right'
-    (f := fun p : (Fin T → unitBall ι × ℝ) × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1)
+    (f := fun p : Hist Unit (unitBall ι) ℝ T × EuclideanSpace ℝ ι ↦ likelihood p.2 p.1)
     (measurable_likelihood_swap (T := T)).stronglyMeasurable
 
 lemma stronglyMeasurable_postN : StronglyMeasurable (postN (T := T) (ι := ι) σ) :=
   StronglyMeasurable.integral_prod_right'
-    (f := fun p : (Fin T → unitBall ι × ℝ) × EuclideanSpace ℝ ι ↦ ‖p.2‖ ^ 2 * likelihood p.2 p.1)
+    (f := fun p : Hist Unit (unitBall ι) ℝ T × EuclideanSpace ℝ ι ↦ ‖p.2‖ ^ 2 * likelihood p.2 p.1)
     ((measurable_snd.norm.pow_const 2).mul (measurable_likelihood_swap (T := T))).stronglyMeasurable
 
-lemma postZ_pos (h : Fin T → unitBall ι × ℝ) : 0 < postZ σ h := by
+lemma postZ_pos (h : Hist Unit (unitBall ι) ℝ T) : 0 < postZ σ h := by
   unfold postZ
   simp_rw [likelihood_eq_gaussTilt]
   exact integral_gaussTilt_pos (posSemidef_histS h)
 
 /-- `‖u(h)‖² ≤ Z(h) (N(h) - c Z(h))` with `c = d² / (d σ⁻² + T)`: the posterior second moment. -/
-lemma norm_postU_sq_le (hσ : 0 < σ) (h : Fin T → unitBall ι × ℝ) :
+lemma norm_postU_sq_le (hσ : 0 < σ) (h : Hist Unit (unitBall ι) ℝ T) :
     ‖postU σ h‖ ^ 2 ≤ postZ σ h *
       (postN σ h - (Fintype.card ι : ℝ) ^ 2 / (Fintype.card ι * σ⁻¹ ^ 2 + T) * postZ σ h) := by
   have hS := posSemidef_histS h
@@ -294,7 +294,7 @@ lemma norm_postU_sq_le (hσ : 0 < σ) (h : Fin T → unitBall ι × ℝ) :
   nlinarith [sq_nonneg ‖postMean σ (histB h) (histS h)‖, mul_le_mul_of_nonneg_right htr hZ.le]
 
 /-- `‖u(h)‖ ≤ √Z(h) √(N(h) - c Z(h))`. -/
-lemma norm_postU_le (hσ : 0 < σ) (h : Fin T → unitBall ι × ℝ) :
+lemma norm_postU_le (hσ : 0 < σ) (h : Hist Unit (unitBall ι) ℝ T) :
     ‖postU σ h‖ ≤ √(postZ σ h) *
       √(postN σ h - (Fintype.card ι : ℝ) ^ 2 / (Fintype.card ι * σ⁻¹ ^ 2 + T) * postZ σ h) := by
   rw [← Real.sqrt_mul (postZ_pos h).le, Real.le_sqrt (norm_nonneg _)]
@@ -346,10 +346,10 @@ section bound
 
 /-- The mean recommendation: `⟪rec, θ⟫` is `P`-integrable against the likelihood. -/
 lemma integrable_likelihood_mul_inner_prod :
-    Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+    Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       likelihood q.1 q.2.1 * ⟪((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι), q.1⟫)
       ((gaussPrior σ).prod (noisePairLaw A T)) := by
-  have hmeas : Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hmeas : Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       likelihood q.1 q.2.1 * ⟪((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι), q.1⟫ :=
     (measurable_likelihood_prod_fst T).mul
       ((measurable_subtype_coe.comp measurable_snd.snd).inner measurable_fst)
@@ -364,7 +364,7 @@ lemma integrable_likelihood_mul_inner_prod :
     _ = ‖q.1‖ := one_mul _
 
 lemma integrable_norm_postU :
-    Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ ‖postU σ p.1‖)
+    Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ ‖postU σ p.1‖)
       (noisePairLaw A T) := by
   have hdom := (integrable_likelihood_mul_prod A T σ (g := fun θ ↦ ‖θ‖) measurable_norm
     (integrable_norm_gaussPrior (ι := ι) (σ := σ))).integral_prod_right
@@ -383,7 +383,7 @@ lemma integral_inner_bayesJointLaw_le :
       ∫ p, ‖postU σ p.1‖ ∂noisePairLaw A T := by
   have hint := integrable_likelihood_mul_inner_prod A (T := T) (σ := σ)
   rw [integral_bayesJointLaw, integral_prod_symm _ hint]
-  have hpt : ∀ p : (Fin T → unitBall ι × ℝ) × unitBall ι,
+  have hpt : ∀ p : Hist Unit (unitBall ι) ℝ T × unitBall ι,
       ∫ θ, likelihood θ p.1 * ⟪((p.2 : unitBall ι) : EuclideanSpace ℝ ι), θ⟫ ∂gaussPrior σ =
         ⟪((p.2 : unitBall ι) : EuclideanSpace ℝ ι), postU σ p.1⟫ := by
     intro p
@@ -402,7 +402,7 @@ lemma integral_inner_bayesJointLaw_le :
     _ = ‖postU σ p.1‖ := one_mul _
 
 lemma integrable_postZ :
-    Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ postZ σ p.1) (noisePairLaw A T) :=
+    Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ postZ σ p.1) (noisePairLaw A T) :=
   ((integrable_likelihood_mul_prod A T σ (g := fun _ ↦ 1) measurable_const
     (integrable_const 1)).integral_prod_right).congr (ae_of_all _ fun p ↦ by simp [postZ])
 
@@ -414,7 +414,7 @@ lemma integral_postZ : ∫ p, postZ σ p.1 ∂noisePairLaw A T = 1 := by
   simpa [postZ] using h
 
 lemma integrable_postN :
-    Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ postN σ p.1) (noisePairLaw A T) :=
+    Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ postN σ p.1) (noisePairLaw A T) :=
   ((integrable_likelihood_mul_prod A T σ (g := fun θ ↦ ‖θ‖ ^ 2) (by fun_prop)
     (integrable_norm_sq_gaussPrior (ι := ι) (σ := σ))).integral_prod_right).congr
     (ae_of_all _ fun p ↦ by
@@ -444,39 +444,39 @@ lemma integral_norm_postU_le (hσ : 0 < σ) :
   set c : ℝ := (Fintype.card ι : ℝ) ^ 2 / (Fintype.card ι * σ⁻¹ ^ 2 + T) with hc
   have hZ := integrable_postZ A (T := T) (σ := σ)
   have hN := integrable_postN A (T := T) (σ := σ)
-  have hZ0 : ∀ p : (Fin T → unitBall ι × ℝ) × unitBall ι, 0 ≤ postZ σ p.1 :=
+  have hZ0 : ∀ p : Hist Unit (unitBall ι) ℝ T × unitBall ι, 0 ≤ postZ σ p.1 :=
     fun p ↦ (postZ_pos _).le
-  have hNZ : ∀ p : (Fin T → unitBall ι × ℝ) × unitBall ι, 0 ≤ postN σ p.1 - c * postZ σ p.1 := by
+  have hNZ : ∀ p : Hist Unit (unitBall ι) ℝ T × unitBall ι, 0 ≤ postN σ p.1 - c * postZ σ p.1 := by
     intro p
     have h1 := norm_postU_sq_le hσ p.1
     have h2 := postZ_pos (σ := σ) p.1
     by_contra hlt
     push Not at hlt
     nlinarith [sq_nonneg ‖postU σ p.1‖]
-  have hmZ : Measurable fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ postZ σ p.1 :=
+  have hmZ : Measurable fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ postZ σ p.1 :=
     (stronglyMeasurable_postZ (T := T) (σ := σ)).measurable.comp measurable_fst
-  have hmN : Measurable fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ postN σ p.1 :=
+  have hmN : Measurable fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ postN σ p.1 :=
     (stronglyMeasurable_postN (T := T) (σ := σ)).measurable.comp measurable_fst
-  have hNZi : Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hNZi : Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       postN σ p.1 - c * postZ σ p.1) (noisePairLaw A T) := hN.sub (hZ.const_mul c)
-  have hm2 : Measurable fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hm2 : Measurable fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       postN σ p.1 - c * postZ σ p.1 := hmN.sub (hmZ.const_mul c)
-  have hbound : Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hbound : Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       1 / 2 * (postZ σ p.1 + (postN σ p.1 - c * postZ σ p.1))) (noisePairLaw A T) :=
     (hZ.add hNZi).const_mul _
-  have hI1 : Integrable (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hI1 : Integrable (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       √(postZ σ p.1) * √(postN σ p.1 - c * postZ σ p.1)) (noisePairLaw A T) := by
     refine hbound.mono' (hmZ.sqrt.mul hm2.sqrt).aestronglyMeasurable (ae_of_all _ fun p ↦ ?_)
     rw [Real.norm_of_nonneg (mul_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _))]
     have h3 := two_mul_le_add_sq (√(postZ σ p.1)) (√(postN σ p.1 - c * postZ σ p.1))
     rw [Real.sq_sqrt (hZ0 p), Real.sq_sqrt (hNZ p)] at h3
     linarith
-  have hL1 : MemLp (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦ √(postZ σ p.1))
+  have hL1 : MemLp (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦ √(postZ σ p.1))
       (ENNReal.ofReal 2) (noisePairLaw A T) := by
     rw [ENNReal.ofReal_ofNat, memLp_two_iff_integrable_sq hmZ.sqrt.aestronglyMeasurable]
     refine hZ.congr (ae_of_all _ fun p ↦ ?_)
     simp [Real.sq_sqrt (hZ0 p)]
-  have hL2 : MemLp (fun p : (Fin T → unitBall ι × ℝ) × unitBall ι ↦
+  have hL2 : MemLp (fun p : Hist Unit (unitBall ι) ℝ T × unitBall ι ↦
       √(postN σ p.1 - c * postZ σ p.1)) (ENNReal.ofReal 2) (noisePairLaw A T) := by
     rw [ENNReal.ofReal_ofNat, memLp_two_iff_integrable_sq hm2.sqrt.aestronglyMeasurable]
     refine hNZi.congr (ae_of_all _ fun p ↦ ?_)
@@ -500,12 +500,12 @@ theorem integral_simpleRegret_bayesJointLaw_ge (hσ : 0 < σ) :
       √(σ ^ 2 * Fintype.card ι - (Fintype.card ι : ℝ) ^ 2 / (Fintype.card ι * σ⁻¹ ^ 2 + T)) ≤
       ∫ q, simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι)
         ∂bayesJointLaw A T σ := by
-  have hQ1 : Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hQ1 : Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       ‖q.1‖) (bayesJointLaw A T σ) :=
     (integrable_bayesJointLaw_iff A T σ _).2
       (integrable_likelihood_mul_prod A T σ measurable_norm
         (integrable_norm_gaussPrior (ι := ι) (σ := σ)))
-  have hQ2 : Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hQ2 : Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       ⟪((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι), q.1⟫) (bayesJointLaw A T σ) :=
     (integrable_bayesJointLaw_iff A T σ _).2 (integrable_likelihood_mul_inner_prod A)
   have h1 : ∫ q, simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι)
@@ -546,7 +546,7 @@ lemma simpleRegret_unitBall_le (θ : EuclideanSpace ℝ ι) (x : unitBall ι) :
 
 omit [DecidableEq ι] in
 lemma measurable_simpleRegret_unitBall_prod :
-    Measurable fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+    Measurable fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι) := by
   simp_rw [simpleRegret_unitBall]
   exact measurable_fst.norm.sub
@@ -561,7 +561,7 @@ omit [DecidableEq ι] in
 /-- `θ ↦ E_θ[r]` is measurable (blueprint `lem:pb_kernel_of_likelihood`). -/
 lemma stronglyMeasurable_expRegret : StronglyMeasurable (expRegret T A) :=
   StronglyMeasurable.integral_kernel_prod_right'
-    (f := fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+    (f := fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι))
     (measurable_simpleRegret_unitBall_prod (T := T)).stronglyMeasurable
 
@@ -585,10 +585,10 @@ lemma integrable_expRegret : Integrable (expRegret T A) (gaussPrior σ) :=
       exact expRegret_le A θ)
 
 lemma integrable_simpleRegret_bayesJointLaw :
-    Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+    Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι))
       (bayesJointLaw A T σ) := by
-  have h : Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have h : Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       2 * ‖q.1‖) (bayesJointLaw A T σ) :=
     (integrable_bayesJointLaw_iff A T σ _).2 (integrable_likelihood_mul_prod A T σ
       (g := fun θ ↦ 2 * ‖θ‖) (by fun_prop)
@@ -599,7 +599,7 @@ lemma integrable_simpleRegret_bayesJointLaw :
   exact simpleRegret_unitBall_le _ _
 
 lemma integrable_norm_sq_bayesJointLaw :
-    Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦ ‖q.1‖ ^ 2)
+    Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦ ‖q.1‖ ^ 2)
       (bayesJointLaw A T σ) :=
   (integrable_bayesJointLaw_iff A T σ _).2 (integrable_likelihood_mul_prod A T σ
     (g := fun θ ↦ ‖θ‖ ^ 2) (by fun_prop) (integrable_norm_sq_gaussPrior (ι := ι) (σ := σ)))
@@ -619,7 +619,7 @@ lemma integral_indicator_mul_simpleRegret_bayesJointLaw_ge {R : ℝ} (hR : 0 < R
   have hint := integrable_simpleRegret_bayesJointLaw A (T := T) (σ := σ)
   have hB : MeasurableSet {θ : EuclideanSpace ℝ ι | ‖θ‖ ≤ R} :=
     measurableSet_le measurable_norm measurable_const
-  have hind : Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hind : Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       {θ : EuclideanSpace ℝ ι | ‖θ‖ ≤ R}.indicator (fun _ ↦ (1 : ℝ)) q.1 *
         simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι))
       (bayesJointLaw A T σ) := by
@@ -665,7 +665,7 @@ lemma integral_indicator_mul_simpleRegret_bayesJointLaw (R : ℝ) :
   have hint := integrable_simpleRegret_bayesJointLaw A (T := T) (σ := σ)
   have hB : MeasurableSet {θ : EuclideanSpace ℝ ι | ‖θ‖ ≤ R} :=
     measurableSet_le measurable_norm measurable_const
-  have hind : Integrable (fun q : EuclideanSpace ℝ ι × ((Fin T → unitBall ι × ℝ) × unitBall ι) ↦
+  have hind : Integrable (fun q : EuclideanSpace ℝ ι × (Hist Unit (unitBall ι) ℝ T × unitBall ι) ↦
       {θ : EuclideanSpace ℝ ι | ‖θ‖ ≤ R}.indicator (fun _ ↦ (1 : ℝ)) q.1 *
         simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι))
       (gaussPrior σ ⊗ₘ pairKernel A T) := by
@@ -784,7 +784,7 @@ lemma pairKernel_zero_eq (θ θ' : EuclideanSpace ℝ ι) :
     pairKernel A 0 θ = pairKernel A 0 θ' := by
   have h : ∀ ϑ : EuclideanSpace ℝ ι, pairKernel A 0 ϑ = noisePairLaw A 0 := fun ϑ ↦ by
     rw [pairKernel_eq_withDensity]
-    have : (fun p : (Fin 0 → unitBall ι × ℝ) × unitBall ι ↦
+    have : (fun p : Hist Unit (unitBall ι) ℝ 0 × unitBall ι ↦
         ENNReal.ofReal (likelihood ϑ p.1)) = 1 := by
       funext p
       simp [likelihood]
@@ -809,9 +809,9 @@ lemma not_isPAC_unitBall_of_isFixedBudget_zero (hd : 0 < Fintype.card ι) {ε δ
   have h1 := hpac.le_measureReal_pairKernel hA θ
   have h2 := hpac.le_measureReal_pairKernel hA (-θ)
   rw [pairKernel_zero_eq A (-θ) θ] at h2
-  have hdisj : {p : (Fin 0 → unitBall ι × ℝ) × unitBall ι |
+  have hdisj : {p : Hist Unit (unitBall ι) ℝ 0 × unitBall ι |
       simpleRegret (unitBall ι) (-θ) ((p.2 : unitBall ι) : EuclideanSpace ℝ ι) ≤ ε} ⊆
-      {p : (Fin 0 → unitBall ι × ℝ) × unitBall ι |
+      {p : Hist Unit (unitBall ι) ℝ 0 × unitBall ι |
         simpleRegret (unitBall ι) θ ((p.2 : unitBall ι) : EuclideanSpace ℝ ι) ≤ ε}ᶜ := by
     intro p hp
     simp only [Set.mem_ofPred_eq, Set.mem_compl_iff, not_le] at hp ⊢

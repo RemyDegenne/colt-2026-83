@@ -67,7 +67,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
   -- the canonical runs
   have hrun := fun S : Finset ι ↦ hA.isRun_fixedBudgetRunMeasure
     (env := linearGaussianEnv (mSet ι m) (msParam Δ S))
-  obtain ⟨P, hP⟩ : ∃ P : Finset ι → Measure ((ℕ → mSet ι m × ℝ) × mSet ι m),
+  obtain ⟨P, hP⟩ : ∃ P : Finset ι → Measure ((ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m),
       ∀ S, P S = A.fixedBudgetRunMeasure (linearGaussianEnv (mSet ι m) (msParam Δ S)) T :=
     ⟨_, fun _ ↦ rfl⟩
   have hprob : ∀ S, IsProbabilityMeasure (P S) := fun S ↦ by rw [hP]; infer_instance
@@ -78,7 +78,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
   have hAm : ∀ i, MeasurableSet (Aset i) := fun i ↦
     (hcoord i).measurable (measurableSet_singleton 1)
   have hAm' : ∀ i, MeasurableSet (Prod.snd ⁻¹' Aset i :
-      Set ((ℕ → mSet ι m × ℝ) × mSet ι m)) := fun i ↦ measurable_snd (hAm i)
+      Set ((ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m)) := fun i ↦ measurable_snd (hAm i)
   have hind : ∀ (i : ι) (y : mSet ι m),
       Set.indicator (Aset i) (fun _ ↦ (1 : ℝ)) y = (y : EuclideanSpace ℝ ι) i := by
     intro i y
@@ -105,7 +105,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
       simp [measureReal_def]
     simp_rw [hstep]
     rw [← integral_finsetSum _ fun i _ ↦ (integrable_const _).indicator (hAm' i)]
-    have hone : ∀ ω : (ℕ → mSet ι m × ℝ) × mSet ι m,
+    have hone : ∀ ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m,
         ∑ i, Set.indicator (Prod.snd ⁻¹' Aset i) (fun _ ↦ (1 : ℝ)) ω = m := by
       intro ω
       have h1 : ∀ i, Set.indicator (Prod.snd ⁻¹' Aset i) (fun _ ↦ (1 : ℝ)) ω =
@@ -123,7 +123,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
     simp
   -- (2) the total number of pulls is `m T`
   have hmeasX : ∀ (S : Finset ι) (t : ℕ) (i : ι),
-      Measurable fun ω : (ℕ → mSet ι m × ℝ) × mSet ι m ↦
+      Measurable fun ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m ↦
         ((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι) i :=
     fun S t i ↦ (hcoord i).measurable.comp ((hrun S).isAlgEnvSeq.measurable_action t)
   have hintX : ∀ (S : Finset ι) (t : ℕ) (i : ι),
@@ -149,7 +149,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
         ∑ i, ∫ ω, ((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι) i ∂(P S) = m := by
       intro t _
       rw [← integral_finsetSum _ fun i _ ↦ hintX S t i]
-      have hb : ∀ ω : (ℕ → mSet ι m × ℝ) × mSet ι m,
+      have hb : ∀ ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m,
           ∑ i, ((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι) i = m :=
         fun ω ↦ (IT.action t ω.1 : mSet ι m).2.2
       simp_rw [hb]
@@ -220,7 +220,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
     have hK : ∑ t ∈ Finset.range T,
         ∫ ω, ⟪((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι),
           msParam Δ B - msParam Δ (insert i B)⟫ ^ 2 / 2 ∂(P B) ≤ Δ ^ 2 / 2 * Nb B i := by
-      have hpt : ∀ (t : ℕ) (ω : (ℕ → mSet ι m × ℝ) × mSet ι m),
+      have hpt : ∀ (t : ℕ) (ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m),
           ⟪((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι),
             msParam Δ B - msParam Δ (insert i B)⟫ ^ 2 / 2 =
             Δ ^ 2 / 2 * ((IT.action t ω.1 : mSet ι m) : EuclideanSpace ℝ ι) i := by
@@ -297,7 +297,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
     intro S
     have := hprob S
     rw [hVal]
-    have hpt : ∀ ω : (ℕ → mSet ι m × ℝ) × mSet ι m,
+    have hpt : ∀ ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m,
         ⟪((ω.2 : mSet ι m) : EuclideanSpace ℝ ι), msParam Δ S⟫ =
           ∑ i ∈ S, Set.indicator (Prod.snd ⁻¹' Aset i) (fun _ ↦ Δ) ω := by
       intro ω
@@ -332,19 +332,19 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
       intro y hy
       rw [hsr]
       linarith [inner_msParam_nonneg hΔ.le S hy]
-    have hpacs : 1 - δ ≤ (P S).real {ω : (ℕ → mSet ι m × ℝ) × mSet ι m |
+    have hpacs : 1 - δ ≤ (P S).real {ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m |
         simpleRegret (mSet ι m) (msParam Δ S)
           ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι) ≤ ε} := by
       rw [hP S]
-      exact hpac (msParam Δ S) _ _ _ _ (hrun S)
+      exact hpac (msParam Δ S) _ _ _ _ _ (hrun S)
     have hint := integral_simpleRegret_le_of_measureReal_le (P := P S) measurable_snd h0 hZ
       (by linarith) hpacs
-    have hmeasR : Measurable fun ω : (ℕ → mSet ι m × ℝ) × mSet ι m ↦
+    have hmeasR : Measurable fun ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m ↦
         simpleRegret (mSet ι m) (msParam Δ S)
           ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι) :=
       ((continuous_const.sub (continuous_subtype_val.inner continuous_const)).measurable).comp
         measurable_snd
-    have hintR : Integrable (fun ω : (ℕ → mSet ι m × ℝ) × mSet ι m ↦
+    have hintR : Integrable (fun ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m ↦
         simpleRegret (mSet ι m) (msParam Δ S)
           ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι)) (P S) :=
       Integrable.of_bound hmeasR.aestronglyMeasurable (10 * ε)
@@ -354,7 +354,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
     have hVal2 : Val S = 10 * ε - ∫ ω, simpleRegret (mSet ι m) (msParam Δ S)
         ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι) ∂(P S) := by
       rw [hVal]
-      have hpt : ∀ ω : (ℕ → mSet ι m × ℝ) × mSet ι m,
+      have hpt : ∀ ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m,
           ⟪((ω.2 : mSet ι m) : EuclideanSpace ℝ ι), msParam Δ S⟫ =
             10 * ε - simpleRegret (mSet ι m) (msParam Δ S)
               ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι) := fun ω ↦ by rw [hsr]; ring

@@ -54,7 +54,7 @@ lemma integral_exp_mul_inner_stdGaussian (a : E) (t : ℝ) :
     ∫ x, exp (t * ⟪a, x⟫) ∂stdGaussian E = exp (t ^ 2 * ‖a‖ ^ 2 / 2) := by
   have h : ∫ x, exp (t * ⟪a, x⟫) ∂stdGaussian E =
       exp (0 * t + ((‖a‖₊ ^ 2 : ℝ≥0) : ℝ) * t ^ 2 / 2) :=
-    mgf_gaussianReal (stdGaussian_map_toDual a) t
+    mgf_gaussianReal ⟨by fun_prop, stdGaussian_map_toDual a⟩ t
   rw [h]
   push_cast
   ring_nf

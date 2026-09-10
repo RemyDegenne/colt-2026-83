@@ -234,7 +234,8 @@ def signOf (b : Bool) : ℝ := if b then 1 else -1
 lemma measurable_signOf : Measurable signOf := measurable_of_countable _
 
 lemma uniformBool_map_signOf : uniformBool.map signOf = signMeasure := by
-  rw [uniformBool, signMeasure, Measure.map_smul, Measure.map_add _ _ measurable_signOf,
+  rw [uniformBool, signMeasure, Measure.map_smul _ measurable_signOf.aemeasurable,
+    Measure.map_add _ _ measurable_signOf,
     Measure.map_dirac' measurable_signOf, Measure.map_dirac' measurable_signOf]
   rfl
 
@@ -253,7 +254,7 @@ def signVec (u : ι → Bool) : ι → ℝ := fun i ↦ signOf (u i)
 
 omit [Fintype ι] in
 lemma measurable_signVec : Measurable (signVec (ι := ι)) :=
-  measurable_pi_lambda _ fun i ↦ measurable_signOf.comp (measurable_pi_apply i)
+  Measurable.of_eval fun i ↦ measurable_signOf.comp (measurable_pi_apply i)
 
 lemma uniformBoolVec_map_signVec : (uniformBoolVec ι).map signVec = rademacherMeasure ι := by
   unfold uniformBoolVec rademacherMeasure signVec

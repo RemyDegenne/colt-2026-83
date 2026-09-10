@@ -35,25 +35,25 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [Measurabl
 
 /-- The history of the `T` rounds of the fixed design `x` with reward vector `θ` and noise
 vector `η`: round `t` plays `x t` and observes `⟪x t, θ⟫ + η t`. -/
-def fixedDesignHist (x : Fin T → 𝒳) (θ : E) (η : Fin T → ℝ) : Fin T → 𝒳 × ℝ :=
-  fun t ↦ (x t, ⟪(x t : E), θ⟫ + η t)
+def fixedDesignHist (x : Fin T → 𝒳) (θ : E) (η : Fin T → ℝ) : Hist Unit 𝒳 ℝ T :=
+  fun t ↦ ((), x t, ⟪(x t : E), θ⟫ + η t)
 
 lemma measurable_fixedDesignHist (x : Fin T → 𝒳) (θ : E) : Measurable (fixedDesignHist x θ) :=
-  measurable_pi_lambda _ fun t ↦
-    measurable_const.prodMk (measurable_const.add (measurable_pi_apply t))
+  Measurable.of_eval fun t ↦ measurable_const.prodMk
+    (measurable_const.prodMk (measurable_const.add (measurable_pi_apply t)))
 
 /-- The law of the history of the `T` rounds of the fixed design `x` with reward vector `θ`:
 the image of the standard Gaussian noise `N(0,1)^T` by `fixedDesignHist x θ`. -/
-noncomputable def fixedDesignHistLaw (x : Fin T → 𝒳) (θ : E) : Measure (Fin T → 𝒳 × ℝ) :=
+noncomputable def fixedDesignHistLaw (x : Fin T → 𝒳) (θ : E) : Measure (Hist Unit 𝒳 ℝ T) :=
   (Measure.pi fun _ : Fin T ↦ gaussianReal 0 1).map (fixedDesignHist x θ)
 
 instance (x : Fin T → 𝒳) (θ : E) : IsProbabilityMeasure (fixedDesignHistLaw x θ) :=
-  Measure.isProbabilityMeasure_map (measurable_fixedDesignHist x θ).aemeasurable
+  by unfold fixedDesignHistLaw; infer_instance
 
 /-- The joint law of (history of the `T` rounds, output) of the fixed-budget algorithm `A` with
 the fixed design `x` in the linear Gaussian environment with reward vector `θ`. -/
 noncomputable def fixedDesignPairLaw (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
-    Measure ((Fin T → 𝒳 × ℝ) × 𝒳) :=
+    Measure (Hist Unit 𝒳 ℝ T × 𝒳) :=
   fixedDesignHistLaw x θ ⊗ₘ A.output T
 
 instance (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) [IsMarkovKernel (A.output T)] :
@@ -73,24 +73,26 @@ lemma fixedDesignPairLaw_congr (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳)
 section run
 
 variable [OpensMeasurableSpace E] [MeasurableEq 𝒳] {Ω : Type*} {mΩ : MeasurableSpace Ω}
-  {P : Measure Ω} [IsProbabilityMeasure P] {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {out : Ω → 𝒳}
-  {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
+  {P : Measure Ω} [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
+  {out : Ω → 𝒳} {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
 
 /-- Under a fixed-design run, the history of the first `T` rounds has law
 `fixedDesignHistLaw`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasLaw_history_of_fixedDesign
-    (h : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ) :
-    HasLaw (history X Y T) (fixedDesignHistLaw (fun t : Fin T ↦ x t) θ) P := by
+    (h : IsAlgEnvSeq O X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ) :
+    HasLaw (history O X Y T) (fixedDesignHistLaw (fun t : Fin T ↦ x t) θ) P := by
   have hY := h.hasLaw_feedback_finVec_of_fixedDesign T
-  have hm : Measurable fun y : Fin T → ℝ ↦ fun t : Fin T ↦ (x t, y t) :=
-    measurable_pi_lambda _ fun t ↦ measurable_const.prodMk (measurable_pi_apply t)
-  have h1 : HasLaw (fun ω ↦ fun t : Fin T ↦ (x t, Y t ω))
+  have hm : Measurable fun y : Fin T → ℝ ↦ fun t : Fin T ↦ ((), x t, y t) :=
+    Measurable.of_eval fun t ↦
+      measurable_const.prodMk (measurable_const.prodMk (measurable_pi_apply t))
+  have h1 : HasLaw (fun ω ↦ fun t : Fin T ↦ ((), x t, Y t ω))
       (fixedDesignHistLaw (fun t : Fin T ↦ x t) θ) P := by
-    have := (⟨hm.aemeasurable, rfl⟩ : HasLaw (fun y : Fin T → ℝ ↦ fun t : Fin T ↦ (x t, y t)) _ _)
+    have := (⟨hm.aemeasurable, rfl⟩ :
+        HasLaw (fun y : Fin T → ℝ ↦ fun t : Fin T ↦ ((), x t, y t)) _ _)
       |>.comp hY
     have hμ : ((Measure.pi fun _ : Fin T ↦ gaussianReal 0 1).map
         (fun η (i : Fin T) ↦ ⟪(x i : E), θ⟫ + η i)).map
-          (fun y : Fin T → ℝ ↦ fun t : Fin T ↦ (x t, y t)) =
+          (fun y : Fin T → ℝ ↦ fun t : Fin T ↦ ((), x t, y t)) =
         fixedDesignHistLaw (fun t : Fin T ↦ x t) θ := by
       rw [fixedDesignHistLaw, Measure.map_map hm (by fun_prop)]
       rfl
@@ -105,11 +107,11 @@ pair (history of the `T` rounds, output) of a run of the fixed-budget algorithm 
 with the fixed design `x` in the linear Gaussian environment with reward vector `θ` has law
 `fixedDesignPairLaw A x θ`. -/
 lemma _root_.Learning.IdentAlg.IsRun.hasLaw_history_out_of_fixedDesign
-    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
+    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
     (hdes : A.alg = fixedDesignAlg x) :
-    HasLaw (fun ω ↦ (history X Y T ω, out ω)) (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ)
+    HasLaw (fun ω ↦ (history O X Y T ω, out ω)) (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ)
       P := by
-  have hseq : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P := by
+  have hseq : IsAlgEnvSeq O X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P := by
     have := h.isAlgEnvSeq
     rwa [hdes] at this
   exact (hseq.hasLaw_history_of_fixedDesign T).prodMk_of_hasCondDistrib
@@ -134,8 +136,8 @@ lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_fixedDesignPairLaw
   have := hA.isMarkovKernel_output
   have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
   have hlaw := hrun.hasLaw_history_out_of_fixedDesign hA hdes
-  have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ hrun
-  have hmeas : MeasurableSet {p : (Fin T → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ p.2 ≤ ε} := by
+  have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ _ hrun
+  have hmeas : MeasurableSet {p : Hist Unit 𝒳 ℝ T × 𝒳 | simpleRegret 𝒳 θ p.2 ≤ ε} := by
     refine measurableSet_le ?_ measurable_const
     exact (continuous_const.sub ((continuous_subtype_val.comp continuous_snd).inner
       continuous_const)).measurable

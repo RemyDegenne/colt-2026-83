@@ -30,7 +30,7 @@ def shiftSeq {α : Type*} (a : ℕ) (ω : ℕ → α) : ℕ → α := fun t ↦ 
 
 lemma measurable_shiftSeq {α : Type*} [MeasurableSpace α] (a : ℕ) :
     Measurable (shiftSeq (α := α) a) :=
-  measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+  Measurable.of_eval fun _ ↦ measurable_pi_apply _
 
 variable {ι : Type*} [Fintype ι]
 
@@ -61,8 +61,8 @@ noncomputable def yω (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) (ω : ℕ →
   fun t ↦ (Q.alg d).seedFeedback (Q.F θ) t ω
 
 lemma measurable_yω (θ : EuclideanSpace ℝ (Fin Q.k × Fin d)) : Measurable (Q.yω θ) :=
-  measurable_pi_lambda _ fun t ↦
-    (SeededAlg.measurable_seedStep (LinearBandit.measurable_uncurry_linearNoise _ θ) t).snd
+  Measurable.of_eval fun t ↦ Round.measurable_feedback.comp
+    (SeededAlg.measurable_seedStep (LinearBandit.measurable_uncurry_linearNoise _ θ) t)
 
 lemma N_pos (hd : 0 < d) : 0 < Q.N d := by
   have h := Q.P.T₁_pos (ι := Fin d) (by simpa using hd)
@@ -90,7 +90,7 @@ lemma block_round_mod (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) : (i * Q.N d + t)
     Nat.mod_eq_of_lt ht]
 
 lemma nextAction_of_lt (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) {n : ℕ}
-    (h : Fin n → blockBallSet Q.k d × ℝ) (u : Fin d → Bool) :
+    (h : Hist Unit (blockBallSet Q.k d) ℝ n) (u : Fin d → Bool) :
     Q.nextAction d (i * Q.N d + t) h u = blockEmbBall i (Q.P.nextAction t (Q.pastOfBlock d i h)
       (Q.P.jStar (Fin d) (Q.yOfBlock d i h)) u) := by
   unfold nextAction
@@ -102,14 +102,15 @@ against `θ^(i)` on the seed sequence shifted by `i N`, embedded on block `i`. -
 theorem seedStep_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
     (ω : ℕ → (Fin d → Bool) × ℝ) (i : Fin Q.k) {t : ℕ} (ht : t < Q.N d) :
     (Q.alg d).seedStep (Q.F θ) (i * Q.N d + t) ω
-      = (blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) t
-            (shiftSeq (i * Q.N d) ω)).1,
+      = ((), blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) t
+            (shiftSeq (i * Q.N d) ω)).action,
         ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) t
-            (shiftSeq (i * Q.N d) ω)).2) := by
-  suffices hact : ∀ t, t < Q.N d → ((Q.alg d).seedStep (Q.F θ) (i * Q.N d + t) ω).1
+            (shiftSeq (i * Q.N d) ω)).feedback) := by
+  suffices hact : ∀ t, t < Q.N d → ((Q.alg d).seedStep (Q.F θ) (i * Q.N d + t) ω).action
       = blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) t
-          (shiftSeq (i * Q.N d) ω)).1 by
-    refine Prod.ext (hact t ht) ?_
+          (shiftSeq (i * Q.N d) ω)).action by
+    refine Prod.ext rfl (Prod.ext (hact t ht) ?_)
+    change ((Q.alg d).seedStep (Q.F θ) (i * Q.N d + t) ω).feedback = _
     rw [SeededAlg.seedFeedback_eq, SeededAlg.seedFeedback_eq, hact t ht, Q.F_blockEmbBall]
     rfl
   intro t
@@ -117,12 +118,13 @@ theorem seedStep_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
   | _ t ih =>
     intro ht
     have ihp : ∀ r, r < t → r < Q.N d → (Q.alg d).seedStep (Q.F θ) (i * Q.N d + r) ω
-        = (blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) r
-              (shiftSeq (i * Q.N d) ω)).1,
+        = ((), blockEmbBall i ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) r
+              (shiftSeq (i * Q.N d) ω)).action,
           ((Q.P.alg (Fin d)).seedStep (NormEstParam.F (blockProj i θ)) r
-              (shiftSeq (i * Q.N d) ω)).2) := by
+              (shiftSeq (i * Q.N d) ω)).feedback) := by
       intro r hr hrN
-      refine Prod.ext (ih r hr hrN) ?_
+      refine Prod.ext rfl (Prod.ext (ih r hr hrN) ?_)
+      change ((Q.alg d).seedStep (Q.F θ) (i * Q.N d + r) ω).feedback = _
       rw [SeededAlg.seedFeedback_eq, SeededAlg.seedFeedback_eq, ih r hr hrN, Q.F_blockEmbBall]
       rfl
     rw [SeededAlg.seedStep_eq, SeededAlg.seedStep_eq]
@@ -135,7 +137,7 @@ theorem seedStep_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
       funext r
       simp only [pastOfBlock, NormEstParam.pastOf]
       split_ifs with h1 h2 h2
-      · rw [ihp r (by omega) (by omega), blockProjBall_blockEmbBall]
+      · rw [ihp r (by omega) (by omega), Round.action_mk, blockProjBall_blockEmbBall]
       · omega
       · omega
       · rfl
@@ -146,7 +148,7 @@ theorem seedStep_block (θ : EuclideanSpace ℝ (Fin Q.k × Fin d))
       funext r
       simp only [yOfBlock, NormEstParam.yOf]
       split_ifs with h1 h2 h2
-      · rw [ihp r (by omega) (by omega)]
+      · rw [ihp r (by omega) (by omega), Round.feedback_mk]
       · omega
       · omega
       · rfl

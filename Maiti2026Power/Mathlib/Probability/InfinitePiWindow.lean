@@ -47,7 +47,7 @@ lemma infinitePi_map_eval_comp {J : Type*} [Fintype J] {f : J → ι} (hf : Func
     simp [MeasurableEquiv.piCongrLeft, Equiv.piCongrLeft_symm_apply, e, Set.domRestrict]
     rfl
   have hm : Measurable (I.domRestrict : (ι → X) → (I → X)) :=
-    measurable_pi_lambda _ fun i ↦ measurable_pi_apply _
+    Measurable.of_eval fun i ↦ measurable_pi_apply _
   rw [h3, ← Measure.map_map (MeasurableEquiv.measurable _) hm, h1, h2]
 
 /-- A product of `J` copies of `μ ⊗ ν` is the product of the `J`-fold products of `μ` and `ν`. -/
@@ -72,7 +72,7 @@ i.i.d. sequence with the same law (version for an arbitrary nonempty index type)
 theorem infinitePi_map_eval_comp' {J : Type*} [Nonempty J] {f : J → ι} (hf : Function.Injective f) :
     (infinitePi fun _ : ι ↦ μ).map (fun ω (p : J) ↦ ω (f p)) = infinitePi fun _ : J ↦ μ := by
   have hm : Measurable fun ω : ι → X ↦ fun p : J ↦ ω (f p) :=
-    measurable_pi_lambda _ fun p ↦ measurable_pi_apply _
+    Measurable.of_eval fun p ↦ measurable_pi_apply _
   refine Measure.eq_infinitePi _ fun s t ht ↦ ?_
   rw [Measure.map_apply hm (MeasurableSet.pi s.countable_toSet fun i _ ↦ ht i)]
   have hpre : (fun ω : ι → X ↦ fun p : J ↦ ω (f p)) ⁻¹' ((s : Set J).pi t)
@@ -108,9 +108,9 @@ lemma indepFun_prefix_window {T : ℕ} {J : Type*} [Finite J] {f : J → ℕ} (h
     exact absurd (Finset.mem_range.1 hx) (not_lt.2 (hf p))
   have h := hind.indepFun_finset (Finset.range T) (Finset.univ.image f) hdisj
     (fun i ↦ measurable_pi_apply i)
-  exact h.comp (measurable_pi_lambda _ fun (t : Fin T) ↦
+  exact h.comp (Measurable.of_eval fun (t : Fin T) ↦
       measurable_pi_apply (⟨(t : ℕ), Finset.mem_range.2 t.2⟩ : Finset.range T))
-    (measurable_pi_lambda _ fun p ↦
+    (Measurable.of_eval fun p ↦
       measurable_pi_apply ⟨f p, Finset.mem_image_of_mem f (Finset.mem_univ p)⟩)
 
 end ProbabilityTheory

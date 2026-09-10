@@ -109,23 +109,23 @@ lemma IsGOptimalDesign.sum_mul_inner_mixtureParam_sq_le [Nonempty ι] (hw : IsGO
 
 section kl
 
-variable (alg : Algorithm 𝒳 ℝ) (N : ℕ)
+variable (alg : Algorithm Unit 𝒳 ℝ) (N : ℕ)
 
 /-- The law of the history of the first `N` rounds of the algorithm `alg` in the linear Gaussian
 environment on `𝒳` with reward vector `θ`. -/
-noncomputable def histLaw (θ : EuclideanSpace ℝ ι) : Measure (Fin N → 𝒳 × ℝ) :=
+noncomputable def histLaw (θ : EuclideanSpace ℝ ι) : Measure (Hist Unit 𝒳 ℝ N) :=
   (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (IT.hist N)
 
 instance (θ : EuclideanSpace ℝ ι) : IsProbabilityMeasure (histLaw alg N θ) :=
-  Measure.isProbabilityMeasure_map (IT.measurable_hist N).aemeasurable
+  by unfold histLaw; infer_instance
 
 omit [DecidableEq ι] in
-lemma histLaw_apply (θ : EuclideanSpace ℝ ι) {E : Set (Fin N → 𝒳 × ℝ)} (hE : MeasurableSet E) :
+lemma histLaw_apply (θ : EuclideanSpace ℝ ι) {E : Set (Hist Unit 𝒳 ℝ N)} (hE : MeasurableSet E) :
     histLaw alg N θ E = trajMeasure alg (linearGaussianEnv 𝒳 θ) (IT.hist N ⁻¹' E) :=
   Measure.map_apply (IT.measurable_hist N) hE
 
 omit [DecidableEq ι] in
-lemma histLaw_real_apply (θ : EuclideanSpace ℝ ι) {E : Set (Fin N → 𝒳 × ℝ)}
+lemma histLaw_real_apply (θ : EuclideanSpace ℝ ι) {E : Set (Hist Unit 𝒳 ℝ N)}
     (hE : MeasurableSet E) :
     (histLaw alg N θ).real E = (trajMeasure alg (linearGaussianEnv 𝒳 θ)).real (IT.hist N ⁻¹' E) :=
   by rw [measureReal_def, histLaw_apply alg N θ hE, measureReal_def]
@@ -133,7 +133,7 @@ lemma histLaw_real_apply (θ : EuclideanSpace ℝ ι) {E : Set (Fin N → 𝒳 �
 /-- The mixture, with the weights of the design `w`, of the laws of the history of the first `N`
 rounds under the alternatives `mixtureParam w ε x`, `x` in the support of `w`. -/
 noncomputable def mixtureHistLaw (w : EuclideanSpace ℝ ι →₀ ℝ) (ε : ℝ) :
-    Measure (Fin N → 𝒳 × ℝ) :=
+    Measure (Hist Unit 𝒳 ℝ N) :=
   ∑ x ∈ w.support, (designWeight w x : ℝ≥0∞) • histLaw alg N (mixtureParam w ε x)
 
 lemma IsDesign.isProbabilityMeasure_mixtureHistLaw (hw : IsDesign 𝒳 w) (ε : ℝ) :
@@ -151,7 +151,7 @@ lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
   have hwd := hw.isDesign
   set P₀ := trajMeasure alg (linearGaussianEnv 𝒳 0) with hP₀
   have hrun := IT.isAlgEnvSeq_trajMeasure alg (linearGaussianEnv 𝒳 0)
-  set f : EuclideanSpace ℝ ι → ℕ → (ℕ → 𝒳 × ℝ) → ℝ := fun x t h ↦
+  set f : EuclideanSpace ℝ ι → ℕ → (ℕ → Round Unit 𝒳 ℝ) → ℝ := fun x t h ↦
     ⟪((IT.action t h : 𝒳) : EuclideanSpace ℝ ι), 0 - mixtureParam w ε x⟫ ^ 2 / 2 with hf
   have hf_meas : ∀ x t, Measurable (f x t) := fun x t ↦
     ((measurable_inner_action hrun t _).pow_const 2).div_const 2
@@ -163,7 +163,7 @@ lemma IsGOptimalDesign.klDiv_histLaw_zero_mixtureHistLaw_le [Nonempty ι]
         exact div_le_div_of_nonneg_right (inner_sq_le hR _ _) (by norm_num))
   refine (klDiv_finsetSum_smul_right_le hwd.sum_designWeight).trans ?_
   have hhist : ∀ θ, histLaw alg N θ =
-      (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (history IT.action IT.feedback N) :=
+      (trajMeasure alg (linearGaussianEnv 𝒳 θ)).map (history IT.obs IT.action IT.feedback N) :=
     fun _ ↦ rfl
   have hterm : ∀ x, klDiv (histLaw alg N 0) (histLaw alg N (mixtureParam w ε x)) =
       ENNReal.ofReal (∑ t ∈ range N, ∫ h, f x t h ∂P₀) := fun x ↦ by
@@ -210,7 +210,7 @@ Bretagnolle–Huber form): for every algorithm, horizon `N` and measurable set `
 if `P₀(E) ≤ α` and `P_{θ⁽ˣ⁾}(Eᶜ) ≤ β` for every support point `x`, then
 `½ exp (-N · 9 ε² / (2 d)) ≤ α + β`. -/
 lemma IsGOptimalDesign.exp_neg_le_of_mixture [Nonempty ι] (hw : IsGOptimalDesign 𝒳 w) {R : ℝ}
-    (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) {E : Set (Fin N → 𝒳 × ℝ)} (hE : MeasurableSet E)
+    (hR : ∀ x ∈ 𝒳, ‖x‖ ≤ R) (ε : ℝ) {E : Set (Hist Unit 𝒳 ℝ N)} (hE : MeasurableSet E)
     {α β : ℝ} (hβ0 : 0 ≤ β) (hα : (histLaw alg N 0).real E ≤ α)
     (hβ : ∀ x ∈ w.support, (histLaw alg N (mixtureParam w ε x)).real Eᶜ ≤ β) :
     1 / 2 * exp (-(N * (9 * ε ^ 2 / (2 * Fintype.card ι)))) ≤ α + β := by

@@ -303,11 +303,11 @@ variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx 
 /-- The history of the design `x` seen by the algorithm in the Bayesian model, as a function of
 the standard Gaussian pair `(g, η)`. -/
 noncomputable def bayesHist (p : EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) :
-    Fin T → 𝒳 × ℝ :=
+    Hist Unit 𝒳 ℝ T :=
   fixedDesignHist (fun t ↦ ⟨x t, hx t⟩) (bayesParam x τ p.1) (WithLp.ofLp p.2)
 
 lemma bayesHist_eq (p : EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) :
-    bayesHist x hx τ p = fun t ↦ (⟨x t, hx t⟩, bayesObs x τ p t) := rfl
+    bayesHist x hx τ p = fun t ↦ ((), ⟨x t, hx t⟩, bayesObs x τ p t) := rfl
 
 lemma continuous_bayesObs : Continuous fun p ↦ bayesObs x τ p := by
   refine continuous_pi fun t ↦ ?_
@@ -316,7 +316,7 @@ lemma continuous_bayesObs : Continuous fun p ↦ bayesObs x τ p := by
     ((PiLp.proj (𝕜 := ℝ) 2 (fun _ : Fin T ↦ ℝ) t).continuous.comp continuous_snd)
 
 lemma measurable_bayesHist : Measurable (bayesHist x hx τ) := by
-  refine measurable_pi_lambda _ fun t ↦ measurable_const.prodMk ?_
+  refine Measurable.of_eval fun t ↦ measurable_const.prodMk (measurable_const.prodMk ?_)
   exact ((continuous_apply t).comp (continuous_bayesObs x τ)).measurable
 
 /-- The recommendation kernel of the Bayesian model: `(g, η) ↦ A.output T (history)`. -/
@@ -337,18 +337,18 @@ instance [IsMarkovKernel (A.output T)] : IsProbabilityMeasure (bayesJoint A x hx
   infer_instance
 
 /-- The mean recommendation `∫ rec ∂A.output T h` as a function of the history `h`. -/
-noncomputable def meanOutput (h : Fin T → 𝒳 × ℝ) : EuclideanSpace ℝ ι :=
+noncomputable def meanOutput (h : Hist Unit 𝒳 ℝ T) : EuclideanSpace ℝ ι :=
   ∫ z, (z : EuclideanSpace ℝ ι) ∂(A.output T h)
 
 omit [DecidableEq ι] in
 lemma measurable_meanOutput : Measurable (meanOutput A (T := T)) := by
-  have : StronglyMeasurable fun q : (Fin T → 𝒳 × ℝ) × 𝒳 ↦ (q.2 : EuclideanSpace ℝ ι) :=
+  have : StronglyMeasurable fun q : Hist Unit 𝒳 ℝ T × 𝒳 ↦ (q.2 : EuclideanSpace ℝ ι) :=
     (continuous_subtype_val.comp continuous_snd).measurable.stronglyMeasurable
   exact this.integral_kernel_prod_right'.measurable
 
 omit [DecidableEq ι] in
 lemma norm_meanOutput_le [IsMarkovKernel (A.output T)] (hR : ∀ z ∈ 𝒳, ‖z‖ ≤ R)
-    (h : Fin T → 𝒳 × ℝ) : ‖meanOutput A h‖ ≤ R := by
+    (h : Hist Unit 𝒳 ℝ T) : ‖meanOutput A h‖ ≤ R := by
   have hae : ∀ᵐ z : 𝒳 ∂(A.output T h), ‖Subtype.val z‖ ≤ R := ae_of_all _ fun z ↦ hR z z.2
   refine (norm_integral_le_of_norm_le_const hae).trans ?_
   simp
@@ -397,7 +397,7 @@ lemma bayesYclm_apply (p : EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) 
 
 /-- The history is a (measurable) function of the observation vector `y`. -/
 lemma bayesHist_eq_comp (p : EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) :
-    bayesHist x hx τ p = (fun y : EuclideanSpace ℝ (Fin T) ↦ fun t ↦ (⟨x t, hx t⟩, y t))
+    bayesHist x hx τ p = (fun y : EuclideanSpace ℝ (Fin T) ↦ fun t ↦ ((), ⟨x t, hx t⟩, y t))
       (bayesYclm x τ p) := by
   rw [bayesHist_eq, bayesYclm_apply, ← toLp_bayesObs]
 
@@ -424,11 +424,11 @@ lemma integral_inner_bayesW_bayesJoint (hR : ∀ z ∈ 𝒳, ‖z‖ ≤ R)
   set μ₀ := (stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ (Fin T)))
     with hμ₀
   set G : EuclideanSpace ℝ (Fin T) → EuclideanSpace ℝ ι :=
-    fun y ↦ meanOutput A (fun t ↦ (⟨x t, hx t⟩, y t)) with hG
+    fun y ↦ meanOutput A (fun t ↦ ((), ⟨x t, hx t⟩, y t)) with hG
   have hGm : Measurable G := by
-    refine (measurable_meanOutput A).comp (measurable_pi_lambda _ fun t ↦ ?_)
-    exact measurable_const.prodMk
-      (PiLp.proj (𝕜 := ℝ) 2 (fun _ : Fin T ↦ ℝ) t).continuous.measurable
+    refine (measurable_meanOutput A).comp (Measurable.of_eval fun t ↦ ?_)
+    exact measurable_const.prodMk (measurable_const.prodMk
+      (PiLp.proj (𝕜 := ℝ) 2 (fun _ : Fin T ↦ ℝ) t).continuous.measurable)
   have hGb : ∀ y, ‖G y‖ ≤ R := fun y ↦ norm_meanOutput_le A hR _
   -- integrate out the recommendation: `E[⟪rec, W⟫ | g, η] = ⟪G y, W⟫`
   have h1 : ∫ q, ⟪(q.2 : EuclideanSpace ℝ ι), bayesWclm x τ q.1⟫ ∂bayesJoint A x hx τ =
@@ -618,13 +618,13 @@ lemma measureReal_lt_simpleRegret_bayes_le {E : Type u} [NormedAddCommGroup E]
     (hA : A.IsFixedBudget T) (hdes : A.alg = fixedDesignAlg x') (θ : E) :
     (fixedDesignPairLaw A (fun t : Fin T ↦ x' t) θ).real
       {p | ε < simpleRegret 𝒳 θ (p.2 : E)} ≤ δ := by
-  have hmeas : MeasurableSet {p : (Fin T → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ (p.2 : E) ≤ ε} := by
+  have hmeas : MeasurableSet {p : Hist Unit 𝒳 ℝ T × 𝒳 | simpleRegret 𝒳 θ (p.2 : E) ≤ ε} := by
     refine measurableSet_le ?_ measurable_const
     exact (continuous_const.sub ((continuous_subtype_val.comp continuous_snd).inner
       continuous_const)).measurable
   have h := hpac.le_measureReal_fixedDesignPairLaw hA hdes θ
-  have hcompl : {p : (Fin T → 𝒳 × ℝ) × 𝒳 | ε < simpleRegret 𝒳 θ (p.2 : E)} =
-      {p : (Fin T → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ (p.2 : E) ≤ ε}ᶜ := by
+  have hcompl : {p : Hist Unit 𝒳 ℝ T × 𝒳 | ε < simpleRegret 𝒳 θ (p.2 : E)} =
+      {p : Hist Unit 𝒳 ℝ T × 𝒳 | simpleRegret 𝒳 θ (p.2 : E) ≤ ε}ᶜ := by
     ext p
     simp [not_le]
   rw [hcompl, measureReal_compl hmeas, probReal_univ]
@@ -647,7 +647,7 @@ lemma measureReal_lt_simpleRegret_comap_eq (g : EuclideanSpace ℝ ι) {ε : ℝ
   have hmap := map_snd_compProd_comap (stdGaussian (EuclideanSpace ℝ (Fin T))) (A.output T) hg
     (fun _ ↦ inferInstance)
   rw [bayesKernel_comap A x hx τ g, fixedDesignPairLaw, ← map_bayesHist_stdGaussian x hx τ g]
-  have h1 : ∀ (μ : Measure ((Fin T → 𝒳 × ℝ) × 𝒳)),
+  have h1 : ∀ (μ : Measure (Hist Unit 𝒳 ℝ T × 𝒳)),
       μ.real {p | ε < simpleRegret 𝒳 (bayesParam x τ g) (p.2 : EuclideanSpace ℝ ι)} =
         (μ.map Prod.snd).real {z : 𝒳 | ε < simpleRegret 𝒳 (bayesParam x τ g) (z : _)} := by
     intro μ

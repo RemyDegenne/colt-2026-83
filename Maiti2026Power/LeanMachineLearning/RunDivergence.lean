@@ -36,27 +36,29 @@ namespace Learning.IdentAlg
 variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
   {m𝓞 : MeasurableSpace 𝓞} {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
-  {A : IdentAlg 𝓐 𝓨 𝓞} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {X' : ℕ → Ω' → 𝓐} {Y' : ℕ → Ω' → 𝓨}
-  {out : Ω → 𝓞} {out' : Ω' → 𝓞} {env env' : Environment 𝓐 𝓨}
+  {A : IdentAlg 𝓐 𝓨 𝓞} {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
+  {O' : ℕ → Ω' → Unit} {X' : ℕ → Ω' → 𝓐} {Y' : ℕ → Ω' → 𝓨}
+  {out : Ω → 𝓞} {out' : Ω' → 𝓞} {env env' : Environment Unit 𝓐 𝓨}
 
 /-- When the stopping time of a run is almost surely finite, the history at the stopping time
 belongs to the stopping set almost surely. -/
-lemma IsRun.ae_stoppedHist_mem_stopSet (h : A.IsRun env X Y out P)
-    (hτ : ∀ᵐ ω ∂P, A.stoppingTime X Y ω ≠ ⊤) :
-    ∀ᵐ s ∂(P.map (A.stoppedHist X Y)), s ∈ A.stopSet := by
+lemma IsRun.ae_stoppedHist_mem_stopSet (h : A.IsRun env O X Y out P)
+    (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤) :
+    ∀ᵐ s ∂(P.map (A.stoppedHist O X Y)), s ∈ A.stopSet := by
   rw [ae_map_iff (p := fun a ↦ a ∈ A.stopSet) h.hasCondDistrib_output.aemeasurable_fst
     A.measurableSet_stopSet]
-  filter_upwards [hτ] with ω hω using A.stoppedHist_mem_stopSet_of_ne_top X Y hω
+  filter_upwards [hτ] with ω hω using A.stoppedHist_mem_stopSet_of_ne_top O X Y hω
 
 /-- **Data processing for runs**: for two runs of the same identification algorithm with almost
 surely finite stopping times, the divergence between the laws of the pairs (history at the
 stopping time, output) is the divergence between the laws of the histories at the stopping
 time. -/
-lemma IsRun.klDiv_map_stoppedHist_out (h : A.IsRun env X Y out P) (h' : A.IsRun env' X' Y' out' P')
-    (hτ : ∀ᵐ ω ∂P, A.stoppingTime X Y ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', A.stoppingTime X' Y' ω ≠ ⊤) :
-    klDiv (P.map fun ω ↦ (A.stoppedHist X Y ω, out ω))
-        (P'.map fun ω ↦ (A.stoppedHist X' Y' ω, out' ω)) =
-      klDiv (P.map (A.stoppedHist X Y)) (P'.map (A.stoppedHist X' Y')) := by
+lemma IsRun.klDiv_map_stoppedHist_out (h : A.IsRun env O X Y out P)
+    (h' : A.IsRun env' O' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
+    klDiv (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
+        (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) =
+      klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) := by
   have hne : Nonempty 𝓞 := ⟨out (Measure.nonempty_of_neZero P).some⟩
   rw [h.hasCondDistrib_output.map_eq, h'.hasCondDistrib_output.map_eq]
   exact klDiv_compProd_left_of_ae _ _ _ A.measurableSet_stopSet
@@ -66,14 +68,14 @@ lemma IsRun.klDiv_map_stoppedHist_out (h : A.IsRun env X Y out P) (h' : A.IsRun 
 /-- **Data processing for runs**: for two runs of the same identification algorithm with almost
 surely finite stopping times, the divergence between the laws of the outputs is at most the
 divergence between the laws of the histories at the stopping time. -/
-lemma IsRun.klDiv_map_out_le_stoppedHist (h : A.IsRun env X Y out P)
-    (h' : A.IsRun env' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime X Y ω ≠ ⊤)
-    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime X' Y' ω ≠ ⊤) :
+lemma IsRun.klDiv_map_out_le_stoppedHist (h : A.IsRun env O X Y out P)
+    (h' : A.IsRun env' O' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
     klDiv (P.map out) (P'.map out') ≤
-      klDiv (P.map (A.stoppedHist X Y)) (P'.map (A.stoppedHist X' Y')) := by
+      klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) := by
   rw [← h.klDiv_map_stoppedHist_out h' hτ hτ']
-  have := klDiv_map_le (P.map fun ω ↦ (A.stoppedHist X Y ω, out ω))
-    (P'.map fun ω ↦ (A.stoppedHist X' Y' ω, out' ω)) measurable_snd
+  have := klDiv_map_le (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
+    (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) measurable_snd
   rwa [AEMeasurable.map_map_of_aemeasurable measurable_snd.aemeasurable
     h.hasCondDistrib_output.aemeasurable, AEMeasurable.map_map_of_aemeasurable
     measurable_snd.aemeasurable h'.hasCondDistrib_output.aemeasurable] at this
@@ -85,12 +87,12 @@ identification algorithm in two stationary environments with reward kernels `κ`
 almost surely finite stopping times, the divergence between the laws of the outputs is at most
 the series over the rounds `t` of the conditional divergences of the reward kernels given the
 played action, on the event that the algorithm has not stopped after `t` rounds. -/
-lemma IsRun.klDiv_map_out_le_tsum_compProd (h : A.IsRun (stationaryEnv κ) X Y out P)
-    (h' : A.IsRun (stationaryEnv κ') X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime X Y ω ≠ ⊤)
-    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime X' Y' ω ≠ ⊤) :
+lemma IsRun.klDiv_map_out_le_tsum_compProd (h : A.IsRun (stationaryEnv κ) O X Y out P)
+    (h' : A.IsRun (stationaryEnv κ') O' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
     klDiv (P.map out) (P'.map out') ≤
-      ∑' t : ℕ, klDiv ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime X Y ω}).map (X t) ⊗ₘ κ)
-        ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime X Y ω}).map (X t) ⊗ₘ κ') :=
+      ∑' t : ℕ, klDiv ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ)
+        ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ') :=
   (h.klDiv_map_out_le_stoppedHist h' hτ hτ').trans_eq
     (h.isAlgEnvSeq.klDiv_map_stoppedHist_compProd h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
 
@@ -100,10 +102,10 @@ almost surely finite stopping times, the divergence between the laws of the outp
 the expected sum, along the first run, of the divergences of the reward kernels at the actions
 played before stopping. -/
 lemma IsRun.klDiv_map_out_le_lintegral [MeasurableSpace.CountablyGenerated 𝓨]
-    (h : A.IsRun (stationaryEnv κ) X Y out P) (h' : A.IsRun (stationaryEnv κ') X' Y' out' P')
-    (hτ : ∀ᵐ ω ∂P, A.stoppingTime X Y ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', A.stoppingTime X' Y' ω ≠ ⊤) :
+    (h : A.IsRun (stationaryEnv κ) O X Y out P) (h' : A.IsRun (stationaryEnv κ') O' X' Y' out' P')
+    (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
     klDiv (P.map out) (P'.map out') ≤
-      ∫⁻ ω, ∑ t ∈ range (A.stoppingTime X Y ω).toNat, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P :=
+      ∫⁻ ω, ∑ t ∈ range (A.stoppingTime O X Y ω).toNat, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P :=
   (h.klDiv_map_out_le_stoppedHist h' hτ hτ').trans_eq
     (h.isAlgEnvSeq.klDiv_map_stoppedHist h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
 

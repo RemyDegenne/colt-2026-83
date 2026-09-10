@@ -131,7 +131,7 @@ lemma exists_isDesign_of_mem_designSet (hA : A ∈ designSet 𝒳) :
     exact hx𝒳 i
   · by_cases hy : y ∈ Set.range x
     · obtain ⟨i, rfl⟩ := hy
-      rw [Finsupp.mapDomain_apply hxinj, hv'_apply]
+      rw [Finsupp.mapDomain_apply_of_injective hxinj, hv'_apply]
       exact (hv i).le
     · rw [Finsupp.mapDomain_of_notMem_range _ _ hy]
   · change (Finsupp.mapDomain x v').sum (fun _ a ↦ a) = 1

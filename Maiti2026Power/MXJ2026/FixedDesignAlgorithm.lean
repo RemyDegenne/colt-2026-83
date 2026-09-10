@@ -38,13 +38,13 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι] {𝒳 : Set (EuclideanSpace 
 /-- The recommendation rule of the fixed-design algorithm: least squares on the observations of
 the history, then the selector `s`. -/
 noncomputable def lsRecommend (T : ℕ) (x : ℕ → 𝒳) (s : EuclideanSpace ℝ ι → 𝒳)
-    (y : Fin T → 𝒳 × ℝ) : 𝒳 :=
-  s (leastSquares (fun t : Fin T ↦ (x t : EuclideanSpace ℝ ι)) fun t ↦ (y t).2)
+    (y : Hist Unit 𝒳 ℝ T) : 𝒳 :=
+  s (leastSquares (fun t : Fin T ↦ (x t : EuclideanSpace ℝ ι)) fun t ↦ (y t).feedback)
 
 lemma measurable_lsRecommend (T : ℕ) (x : ℕ → 𝒳) {s : EuclideanSpace ℝ ι → 𝒳}
     (hs : Measurable s) : Measurable (lsRecommend T x s) :=
   hs.comp ((continuous_leastSquares _).measurable.comp
-    (measurable_pi_lambda _ fun t ↦ (measurable_pi_apply t).snd))
+    (Measurable.of_eval fun t ↦ Round.measurable_feedback.comp (measurable_pi_apply t)))
 
 /-- **The fixed-design identification algorithm** (blueprint `def:fixed_design_algorithm`):
 play the design `x` for `T` rounds, then recommend `s θ̂` where `θ̂` is the least-squares
@@ -79,7 +79,7 @@ lemma isPAC_fixedDesignIdentAlg (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
     (hbudget : 2 * gwMat 𝒳 (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)) +
       2 * σ * √(2 * gaussianConcentrationConst * log (1 / δ)) ≤ 3 * ε / 4) :
     IsPAC 𝒳 (fixedDesignIdentAlg T x s hs) ε δ := by
-  intro θ Ω _ P _ X Y out hrun
+  intro θ Ω _ P _ O X Y out hrun
   obtain ⟨R, hR⟩ : ∃ R, ∀ y ∈ 𝒳, ‖y‖ ≤ R := by
     obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
     exact ⟨r, fun y hy ↦ mem_closedBall_zero_iff.1 (hr hy)⟩
@@ -88,7 +88,7 @@ lemma isPAC_fixedDesignIdentAlg (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
   set θh : Ω → EuclideanSpace ℝ ι := fun ω ↦ leastSquares xT fun t ↦ Y t ω with hθh
   have hY := hrun.isAlgEnvSeq.measurable_feedback
   have hθhm : Measurable θh :=
-    (continuous_leastSquares xT).measurable.comp (measurable_pi_lambda _ fun t ↦ hY t)
+    (continuous_leastSquares xT).measurable.comp (Measurable.of_eval fun t ↦ hY t)
   -- the law of the estimation error
   have hls := hasLaw_leastSquares_of_fixedDesign hrun.isAlgEnvSeq T hS
   have hΔ : HasLaw (fun ω ↦ θh ω - θ) (multivariateGaussian 0 Sm⁻¹) P := by

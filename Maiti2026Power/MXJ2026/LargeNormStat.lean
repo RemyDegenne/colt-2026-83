@@ -83,7 +83,7 @@ noncomputable def lnDelta (n : ℕ) (e : ι → Fin n → ℝ) : EuclideanSpace 
 omit [Fintype ι] in
 lemma measurable_lnDelta [Finite ι] (n : ℕ) : Measurable (lnDelta (ι := ι) n) := by
   have := Fintype.ofFinite ι
-  exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_lambda _ fun i ↦
+  exact (PiLp.continuous_toLp 2 _).measurable.comp (Measurable.of_eval fun i ↦
     (Finset.measurable_sum _ fun ℓ _ ↦
       (measurable_pi_apply ℓ).comp (measurable_pi_apply i)).div_const _)
 

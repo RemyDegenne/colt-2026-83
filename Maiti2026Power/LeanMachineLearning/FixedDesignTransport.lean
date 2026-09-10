@@ -37,18 +37,20 @@ namespace Learning.LinearBandit
 variable {E F : Type*} [MeasurableSpace E] [MeasurableSpace F] {𝒳 : Set E} {𝒴 : Set F} {T : ℕ}
 
 /-- Relabelling of a history on `𝒴` with the actions of the design `x` on `𝒳`. -/
-def relabelHist (x : ℕ → 𝒳) (h : Fin T → 𝒴 × ℝ) : Fin T → 𝒳 × ℝ := fun t ↦ (x t, (h t).2)
+def relabelHist (x : ℕ → 𝒳) (h : Hist Unit 𝒴 ℝ T) : Hist Unit 𝒳 ℝ T :=
+  fun t ↦ ((), x t, (h t).feedback)
 
 lemma measurable_relabelHist (x : ℕ → 𝒳) : Measurable (relabelHist (T := T) (𝒴 := 𝒴) x) :=
-  measurable_pi_lambda _ fun t ↦ measurable_const.prodMk (measurable_pi_apply t).snd
+  Measurable.of_eval fun t ↦ measurable_const.prodMk
+    (measurable_const.prodMk (Round.measurable_feedback.comp (measurable_pi_apply t)))
 
 /-- The output kernel of the transported algorithm: relabel the history with the actions of
 `x`, draw a recommendation from `ρ` and apply `π`. -/
-noncomputable def transportKernel (ρ : Kernel (Fin T → 𝒳 × ℝ) 𝒳) (x : ℕ → 𝒳) {π : 𝒳 → 𝒴}
-    (hπ : Measurable π) : Kernel (Fin T → 𝒴 × ℝ) 𝒴 :=
+noncomputable def transportKernel (ρ : Kernel (Hist Unit 𝒳 ℝ T) 𝒳) (x : ℕ → 𝒳) {π : 𝒳 → 𝒴}
+    (hπ : Measurable π) : Kernel (Hist Unit 𝒴 ℝ T) 𝒴 :=
   Kernel.deterministic π hπ ∘ₖ ρ.comap (relabelHist x) (measurable_relabelHist x)
 
-instance (ρ : Kernel (Fin T → 𝒳 × ℝ) 𝒳) [IsMarkovKernel ρ] (x : ℕ → 𝒳) {π : 𝒳 → 𝒴}
+instance (ρ : Kernel (Hist Unit 𝒳 ℝ T) 𝒳) [IsMarkovKernel ρ] (x : ℕ → 𝒳) {π : 𝒳 → 𝒴}
     (hπ : Measurable π) : IsMarkovKernel (transportKernel ρ x hπ) := by
   unfold transportKernel
   infer_instance
@@ -104,7 +106,7 @@ theorem isPAC_fixedDesignTransport {E : Type u} [NormedAddCommGroup E] [InnerPro
     {π : 𝒳 → 𝒴} (hπ : Measurable π)
     (hreg : ∀ (ϑ : F) (y : 𝒳), simpleRegret 𝒴 ϑ (π y) ≤ simpleRegret 𝒳 (L ϑ) y) :
     IsPAC 𝒴 (fixedDesignTransport A T x x' hπ) ε δ := by
-  intro ϑ Ω _ P _ X Y out hrun
+  intro ϑ Ω _ P _ O X Y out hrun
   have hlaw := hrun.hasLaw_history_out_of_fixedDesign isFixedBudget_fixedDesignTransport
     alg_fixedDesignTransport
   have hG' : MeasurableSet {y : 𝒴 | simpleRegret 𝒴 ϑ y ≤ ε} :=

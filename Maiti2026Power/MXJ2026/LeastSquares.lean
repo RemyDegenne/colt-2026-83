@@ -123,8 +123,8 @@ matrix `Σ = ∑ t < T, x t x tᵀ` is positive definite then the least-squares 
 `T` observations has the law `N(θ, Σ⁻¹)`. -/
 lemma hasLaw_leastSquares_of_fixedDesign {𝒳 : Set (EuclideanSpace ℝ ι)}
     {θ : EuclideanSpace ℝ ι} {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω}
-    [IsProbabilityMeasure P] {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {x : ℕ → 𝒳}
-    (h : IsAlgEnvSeq X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ)
+    [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {x : ℕ → 𝒳}
+    (h : IsAlgEnvSeq O X Y (fixedDesignAlg x) (linearGaussianEnv 𝒳 θ) P) (T : ℕ)
     (hS : (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)).PosDef) :
     HasLaw (fun ω ↦ leastSquares (fun t : Fin T ↦ (x t : EuclideanSpace ℝ ι)) (fun t ↦ Y t ω))
       (multivariateGaussian θ (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι))⁻¹) P := by

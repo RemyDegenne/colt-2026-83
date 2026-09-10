@@ -59,7 +59,7 @@ The Markov-kernel argument of `stationaryEnv` is given inline rather than throug
 above: the nested proof of an exposed `def` becomes a public auxiliary constant, whereas the proof
 inside an instance (a theorem) becomes a module-private one, which the standalone comparator
 challenges (`comparator/`) could not reproduce. -/
-noncomputable def linearGaussianEnv (𝒳 : Set E) (θ : E) : Environment 𝒳 ℝ :=
+noncomputable def linearGaussianEnv (𝒳 : Set E) (θ : E) : Environment Unit 𝒳 ℝ :=
   @stationaryEnv _ _ _ _ (linearGaussianKernel 𝒳 θ)
     ⟨fun _ ↦ inferInstanceAs (IsProbabilityMeasure (gaussianReal _ 1))⟩
 

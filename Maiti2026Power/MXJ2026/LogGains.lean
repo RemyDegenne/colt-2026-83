@@ -60,7 +60,7 @@ theorem exists_isPAC_of_finite (𝒳 : Set (EuclideanSpace ℝ ι)) (hfin : 𝒳
   · -- degenerate case `d = 0`: every reward vector is `0` and every recommendation is optimal
     refine ⟨0, by simp, fixedDesignIdentAlg 0 (fun _ ↦ ⟨x₀, hx₀⟩) (fun _ ↦ ⟨x₀, hx₀⟩)
       measurable_const, isFixedBudget_fixedDesignIdentAlg, ?_⟩
-    intro θ Ω _ P _ X Y out hrun
+    intro θ Ω _ P _ O X Y out hrun
     have hθ : θ = 0 := by
       ext i
       exact isEmptyElim i

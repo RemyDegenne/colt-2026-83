@@ -43,16 +43,16 @@ variable {E 𝓞 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [Meas
   {𝒳 : Set E} {θ θ' : E} {A : IdentAlg 𝒳 ℝ 𝓞} {T : ℕ}
   {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
-  {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {X' : ℕ → Ω' → 𝒳} {Y' : ℕ → Ω' → ℝ} {out : Ω → 𝓞}
-  {out' : Ω' → 𝓞}
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {O' : ℕ → Ω' → Unit} {X' : ℕ → Ω' → 𝒳}
+  {Y' : ℕ → Ω' → ℝ} {out : Ω → 𝓞} {out' : Ω' → 𝓞}
 
 /-- The divergence between the laws of the outputs of two runs of a fixed-budget algorithm with
 budget `T` in the linear Gaussian environments with reward vectors `θ` and `θ'` is at most the
 expected sum of the squared gaps along the trajectory of the first run (the *divergence
 decomposition*, transferred to the outputs by data processing). -/
 lemma IsRun.klDiv_map_out_le_sum_integral {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
-    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
-    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') :
+    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
+    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤
       ENNReal.ofReal (∑ t ∈ Finset.range T, ∫ ω, ⟪(X t ω : E), θ - θ'⟫ ^ 2 / 2 ∂P) :=
   (IdentAlg.IsRun.klDiv_map_out_le hA h h').trans
@@ -63,16 +63,16 @@ if the expected sum of the squared gaps along the trajectory is at most `K`, the
 any event of the output differ by at most `√(K / 2)`. -/
 lemma IsRun.abs_measureReal_sub_le_of_sum_le {C K : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hK : ∑ t ∈ Finset.range T, ∫ ω, ⟪(X t ω : E), θ - θ'⟫ ^ 2 / 2 ∂P ≤ K)
-    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
-    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
+    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
+    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
     |P.real (out ⁻¹' B) - P'.real (out' ⁻¹' B)| ≤ √(K / 2) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hout' : AEMeasurable out' P' := h'.hasCondDistrib_output.aemeasurable_snd
   have hkl := (IsRun.klDiv_map_out_le_sum_integral hC hA h h').trans
     (ENNReal.ofReal_le_ofReal hK)
   have hne : klDiv (P.map out) (P'.map out') ≠ ∞ := ne_top_of_le_ne_top ENNReal.ofReal_ne_top hkl
-  have : IsProbabilityMeasure (P.map out) := Measure.isProbabilityMeasure_map hout
-  have : IsProbabilityMeasure (P'.map out') := Measure.isProbabilityMeasure_map hout'
+  have : IsProbabilityMeasure (P.map out) := inferInstance
+  have : IsProbabilityMeasure (P'.map out') := inferInstance
   have hK0 : 0 ≤ K :=
     le_trans (Finset.sum_nonneg fun t _ ↦ integral_nonneg fun ω ↦ by positivity) hK
   rw [← map_measureReal_apply_of_aemeasurable hout hB,
@@ -87,15 +87,15 @@ identification algorithm with budget `T` in the linear Gaussian environments wit
 `θ` and `θ'`, with `⟪x, θ - θ'⟫ ^ 2 ≤ C` on the action set, the probabilities of any event of the
 output differ by at most `√(T C / 4)`. -/
 lemma IsRun.abs_measureReal_sub_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
-    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
-    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
+    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
+    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
     |P.real (out ⁻¹' B) - P'.real (out' ⁻¹' B)| ≤ √(T * C / 4) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hout' : AEMeasurable out' P' := h'.hasCondDistrib_output.aemeasurable_snd
   have hkl := IsRun.klDiv_map_out_le_of_sq_le hC hA h h'
   have hne : klDiv (P.map out) (P'.map out') ≠ ∞ := ne_top_of_le_ne_top ENNReal.ofReal_ne_top hkl
-  have : IsProbabilityMeasure (P.map out) := Measure.isProbabilityMeasure_map hout
-  have : IsProbabilityMeasure (P'.map out') := Measure.isProbabilityMeasure_map hout'
+  have : IsProbabilityMeasure (P.map out) := inferInstance
+  have : IsProbabilityMeasure (P'.map out') := inferInstance
   have hC0 : 0 ≤ C := by
     obtain ⟨ω⟩ := Measure.nonempty_of_neZero P
     exact (sq_nonneg _).trans (hC _ (X 0 ω).2)
@@ -113,17 +113,17 @@ then no test on the output of a fixed-budget algorithm with budget `T` separates
 lemma IsRun.one_sub_le_measureReal_add_of_sq_le {C : ℝ} {θp θm : E}
     {Ωp Ωm : Type*} {mΩp : MeasurableSpace Ωp} {mΩm : MeasurableSpace Ωm}
     {Pp : Measure Ωp} {Pm : Measure Ωm} [IsProbabilityMeasure Pp] [IsProbabilityMeasure Pm]
-    {Xp : ℕ → Ωp → 𝒳} {Yp : ℕ → Ωp → ℝ} {outp : Ωp → 𝓞}
-    {Xm : ℕ → Ωm → 𝒳} {Ym : ℕ → Ωm → ℝ} {outm : Ωm → 𝓞}
+    {Op : ℕ → Ωp → Unit} {Xp : ℕ → Ωp → 𝒳} {Yp : ℕ → Ωp → ℝ} {outp : Ωp → 𝓞}
+    {Om : ℕ → Ωm → Unit} {Xm : ℕ → Ωm → 𝒳} {Ym : ℕ → Ωm → ℝ} {outm : Ωm → 𝓞}
     (hCp : ∀ x ∈ 𝒳, ⟪x, θ - θp⟫ ^ 2 ≤ C) (hCm : ∀ x ∈ 𝒳, ⟪x, θ - θm⟫ ^ 2 ≤ C)
-    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) X Y out P)
-    (hp : A.IsRun (linearGaussianEnv 𝒳 θp) Xp Yp outp Pp)
-    (hm : A.IsRun (linearGaussianEnv 𝒳 θm) Xm Ym outm Pm)
+    (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
+    (hp : A.IsRun (linearGaussianEnv 𝒳 θp) Op Xp Yp outp Pp)
+    (hm : A.IsRun (linearGaussianEnv 𝒳 θm) Om Xm Ym outm Pm)
     {B : Set 𝓞} (hB : MeasurableSet B) :
     1 - 2 * √(T * C / 4) ≤ Pp.real (outp ⁻¹' B) + Pm.real (outm ⁻¹' Bᶜ) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hsum : P.real (out ⁻¹' B) + P.real (out ⁻¹' Bᶜ) = 1 := by
-    have : IsProbabilityMeasure (P.map out) := Measure.isProbabilityMeasure_map hout
+    have : IsProbabilityMeasure (P.map out) := inferInstance
     rw [← map_measureReal_apply_of_aemeasurable hout hB,
       ← map_measureReal_apply_of_aemeasurable hout hB.compl]
     rw [measureReal_compl hB, probReal_univ]

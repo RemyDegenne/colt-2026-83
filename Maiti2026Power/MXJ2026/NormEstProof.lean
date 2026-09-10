@@ -132,8 +132,8 @@ lemma abs_estimate_sub_le_of_jStar_eq_zero (θ : EuclideanSpace ℝ ι) {y : ℕ
 variable [DecidableEq ι]
 
 lemma measurable_yω (θ : EuclideanSpace ℝ ι) : Measurable (P.yω θ) :=
-  measurable_pi_lambda _ fun t ↦
-    (SeededAlg.measurable_seedStep (LinearBandit.measurable_uncurry_linearNoise _ θ) t).snd
+  Measurable.of_eval fun t ↦ Round.measurable_feedback.comp
+    (SeededAlg.measurable_seedStep (LinearBandit.measurable_uncurry_linearNoise _ θ) t)
 
 lemma measurable_jsω (θ : EuclideanSpace ℝ ι) : Measurable (P.jsω θ) :=
   (P.measurable_jStar).comp (P.measurable_yω θ)
@@ -150,7 +150,7 @@ def prefixExtend {α : Type*} [Inhabited α] (T : ℕ) (w : Fin T → α) : ℕ 
 omit [DecidableEq ι] in
 lemma measurable_prefixExtend {α : Type*} [MeasurableSpace α] [Inhabited α] (T : ℕ) :
     Measurable (prefixExtend (α := α) T) := by
-  refine measurable_pi_lambda _ fun t ↦ ?_
+  refine Measurable.of_eval fun t ↦ ?_
   unfold prefixExtend
   split_ifs
   exacts [measurable_pi_apply _, measurable_const]
@@ -159,7 +159,7 @@ lemma yω_prefixExtend (θ : EuclideanSpace ℝ ι) (ω : ℕ → (ι → Bool) 
     (hr : r < P.T₁ ι) :
     P.yω θ (prefixExtend (P.T₁ ι) fun t : Fin (P.T₁ ι) ↦ ω t) r = P.yω θ ω r := by
   unfold yω SeededAlg.seedFeedback
-  refine congrArg Prod.snd (SeededAlg.seedStep_congr fun k hk ↦ ?_)
+  refine congrArg Round.feedback (SeededAlg.seedStep_congr fun k hk ↦ ?_)
   simp [prefixExtend, hk.trans_lt hr]
 
 lemma jsω_prefixExtend (θ : EuclideanSpace ℝ ι) (ω : ℕ → (ι → Bool) × ℝ) :

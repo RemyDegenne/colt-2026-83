@@ -120,12 +120,14 @@ variable {E₁ E₂ F G : Type*}
   [NormedAddCommGroup G] [InnerProductSpace ℝ G] [FiniteDimensional ℝ G]
   {A₁ : E₁ →L[ℝ] F} {A₂ : E₂ →L[ℝ] F} {B₁ : E₁ →L[ℝ] G} {B₂ : E₂ →L[ℝ] G}
 
+omit [BorelSpace E₂] in
 /-- Linear forms of the first coordinate are square integrable under a product of standard
 Gaussian measures. -/
 lemma memLp_two_inner_fst_prod_stdGaussian (a : E₁) :
     MemLp (fun p : E₁ × E₂ ↦ ⟪a, p.1⟫) 2 ((stdGaussian E₁).prod (stdGaussian E₂)) :=
   (memLp_two_inner_stdGaussian a).comp_fst _
 
+omit [BorelSpace E₁] in
 /-- Linear forms of the second coordinate are square integrable under a product of standard
 Gaussian measures. -/
 lemma memLp_two_inner_snd_prod_stdGaussian (a : E₂) :

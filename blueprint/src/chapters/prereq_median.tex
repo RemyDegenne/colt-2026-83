@@ -22,7 +22,7 @@ algorithm \texttt{roundRobinAlgorithm} (\texttt{SequentialLearning/Algorithms/Ro
 pull counts \texttt{pullCount}, cumulative sums and empirical means \texttt{sumRewards},
 \texttt{empMean} (\texttt{SequentialLearning/SumRewards.lean}), the conditional law of the
 feedback given the history and the current action (the structure field
-\texttt{IsAlgEnvSeq.hasCondDistrib\_feedback n : HasCondDistrib (Y (n+1)) (history A Y n, A (n+1)) (env.feedback n) P},
+\texttt{IsAlgEnvSeq.hasCondDistrib\_feedback n : HasCondDistrib (Y n) ((history O A Y n, O n), A n) (env.feedback n) P},
 and \texttt{IsObliviousEnv.hasCondDistrib\_feedback\_history\_action} in
 \texttt{SequentialLearning/StationaryEnv.lean}; the lemma
 \texttt{hasCondDistrib\_feedback\_stationaryEnv} conditions on the current action only), and

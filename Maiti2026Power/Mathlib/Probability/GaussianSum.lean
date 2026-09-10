@@ -41,7 +41,7 @@ lemma hasLaw_finset_sum_gaussianReal {ι : Type*} {X : ι → Ω → ℝ} {m : �
     rw [Finset.sum_insert hi, Finset.sum_insert hi, Finset.sum_insert hi]
     have hind : IndepFun (X i) (∑ j ∈ s, X j) P :=
       (h_indep.indepFun_finsetSum_of_notMem₀ (fun j ↦ (hX j).aemeasurable) hi).symm
-    exact ⟨by fun_prop, gaussianReal_add_gaussianReal_of_indepFun hind (hX i).map_eq ih.map_eq⟩
+    exact ⟨by fun_prop, gaussianReal_add_gaussianReal_of_indepFun hind (hX i) ih⟩
 
 /-- Under the product of `s` standard Gaussians, `m + c * ∑ ℓ, e ℓ` has law `N(m, c² s)`. -/
 lemma hasLaw_const_add_const_mul_sum_pi_gaussianReal {s : ℕ} (m c : ℝ) :

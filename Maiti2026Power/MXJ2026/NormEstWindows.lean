@@ -37,8 +37,8 @@ def splitPairs {J : Type*} (v : J → (ι → Bool) × ℝ) : (J → ι → Bool
   (fun p ↦ (v p).1, fun p ↦ (v p).2)
 
 lemma measurable_splitPairs {J : Type*} : Measurable (splitPairs (ι := ι) (J := J)) :=
-  (measurable_pi_lambda _ fun p ↦ (measurable_pi_apply p).fst).prodMk
-    (measurable_pi_lambda _ fun p ↦ (measurable_pi_apply p).snd)
+  (Measurable.of_eval fun p ↦ (measurable_pi_apply p).fst).prodMk
+    (Measurable.of_eval fun p ↦ (measurable_pi_apply p).snd)
 
 section RBWindow
 
@@ -78,19 +78,19 @@ def rbProj (a s K : ℕ) (ω : ℕ → (ι → Bool) × ℝ) :
   (fun k ↦ (ω (a + k * s)).1, fun k ℓ ↦ (ω (a + k * s + ℓ)).2)
 
 lemma measurable_rbProj : Measurable (rbProj (ι := ι) a s K) :=
-  (measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).fst).prodMk
-    (measurable_pi_lambda _ fun _ ↦ measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).snd)
+  (Measurable.of_eval fun _ ↦ (measurable_pi_apply _).fst).prodMk
+    (Measurable.of_eval fun _ ↦ Measurable.of_eval fun _ ↦ (measurable_pi_apply _).snd)
 
 /-- The block-start seeds of a window. -/
 def blockSeeds (hs : 0 < s) (v : (_ : Fin K) × Fin s → ι → Bool) : Fin K → ι → Bool :=
   fun k ↦ v ⟨k, ⟨0, hs⟩⟩
 
 lemma measurable_blockSeeds (hs : 0 < s) : Measurable (blockSeeds (ι := ι) (K := K) hs) :=
-  measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+  Measurable.of_eval fun _ ↦ measurable_pi_apply _
 
 lemma measurable_sigmaCurry {J : Type*} {κ : J → Type*} :
     Measurable (Sigma.curry (α := J) (β := κ) (γ := fun _ _ ↦ ℝ)) :=
-  measurable_pi_lambda _ fun _ ↦ measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+  Measurable.of_eval fun _ ↦ Measurable.of_eval fun _ ↦ measurable_pi_apply _
 
 lemma rbProj_eq (hs : 0 < s) :
     rbProj (ι := ι) a s K
@@ -119,7 +119,7 @@ seed-noise sequence have law `rbMeasure`. -/
 theorem nsMeasure_map_rbProj (hs : 0 < s) :
     (nsMeasure ι).map (rbProj a s K) = rbMeasure ι s K := by
   have hproj : Measurable fun ω : ℕ → (ι → Bool) × ℝ ↦ fun p : (_ : Fin K) × Fin s ↦
-      ω (winIdx a s p) := measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+      ω (winIdx a s p) := Measurable.of_eval fun _ ↦ measurable_pi_apply _
   have hcurry : Measurable (Sigma.curry (α := Fin K) (β := fun _ ↦ Fin s) (γ := fun _ _ ↦ ℝ)) :=
     measurable_sigmaCurry
   have hg : Measurable (Prod.map (blockSeeds (ι := ι) (K := K) hs)
@@ -187,7 +187,7 @@ noncomputable def lnProj (a n : ℕ) (ω : ℕ → (ι → Bool) × ℝ) : ι �
   fun i ℓ ↦ (ω (a + (Fintype.equivFin ι i) * n + ℓ)).2
 
 lemma measurable_lnProj : Measurable (lnProj (ι := ι) a n) :=
-  measurable_pi_lambda _ fun _ ↦ measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).snd
+  Measurable.of_eval fun _ ↦ Measurable.of_eval fun _ ↦ (measurable_pi_apply _).snd
 
 lemma lnProj_eq :
     lnProj (ι := ι) a n = Sigma.curry (γ := fun _ _ ↦ ℝ) ∘ Prod.snd ∘ splitPairs
@@ -200,7 +200,7 @@ sequence have law `lnNoise`. -/
 theorem nsMeasure_map_lnProj :
     (nsMeasure ι).map (lnProj a n) = lnNoise ι n := by
   have hproj : Measurable fun ω : ℕ → (ι → Bool) × ℝ ↦ fun p : (_ : ι) × Fin n ↦
-      ω (lnIdx a n p) := measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+      ω (lnIdx a n p) := Measurable.of_eval fun _ ↦ measurable_pi_apply _
   have hcurry : Measurable (Sigma.curry (α := ι) (β := fun _ ↦ Fin n) (γ := fun _ _ ↦ ℝ)) :=
     measurable_sigmaCurry
   rw [lnProj_eq, ← Measure.map_map hcurry (measurable_snd.comp (measurable_splitPairs.comp hproj)),

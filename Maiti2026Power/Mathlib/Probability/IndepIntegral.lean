@@ -51,7 +51,7 @@ lemma IndepFun.integral_inner_comp_eq_zero (hind : IndepFun V W P) (hV : AEMeasu
     (indepFun_iff_map_prod_eq_prod_map_map hV hWm).1 hind
   have hWmap : Integrable (fun w : E ↦ w) (P.map W) :=
     (integrable_map_measure aestronglyMeasurable_id hWm).2 hW
-  have hprob : IsProbabilityMeasure (P.map V) := Measure.isProbabilityMeasure_map hV
+  have hprob : IsProbabilityMeasure (P.map V) := inferInstance
   have hmeas : ∀ μ : Measure (𝓥 × E), AEStronglyMeasurable (fun p : 𝓥 × E ↦ ⟪f p.1, p.2⟫) μ :=
     fun μ ↦ (hf.comp measurable_fst).aestronglyMeasurable.inner
       measurable_snd.aestronglyMeasurable

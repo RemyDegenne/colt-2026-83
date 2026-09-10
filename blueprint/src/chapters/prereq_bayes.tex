@@ -147,9 +147,10 @@ $D_{n+1}^\rho(e^{-1}(h,(a,y))) = D_n^\rho(h)\rho(a,y)$. The integral formulas ar
 \texttt{integral\_withDensity\_eq\_integral\_smul}.
 \end{proof}
 
-\textbf{Lean remark.} \texttt{Learning.envDensity ρ n : (Fin n → 𝓐 × 𝓨) → ℝ≥0∞} is the
+\textbf{Lean remark.} \texttt{Learning.envDensity ρ n : Hist Unit 𝓐 𝓨 n → ℝ≥0∞} is the
 product $\prod_{t<n}\rho(x_t,y_t)$ over \texttt{Fin n}, matching LML's histories
-\texttt{history X Y n : Fin n → 𝓐 × 𝓨}, with the recursion \texttt{envDensity\_snoc}; the law
+\texttt{history O X Y n : Hist Unit 𝓐 𝓨 n} (rounds \texttt{Unit × 𝓐 × 𝓨}: there are no
+observations), with the recursion \texttt{envDensity\_snoc}; the law
 identity \texttt{map\_history\_eq\_withDensity\_env} is proved by induction on $n$ from the
 composition-product recursion of the law of the history. The kernel-level identity
 $\pi\otimes(\tilde\kappa_0.\mathrm{withDensity}\,\rho) = (\pi\otimes\tilde\kappa_0).\mathrm{withDensity}(\rho\circ\mathrm{snd})$

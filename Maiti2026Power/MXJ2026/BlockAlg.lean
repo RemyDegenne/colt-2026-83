@@ -140,7 +140,7 @@ noncomputable def estN (d : ℕ) (m : ℕ) (y : ℕ → ℝ) : ℝ :=
   Q.P.estimate (Fin d) fun r ↦ y (m * Q.N d + r)
 
 lemma measurable_estN (m : ℕ) : Measurable (Q.estN d m) :=
-  (Q.P.measurable_estimate).comp (measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _)
+  (Q.P.measurable_estimate).comp (Measurable.of_eval fun _ ↦ measurable_pi_apply _)
 
 lemma exists_argmax (d : ℕ) (y : ℕ → ℝ) :
     ∃ m, m < Q.k ∧ ∀ j < Q.k, Q.estN d j y ≤ Q.estN d m y := by
@@ -191,7 +191,7 @@ noncomputable def thetaHat (d : ℕ) (y : ℕ → ℝ) : EuclideanSpace ℝ (Fin
 
 lemma measurable_thetaHat : Measurable (Q.thetaHat d) := by
   unfold thetaHat
-  refine (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_lambda _ fun m ↦ ?_)
+  refine (PiLp.continuous_toLp 2 _).measurable.comp (Measurable.of_eval fun m ↦ ?_)
   refine (Finset.measurable_sum _ fun ℓ _ ↦ ?_).div_const _
   exact measurable_pi_apply (Q.T₂ d + Fintype.equivFin (Fin d) m * Q.n₂ d + ℓ)
 
@@ -210,32 +210,33 @@ lemma measurable_recommend : Measurable (Q.recommend d) := by
 
 /-- The past actions of block `i` in a history of the first `n` rounds, extended by `0`. -/
 noncomputable def pastOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ}
-    (h : Fin n → blockBallSet Q.k d × ℝ) : ℕ → unitBall (Fin d) :=
-  fun r ↦ if hr : i * Q.N d + r < n then blockProjBall i (h ⟨i * Q.N d + r, hr⟩).1
+    (h : Hist Unit (blockBallSet Q.k d) ℝ n) : ℕ → unitBall (Fin d) :=
+  fun r ↦ if hr : i * Q.N d + r < n then blockProjBall i (h ⟨i * Q.N d + r, hr⟩).action
     else unitBallZero
 
 /-- The observations of block `i` in a history of the first `n` rounds, extended by `0`. -/
-noncomputable def yOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ} (h : Fin n → blockBallSet Q.k d × ℝ) :
+noncomputable def yOfBlock (d : ℕ) (i : Fin Q.k) {n : ℕ} (h : Hist Unit (blockBallSet Q.k d) ℝ n) :
     ℕ → ℝ :=
-  fun r ↦ if hr : i * Q.N d + r < n then (h ⟨i * Q.N d + r, hr⟩).2 else 0
+  fun r ↦ if hr : i * Q.N d + r < n then (h ⟨i * Q.N d + r, hr⟩).feedback else 0
 
 lemma measurable_pastOfBlock_apply (i : Fin Q.k) {n : ℕ} (r : ℕ) :
-    Measurable fun h : Fin n → blockBallSet Q.k d × ℝ ↦ Q.pastOfBlock d i h r := by
+    Measurable fun h : Hist Unit (blockBallSet Q.k d) ℝ n ↦ Q.pastOfBlock d i h r := by
   unfold pastOfBlock
   split_ifs
-  exacts [(measurable_blockProjBall i).comp (measurable_pi_apply _).fst, measurable_const]
+  exacts [(measurable_blockProjBall i).comp (Round.measurable_action.comp (measurable_pi_apply _)),
+    measurable_const]
 
 lemma measurable_yOfBlock (i : Fin Q.k) {n : ℕ} :
-    Measurable fun h : Fin n → blockBallSet Q.k d × ℝ ↦ Q.yOfBlock d i h := by
-  refine measurable_pi_lambda _ fun r ↦ ?_
+    Measurable fun h : Hist Unit (blockBallSet Q.k d) ℝ n ↦ Q.yOfBlock d i h := by
+  refine Measurable.of_eval fun r ↦ ?_
   unfold yOfBlock
   split_ifs
-  exacts [(measurable_pi_apply _).snd, measurable_const]
+  exacts [Round.measurable_feedback.comp (measurable_pi_apply _), measurable_const]
 
 /-- The action of round `t` computed from the history of the first `n` rounds and the fresh seed
 `u`: in phase 1, the action of the meta-algorithm of the block of `t` embedded on that block; in
 phase 2, the basis vector of the round on the selected block. -/
-noncomputable def nextAction (d : ℕ) (t : ℕ) {n : ℕ} (h : Fin n → blockBallSet Q.k d × ℝ)
+noncomputable def nextAction (d : ℕ) (t : ℕ) {n : ℕ} (h : Hist Unit (blockBallSet Q.k d) ℝ n)
     (u : Fin d → Bool) : blockBallSet Q.k d :=
   if t < Q.T₂ d then
     blockEmbBall (Q.blockOf d t) (Q.P.nextAction (t % Q.N d) (Q.pastOfBlock d (Q.blockOf d t) h)
@@ -246,15 +247,15 @@ noncomputable def nextAction (d : ℕ) (t : ℕ) {n : ℕ} (h : Fin n → blockB
     | none => Q.zeroBB d
 
 lemma measurable_nextAction (t : ℕ) {n : ℕ} :
-    Measurable fun p : (Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
+    Measurable fun p : Hist Unit (blockBallSet Q.k d) ℝ n × (Fin d → Bool) ↦
       Q.nextAction d t p.1 p.2 := by
   unfold nextAction
   split_ifs with ht
-  · have h1 : Measurable fun q : ℕ × ((Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool)) ↦
+  · have h1 : Measurable fun q : ℕ × (Hist Unit (blockBallSet Q.k d) ℝ n × (Fin d → Bool)) ↦
         Q.P.nextAction (t % Q.N d) (Q.pastOfBlock d (Q.blockOf d t) q.2.1) q.1 q.2.2 :=
       measurable_from_prod_countable_right fun js ↦
         Q.P.measurable_nextAction_of (t % Q.N d) js (Q.measurable_pastOfBlock_apply (Q.blockOf d t))
-    have h2 : Measurable fun p : (Fin n → blockBallSet Q.k d × ℝ) × (Fin d → Bool) ↦
+    have h2 : Measurable fun p : Hist Unit (blockBallSet Q.k d) ℝ n × (Fin d → Bool) ↦
         (Q.P.jStar (Fin d) (Q.yOfBlock d (Q.blockOf d t) p.1), p) :=
       ((Q.P.measurable_jStar).comp ((Q.measurable_yOfBlock (Q.blockOf d t)).comp
         measurable_fst)).prodMk measurable_id
@@ -273,7 +274,8 @@ noncomputable def alg (d : ℕ) : SeededAlg (blockBallSet Q.k d) ℝ (Fin d → 
 
 /-- The deterministic output: the recommendation computed from the observations of the
 history of the `T` rounds. -/
-noncomputable def output (d : ℕ) (h : Fin (Q.T d) → blockBallSet Q.k d × ℝ) : blockBallSet Q.k d :=
+noncomputable def output (d : ℕ) (h : Hist Unit (blockBallSet Q.k d) ℝ (Q.T d)) :
+    blockBallSet Q.k d :=
   Q.recommend d (NormEstParam.yOf h)
 
 lemma measurable_output : Measurable (Q.output d) :=

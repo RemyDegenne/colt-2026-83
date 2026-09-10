@@ -6,65 +6,83 @@ section
 open MeasureTheory ProbabilityTheory Filter Real Finset
 open scoped ENNReal NNReal
 namespace Learning
-variable {𝓐 𝓨 Ω : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {mΩ : MeasurableSpace Ω}
 
-/-- A stochastic, sequential algorithm. -/
-structure Algorithm (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Policy or sampling rule: distribution of the action at time `n` given the history of the
-  `n` previous action-feedback pairs. -/
-  policy : (n : ℕ) → Kernel (Fin n → 𝓐 × 𝓨) 𝓐
+variable {𝓞 𝓐 𝓨 Ω : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨} {mΩ : MeasurableSpace Ω}
+
+/-- One round of interaction: an observation, then an action, then a feedback. -/
+abbrev Round (𝓞 𝓐 𝓨 : Type*) := 𝓞 × 𝓐 × 𝓨
+
+/-- History of `n` complete rounds; `n = 0` is the empty history. -/
+abbrev Hist (𝓞 𝓐 𝓨 : Type*) (n : ℕ) := Fin n → Round 𝓞 𝓐 𝓨
+
+/-- A stochastic, sequential algorithm.
+At each round, it sees an observation in `𝓞`, then takes an action in `𝓐`, and finally receives
+feedback in `𝓨`. The action is a random function of the past rounds and the current observation. -/
+@[ext]
+structure Algorithm (𝓞 𝓐 𝓨 : Type*) [MeasurableSpace 𝓞] [MeasurableSpace 𝓐] [MeasurableSpace 𝓨]
+    where
+  /-- Law of the action of round `n` given the past rounds and the current observation. -/
+  policy : (n : ℕ) → Kernel (Hist 𝓞 𝓐 𝓨 n × 𝓞) 𝓐
   /-- The policy is a Markov kernel. -/
-  [h_policy : ∀ n, IsMarkovKernel (policy n)]
+  [isMarkovKernel_policy : ∀ n, IsMarkovKernel (policy n)]
 
-instance (alg : Algorithm 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (alg.policy n) := alg.h_policy n
+instance (alg : Algorithm 𝓞 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (alg.policy n) :=
+  alg.isMarkovKernel_policy n
 
-/-- Distribution of the first action: the policy at time `0` applied to the empty history. -/
-def Algorithm.p0 (alg : Algorithm 𝓐 𝓨) : Measure 𝓐 :=
-  alg.policy 0 default
-deriving IsProbabilityMeasure
+/-- A stochastic environment.
+At each round, an observation is drawn prior to the algorithm taking an action. Then the environment
+provides feedback based on the observation and the action. -/
+@[ext]
+structure Environment (𝓞 𝓐 𝓨 : Type*) [MeasurableSpace 𝓞] [MeasurableSpace 𝓐] [MeasurableSpace 𝓨]
+    where
+  /-- Law of the observation of round `n` given the past rounds. -/
+  obs : (n : ℕ) → Kernel (Hist 𝓞 𝓐 𝓨 n) 𝓞
+  /-- Law of the feedback of round `n` given the past rounds, the observation and the action. -/
+  feedback : (n : ℕ) → Kernel ((Hist 𝓞 𝓐 𝓨 n × 𝓞) × 𝓐) 𝓨
+  /-- The observation kernel is a Markov kernel. -/
+  [isMarkovKernel_obs : ∀ n, IsMarkovKernel (obs n)]
+  /-- The feedback kernel is a Markov kernel. -/
+  [isMarkovKernel_feedback : ∀ n, IsMarkovKernel (feedback n)]
 
-/-- A stochastic environment. -/
-structure Environment (𝓐 𝓨 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨] where
-  /-- Distribution of the feedback at time `n` as function of the history of the `n` previous
-  action-feedback pairs and of the action at time `n`. -/
-  feedback : (n : ℕ) → Kernel ((Fin n → 𝓐 × 𝓨) × 𝓐) 𝓨
-  /-- The feedback kernels are Markov kernels. -/
-  [h_feedback : ∀ n, IsMarkovKernel (feedback n)]
-
-instance (env : Environment 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.feedback n) := env.h_feedback n
-
-/-- Distribution of the first feedback given the first action: the feedback kernel at time `0`
-applied to the empty history. -/
-noncomputable def Environment.ν0 (env : Environment 𝓐 𝓨) : Kernel 𝓐 𝓨 :=
-  (env.feedback 0).sectR default
-deriving IsMarkovKernel
+instance (env : Environment 𝓞 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.obs n) := env.isMarkovKernel_obs n
+instance (env : Environment 𝓞 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.feedback n) :=
+  env.isMarkovKernel_feedback n
 
 section IsAlgEnvSeq
 
-variable {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {alg : Algorithm 𝓐 𝓨} {env : Environment 𝓐 𝓨}
+variable {O : ℕ → Ω → 𝓞} {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
+    {alg : Algorithm 𝓞 𝓐 𝓨} {env : Environment 𝓞 𝓐 𝓨}
     {P : Measure Ω} [IsFiniteMeasure P] {N : ℕ}
 
-/-- History of the algorithm-environment sequence before time `n`: the action-feedback pairs at
+/-- History of the algorithm-environment sequence before time `n`: the rounds at
 times `0, ..., n - 1`. -/
-def history (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Fin n → 𝓐 × 𝓨 :=
-  fun i ↦ (A i ω, Y i ω)
+def history (O : ℕ → Ω → 𝓞) (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Hist 𝓞 𝓐 𝓨 n :=
+  fun i ↦ (O i ω, A i ω, Y i ω)
 
-/-- An algorithm-environment sequence: a sequence of actions and feedbacks generated
+/-- An algorithm-environment sequence: a sequence of observations, actions and feedbacks generated
 by an algorithm interacting with an environment. -/
 structure IsAlgEnvSeq
-    (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (alg : Algorithm 𝓐 𝓨) (env : Environment 𝓐 𝓨)
+    (O : ℕ → Ω → 𝓞) (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
+    (alg : Algorithm 𝓞 𝓐 𝓨) (env : Environment 𝓞 𝓐 𝓨)
     (P : Measure Ω) [IsFiniteMeasure P] : Prop where
+  /-- The observation sequence is measurable. -/
+  measurable_obs n : Measurable (O n) := by fun_prop
   /-- The action sequence is measurable. -/
   measurable_action n : Measurable (A n) := by fun_prop
   /-- The feedback sequence is measurable. -/
   measurable_feedback n : Measurable (Y n) := by fun_prop
-  /-- The action at time `n` has the correct conditional distribution given the history. -/
+  /-- The observation at time `n` has the correct conditional distribution given the history. -/
+  hasCondDistrib_obs n :
+    HasCondDistrib (O n) (history O A Y n) (env.obs n) P
+  /-- The action at time `n` has the correct conditional distribution given the history and the
+  observation at time `n`. -/
   hasCondDistrib_action n :
-    HasCondDistrib (A n) (history A Y n) (alg.policy n) P
-  /-- The feedback at time `n` has the correct conditional distribution given the history and
-  the action at time `n`. -/
+    HasCondDistrib (A n) (fun ω ↦ (history O A Y n ω, O n ω)) (alg.policy n) P
+  /-- The feedback at time `n` has the correct conditional distribution given the history, the
+  observation and the action at time `n`. -/
   hasCondDistrib_feedback n :
-    HasCondDistrib (Y n) (fun ω ↦ (history A Y n ω, A n ω)) (env.feedback n) P
+    HasCondDistrib (Y n) (fun ω ↦ ((history O A Y n ω, O n ω), A n ω)) (env.feedback n) P
 
 end IsAlgEnvSeq
 
@@ -76,17 +94,23 @@ section
 open MeasureTheory ProbabilityTheory Filter Real Finset
 open scoped ENNReal NNReal
 namespace Learning
-variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
 
-/-- An oblivious environment, in which the distribution of the next feedback depends only on
-the last action, but in a possibly time-dependent manner. -/
+variable {𝓞 𝓐 𝓨 : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨}
+
+/-- An oblivious environment without observations, in which the distribution of the next feedback
+depends only on the last action, but in a possibly time-dependent manner. -/
 @[simps]
-def obliviousEnv (ν : ℕ → Kernel 𝓐 𝓨) [∀ n, IsMarkovKernel (ν n)] : Environment 𝓐 𝓨 where
+noncomputable
+def obliviousEnv (ν : ℕ → Kernel 𝓐 𝓨) [∀ n, IsMarkovKernel (ν n)] : Environment Unit 𝓐 𝓨 where
+  obs _ := Kernel.const _ (Measure.dirac ())
   feedback n := (ν n).prodMkLeft _
 
-/-- A stationary environment, in which the distribution of the next feedback depends only on the
-last action. -/
-def stationaryEnv (ν : Kernel 𝓐 𝓨) [IsMarkovKernel ν] : Environment 𝓐 𝓨 := obliviousEnv fun _ ↦ ν
+/-- A stationary environment without observations, in which the distribution of the next feedback
+depends only on the last action. -/
+noncomputable
+def stationaryEnv (ν : Kernel 𝓐 𝓨) [IsMarkovKernel ν] : Environment Unit 𝓐 𝓨 :=
+  obliviousEnv fun _ ↦ ν
 
 end Learning
 end
@@ -96,15 +120,17 @@ section
 open MeasureTheory ProbabilityTheory Filter Real Finset
 open scoped ENNReal NNReal
 namespace Learning
-variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
+
+variable {𝓞 𝓐 𝓨 : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨}
 
 /-- A deterministic algorithm, which chooses the action given by the function `nextA`.
-The initial action is `nextA 0 default`. -/
+The initial action is `fun o ↦ nextA 0 (default, o)`. -/
 @[simps]
 noncomputable
-def detAlgorithm (nextA : (n : ℕ) → (Fin n → 𝓐 × 𝓨) → 𝓐)
+def detAlgorithm (nextA : (n : ℕ) → (Hist 𝓞 𝓐 𝓨 n × 𝓞) → 𝓐)
     (h_next : ∀ n, Measurable (nextA n)) :
-    Algorithm 𝓐 𝓨 where
+    Algorithm 𝓞 𝓐 𝓨 where
   policy n := Kernel.deterministic (nextA n) (h_next n)
 
 end Learning

@@ -63,7 +63,8 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
   set θ : (ι → Bool) → EuclideanSpace ℝ ι := fun s ↦ c • signVec s with hθ_def
   have hrun := fun s ↦ hA.isRun_fixedBudgetRunMeasure
     (env := linearGaussianEnv (cubeSet u) (θ s))
-  obtain ⟨P, hP⟩ : ∃ P : (ι → Bool) → Measure ((ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u),
+  obtain ⟨P, hP⟩ : ∃ P : (ι → Bool) →
+      Measure ((ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u),
       ∀ s, P s = A.fixedBudgetRunMeasure (linearGaussianEnv (cubeSet u) (θ s)) T :=
     ⟨_, fun _ ↦ rfl⟩
   have hprob : ∀ s, IsProbabilityMeasure (P s) := fun s ↦ by rw [hP]; infer_instance
@@ -77,14 +78,14 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
   obtain ⟨q, hq⟩ : ∃ q : (ι → Bool) → ι → ℝ, ∀ s j,
       q s j = (P s).real {ω | (ω.2 : EuclideanSpace ℝ ι) j ≠ u (s j)} := ⟨_, fun _ _ ↦ rfl⟩
   have hev_true : ∀ (s : ι → Bool) (j : ι), s j = true →
-      {ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u |
+      {ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u |
         (ω.2 : EuclideanSpace ℝ ι) j ≠ u (s j)} = Prod.snd ⁻¹' Bset j := by
     intro s j hsj
     ext ω
     simp only [hsj, Set.mem_ofPred_eq, Set.mem_preimage, hBset]
     exact ⟨fun h ↦ ((ω.2).2 j).resolve_left h, fun h ↦ by rw [h]; exact hune⟩
   have hev_false : ∀ (s : ι → Bool) (j : ι), s j = false →
-      {ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u |
+      {ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u |
         (ω.2 : EuclideanSpace ℝ ι) j ≠ u (s j)} = Prod.snd ⁻¹' (Bset j)ᶜ := by
     intro s j hsj
     ext ω
@@ -154,7 +155,8 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
       ∫ ω, simpleRegret (cubeSet u) (θ s) (ω.2 : EuclideanSpace ℝ ι) ∂(P s) =
         c * g * ∑ j, q s j := by
     intro s
-    have hmeasA : ∀ j : ι, MeasurableSet {ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u |
+    have hmeasA : ∀ j : ι,
+        MeasurableSet {ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u |
         (ω.2 : EuclideanSpace ℝ ι) j ≠ u (s j)} := by
       intro j
       by_cases hsj : s j = true
@@ -162,9 +164,9 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
         exact measurable_snd (hBm j)
       · rw [hev_false s j (by simpa using hsj)]
         exact measurable_snd (hBm j).compl
-    have hpt : ∀ ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u,
+    have hpt : ∀ ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u,
         simpleRegret (cubeSet u) (θ s) (ω.2 : EuclideanSpace ℝ ι) =
-          ∑ j, Set.indicator {ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u |
+          ∑ j, Set.indicator {ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u |
             (ω.2 : EuclideanSpace ℝ ι) j ≠ u (s j)} (fun _ ↦ c * g) ω := by
       intro ω
       rw [hθ_def, simpleRegret_smul_signVec hu hc s (ω.2).2, hammingCard, card_filter]
@@ -183,11 +185,11 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
         ε + (10 * ε - ε) * δ := by
     intro s
     have hpacs : 1 - δ ≤ (P s).real
-        {ω : (ℕ → cubeSet (ι := ι) u × ℝ) × cubeSet (ι := ι) u |
+        {ω : (ℕ → Round Unit (cubeSet (ι := ι) u) ℝ) × cubeSet (ι := ι) u |
           simpleRegret (cubeSet u) (θ s)
             ((ω.2 : cubeSet (ι := ι) u) : EuclideanSpace ℝ ι) ≤ ε} := by
       rw [hP s]
-      exact hpac (θ s) _ _ _ _ (hrun s)
+      exact hpac (θ s) _ _ _ _ _ (hrun s)
     refine integral_simpleRegret_le_of_measureReal_le measurable_snd ?_ ?_ (by linarith) hpacs
     · intro x hx
       rw [hθ_def, simpleRegret_smul_signVec hu hc s hx]

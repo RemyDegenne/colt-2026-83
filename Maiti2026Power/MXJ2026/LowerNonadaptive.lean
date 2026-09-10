@@ -121,14 +121,14 @@ lemma posDef_of_isFixedDesign_of_isPAC_of_forall (h𝒳 : IsCompact 𝒳)
   rw [hlaw] at hp1
   set μ := fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ' with hμ_def
   have hmeas : ∀ ϑ : EuclideanSpace ℝ ι,
-      MeasurableSet {p : (Fin T → 𝒳 × ℝ) × 𝒳 |
+      MeasurableSet {p : Hist Unit 𝒳 ℝ T × 𝒳 |
         simpleRegret 𝒳 ϑ (p.2 : EuclideanSpace ℝ ι) ≤ ε} := fun ϑ ↦ by
     refine measurableSet_le ?_ measurable_const
     exact (continuous_const.sub ((continuous_subtype_val.comp continuous_snd).inner
       continuous_const)).measurable
-  have hsub : {p : (Fin T → 𝒳 × ℝ) × 𝒳 |
+  have hsub : {p : Hist Unit 𝒳 ℝ T × 𝒳 |
       simpleRegret 𝒳 θ' (p.2 : EuclideanSpace ℝ ι) ≤ ε} ⊆
-      {p : (Fin T → 𝒳 × ℝ) × 𝒳 |
+      {p : Hist Unit 𝒳 ℝ T × 𝒳 |
         simpleRegret 𝒳 θ (p.2 : EuclideanSpace ℝ ι) ≤ ε}ᶜ := by
     intro p hp
     have h := hsum (p.2 : EuclideanSpace ℝ ι)

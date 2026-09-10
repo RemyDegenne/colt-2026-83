@@ -6,7 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Linarith
 

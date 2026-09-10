@@ -41,7 +41,7 @@ lemma lintegral_exp_mul_sq_le [SFinite μ] (h : HasSubgaussianMGF Z c μ) {a : �
   have hs2 : s ^ 2 = 2 * a := Real.sq_sqrt (by positivity)
   have hpt : ∀ z : ℝ, exp (a * z ^ 2) = ∫ v, exp ((s * z) * v) ∂gaussianReal 0 1 := by
     intro z
-    have := mgf_gaussianReal (X := id) (p := gaussianReal 0 1) (μ := 0) (v := 1) Measure.map_id
+    have := mgf_gaussianReal (X := id) (p := gaussianReal 0 1) (μ := 0) (v := 1) HasLaw.id
       (s * z)
     simp only [mgf, id] at this
     rw [this]

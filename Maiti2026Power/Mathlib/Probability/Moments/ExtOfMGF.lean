@@ -47,7 +47,7 @@ theorem _root_.MeasureTheory.Measure.ext_of_eqOn_mgf [IsProbabilityMeasure μ] [
     (hX0 : 0 ∈ interior (integrableExpSet X μ)) (hY0 : 0 ∈ interior (integrableExpSet Y μ'))
     (h : mgf X μ =ᶠ[nhds 0] mgf Y μ') :
     μ.map X = μ'.map Y := by
-  have : IsProbabilityMeasure (μ.map X) := Measure.isProbabilityMeasure_map hX
+  have : IsProbabilityMeasure (μ.map X) := inferInstance
   have : IsFiniteMeasure (μ'.map Y) := by
     constructor
     rw [Measure.map_apply_of_aemeasurable hY MeasurableSet.univ]

@@ -12,7 +12,7 @@ public import Maiti2026Power.Mathlib.Probability.GaussianMGF
 /-!
 # Sub-Gaussian noise of linear Gaussian environments
 
-For an algorithm-environment sequence `(X, Y)` in the linear Gaussian environment
+For an algorithm-environment sequence `(O, X, Y)` in the linear Gaussian environment
 `linearGaussianEnv 𝒳 θ`, the *noise* `η t := Y t - ⟪X t, θ⟫` has, conditionally on the history of
 the first `t` rounds and the action `X t`, the law `N(0, 1)`
 (`IsAlgEnvSeq.hasCondDistrib_noise`, `IsAlgEnvSeq.hasCondDistrib_noise_zero`). It is therefore
@@ -38,7 +38,8 @@ namespace Learning.LinearBandit
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} {θ : E} {Ω : Type*} {mΩ : MeasurableSpace Ω}
-  {P : Measure Ω} [IsProbabilityMeasure P] {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {alg : Algorithm 𝒳 ℝ}
+  {P : Measure Ω} [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
+  {alg : Algorithm Unit 𝒳 ℝ}
 
 /-- The noise at time `t` of a sequence of actions and feedbacks in the linear Gaussian environment
 with reward vector `θ`: `Y t - ⟪X t, θ⟫`. -/
@@ -74,20 +75,23 @@ lemma hasCondDistrib_sub_inner_of_hasCondDistrib {𝓧 : Type*} {m𝓧 : Measura
   change (gaussianReal ⟪(a z : E), θ⟫ 1).map (fun y ↦ y - ⟪(a z : E), θ⟫) _ = _
   rw [gaussianReal_map_sub_const, sub_self]
 
-variable (h : IsAlgEnvSeq X Y alg (linearGaussianEnv 𝒳 θ) P)
+variable (h : IsAlgEnvSeq O X Y alg (linearGaussianEnv 𝒳 θ) P)
 include h
 
 /-- Conditionally on the history of the first `n` rounds and the action at round `n`, the noise
 at round `n` has the law `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise (n : ℕ) :
-    HasCondDistrib (noise θ X Y n) (fun ω ↦ (history X Y n ω, X n ω))
+    HasCondDistrib (noise θ X Y n) (fun ω ↦ ((history O X Y n ω, O n ω), X n ω))
       (Kernel.const _ (gaussianReal 0 1)) P :=
   hasCondDistrib_sub_inner_of_hasCondDistrib measurable_snd (h.hasCondDistrib_feedback n)
 
 /-- Conditionally on the first action, the noise at time `0` has the law `N(0, 1)`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondDistrib_noise_zero :
-    HasCondDistrib (noise θ X Y 0) (X 0) (Kernel.const _ (gaussianReal 0 1)) P :=
-  hasCondDistrib_sub_inner_of_hasCondDistrib measurable_id h.hasCondDistrib_feedback_zero
+    HasCondDistrib (noise θ X Y 0) (X 0) (Kernel.const _ (gaussianReal 0 1)) P := by
+  have h0 := h.hasCondDistrib_feedback_zero
+  rw [linearGaussianEnv, ν0_stationaryEnv] at h0
+  exact (hasCondDistrib_sub_inner_of_hasCondDistrib measurable_snd h0).const_comp_right
+    measurable_snd
 
 lemma _root_.Learning.IsAlgEnvSeq.measurable_noise (t : ℕ) : Measurable (noise θ X Y t) :=
   (h.measurable_feedback t).sub
@@ -112,15 +116,15 @@ history of the first `n` rounds and the action at round `n`. -/
 lemma _root_.Learning.IsAlgEnvSeq.hasCondSubgaussianMGF_noise (n : ℕ) :
     HasCondSubgaussianMGF (h.filtrationAction n) (h.filtrationAction.le n)
       (noise θ X Y n) 1 P := by
-  have hZ : Measurable fun ω ↦ (history X Y n ω, X n ω) :=
-    (h.measurable_history n).prodMk (h.measurable_action n)
+  have hZ : Measurable fun ω ↦ ((history O X Y n ω, O n ω), X n ω) :=
+    ((h.measurable_history n).prodMk (h.measurable_obs n)).prodMk (h.measurable_action n)
   have key := (h.hasCondDistrib_noise n).hasCondSubgaussianMGF_of_const (h.measurable_noise n)
     hZ (hasSubgaussianMGF_fun_id_gaussianReal 1)
   have heq : h.filtrationAction n =
-      MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X n ω)) inferInstance :=
+      MeasurableSpace.comap (fun ω ↦ ((history O X Y n ω, O n ω), X n ω)) inferInstance :=
     h.filtrationAction_eq_comap n
   have hgen : ∀ (m : MeasurableSpace Ω) (hm : m ≤ mΩ),
-      m = MeasurableSpace.comap (fun ω ↦ (history X Y n ω, X n ω)) inferInstance →
+      m = MeasurableSpace.comap (fun ω ↦ ((history O X Y n ω, O n ω), X n ω)) inferInstance →
       HasCondSubgaussianMGF m hm (noise θ X Y n) 1 P := by
     rintro m hm rfl
     exact key

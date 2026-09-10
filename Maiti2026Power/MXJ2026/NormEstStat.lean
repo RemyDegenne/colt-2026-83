@@ -74,15 +74,15 @@ namespace NormEstParam
 variable {ι : Type*} [Fintype ι] (P : NormEstParam)
 
 /-- The observation sequence of a history of length `T`, extended by `0`. -/
-def yOf {𝓐 : Type*} {T : ℕ} (h : Fin T → 𝓐 × ℝ) : ℕ → ℝ :=
-  fun t ↦ if ht : t < T then (h ⟨t, ht⟩).2 else 0
+def yOf {𝓐 : Type*} {T : ℕ} (h : Learning.Hist Unit 𝓐 ℝ T) : ℕ → ℝ :=
+  fun t ↦ if ht : t < T then (h ⟨t, ht⟩).feedback else 0
 
 lemma measurable_yOf {𝓐 : Type*} [MeasurableSpace 𝓐] (T : ℕ) :
-    Measurable (yOf : (Fin T → 𝓐 × ℝ) → ℕ → ℝ) := by
-  refine measurable_pi_lambda _ fun t ↦ ?_
+    Measurable (yOf : Learning.Hist Unit 𝓐 ℝ T → ℕ → ℝ) := by
+  refine Measurable.of_eval fun t ↦ ?_
   unfold yOf
   split_ifs
-  exacts [(measurable_pi_apply _).snd, measurable_const]
+  exacts [Learning.Round.measurable_feedback.comp (measurable_pi_apply _), measurable_const]
 
 /-- The statistic of the test at scale `j`. -/
 noncomputable def testStat (ι : Type*) [Fintype ι] (j : ℕ) (y : ℕ → ℝ) : ℝ :=
@@ -174,7 +174,7 @@ lemma measurable_lnRStat : Measurable (P.lnRStat ι) := by
   unfold lnRStat
   have h1 : Measurable fun y : ℕ → ℝ ↦ (fun i : ι ↦
       (∑ ℓ : Fin P.n, y (P.T₁ ι + (Fintype.equivFin ι i) * P.n + ℓ)) / P.n) := by
-    refine measurable_pi_lambda _ fun i ↦ ?_
+    refine Measurable.of_eval fun i ↦ ?_
     refine (Finset.measurable_sum _ fun ℓ _ ↦ ?_).div_const _
     exact measurable_pi_apply (P.T₁ ι + (Fintype.equivFin ι i) * P.n + ℓ)
   exact ((continuous_norm.measurable.comp

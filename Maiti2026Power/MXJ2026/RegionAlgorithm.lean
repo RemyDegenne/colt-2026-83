@@ -50,7 +50,7 @@ noncomputable def regionCandidates (x : Fin T₁ → 𝒳) (sel : Fin K → Eucl
 
 lemma measurable_regionCandidates (x : Fin T₁ → 𝒳) (hsel : ∀ i, Measurable (sel i)) :
     Measurable (regionCandidates x sel) :=
-  (measurable_pi_lambda _ fun i ↦ (hsel i).comp (continuous_leastSquares _).measurable).prodMk
+  (Measurable.of_eval fun i ↦ (hsel i).comp (continuous_leastSquares _).measurable).prodMk
     measurable_const
 
 /-- **The region algorithm** (blueprint `def:region_algorithm`): play the design `x` for `T₁`
@@ -106,7 +106,7 @@ lemma one_sub_le_measureReal_regionCandidates (h𝒳 : 𝒳.Finite) (hne : 𝒳.
   set P : Measure (Fin T₁ → ℝ) := Measure.pi fun _ ↦ gaussianReal 0 1 with hP
   have hθhm : Measurable θh :=
     (continuous_leastSquares xT).measurable.comp
-      (measurable_pi_lambda _ fun t ↦ measurable_const.add (measurable_pi_apply t))
+      (Measurable.of_eval fun t ↦ measurable_const.add (measurable_pi_apply t))
   -- the law of the estimation error
   have hΔ : HasLaw (fun η ↦ θh η - θ) (multivariateGaussian 0 Sm⁻¹) P := by
     have := (⟨(measurable_id.sub_const θ).aemeasurable, rfl⟩ :

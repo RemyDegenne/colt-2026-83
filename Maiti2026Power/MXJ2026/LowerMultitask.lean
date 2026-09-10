@@ -78,11 +78,11 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
   have hrun0 := fun (κ : ∀ j, Fin (d j)) (j : Fin m) ↦ hA.isRun_fixedBudgetRunMeasure
     (env := linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j))
   obtain ⟨P, hP⟩ : ∃ P : (∀ j, Fin (d j)) →
-      Measure ((ℕ → multitaskSet d × ℝ) × multitaskSet d),
+      Measure ((ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d),
       ∀ κ, P κ = A.fixedBudgetRunMeasure (linearGaussianEnv (multitaskSet d) (mtParam d ε κ)) T :=
     ⟨_, fun _ ↦ rfl⟩
   obtain ⟨Q, hQ⟩ : ∃ Q : (∀ j, Fin (d j)) → Fin m →
-      Measure ((ℕ → multitaskSet d × ℝ) × multitaskSet d),
+      Measure ((ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d),
       ∀ κ j, Q κ j =
         A.fixedBudgetRunMeasure (linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j)) T :=
     ⟨_, fun _ _ ↦ rfl⟩
@@ -98,7 +98,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     (hcoord ⟨j, i⟩).measurable (measurableSet_singleton 1)
   have hEvm' : ∀ (j : Fin m) (i : Fin (d j)),
       MeasurableSet (Prod.snd ⁻¹' Ev j i :
-        Set ((ℕ → multitaskSet d × ℝ) × multitaskSet d)) := fun j i ↦
+        Set ((ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d)) := fun j i ↦
     measurable_snd (hEvm j i)
   -- the indicator of `Ev j i` is the coordinate `⟨j, i⟩`
   have hind : ∀ (j : Fin m) (i : Fin (d j)) (y : multitaskSet d),
@@ -125,7 +125,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
       simp [measureReal_def]
     simp_rw [hstep]
     rw [← integral_finsetSum _ fun i _ ↦ hint i]
-    have hone : ∀ ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d,
+    have hone : ∀ ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d,
         ∑ i, Set.indicator (Prod.snd ⁻¹' Ev j i) (fun _ ↦ (1 : ℝ)) ω = 1 := by
       intro ω
       have h1 : ∀ i : Fin (d j), Set.indicator (Prod.snd ⁻¹' Ev j i) (fun _ ↦ (1 : ℝ)) ω =
@@ -143,7 +143,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     simp
   -- (B) the expected number of pulls of the coordinates of a block sums to `T`
   have hmeasX : ∀ (κ : ∀ j, Fin (d j)) (j : Fin m) (t : ℕ) (i : Σ j, Fin (d j)),
-      Measurable fun ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d ↦
+      Measurable fun ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d ↦
         ((IT.action t ω.1 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) i :=
     fun κ j t i ↦ (hcoord i).measurable.comp ((hrun0 κ j).isAlgEnvSeq.measurable_action t)
   have hintX : ∀ (κ : ∀ j, Fin (d j)) (j : Fin m) (t : ℕ) (i : Σ j, Fin (d j)),
@@ -173,7 +173,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
           EuclideanSpace ℝ (Σ j, Fin (d j))) ⟨j, i⟩ ∂(Q κ j) = 1 := by
       intro t _
       rw [← integral_finsetSum _ fun i _ ↦ hintX κ j t ⟨j, i⟩]
-      have hb : ∀ ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d,
+      have hb : ∀ ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d,
           ∑ i, ((IT.action t ω.1 : multitaskSet d) :
             EuclideanSpace ℝ (Σ j, Fin (d j))) ⟨j, i⟩ = 1 :=
         fun ω ↦ (IT.action t ω.1 : multitaskSet d).2.2 j
@@ -197,7 +197,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
         ∫ ω, ⟪((IT.action t ω.1 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))),
           mtParam0 d ε κ j - mtParam d ε κ'⟫ ^ 2 / 2 ∂(Q κ j) ≤
         50 * mtEps d ε j ^ 2 * Nb κ j i := by
-      have hpt : ∀ (t : ℕ) (ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d),
+      have hpt : ∀ (t : ℕ) (ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d),
           ⟪((IT.action t ω.1 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))),
             mtParam0 d ε κ j - mtParam d ε κ'⟫ ^ 2 / 2 =
             50 * mtEps d ε j ^ 2 * ((IT.action t ω.1 : multitaskSet d) :
@@ -263,7 +263,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     intro κ
     have := hprobP κ
     rw [hVal]
-    have hpt : ∀ ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d,
+    have hpt : ∀ ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d,
         ⟪((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))), mtParam d ε κ⟫ =
           ∑ j, Set.indicator (Prod.snd ⁻¹' Ev j (κ j)) (fun _ ↦ 10 * mtEps d ε j) ω := by
       intro ω
@@ -331,19 +331,19 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
       intro y hy
       rw [hsr]
       linarith [inner_mtParam_nonneg hε.le κ hy]
-    have hpacs : 1 - δ ≤ (P κ).real {ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d |
+    have hpacs : 1 - δ ≤ (P κ).real {ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d |
         simpleRegret (multitaskSet d) (mtParam d ε κ)
           ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) ≤ ε} := by
       rw [hP κ]
-      exact hpac (mtParam d ε κ) _ _ _ _ (hrun κ)
+      exact hpac (mtParam d ε κ) _ _ _ _ _ (hrun κ)
     have hint := integral_simpleRegret_le_of_measureReal_le (P := P κ) measurable_snd h0 hZ
       (by linarith) hpacs
-    have hmeasR : Measurable fun ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d ↦
+    have hmeasR : Measurable fun ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d ↦
         simpleRegret (multitaskSet d) (mtParam d ε κ)
           ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) :=
       ((continuous_const.sub (continuous_subtype_val.inner continuous_const)).measurable).comp
         measurable_snd
-    have hintR : Integrable (fun ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d ↦
+    have hintR : Integrable (fun ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d ↦
         simpleRegret (multitaskSet d) (mtParam d ε κ)
           ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j)))) (P κ) :=
       Integrable.of_bound hmeasR.aestronglyMeasurable (10 * ε)
@@ -353,7 +353,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     have hVal2 : Val κ = 10 * ε - ∫ ω, simpleRegret (multitaskSet d) (mtParam d ε κ)
         ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) ∂(P κ) := by
       rw [hVal]
-      have hpt : ∀ ω : (ℕ → multitaskSet d × ℝ) × multitaskSet d,
+      have hpt : ∀ ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d,
           ⟪((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))), mtParam d ε κ⟫ =
             10 * ε - simpleRegret (multitaskSet d) (mtParam d ε κ)
               ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) := fun ω ↦ by

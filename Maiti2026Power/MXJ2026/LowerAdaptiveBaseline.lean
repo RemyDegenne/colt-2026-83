@@ -126,26 +126,28 @@ lemma baseline_le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : 
   have hrun_m := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θm)
   set Pp := A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θp) T with hPp
   set Pm := A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θm) T with hPm
-  have hpac_p := hpac θp Pp _ _ _ hrun_p
-  have hpac_m := hpac θm Pm _ _ _ hrun_m
-  change 1 - δ ≤ Pp.real {ω : (ℕ → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θp (ω.2 : EuclideanSpace ℝ ι) ≤ ε}
-    at hpac_p
-  change 1 - δ ≤ Pm.real {ω : (ℕ → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θm (ω.2 : EuclideanSpace ℝ ι) ≤ ε}
-    at hpac_m
-  have hmeas : ∀ θ : EuclideanSpace ℝ ι,
-      MeasurableSet {ω : (ℕ → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θ (ω.2 : EuclideanSpace ℝ ι) ≤ ε} := by
+  have hpac_p := hpac θp Pp _ _ _ _ hrun_p
+  have hpac_m := hpac θm Pm _ _ _ _ hrun_m
+  change 1 - δ ≤ Pp.real {ω : (ℕ → Round Unit 𝒳 ℝ) × 𝒳 |
+    simpleRegret 𝒳 θp (ω.2 : EuclideanSpace ℝ ι) ≤ ε} at hpac_p
+  change 1 - δ ≤ Pm.real {ω : (ℕ → Round Unit 𝒳 ℝ) × 𝒳 |
+    simpleRegret 𝒳 θm (ω.2 : EuclideanSpace ℝ ι) ≤ ε} at hpac_m
+  have hmeas : ∀ θ : EuclideanSpace ℝ ι, MeasurableSet {ω : (ℕ → Round Unit 𝒳 ℝ) × 𝒳 |
+      simpleRegret 𝒳 θ (ω.2 : EuclideanSpace ℝ ι) ≤ ε} := by
     intro θ
     have : Continuous fun x : 𝒳 ↦ simpleRegret 𝒳 θ x :=
       continuous_const.sub (continuous_subtype_val.inner continuous_const)
     exact measurable_snd (measurableSet_le this.measurable measurable_const)
   have herr_p : Pp.real (Prod.snd ⁻¹' Bᶜ) ≤ δ := by
     calc Pp.real (Prod.snd ⁻¹' Bᶜ)
-        ≤ Pp.real {ω : (ℕ → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θp (ω.2 : EuclideanSpace ℝ ι) ≤ ε}ᶜ :=
+        ≤ Pp.real {ω : (ℕ → Round Unit 𝒳 ℝ) × 𝒳 |
+            simpleRegret 𝒳 θp (ω.2 : EuclideanSpace ℝ ι) ≤ ε}ᶜ :=
           measureReal_mono fun ω hω hgood ↦ hω (hgood_p _ hgood)
       _ ≤ δ := by rw [measureReal_compl (hmeas θp), probReal_univ]; linarith
   have herr_m : Pm.real (Prod.snd ⁻¹' B) ≤ δ := by
     calc Pm.real (Prod.snd ⁻¹' B)
-        ≤ Pm.real {ω : (ℕ → 𝒳 × ℝ) × 𝒳 | simpleRegret 𝒳 θm (ω.2 : EuclideanSpace ℝ ι) ≤ ε}ᶜ :=
+        ≤ Pm.real {ω : (ℕ → Round Unit 𝒳 ℝ) × 𝒳 |
+            simpleRegret 𝒳 θm (ω.2 : EuclideanSpace ℝ ι) ≤ ε}ᶜ :=
           measureReal_mono fun ω hω hgood ↦ hgood_m _ hgood hω
       _ ≤ δ := by rw [measureReal_compl (hmeas θm), probReal_univ]; linarith
   -- Bretagnolle–Huber

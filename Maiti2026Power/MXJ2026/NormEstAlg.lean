@@ -63,15 +63,15 @@ noncomputable def nextAction (t : ℕ) (past : ℕ → unitBall ι) (js : ℕ) (
     | none => unitBallZero
 
 /-- The past actions of a history of the first `n` rounds, extended by the zero action. -/
-def pastOf {n : ℕ} (h : Fin n → unitBall ι × ℝ) : ℕ → unitBall ι :=
-  fun r ↦ if hr : r < n then (h ⟨r, hr⟩).1 else unitBallZero
+def pastOf {n : ℕ} (h : Hist Unit (unitBall ι) ℝ n) : ℕ → unitBall ι :=
+  fun r ↦ if hr : r < n then (h ⟨r, hr⟩).action else unitBallZero
 
 omit [DecidableEq ι] in
 lemma measurable_pastOf_apply {n : ℕ} (r : ℕ) :
-    Measurable fun h : Fin n → unitBall ι × ℝ ↦ pastOf h r := by
+    Measurable fun h : Hist Unit (unitBall ι) ℝ n ↦ pastOf h r := by
   unfold pastOf
   split_ifs
-  exacts [(measurable_pi_apply _).fst, measurable_const]
+  exacts [Round.measurable_action.comp (measurable_pi_apply _), measurable_const]
 
 lemma measurable_nextAction_of (t js : ℕ) {α : Type*} [MeasurableSpace α]
     {past : α → ℕ → unitBall ι} (hpast : ∀ b, Measurable fun a ↦ past a b) :
@@ -87,7 +87,7 @@ lemma measurable_nextAction_of (t js : ℕ) {α : Type*} [MeasurableSpace α]
     · exact (hpast b).comp measurable_fst
 
 lemma measurable_nextAction (t js : ℕ) {n : ℕ} :
-    Measurable fun p : (Fin n → unitBall ι × ℝ) × (ι → Bool) ↦
+    Measurable fun p : Hist Unit (unitBall ι) ℝ n × (ι → Bool) ↦
       P.nextAction (ι := ι) t (pastOf p.1) js p.2 :=
   P.measurable_nextAction_of t js fun b ↦ measurable_pastOf_apply b
 
@@ -97,10 +97,10 @@ noncomputable def alg (ι : Type*) [Fintype ι] [DecidableEq ι] :
   seed := uniformBoolVec ι
   next n h u := P.nextAction (ι := ι) n (pastOf h) (P.jStar ι (yOf h)) u
   measurable_next n := by
-    have h1 : Measurable fun p : ℕ × ((Fin n → unitBall ι × ℝ) × (ι → Bool)) ↦
+    have h1 : Measurable fun p : ℕ × (Hist Unit (unitBall ι) ℝ n × (ι → Bool)) ↦
         P.nextAction (ι := ι) n (pastOf p.2.1) p.1 p.2.2 :=
       measurable_from_prod_countable_right fun js ↦ P.measurable_nextAction n js
-    have h2 : Measurable fun p : (Fin n → unitBall ι × ℝ) × (ι → Bool) ↦
+    have h2 : Measurable fun p : Hist Unit (unitBall ι) ℝ n × (ι → Bool) ↦
         (P.jStar ι (yOf p.1), p) :=
       ((P.measurable_jStar).comp ((measurable_yOf n).comp measurable_fst)).prodMk measurable_id
     exact h1.comp h2
@@ -108,7 +108,7 @@ noncomputable def alg (ι : Type*) [Fintype ι] [DecidableEq ι] :
 omit [DecidableEq ι] in
 /-- The deterministic output of the meta-algorithm: the estimate computed from the observations
 of the history of the `T` rounds. -/
-noncomputable def output (ι : Type*) [Fintype ι] (h : Fin (P.T ι) → unitBall ι × ℝ) : ℝ :=
+noncomputable def output (ι : Type*) [Fintype ι] (h : Hist Unit (unitBall ι) ℝ (P.T ι)) : ℝ :=
   P.estimate ι (yOf h)
 
 omit [DecidableEq ι] in

@@ -71,16 +71,16 @@ structure PhasedAlg (𝓐 𝓨 S : Type*) [MeasurableSpace 𝓐] [MeasurableSpac
 
 /-- The observation sequence read from a history of the first `n` rounds (`0 < n`), extended
 beyond `n - 1` by the observation at time `n - 1`. -/
-def extendObs (n : ℕ) (hn : 0 < n) (h : Fin n → 𝓐 × 𝓨) : ℕ → 𝓨 :=
-  fun t ↦ (h ⟨min t (n - 1), by omega⟩).2
+def extendObs (n : ℕ) (hn : 0 < n) (h : Hist Unit 𝓐 𝓨 n) : ℕ → 𝓨 :=
+  fun t ↦ (h ⟨min t (n - 1), by omega⟩).feedback
 
 lemma measurable_extendObs (n : ℕ) (hn : 0 < n) :
     Measurable (extendObs (𝓐 := 𝓐) (𝓨 := 𝓨) n hn) :=
-  measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).snd
+  Measurable.of_eval fun _ ↦ Round.measurable_feedback.comp (measurable_pi_apply _)
 
 omit m𝓐 m𝓨 in
-lemma extendObs_history {Ω : Type*} (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (hn : 0 < n) (ω : Ω)
-    {t : ℕ} (ht : t < n) : extendObs n hn (history X Y n ω) t = Y t ω := by
+lemma extendObs_history {Ω : Type*} (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ)
+    (hn : 0 < n) (ω : Ω) {t : ℕ} (ht : t < n) : extendObs n hn (history O X Y n ω) t = Y t ω := by
   simp [extendObs, history, min_eq_left (by omega : t ≤ n - 1)]
 
 namespace PhasedAlg
@@ -165,7 +165,7 @@ lemma measurable_actAt (ℓ j : ℕ) : Measurable fun s ↦ A.actAt ℓ s j := b
 def phaseObs (ℓ : ℕ) (y : ℕ → 𝓨) : Fin (A.len ℓ) → 𝓨 := fun j ↦ y (A.start ℓ + j)
 
 lemma measurable_phaseObs (ℓ : ℕ) : Measurable (A.phaseObs ℓ) :=
-  measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _
+  Measurable.of_eval fun _ ↦ measurable_pi_apply _
 
 /-- The state at the start of phase `ℓ`, as a function of the observation sequence. -/
 def state : ℕ → (ℕ → 𝓨) → S
@@ -215,7 +215,7 @@ lemma measurable_actionAt (t : ℕ) : Measurable (A.actionAt t) :=
   (A.measurable_actAt _ _).comp (A.measurable_state _)
 
 /-- The action at round `n` computed from the history of the first `n` rounds. -/
-noncomputable def nextAction (n : ℕ) (h : Fin n → 𝓐 × 𝓨) : 𝓐 :=
+noncomputable def nextAction (n : ℕ) (h : Hist Unit 𝓐 𝓨 n) : 𝓐 :=
   if hn : 0 < n then A.actionAt n (extendObs n hn h) else A.act 0 A.init ⟨0, A.len_pos 0⟩
 
 lemma measurable_nextAction (n : ℕ) : Measurable (A.nextAction n) := by
@@ -227,21 +227,22 @@ lemma measurable_nextAction (n : ℕ) : Measurable (A.nextAction n) := by
 /-- The phased algorithm as a deterministic LML algorithm: at time `t` in phase `ℓ`, it plays the
 action `act ℓ s j` where `s` is the state computed from the observations before the phase and
 `j = t - start ℓ`. -/
-noncomputable def toAlgorithm : Algorithm 𝓐 𝓨 :=
-  detAlgorithm A.nextAction A.measurable_nextAction
+noncomputable def toAlgorithm : Algorithm Unit 𝓐 𝓨 :=
+  detAlgorithm (fun n p ↦ A.nextAction n p.1)
+    fun n ↦ (A.measurable_nextAction n).comp measurable_fst
 
 /-- The state at the start of phase `ℓ` as a function of the history of the first `start ℓ`
 rounds. -/
-def stateOfFinHistory (ℓ : ℕ) (hist : Fin (A.start ℓ) → 𝓐 × 𝓨) : S :=
+def stateOfFinHistory (ℓ : ℕ) (hist : Hist Unit 𝓐 𝓨 (A.start ℓ)) : S :=
   if hℓ : 0 < A.start ℓ then
-    A.state ℓ fun t ↦ (hist ⟨min t (A.start ℓ - 1), by omega⟩).2
+    A.state ℓ fun t ↦ (hist ⟨min t (A.start ℓ - 1), by omega⟩).feedback
   else A.init
 
 lemma measurable_stateOfFinHistory (ℓ : ℕ) : Measurable (A.stateOfFinHistory ℓ) := by
   unfold stateOfFinHistory
   split_ifs
   · exact (A.measurable_state ℓ).comp
-      (measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).snd)
+      (Measurable.of_eval fun _ ↦ Round.measurable_feedback.comp (measurable_pi_apply _))
   · exact measurable_const
 
 end state
@@ -299,7 +300,7 @@ end cons
 section run
 
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbabilityMeasure P]
-  {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment 𝓐 𝓨}
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment Unit 𝓐 𝓨}
 
 /-- The state process of `A` along the observation process `Y`: the state at the start of
 phase `ℓ`. -/
@@ -309,10 +310,10 @@ def stateProc (Y : ℕ → Ω → 𝓨) (ℓ : ℕ) (ω : Ω) : S := A.state ℓ
 
 lemma measurable_stateProc (hY : ∀ t, Measurable (Y t)) (ℓ : ℕ) :
     Measurable (A.stateProc Y ℓ) :=
-  (A.measurable_state ℓ).comp (measurable_pi_lambda _ hY)
+  (A.measurable_state ℓ).comp (Measurable.of_eval hY)
 
 lemma stateOfFinHistory_history (ℓ : ℕ) (ω : Ω) :
-    A.stateOfFinHistory ℓ (history X Y (A.start ℓ) ω) = A.stateProc Y ℓ ω := by
+    A.stateOfFinHistory ℓ (history O X Y (A.start ℓ) ω) = A.stateProc Y ℓ ω := by
   unfold stateOfFinHistory stateProc
   split_ifs with hℓ
   · exact A.state_congr fun t ht ↦ by
@@ -322,17 +323,18 @@ lemma stateOfFinHistory_history (ℓ : ℕ) (ω : Ω) :
       exact hℓ (A.start_pos_iff.2 (Nat.pos_of_ne_zero hne))
     rfl
 
-variable [MeasurableEq 𝓐] (h : IsAlgEnvSeq X Y A.toAlgorithm env P)
+variable [MeasurableEq 𝓐] (h : IsAlgEnvSeq O X Y A.toAlgorithm env P)
 include h
 
 /-- Along a run of the phased algorithm, the actions are given by `actionAt` applied to the
 observation process. -/
 lemma ae_action_eq : ∀ᵐ ω ∂P, ∀ t, X t ω = A.actionAt t fun s ↦ Y s ω := by
-  have h' : IsAlgEnvSeq X Y (detAlgorithm A.nextAction A.measurable_nextAction) env P := h
+  have h' : IsAlgEnvSeq O X Y (detAlgorithm (fun n p ↦ A.nextAction n p.1)
+      fun n ↦ (A.measurable_nextAction n).comp measurable_fst) env P := h
   filter_upwards [h'.action_detAlgorithm_ae_all_eq] with ω hω t
   rw [hω t, nextAction]
   split_ifs with ht
-  · exact A.actionAt_congr fun s hs ↦ extendObs_history X Y t ht ω hs
+  · exact A.actionAt_congr fun s hs ↦ extendObs_history O X Y t ht ω hs
   · obtain rfl : t = 0 := by omega
     have := A.actionAt_start_add (ℓ := 0) ⟨0, A.len_pos 0⟩ fun s ↦ Y s ω
     simpa using this.symm
@@ -370,12 +372,12 @@ lemma output_toIdentAlg :
   IdentAlg.output_fixedBudget _ _ _
 
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbabilityMeasure P]
-  {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment 𝓐 𝓨} {o : Ω → 𝓞}
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment Unit 𝓐 𝓨} {o : Ω → 𝓞}
 
 /-- Along a run of the identification algorithm, the output is `out` of the state at the end of
 the last phase. -/
 lemma output_ae_eq_of_isRun [MeasurableEq 𝓞]
-    (hrun : (A.toIdentAlg L out hout).IsRun env X Y o P) :
+    (hrun : (A.toIdentAlg L out hout).IsRun env O X Y o P) :
     o =ᵐ[P] fun ω ↦ out (A.stateProc Y L ω) := by
   filter_upwards [hrun.output_ae_eq_of_output_eq_deterministic A.isFixedBudget_toIdentAlg _
     A.output_toIdentAlg] with ω hω
@@ -392,7 +394,7 @@ namespace Learning.PhasedAlg
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} {θ : E} {S : Type*} {mS : MeasurableSpace S}
   {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbabilityMeasure P]
-  {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} (A : PhasedAlg 𝒳 ℝ S)
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} (A : PhasedAlg 𝒳 ℝ S)
 
 /-- The noise of phase `ℓ` of a run in a linear Gaussian bandit. -/
 noncomputable def phaseNoise (θ : E) (X : ℕ → Ω → 𝒳) (Y : ℕ → Ω → ℝ) (ℓ : ℕ) (ω : Ω) :
@@ -419,11 +421,11 @@ lemma measurable_nextState (θ : E) (ℓ : ℕ) :
   have : Function.uncurry (A.nextState θ ℓ) = Function.uncurry (A.upd ℓ) ∘
       fun p : S × (Fin (A.len ℓ) → ℝ) ↦ (p.1, fun j ↦ ⟪(A.act ℓ p.1 j : E), θ⟫ + p.2 j) := rfl
   rw [this]
-  refine (A.measurable_upd ℓ).comp (measurable_fst.prodMk (measurable_pi_lambda _ fun j ↦ ?_))
+  refine (A.measurable_upd ℓ).comp (measurable_fst.prodMk (Measurable.of_eval fun j ↦ ?_))
   exact ((continuous_id.inner continuous_const).measurable.comp (measurable_subtype_coe.comp
     ((A.measurable_act ℓ j).comp measurable_fst))).add ((measurable_pi_apply j).comp measurable_snd)
 
-variable (h : IsAlgEnvSeq X Y A.toAlgorithm (LinearBandit.linearGaussianEnv 𝒳 θ) P)
+variable (h : IsAlgEnvSeq O X Y A.toAlgorithm (LinearBandit.linearGaussianEnv 𝒳 θ) P)
 include h
 
 /-- **The noise of a phase is independent of the state at the start of the phase**, with the
@@ -433,7 +435,7 @@ lemma hasCondDistrib_phaseNoise (ℓ : ℕ) :
       (Kernel.const _ (Measure.pi fun _ ↦ gaussianReal 0 1)) P := by
   have h1 := (h.hasCondDistrib_noise_window (A.start ℓ) (A.len ℓ)).const_comp_right
     (A.measurable_stateOfFinHistory ℓ)
-  have h2 : A.stateOfFinHistory ℓ ∘ history X Y (A.start ℓ) = A.stateProc Y ℓ :=
+  have h2 : A.stateOfFinHistory ℓ ∘ history O X Y (A.start ℓ) = A.stateProc Y ℓ :=
     funext fun ω ↦ A.stateOfFinHistory_history ℓ ω
   rwa [h2] at h1
 
@@ -521,7 +523,7 @@ lemma isPAC_toIdentAlg {𝓞 : Type*} {m𝓞 : MeasurableSpace 𝓞} [Measurable
           {η | A.nextState θ ℓ s η ∈ good (ℓ + 1)}) ∧
       ∀ s ∈ good L, gd θ (out s)) :
     (A.toIdentAlg L out hout).IsPAC.{u} (LinearBandit.linearGaussianEnv 𝒳) gd δ := by
-  intro θ Ω _ P _ X Y o hrun
+  intro θ Ω _ P _ O X Y o hrun
   obtain ⟨good, hmeas, hinit, ⟨δs, hδs0, hδs, hstep⟩, hL⟩ := hgood θ
   have h1 := A.one_sub_sum_le_measureReal_stateProc_mem hrun.isAlgEnvSeq hmeas hδs0 hinit L hstep
   have h2 : P.real {ω | A.stateProc Y L ω ∈ good L} ≤ P.real {ω | gd θ (o ω)} := by
