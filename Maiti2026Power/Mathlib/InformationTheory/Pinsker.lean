@@ -17,11 +17,10 @@ measures `μ ν` and a measurable set `A`.
 
 The proof goes through the Bernoulli case: for the Bernoulli measures `Ber(x, y, p)` and
 `Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`, `p q : unitInterval`), the
-Kullback-Leibler divergence is the binary divergence `klBer p q`
-(`Maiti2026Power/Mathlib/InformationTheory/KLBer.lean`), which dominates `2 (p - q)²` by a
-calculus argument. The general case follows from the data processing inequality
-`klDiv_map_le` applied to the map `ω ↦ (ω ∈ A)`, whose image measure is the Bernoulli
-measure `Ber(True, False, μ.real A)` (`map_mem_eq_bernoulliMeasure`).
+Kullback-Leibler divergence is the binary divergence `klBer p q` (`InformationTheory.klBer`),
+which dominates `2 (p - q)²` by a calculus argument. The general case follows from the data
+processing inequality `klDiv_map_le` applied to the map `ω ↦ (ω ∈ A)`, whose image measure is the
+Bernoulli measure `Ber(True, False, μ.real A)` (`map_mem_eq_bernoulliMeasure`).
 
 ## Main results
 
@@ -29,17 +28,31 @@ measure `Ber(True, False, μ.real A)` (`map_mem_eq_bernoulliMeasure`).
   `sq_sub_le_klBer`: `ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klBer p q` for `p, q ∈ [0, 1]`.
 * `klDiv_bernoulliMeasure`: `klDiv Ber(x, y, p) Ber(x, y, q) = klBer p q` for `x ≠ y`, and
   `klDiv_bernoulliMeasure_eq_klBerReal`, its `ENNReal.ofReal (klBerReal p q)` form for
-  `0 < q < 1`.
+  `q ∉ {0, 1}`.
 * `ofReal_le_klDiv_bernoulliMeasure`: `ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klDiv Ber(x, y, p)
   Ber(x, y, q)` for all `p q : unitInterval`.
 * `sq_sub_le_klDiv`: `ENNReal.ofReal (2 * (μ.real A - ν.real A) ^ 2) ≤ klDiv μ ν`.
 * `abs_sub_le_sqrt_klDiv`: `|μ.real A - ν.real A| ≤ √((klDiv μ ν).toReal / 2)`.
 -/
 
-@[expose] public section
+public section
 
 open MeasureTheory ProbabilityTheory Real Set unitInterval
 open scoped ENNReal
+
+namespace ProbabilityTheory
+
+variable {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X] {x y : X} {q : I}
+
+/-- The Radon–Nikodym derivative of `Ber(x, y, p)` with respect to `Ber(x, y, q)`. -/
+lemma rnDeriv_bernoulliMeasure [DecidableEq X] (hxy : x ≠ y) (p : I) (hq : q ≠ 0) (hq1 : q ≠ 1) :
+    Ber(x, y, p).rnDeriv Ber(x, y, q) =ᵐ[Ber(x, y, q)]
+      fun z ↦ if z = x then ENNReal.ofReal (p / q) else ENNReal.ofReal ((1 - p) / (1 - q)) := by
+  rw [bernoulliMeasure_eq_withDensity hxy p hq hq1]
+  exact Measure.rnDeriv_withDensity _
+    (Measurable.ite (measurableSet_singleton x) measurable_const measurable_const)
+
+end ProbabilityTheory
 
 namespace InformationTheory
 
@@ -85,7 +98,7 @@ private lemma continuousOn_klBerRealGap {p : ℝ} (hp : 0 ≤ p) :
 private lemma klBerRealGap_self (p : ℝ) : klBerRealGap p p = 0 := by simp [klBerRealGap]
 
 /-- Binary Pinsker inequality when `p ≤ q`. -/
-lemma sq_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q < 1) :
+lemma sq_sub_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q < 1) :
     2 * (p - q) ^ 2 ≤ klBerReal p q := by
   rcases (hp.trans hpq).eq_or_lt with rfl | hq0
   · obtain rfl : p = 0 := le_antisymm hpq hp
@@ -109,26 +122,24 @@ lemma sq_le_klBerReal_of_le {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq1 : q 
 lemma sq_sub_le_klBerReal {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 < q) (hq1 : q < 1) :
     2 * (p - q) ^ 2 ≤ klBerReal p q := by
   rcases le_or_gt p q with hpq | hpq
-  · exact sq_le_klBerReal_of_le hp hpq hq1
-  · have := sq_le_klBerReal_of_le (sub_nonneg.2 hp1) (sub_le_sub_left hpq.le 1) (by linarith)
+  · exact sq_sub_le_klBerReal_of_le hp hpq hq1
+  · have := sq_sub_le_klBerReal_of_le (sub_nonneg.2 hp1) (sub_le_sub_left hpq.le 1) (by linarith)
     rw [klBerReal_one_sub, sub_sub_sub_cancel_left] at this
     linarith [this, show (p - q) ^ 2 = (q - p) ^ 2 by ring]
 
 /-- **Binary Pinsker inequality**: `2 * (p - q) ^ 2 ≤ klBer p q` for `p, q ∈ [0, 1]`. -/
 lemma sq_sub_le_klBer {p q : ℝ} (hp : 0 ≤ p) (hp1 : p ≤ 1) (hq : 0 ≤ q) (hq1 : q ≤ 1) :
     ENNReal.ofReal (2 * (p - q) ^ 2) ≤ klBer p q := by
-  by_cases hq0 : q = 0
-  · by_cases hp0 : p = 0
-    · simp [hq0, hp0]
-    · simp [hq0, klBer_zero_right, hp0]
-  by_cases hq1' : q = 1
-  · by_cases hp1' : p = 1
-    · simp [hq1', hp1']
-    · simp [hq1', klBer_one_right, hp1']
-  have hq0' : 0 < q := lt_of_le_of_ne' hq hq0
-  have hq1' : q < 1 := lt_of_le_of_ne hq1 hq1'
-  rw [klBer_eq_ofReal hq0'.ne' hq1'.ne]
-  exact ENNReal.ofReal_le_ofReal (sq_sub_le_klBerReal hp hp1 hq0' hq1')
+  rcases hq.eq_or_lt with rfl | hq0
+  · rcases eq_or_ne p 0 with rfl | hp0
+    · simp
+    · simp [klBer_zero_right, hp0]
+  rcases hq1.eq_or_lt with rfl | hq1
+  · rcases eq_or_ne p 1 with rfl | hp1
+    · simp
+    · simp [klBer_one_right, hp1]
+  rw [klBer_eq_ofReal hq0.ne' hq1.ne]
+  exact ENNReal.ofReal_le_ofReal (sq_sub_le_klBerReal hp hp1 hq0 hq1)
 
 /-! ### Bernoulli measures -/
 
@@ -137,14 +148,16 @@ section bernoulli
 variable {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X] {x y : X}
 
 /-- The Kullback-Leibler divergence between two Bernoulli measures `Ber(x, y, p)` and
-`Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`), for `x ≠ y` and `0 < q < 1`, is
+`Ber(x, y, q)` (Mathlib's `ProbabilityTheory.bernoulliMeasure`), for `x ≠ y` and `q ∉ {0, 1}`, is
 the binary divergence `klBerReal p q`. -/
-lemma klDiv_bernoulliMeasure_eq_klBerReal (hxy : x ≠ y) (p : I) {q : I} (hq : (q : ℝ) ≠ 0)
-    (hq1 : (q : ℝ) ≠ 1) :
+lemma klDiv_bernoulliMeasure_eq_klBerReal (hxy : x ≠ y) (p : I) {q : I} (hq : q ≠ 0)
+    (hq1 : q ≠ 1) :
     klDiv Ber(x, y, p) Ber(x, y, q) = ENNReal.ofReal (klBerReal p q) := by
   classical
-  have hq0 : (0 : ℝ) < q := lt_of_le_of_ne q.2.1 hq.symm
-  have hq1' : (0 : ℝ) < 1 - q := sub_pos.2 (lt_of_le_of_ne q.2.2 hq1)
+  have hq0 : (0 : ℝ) < q := coe_pos.2 (unitInterval.pos_iff_ne_zero.2 hq)
+  have hq1' : (0 : ℝ) < 1 - q := sub_pos.2 (coe_lt_one.2 (unitInterval.lt_one_iff_ne_one.2 hq1))
+  have hq0' : (q : ℝ) ≠ 0 := hq0.ne'
+  have hq1'' : (1 : ℝ) - q ≠ 0 := hq1'.ne'
   have hp0 : (0 : ℝ) ≤ p := p.2.1
   have hp1 : (0 : ℝ) ≤ 1 - p := sub_nonneg.2 p.2.2
   rw [klDiv_eq_lintegral_klFun_of_ac (bernoulliMeasure_absolutelyContinuous hxy p hq hq1),
@@ -164,29 +177,20 @@ lemma klDiv_bernoulliMeasure_eq_klBerReal (hxy : x ≠ y) (p : I) {q : I} (hq : 
 the binary divergence `klBer p q`. -/
 lemma klDiv_bernoulliMeasure (hxy : x ≠ y) (p q : I) :
     klDiv Ber(x, y, p) Ber(x, y, q) = klBer p q := by
-  by_cases hq0 : (q : ℝ) = 0
-  · simp only [Icc.coe_eq_zero] at hq0
-    simp only [hq0, bernoulliMeasure_zero, Icc.coe_zero, klBer_zero_right, Icc.coe_eq_zero]
-    split_ifs with hp0
+  by_cases hq0 : q = 0
+  · subst hq0
+    by_cases hp0 : p = 0
     · simp [hp0]
-    · rw [klDiv_of_not_ac]
-      intro h
-      have hdx : Measure.dirac y {x} = 0 := by simp [hxy.symm]
-      have hx := h hdx
-      rw [bernoulliMeasure_apply_singleton_left hxy, ENNReal.ofReal_eq_zero] at hx
-      exact hp0 (Icc.coe_eq_zero.mp (le_antisymm hx p.2.1))
-  by_cases hq1 : (q : ℝ) = 1
-  · simp only [Icc.coe_eq_one] at hq1
-    simp only [hq1, bernoulliMeasure_one, Icc.coe_one, klBer_one_right, Icc.coe_eq_one]
-    split_ifs with hp1
+    rw [klDiv_of_not_ac fun h ↦ hp0 (((bernoulliMeasure_absolutelyContinuous_iff hxy).1 h).1 rfl),
+      Icc.coe_zero, klBer_zero_right, ite_eq_right (coe_ne_zero.2 hp0)]
+  by_cases hq1 : q = 1
+  · subst hq1
+    by_cases hp1 : p = 1
     · simp [hp1]
-    · rw [klDiv_of_not_ac]
-      intro h
-      have hdy : Measure.dirac x {y} = 0 := by simp [hxy]
-      have hy := h hdy
-      rw [bernoulliMeasure_apply_singleton_right hxy, ENNReal.ofReal_eq_zero, sub_nonpos] at hy
-      exact hp1 (Icc.coe_eq_one.mp (le_antisymm p.2.2 hy))
-  rw [klDiv_bernoulliMeasure_eq_klBerReal hxy p hq0 hq1, klBer_eq_ofReal hq0 hq1]
+    rw [klDiv_of_not_ac fun h ↦ hp1 (((bernoulliMeasure_absolutelyContinuous_iff hxy).1 h).2 rfl),
+      Icc.coe_one, klBer_one_right, ite_eq_right (coe_ne_one.2 hp1)]
+  rw [klDiv_bernoulliMeasure_eq_klBerReal hxy p hq0 hq1,
+    klBer_eq_ofReal (coe_ne_zero.2 hq0) (coe_ne_one.2 hq1)]
 
 /-- Bernoulli Pinsker inequality in `ℝ≥0∞`, for all parameters in `[0, 1]`:
 `2 (p - q) ^ 2 ≤ KL(Ber(x, y, p) ‖ Ber(x, y, q))` (the divergence is infinite when `q ∈ {0, 1}`
@@ -202,7 +206,10 @@ end bernoulli
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ ν : Measure Ω} {A : Set Ω}
 
 /-- The pushforward of a probability measure by the `Prop`-valued membership map `ω ↦ ω ∈ A` is
-the Bernoulli measure `Ber(True, False, μ.real A)`. -/
+the Bernoulli measure `Ber(True, False, μ.real A)`.
+
+TODO: Mathlib's `hasLaw_indicator_one_bernoulliMeasure` (more recent than the pinned revision)
+states the same for the indicator of `A`; use it once available. -/
 lemma map_mem_eq_bernoulliMeasure [IsProbabilityMeasure μ] (hA : MeasurableSet A) :
     μ.map (· ∈ A) =
       Ber(True, False, ⟨μ.real A, measureReal_nonneg, measureReal_le_one⟩) := by

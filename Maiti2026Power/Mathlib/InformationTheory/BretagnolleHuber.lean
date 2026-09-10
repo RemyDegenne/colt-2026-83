@@ -11,7 +11,7 @@ public import Mathlib.InformationTheory.KullbackLeibler.Basic
 # The Bretagnolle–Huber inequality
 
 For probability measures `μ` and `ν` and a measurable set `A`,
-`μ A + ν Aᶜ ≥ (1 / 2) * exp (-KL(μ ‖ ν))`.
+`μ A + ν Aᶜ ≥ exp (-KL(μ ‖ ν)) / 2`.
 
 ## Main statements
 
@@ -25,10 +25,12 @@ Let `f = μ.rnDeriv ν`. Then `μ A + ν Aᶜ ≥ ∫⁻ min f 1 ∂ν`. By the 
 
 ## References
 
+* [J. Bretagnolle and C. Huber, *Estimation des densités : risque minimax*][bretagnolle1979]
+* [A. B. Tsybakov, *Introduction to Nonparametric Estimation*, Lemma 2.6][tsybakov2009introduction]
 * [T. Lattimore and C. Szepesvári, *Bandit Algorithms*, Theorem 14.2][lattimore2020bandit]
 -/
 
-@[expose] public section
+public section
 
 open MeasureTheory Real Set
 open scoped ENNReal
@@ -80,14 +82,9 @@ integral of `exp (-llr μ ν / 2)` with respect to `μ`. -/
 lemma lintegral_rnDeriv_rpow_half_eq [SigmaFinite μ] [SigmaFinite ν] (hμν : μ ≪ ν) :
     ∫⁻ x, μ.rnDeriv ν x ^ (1 / 2 : ℝ) ∂ν
       = ∫⁻ x, ENNReal.ofReal (exp (-llr μ ν x / 2)) ∂μ := by
-  have h_dens : ∫⁻ x, ENNReal.ofReal (exp (-llr μ ν x / 2)) ∂μ
-      = ∫⁻ x, ENNReal.ofReal (exp (-llr μ ν x / 2)) ∂(ν.withDensity (μ.rnDeriv ν)) := by
-    rw [Measure.withDensity_rnDeriv_eq μ ν hμν]
-  rw [h_dens,
-    lintegral_withDensity_eq_lintegral_mul _ (Measure.measurable_rnDeriv _ _) (by fun_prop)]
+  rw [← lintegral_rnDeriv_mul hμν (by fun_prop)]
   refine lintegral_congr_ae ?_
   filter_upwards [Measure.rnDeriv_lt_top μ ν] with x hx
-  simp only [Pi.mul_apply]
   by_cases h0 : μ.rnDeriv ν x = 0
   · simp [h0, ENNReal.zero_rpow_of_pos]
   · have hpos : 0 < (μ.rnDeriv ν x).toReal := ENNReal.toReal_pos h0 hx.ne
@@ -125,10 +122,10 @@ lemma ofReal_exp_neg_klDiv_div_two_le [IsProbabilityMeasure μ] [IsProbabilityMe
   exact ENNReal.ofReal_le_ofReal h_jensen
 
 /-- **Bretagnolle–Huber inequality**: for probability measures `μ` and `ν` and a measurable set
-`A`, `μ A + ν Aᶜ ≥ (1 / 2) * exp (-KL(μ ‖ ν))`. -/
+`A`, `μ A + ν Aᶜ ≥ exp (-KL(μ ‖ ν)) / 2`. -/
 theorem bretagnolle_huber [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (hA : MeasurableSet A) (h : klDiv μ ν ≠ ∞) :
-    (1 / 2) * exp (-(klDiv μ ν).toReal) ≤ μ.real A + ν.real Aᶜ := by
+    exp (-(klDiv μ ν).toReal) / 2 ≤ μ.real A + ν.real Aᶜ := by
   have h_fin : μ A + ν Aᶜ ≠ ∞ := ENNReal.add_ne_top.mpr ⟨measure_ne_top _ _, measure_ne_top _ _⟩
   have h_le : ENNReal.ofReal (exp (-(klDiv μ ν).toReal / 2))
       ≤ (2 * (μ A + ν Aᶜ)) ^ (1 / 2 : ℝ) := by

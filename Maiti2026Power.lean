@@ -92,6 +92,7 @@ public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.LogSumExp
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.OrthonormalBasisSubmodule
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.SupportFn
 public import Maiti2026Power.Mathlib.Analysis.InnerProductSpace.SupportFnDense
+public import Maiti2026Power.Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Maiti2026Power.Mathlib.Analysis.SpecialFunctions.LogSumExp
 public import Maiti2026Power.Mathlib.Data.Finset.PowersetCardSum
 public import Maiti2026Power.Mathlib.Data.Finset.TopBy

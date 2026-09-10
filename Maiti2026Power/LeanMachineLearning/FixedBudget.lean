@@ -209,7 +209,9 @@ lemma IsRun.exp_neg_le_measureReal_add_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, 
       ≤ (1 / 2) * Real.exp (-(klDiv (P.map out) (P'.map out')).toReal) := by
         gcongr
         exact ENNReal.toReal_le_of_le_ofReal (by positivity) hkl
-    _ ≤ (P.map out).real B + (P'.map out').real Bᶜ := bretagnolle_huber hB hne
+    _ ≤ (P.map out).real B + (P'.map out').real Bᶜ := by
+        rw [one_div_mul_eq_div]
+        exact bretagnolle_huber hB hne
     _ = P.real (out ⁻¹' B) + P'.real (out' ⁻¹' Bᶜ) := by
         rw [map_measureReal_apply_of_aemeasurable hout hB,
           map_measureReal_apply_of_aemeasurable hout' hB.compl]
