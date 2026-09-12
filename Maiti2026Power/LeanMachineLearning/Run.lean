@@ -74,11 +74,6 @@ lemma measurable_history_traj :
   unfold history
   fun_prop
 
-/-- The output rule of a fixed-budget algorithm at its budget is a Markov kernel. -/
-lemma IsFixedBudget.isMarkovKernel_output {A : IdentAlg 𝓐 𝓨 𝓞} {T : ℕ} (hA : A.IsFixedBudget T) :
-    IsMarkovKernel (A.output T) :=
-  ⟨fun h ↦ A.isProbabilityMeasure_output T h (by unfold IsFixedBudget at hA; simp [hA])⟩
-
 /-- The canonical probability space of a run of the fixed-budget algorithm `A` (budget `T`) in
 the environment `env`: the trajectory `ℕ → Round Unit 𝓐 𝓨` has the law `trajMeasure A.alg env`
 and, given the trajectory, the output is drawn from `A.output T` applied to the history of the
@@ -87,22 +82,20 @@ noncomputable def fixedBudgetRunMeasure : Measure ((ℕ → Round Unit 𝓐 𝓨
   trajMeasure A.alg env ⊗ₘ (A.output T).comap (history IT.obs IT.action IT.feedback T)
     (measurable_history_traj T)
 
-instance [IsMarkovKernel (A.output T)] : IsProbabilityMeasure (A.fixedBudgetRunMeasure env T) := by
+instance : IsProbabilityMeasure (A.fixedBudgetRunMeasure env T) := by
   unfold fixedBudgetRunMeasure
   infer_instance
 
 variable {A T}
 
 /-- A fixed-budget identification algorithm has a run in every environment: the canonical run on
-`fixedBudgetRunMeasure` (the instance `IsMarkovKernel (A.output T)` is
-`IsFixedBudget.isMarkovKernel_output`). -/
-lemma IsFixedBudget.isRun_fixedBudgetRunMeasure (hA : A.IsFixedBudget T)
-    [IsMarkovKernel (A.output T)] :
+`fixedBudgetRunMeasure`. -/
+lemma IsFixedBudget.isRun_fixedBudgetRunMeasure (hA : A.IsFixedBudget T) :
     A.IsRun env (fun n ω ↦ IT.obs n ω.1) (fun n ω ↦ IT.action n ω.1) (fun n ω ↦ IT.feedback n ω.1)
       Prod.snd (A.fixedBudgetRunMeasure env T) := by
   have hprob : ∀ h : ℕ → Round Unit 𝓐 𝓨,
       IsProbabilityMeasure (A.outputKernel ⟨T, history IT.obs IT.action IT.feedback T h⟩) :=
-    fun h ↦ A.isProbabilityMeasure_output T _ (by unfold IsFixedBudget at hA; simp [hA])
+    fun _ ↦ inferInstance
   have hfst : HasLaw Prod.fst (trajMeasure A.alg env) (A.fixedBudgetRunMeasure env T) :=
     ⟨measurable_fst.aemeasurable, Measure.fst_compProd _ _⟩
   refine ⟨(IT.isAlgEnvSeq_trajMeasure A.alg env).comp_hasLaw hfst measurable_fst, ?_⟩

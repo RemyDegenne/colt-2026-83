@@ -11,19 +11,20 @@ public import Maiti2026Power.LeanMachineLearning.DivergenceDecomposition
 # Data processing for runs of identification algorithms
 
 For two runs of the same identification algorithm `A` (on arbitrary probability spaces, in two
-environments), whose stopping times are almost surely finite, the divergence between the laws of
-the pairs (history at the stopping time, output) is the divergence between the laws of the
-histories at the stopping time (`IsRun.klDiv_map_stoppedHist_out`), since the output rule is the
-same probability kernel on the stopping set; consequently the divergence between the laws of
-the outputs is at most the divergence between the laws of the stopped histories
-(`IsRun.klDiv_map_out_le_stoppedHist`), by the data-processing inequality.
+environments), the divergence between the laws of the pairs (history at the stopping time,
+output) is the divergence between the laws of the histories at the stopping time
+(`IsRun.klDiv_map_stoppedHist_out`), since the output is drawn from the same Markov kernel;
+consequently the divergence between the laws of the outputs is at most the divergence between
+the laws of the stopped histories (`IsRun.klDiv_map_out_le_stoppedHist`), by the data-processing
+inequality.
 
-Combined with the divergence decomposition for stopped histories, this bounds the divergence
-between the laws of the outputs of two runs in two stationary environments by the expected sum,
-along the first run, of the divergences of the reward kernels at the actions played before
-stopping (`IsRun.klDiv_map_out_le_lintegral`; in composition-product form
-`IsRun.klDiv_map_out_le_tsum_compProd`). This is the standard change-of-measure argument of
-fixed-confidence lower bounds (Kaufmann, Cappé and Garivier, 2016).
+Combined with the divergence decomposition for stopped histories, this bounds, when the stopping
+times are almost surely finite, the divergence between the laws of the outputs of two runs in two
+stationary environments by the expected sum, along the first run, of the divergences of the
+reward kernels at the actions played before stopping (`IsRun.klDiv_map_out_le_lintegral`; in
+composition-product form `IsRun.klDiv_map_out_le_tsum_compProd`). This is the standard
+change-of-measure argument of fixed-confidence lower bounds (Kaufmann, Cappé and Garivier,
+2016).
 -/
 
 @[expose] public section
@@ -40,40 +41,25 @@ variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : Measur
   {O' : ℕ → Ω' → Unit} {X' : ℕ → Ω' → 𝓐} {Y' : ℕ → Ω' → 𝓨}
   {out : Ω → 𝓞} {out' : Ω' → 𝓞} {env env' : Environment Unit 𝓐 𝓨}
 
-/-- When the stopping time of a run is almost surely finite, the history at the stopping time
-belongs to the stopping set almost surely. -/
-lemma IsRun.ae_stoppedHist_mem_stopSet (h : A.IsRun env O X Y out P)
-    (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤) :
-    ∀ᵐ s ∂(P.map (A.stoppedHist O X Y)), s ∈ A.stopSet := by
-  rw [ae_map_iff (p := fun a ↦ a ∈ A.stopSet) h.hasCondDistrib_output.aemeasurable_fst
-    A.measurableSet_stopSet]
-  filter_upwards [hτ] with ω hω using A.stoppedHist_mem_stopSet_of_ne_top O X Y hω
-
-/-- **Data processing for runs**: for two runs of the same identification algorithm with almost
-surely finite stopping times, the divergence between the laws of the pairs (history at the
-stopping time, output) is the divergence between the laws of the histories at the stopping
-time. -/
+/-- **Data processing for runs**: for two runs of the same identification algorithm, the
+divergence between the laws of the pairs (history at the stopping time, output) is the divergence
+between the laws of the histories at the stopping time. -/
 lemma IsRun.klDiv_map_stoppedHist_out (h : A.IsRun env O X Y out P)
-    (h' : A.IsRun env' O' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤)
-    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
+    (h' : A.IsRun env' O' X' Y' out' P') :
     klDiv (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
         (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) =
       klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) := by
-  have hne : Nonempty 𝓞 := ⟨out (Measure.nonempty_of_neZero P).some⟩
   rw [h.hasCondDistrib_output.map_eq, h'.hasCondDistrib_output.map_eq]
-  exact klDiv_compProd_left_of_ae _ _ _ A.measurableSet_stopSet
-    (fun s hs ↦ A.isProbabilityMeasure_output s.1 s.2 hs) (h.ae_stoppedHist_mem_stopSet hτ)
-    (h'.ae_stoppedHist_mem_stopSet hτ')
+  exact klDiv_compProd_left _ _ _
 
-/-- **Data processing for runs**: for two runs of the same identification algorithm with almost
-surely finite stopping times, the divergence between the laws of the outputs is at most the
-divergence between the laws of the histories at the stopping time. -/
+/-- **Data processing for runs**: for two runs of the same identification algorithm, the
+divergence between the laws of the outputs is at most the divergence between the laws of the
+histories at the stopping time. -/
 lemma IsRun.klDiv_map_out_le_stoppedHist (h : A.IsRun env O X Y out P)
-    (h' : A.IsRun env' O' X' Y' out' P') (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤)
-    (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
+    (h' : A.IsRun env' O' X' Y' out' P') :
     klDiv (P.map out) (P'.map out') ≤
       klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) := by
-  rw [← h.klDiv_map_stoppedHist_out h' hτ hτ']
+  rw [← h.klDiv_map_stoppedHist_out h']
   have := klDiv_map_le (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
     (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) measurable_snd
   rwa [AEMeasurable.map_map_of_aemeasurable measurable_snd.aemeasurable
@@ -93,7 +79,7 @@ lemma IsRun.klDiv_map_out_le_tsum_compProd (h : A.IsRun (stationaryEnv κ) O X Y
     klDiv (P.map out) (P'.map out') ≤
       ∑' t : ℕ, klDiv ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ)
         ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ') :=
-  (h.klDiv_map_out_le_stoppedHist h' hτ hτ').trans_eq
+  (h.klDiv_map_out_le_stoppedHist h').trans_eq
     (h.isAlgEnvSeq.klDiv_map_stoppedHist_compProd h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
 
 /-- **Change of measure at a stopping time**, integral form: for two runs of the same
@@ -106,7 +92,7 @@ lemma IsRun.klDiv_map_out_le_lintegral [MeasurableSpace.CountablyGenerated 𝓨]
     (hτ : ∀ᵐ ω ∂P, A.stoppingTime O X Y ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', A.stoppingTime O' X' Y' ω ≠ ⊤) :
     klDiv (P.map out) (P'.map out') ≤
       ∫⁻ ω, ∑ t ∈ range (A.stoppingTime O X Y ω).toNat, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P :=
-  (h.klDiv_map_out_le_stoppedHist h' hτ hτ').trans_eq
+  (h.klDiv_map_out_le_stoppedHist h').trans_eq
     (h.isAlgEnvSeq.klDiv_map_stoppedHist h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
 
 end Learning.IdentAlg

@@ -356,11 +356,13 @@ variable {𝓞 : Type*} {m𝓞 : MeasurableSpace 𝓞} {L : ℕ} {out : S → �
 /-- The fixed-budget identification algorithm which runs `A` for `L` phases (budget `start L`)
 and outputs `out s` where `s` is the state at the end of the last phase. -/
 noncomputable def toIdentAlg (L : ℕ) (out : S → 𝓞) (hout : Measurable out) : IdentAlg 𝓐 𝓨 𝓞 :=
+  haveI : Nonempty 𝓞 := ⟨out A.init⟩
   IdentAlg.fixedBudget A.toAlgorithm (A.start L)
     (Kernel.deterministic (fun hist ↦ out (A.stateOfFinHistory L hist))
       (hout.comp (A.measurable_stateOfFinHistory L)))
 
 lemma isFixedBudget_toIdentAlg : (A.toIdentAlg L out hout).IsFixedBudget (A.start L) :=
+  haveI : Nonempty 𝓞 := ⟨out A.init⟩
   IdentAlg.isFixedBudget_fixedBudget _ _ _
 
 lemma alg_toIdentAlg : (A.toIdentAlg L out hout).alg = A.toAlgorithm := rfl
@@ -369,6 +371,7 @@ lemma output_toIdentAlg :
     (A.toIdentAlg L out hout).output (A.start L) =
       Kernel.deterministic (fun hist ↦ out (A.stateOfFinHistory L hist))
         (hout.comp (A.measurable_stateOfFinHistory L)) :=
+  haveI : Nonempty 𝓞 := ⟨out A.init⟩
   IdentAlg.output_fixedBudget _ _ _
 
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbabilityMeasure P]

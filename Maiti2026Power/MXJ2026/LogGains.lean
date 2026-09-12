@@ -288,7 +288,6 @@ theorem unitBall_le_budget_of_isPAC (hd : 2 ≤ Fintype.card ι) {ε δ : ℝ} (
     (hpac : IsPAC (unitBall ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (1000 * ε ^ 2) ≤ T := by
   classical
-  have := hA.isMarkovKernel_output
   have hd0 : 0 < Fintype.card ι := by omega
   rcases Nat.eq_zero_or_pos T with rfl | hT
   · exact absurd hpac (not_isPAC_unitBall_of_isFixedBudget_zero A hd0 hε (by linarith) hA)

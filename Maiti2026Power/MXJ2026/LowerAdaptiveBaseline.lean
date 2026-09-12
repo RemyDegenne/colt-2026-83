@@ -121,7 +121,6 @@ lemma baseline_le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : 
     change ¬ s ≤ ⟪L x, u⟫
     linarith
   -- the canonical runs
-  have := hA.isMarkovKernel_output
   have hrun_p := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θp)
   have hrun_m := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θm)
   set Pp := A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θp) T with hPp

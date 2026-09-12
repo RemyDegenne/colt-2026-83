@@ -53,7 +53,6 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
     (hbudget : (T : ℝ) ≤ m * n / (2500 * ε ^ 2)) :
     2 / 9 ≤ δ := by
   classical
-  have hmk := hA.isMarkovKernel_output
   have hmR : (0 : ℝ) < m := by
     have : 0 < m := by omega
     exact_mod_cast this

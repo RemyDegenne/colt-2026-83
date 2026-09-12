@@ -95,7 +95,7 @@ end stats
 
 section joint
 
-variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (T : ℕ) [IsMarkovKernel (A.output T)] (σ : ℝ)
+variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (T : ℕ) (σ : ℝ)
 
 /-- The law of (history, recommendation) of `A` under pure noise. -/
 noncomputable def noisePairLaw : Measure (Hist Unit (unitBall ι) ℝ T × unitBall ι) :=
@@ -116,7 +116,7 @@ lemma measurable_likelihood_prod_fst :
       likelihood q.1 q.2.1 :=
   (measurable_likelihood_prod T).comp (measurable_fst.prodMk measurable_snd.fst)
 
-omit [DecidableEq ι] [IsMarkovKernel (A.output T)] in
+omit [DecidableEq ι] in
 lemma pairKernel_eq_withDensity (θ : EuclideanSpace ℝ ι) :
     pairKernel A T θ =
       (noisePairLaw A T).withDensity fun p ↦ ENNReal.ofReal (likelihood θ p.1) := by
@@ -235,7 +235,7 @@ end joint
 
 section regret
 
-variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) [IsMarkovKernel (A.output T)] {σ : ℝ}
+variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) {σ : ℝ}
 
 /-- The posterior quantities of a history: `u(h) = ∫ ℓ_θ(h) • θ dπ = Z(h) m(h)`. -/
 noncomputable def postU (σ : ℝ) (h : Hist Unit (unitBall ι) ℝ T) : EuclideanSpace ℝ ι :=
@@ -565,7 +565,7 @@ lemma stronglyMeasurable_expRegret : StronglyMeasurable (expRegret T A) :=
       simpleRegret (unitBall ι) q.1 ((q.2.2 : unitBall ι) : EuclideanSpace ℝ ι))
     (measurable_simpleRegret_unitBall_prod (T := T)).stronglyMeasurable
 
-omit [DecidableEq ι] [IsMarkovKernel (A.output T)] in
+omit [DecidableEq ι] in
 lemma expRegret_nonneg (θ : EuclideanSpace ℝ ι) : 0 ≤ expRegret T A θ :=
   integral_nonneg fun p ↦ simpleRegret_unitBall_nonneg θ p.2
 
@@ -799,7 +799,6 @@ lemma not_isPAC_unitBall_of_isFixedBudget_zero (hd : 0 < Fintype.card ι) {ε δ
     (hδ : δ < 1 / 2) (hA : A.IsFixedBudget 0) : ¬ IsPAC (unitBall ι) A ε δ := by
   classical
   intro hpac
-  have := hA.isMarkovKernel_output
   obtain ⟨i⟩ : Nonempty ι := Fintype.card_pos_iff.1 hd
   set e : EuclideanSpace ℝ ι := EuclideanSpace.single i 1 with he
   have hen : ‖e‖ = 1 := by simp [he]

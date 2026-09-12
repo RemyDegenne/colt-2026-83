@@ -92,7 +92,7 @@ Markov kernel in `θ`**: the history kernel composed with the output rule. -/
 noncomputable def pairKernel (A : IdentAlg 𝒳 ℝ 𝒳) (T : ℕ) : Kernel E (Hist Unit 𝒳 ℝ T × 𝒳) :=
   histKernel A.alg T ⊗ₖ (A.output T).prodMkLeft E
 
-instance [IsMarkovKernel (A.output T)] : IsMarkovKernel (pairKernel (E := E) A T) := by
+instance : IsMarkovKernel (pairKernel (E := E) A T) := by
   unfold pairKernel
   infer_instance
 
@@ -129,7 +129,6 @@ probability at least `1 - δ` under `pairKernel A T θ`. -/
 lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_pairKernel (hpac : IsPAC 𝒳 A ε δ)
     (hA : A.IsFixedBudget T) (θ : E) :
     1 - δ ≤ (pairKernel A T θ).real {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
-  have := hA.isMarkovKernel_output
   have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
   have hlaw := hrun.hasLaw_history_out_pairKernel hA
   have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ _ hrun
@@ -144,7 +143,6 @@ lemma _root_.Learning.LinearBandit.IsPAC.integral_simpleRegret_pairKernel_le
     (θ : E) {Z : ℝ} (h0 : ∀ x ∈ 𝒳, 0 ≤ simpleRegret 𝒳 θ x) (hZ : ∀ x ∈ 𝒳, simpleRegret 𝒳 θ x ≤ Z)
     (hεZ : ε ≤ Z) :
     ∫ p, simpleRegret 𝒳 θ p.2 ∂(pairKernel A T θ) ≤ ε + (Z - ε) * δ := by
-  have := hA.isMarkovKernel_output
   exact integral_simpleRegret_le_of_measureReal_le (P := pairKernel A T θ) measurable_snd h0 hZ
     hεZ (hpac.le_measureReal_pairKernel hA θ)
 

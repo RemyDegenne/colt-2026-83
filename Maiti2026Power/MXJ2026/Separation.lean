@@ -55,8 +55,8 @@ fixed-design algorithm `A` with design `x` is `(ε, δ)`-PAC on the block-ball s
 design `blockDesign i x` on the unit ball of `ℝ^d`, with the recommendation of `A` projected on
 block `i`, is `(ε, δ)`-PAC on the unit ball. -/
 lemma isPAC_fixedDesignTransport_blockProjBall {k d T : ℕ}
-    {A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d)} [IsMarkovKernel (A.output T)]
-    (hA : A.IsFixedBudget T) {x : ℕ → blockBallSet k d} (hx : A.alg = fixedDesignAlg x)
+    {A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d)} (hA : A.IsFixedBudget T)
+    {x : ℕ → blockBallSet k d} (hx : A.alg = fixedDesignAlg x)
     {ε δ : ℝ} (hpac : IsPAC (blockBallSet k d) A ε δ) (i : Fin k) :
     IsPAC (unitBall (Fin d))
       (fixedDesignTransport A T x (blockDesign i x) (measurable_blockProjBall i)) ε δ :=
@@ -79,7 +79,6 @@ theorem blockBallSet_le_budget_of_isFixedDesign_of_isPAC (k d : ℕ) {ε δ : �
   · simp
   have hε0 : 0 < ε := hε.1
   obtain ⟨x, hx⟩ := hdes
-  have := hA.isMarkovKernel_output
   -- pigeonhole: some block receives at most `T / k` rounds
   obtain ⟨i, hi⟩ := exists_mul_card_blockRounds_le hk x T
   -- the transported algorithm on the unit ball of `ℝ^d` is PAC
@@ -159,6 +158,7 @@ theorem exists_isPAC_blockBallSet (k d : ℕ) (hk : 1 ≤ k) {ε δ : ℝ} (hε 
       ∃ A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d), A.IsFixedBudget T ∧
         IsPAC (blockBallSet k d) A ε δ := by
   classical
+  have : Nonempty (blockBallSet k d) := (blockBallSet_nonempty ⟨0, hk⟩).to_subtype
   let Q : BlockParam := ⟨k, hk, ε, δ, hε, hδ⟩
   have hgood : ∀ θ : EuclideanSpace ℝ (Fin k × Fin d),
       MeasurableSet {x : blockBallSet k d | simpleRegret (blockBallSet k d) θ x ≤ ε} := fun θ ↦
@@ -176,9 +176,7 @@ theorem exists_isPAC_blockBallSet (k d : ℕ) (hk : 1 ≤ k) {ε δ : ℝ} (hε 
       exact isEmptyElim p
     have huniv : {ω : ℕ → (Fin 0 → Bool) × ℝ |
         simpleRegret (blockBallSet k 0) θ (Q.zeroBB 0) ≤ ε} = Set.univ :=
-      Set.eq_univ_of_forall fun ω ↦ by
-        have : Nonempty (blockBallSet k 0) := (blockBallSet_nonempty ⟨0, hk⟩).to_subtype
-        simp [simpleRegret, hθ, hε.1.le]
+      Set.eq_univ_of_forall fun ω ↦ by simp [simpleRegret, hθ, hε.1.le]
     rw [huniv, probReal_univ]
     linarith [hδ.1]
   · refine ⟨Q.T d, Q.T_le hd, IdentAlg.fixedBudget (Q.alg d).toAlgorithm (Q.T d)

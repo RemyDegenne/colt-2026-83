@@ -412,7 +412,7 @@ lemma _root_.Learning.IsAlgEnvSeq.map_history_eq_seed {Ω : Type*} [MeasurableSp
 /-- For a run of a fixed-budget seeded algorithm with deterministic output `g`, the probability
 of an event of the output is computed on the product space of seeds and noises. -/
 lemma _root_.Learning.IdentAlg.IsRun.measureReal_eq_seed {𝓞 : Type*} [MeasurableSpace 𝓞]
-    [MeasurableEq 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
+    [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {out : Ω → 𝓞}
     (h : (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsRun
@@ -441,7 +441,7 @@ lemma _root_.Learning.IdentAlg.IsRun.measureReal_eq_seed {𝓞 : Type*} [Measura
 /-- **PAC guarantee of a fixed-budget seeded algorithm** with deterministic output `g`, from a
 bound on the product space of seeds and noises. -/
 lemma isPAC_fixedBudget_deterministic {Θ : Type*} {𝓞 : Type*} [MeasurableSpace 𝓞]
-    [MeasurableEq 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
+    [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
     {F : Θ → 𝓐 → E → 𝓨} (hF : ∀ θ, Measurable (Function.uncurry (F θ)))
     {good : Θ → 𝓞 → Prop} (hgood : ∀ θ, MeasurableSet {o | good θ o}) {δ : ℝ}
     (h : ∀ θ, 1 - δ ≤ (A.seedMeasure μe).real {ω | good θ (g (A.seedFinHist (F θ) T ω))}) :
@@ -456,7 +456,7 @@ lemma isPAC_fixedBudget_deterministic {Θ : Type*} {𝓞 : Type*} [MeasurableSpa
 deterministic output `g`, from a bound on the product space of seeds and Gaussian noises. -/
 lemma linearBandit_isPAC_fixedBudget_deterministic {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E] {𝒳 : Set E}
-    (A : SeededAlg 𝒳 ℝ U) {𝓞 : Type*} [MeasurableSpace 𝓞] [MeasurableEq 𝓞] {T : ℕ}
+    (A : SeededAlg 𝒳 ℝ U) {𝓞 : Type*} [MeasurableSpace 𝓞] [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ}
     {g : Hist Unit 𝒳 ℝ T → 𝓞} (hg : Measurable g) {good : E → 𝓞 → Prop}
     (hgood : ∀ θ, MeasurableSet {o | good θ o}) {δ : ℝ}
     (h : ∀ θ : E, 1 - δ ≤ (A.seedMeasure (gaussianReal 0 1)).real

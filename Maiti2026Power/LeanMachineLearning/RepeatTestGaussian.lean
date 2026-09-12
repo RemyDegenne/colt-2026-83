@@ -116,7 +116,7 @@ lemma measureReal_phaseMean_le_inner_sub_le [MeasurableEq 𝒳]
 
 section testAlg
 
-variable [MeasurableEq 𝒳] {A : IdentAlg 𝒳 ℝ 𝒳} [IsMarkovKernel (A.output (n + 1))]
+variable [MeasurableEq 𝒳] {A : IdentAlg 𝒳 ℝ 𝒳}
 
 /-- **The test decides `θ ≠ 0` wrongly with small probability.** Under `θ = 0`, the empirical mean
 of the observations of the second phase of the test algorithm exceeds `ε` with probability at

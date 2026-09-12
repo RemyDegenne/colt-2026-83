@@ -83,7 +83,7 @@ variable {𝓞 : Type w} {m𝓞 : MeasurableSpace 𝓞} {A : IdentAlg 𝓐 𝓨 
 conditional law `A.output T` given the history of the first `T` rounds, then
 (history, output) has the same law as under the canonical run of `A` with budget `T`
 (`fixedBudgetRunMeasure`). -/
-lemma map_history_out_eq [IsProbabilityMeasure P] [IsMarkovKernel (A.output T)]
+lemma map_history_out_eq [IsProbabilityMeasure P]
     (h : IsAlgEnvSeqUntil O X Y A.alg env P T)
     (hout : HasCondDistrib out (history O X Y T) (A.output T) P) :
     P.map (fun ω ↦ (history O X Y T ω, out ω)) =
@@ -116,7 +116,6 @@ lemma IsPAC.le_measureReal_of_isAlgEnvSeqUntil [IsProbabilityMeasure P] {Θ : Ty
     (hout : HasCondDistrib out (history O X Y T) (A.output T) P)
     (hgood : MeasurableSet {o | good θ o}) :
     1 - δ ≤ P.real {ω | good θ (out ω)} := by
-  have := hA.isMarkovKernel_output
   have hp := hpac θ _ _ _ _ _ (hA.isRun_fixedBudgetRunMeasure (env := env θ))
   have hmap := map_history_out_eq h hout
   have hg : Measurable fun ω : (ℕ → Round Unit 𝓐 𝓨) × 𝓞 ↦

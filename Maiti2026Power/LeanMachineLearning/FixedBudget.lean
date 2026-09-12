@@ -73,17 +73,6 @@ lemma IsFixedBudget.stoppingTime_ne_top (hA : A.IsFixedBudget T) (ω : Ω) :
   rw [hA.stoppingTime_eq]
   exact ENat.natCast_ne_top T
 
-/-- **Data processing for runs**: for two runs of the same fixed-budget identification algorithm,
-the divergence between the laws of the pairs (history at the stopping time, output) is the
-divergence between the laws of the histories at the stopping time. -/
-lemma IsRun.klDiv_map_stoppedHist_out_of_isFixedBudget (hA : A.IsFixedBudget T)
-    (h : A.IsRun env O X Y out P) (h' : A.IsRun env' O' X' Y' out' P') :
-    klDiv (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
-        (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) =
-      klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) :=
-  h.klDiv_map_stoppedHist_out h' (Filter.Eventually.of_forall hA.stoppingTime_ne_top)
-    (Filter.Eventually.of_forall hA.stoppingTime_ne_top)
-
 /-- **Data processing for runs of a fixed-budget algorithm**: for two runs (in two environments)
 of a fixed-budget algorithm with budget `T`, the divergence between the laws of the outputs is
 at most the divergence between the laws of the histories of the first `T` rounds. -/
@@ -115,7 +104,7 @@ lemma IsRun.klDiv_map_out_le (hA : A.IsFixedBudget T) (h : A.IsRun env O X Y out
     _ ≤ klDiv (P.map fun ω ↦ (A.stoppedHist O X Y ω, out ω))
           (P'.map fun ω ↦ (A.stoppedHist O' X' Y' ω, out' ω)) := klDiv_map_le _ _ measurable_snd
     _ = klDiv (P.map (A.stoppedHist O X Y)) (P'.map (A.stoppedHist O' X' Y')) :=
-        h.klDiv_map_stoppedHist_out_of_isFixedBudget hA h'
+        h.klDiv_map_stoppedHist_out h'
     _ = klDiv ((P.map (history O X Y T)).map ι) ((P'.map (history O' X' Y' T)).map ι) := by
         rw [Measure.map_map hι hfin, Measure.map_map hι hfin']
         congr 2 <;> exact funext fun ω ↦ hA.stoppedHist_eq ω
@@ -152,8 +141,6 @@ their divergence is `0`. -/
 lemma IsRun.klDiv_map_out_eq_zero (hA : A.IsFixedBudget 0) (h : A.IsRun env O X Y out P)
     (h' : A.IsRun env' O' X' Y' out' P') :
     klDiv (P.map out) (P'.map out') = 0 := by
-  have : IsProbabilityMeasure (A.output 0 Fin.elim0) :=
-    A.isProbabilityMeasure_output 0 _ (by unfold IsFixedBudget at hA; simp [hA])
   rw [h.map_out_eq_of_isFixedBudget_zero hA, h'.map_out_eq_of_isFixedBudget_zero hA, klDiv_self]
 
 end IdentAlg

@@ -55,7 +55,6 @@ lemma le_of_isPAC_cubeSet {𝒳 : Set (EuclideanSpace ℝ ι)} {u : Bool → ℝ
     1 / 6 ≤ δ := by
   subst h𝒳
   classical
-  have hmk := hA.isMarkovKernel_output
   set g : ℝ := u true - u false with hg_def
   have hg : 0 < g := by rw [hg_def]; linarith
   have hune : u false ≠ u true := ne_of_lt hu

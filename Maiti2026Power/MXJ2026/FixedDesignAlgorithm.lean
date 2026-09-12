@@ -51,12 +51,14 @@ play the design `x` for `T` rounds, then recommend `s θ̂` where `θ̂` is the 
 estimate and `s` a measurable selector. -/
 noncomputable def fixedDesignIdentAlg (T : ℕ) (x : ℕ → 𝒳) (s : EuclideanSpace ℝ ι → 𝒳)
     (hs : Measurable s) : IdentAlg 𝒳 ℝ 𝒳 :=
+  haveI : Nonempty 𝒳 := ⟨x 0⟩
   IdentAlg.fixedBudget (fixedDesignAlg x) T
     (Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs))
 
 variable {x : ℕ → 𝒳} {s : EuclideanSpace ℝ ι → 𝒳} {hs : Measurable s}
 
 lemma isFixedBudget_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixedBudget T :=
+  haveI : Nonempty 𝒳 := ⟨x 0⟩
   IdentAlg.isFixedBudget_fixedBudget _ _ _
 
 lemma isFixedDesign_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixedDesign := ⟨x, rfl⟩
@@ -64,6 +66,7 @@ lemma isFixedDesign_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixed
 lemma output_fixedDesignIdentAlg :
     (fixedDesignIdentAlg T x s hs).output T =
       Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs) :=
+  haveI : Nonempty 𝒳 := ⟨x 0⟩
   IdentAlg.output_fixedBudget _ _ _
 
 /-- **Fixed-design upper bound** (blueprint `thm:upper`, general form): the fixed-design

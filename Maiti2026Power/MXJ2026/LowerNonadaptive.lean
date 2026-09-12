@@ -58,7 +58,6 @@ lemma gwMat_le_of_isFixedDesign_of_isPAC (h𝒳 : IsCompact 𝒳) (hne : 𝒳.No
   obtain ⟨R, hR⟩ : ∃ R, ∀ z ∈ 𝒳, ‖z‖ ≤ R := by
     obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
     exact ⟨r, fun z hz ↦ mem_closedBall_zero_iff.1 (hr hz)⟩
-  have := hA.isMarkovKernel_output
   set xT : Fin T → EuclideanSpace ℝ ι := fun t ↦ (x t : EuclideanSpace ℝ ι) with hxT_def
   have hx : ∀ t, xT t ∈ 𝒳 := fun t ↦ (x t).2
   have hxeta : (fun t : Fin T ↦ (⟨xT t, hx t⟩ : 𝒳)) = fun t : Fin T ↦ x t := by
@@ -111,7 +110,6 @@ lemma posDef_of_isFixedDesign_of_isPAC_of_forall (h𝒳 : IsCompact 𝒳)
       ∃ y ∈ 𝒳, ⟪y, v⟫ = 0) :
     (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)).PosDef := by
   by_contra hS
-  have := hA.isMarkovKernel_output
   obtain ⟨θ, θ', hθ, hθ', hsum⟩ := exists_singular_instances_of_forall h𝒳 hspan hS h0 hε
   have hlaw : fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ =
       fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ' :=

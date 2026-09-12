@@ -111,8 +111,8 @@ An \emph{identification algorithm} on $\Xs$ is a triple $\mathsf{Alg} = (\mathrm
 an LML algorithm $\mathrm{alg}$ with actions in $\Xs$ and observations in $\R$ (a sampling
 rule), a \emph{stopping rule}: a measurable predicate on finite histories, ``stop after
 $n$ rounds when their history is $h = (x_t,y_t)_{t<n}$''; and a \emph{recommendation rule}
-(output rule) $\rho$: for each $n$, a kernel from histories of length $n$ to $\Xs$ which is a
-probability measure on every history at which the rule stops.
+(output rule) $\rho$: for each $n$, a Markov kernel from histories of length $n$ to $\Xs$ (the
+distribution of the recommendation when the rule stops after $n$ rounds).
 
 A \emph{run} of $\mathsf{Alg}$ against $\nu_\theta$ on a probability space $(\Omega, \Prob)$
 consists of action and observation processes $(x_t, y_t)_{t\in\N}$ forming an
@@ -194,7 +194,7 @@ $(\N \to \Xs\times\R)\times\Xs$ of pairs (trajectory, recommendation), with the 
 ``trajectory measure of the sampling rule, then the recommendation kernel applied to the history
 of the first $T$ rounds'' (\texttt{Learning.IdentAlg.fixedBudgetRunMeasure},
 \texttt{IsFixedBudget.isRun\_fixedBudgetRunMeasure}); the output kernels of an identification
-algorithm are required to be s-finite so that this composition-product is well defined. Since
+algorithm are Markov kernels, so this composition-product is a probability measure. Since
 Lean's universes cannot be quantified over inside a statement, \texttt{Learning.LinearBandit.IsPAC}
 quantifies over probability spaces in the universe of the ambient space $E \supseteq \Xs$, which
 is the universe of the canonical run; runs are transported along measurable maps of the sample

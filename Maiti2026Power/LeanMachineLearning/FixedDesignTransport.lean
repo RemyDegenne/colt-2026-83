@@ -58,15 +58,16 @@ instance (ρ : Kernel (Hist Unit 𝒳 ℝ T) 𝒳) [IsMarkovKernel ρ] (x : ℕ 
 /-- The transported fixed-design algorithm: play the design `x'` on `𝒴`, then draw a
 recommendation from the output rule of `A` on the history relabelled with the actions of `x`, and
 apply `π`. -/
-noncomputable def fixedDesignTransport (A : IdentAlg 𝒳 ℝ 𝒳) (T : ℕ) [IsMarkovKernel (A.output T)]
-    (x : ℕ → 𝒳) (x' : ℕ → 𝒴) {π : 𝒳 → 𝒴} (hπ : Measurable π) : IdentAlg 𝒴 ℝ 𝒴 :=
+noncomputable def fixedDesignTransport (A : IdentAlg 𝒳 ℝ 𝒳) (T : ℕ) (x : ℕ → 𝒳) (x' : ℕ → 𝒴)
+    {π : 𝒳 → 𝒴} (hπ : Measurable π) : IdentAlg 𝒴 ℝ 𝒴 :=
+  haveI : Nonempty 𝒴 := ⟨x' 0⟩
   IdentAlg.fixedBudget (fixedDesignAlg x') T (transportKernel (A.output T) x hπ)
 
-variable {A : IdentAlg 𝒳 ℝ 𝒳} [IsMarkovKernel (A.output T)] {x : ℕ → 𝒳} {x' : ℕ → 𝒴}
-  {π : 𝒳 → 𝒴} {hπ : Measurable π}
+variable {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳} {x' : ℕ → 𝒴} {π : 𝒳 → 𝒴} {hπ : Measurable π}
 
 lemma isFixedBudget_fixedDesignTransport :
     (fixedDesignTransport A T x x' hπ).IsFixedBudget T :=
+  haveI : Nonempty 𝒴 := ⟨x' 0⟩
   IdentAlg.isFixedBudget_fixedBudget _ _ _
 
 lemma alg_fixedDesignTransport : (fixedDesignTransport A T x x' hπ).alg = fixedDesignAlg x' := rfl
@@ -76,6 +77,7 @@ lemma isFixedDesign_fixedDesignTransport : (fixedDesignTransport A T x x' hπ).I
 
 lemma output_fixedDesignTransport :
     (fixedDesignTransport A T x x' hπ).output T = transportKernel (A.output T) x hπ :=
+  haveI : Nonempty 𝒴 := ⟨x' 0⟩
   IdentAlg.output_fixedBudget _ _ _
 
 variable [NormedAddCommGroup E] [InnerProductSpace ℝ E] [NormedAddCommGroup F]
@@ -100,7 +102,7 @@ theorem isPAC_fixedDesignTransport {E : Type u} [NormedAddCommGroup E] [InnerPro
     [MeasurableSpace E] [OpensMeasurableSpace E] [SecondCountableTopology E]
     {F : Type v} [NormedAddCommGroup F] [InnerProductSpace ℝ F] [MeasurableSpace F]
     [OpensMeasurableSpace F] {𝒳 : Set E} {𝒴 : Set F} [MeasurableEq 𝒴]
-    {A : IdentAlg 𝒳 ℝ 𝒳} {T : ℕ} [IsMarkovKernel (A.output T)] (hA : A.IsFixedBudget T)
+    {A : IdentAlg 𝒳 ℝ 𝒳} {T : ℕ} (hA : A.IsFixedBudget T)
     {x : ℕ → 𝒳} (hdes : A.alg = fixedDesignAlg x) {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ)
     (L : F →ₗ[ℝ] E) {x' : ℕ → 𝒴} (hx' : ∀ t (ϑ : F), ⟪(x' t : F), ϑ⟫ = ⟪(x t : E), L ϑ⟫)
     {π : 𝒳 → 𝒴} (hπ : Measurable π)

@@ -63,7 +63,6 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     (hbudget : (T : ℝ) ≤ mtSum d ^ 2 / (20000 * ε ^ 2)) :
     2 / 5 ≤ δ := by
   classical
-  have hmk := hA.isMarkovKernel_output
   have hd0 : ∀ j, 0 < d j := fun j ↦ lt_of_lt_of_le two_pos (hd j)
   have hdR : ∀ j, (0 : ℝ) < d j := fun j ↦ by exact_mod_cast hd0 j
   have hS : 0 < mtSum d := mtSum_pos hm hd0

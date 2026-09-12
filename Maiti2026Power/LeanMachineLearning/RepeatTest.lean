@@ -141,13 +141,12 @@ variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbability
 
 /-- The test algorithm built from an identification algorithm `A` with budget `n + 1` whose
 outputs are actions: play `A` for `n + 1` rounds, then repeat its recommendation forever. -/
-noncomputable def testAlg (A : IdentAlg 𝓐 𝓨 𝓐) (n : ℕ) [IsMarkovKernel (A.output (n + 1))] :
-    Algorithm Unit 𝓐 𝓨 :=
+noncomputable def testAlg (A : IdentAlg 𝓐 𝓨 𝓐) (n : ℕ) : Algorithm Unit 𝓐 𝓨 :=
   A.alg.thenRepeat n (A.output (n + 1))
 
 /-- **The PAC guarantee of `A` applies to the recommendation played by the test algorithm.** -/
-lemma IsPAC.le_measureReal_action_succ_of_testAlg {A : IdentAlg 𝓐 𝓨 𝓐}
-    [IsMarkovKernel (A.output (n + 1))] {Θ : Type*} {env : Θ → Environment Unit 𝓐 𝓨}
+lemma IsPAC.le_measureReal_action_succ_of_testAlg {A : IdentAlg 𝓐 𝓨 𝓐} {Θ : Type*}
+    {env : Θ → Environment Unit 𝓐 𝓨}
     {good : Θ → 𝓐 → Prop} {δ : ℝ} (hpac : A.IsPAC.{max u v} env good δ)
     (hA : A.IsFixedBudget (n + 1)) (θ : Θ) (h : IsAlgEnvSeq O X Y (A.testAlg n) (env θ) P)
     (hgood : MeasurableSet {a | good θ a}) :

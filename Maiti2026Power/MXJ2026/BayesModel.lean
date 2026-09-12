@@ -323,7 +323,7 @@ lemma measurable_bayesHist : Measurable (bayesHist x hx τ) := by
 noncomputable def bayesKernel : Kernel (EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) 𝒳 :=
   (A.output T).comap (bayesHist x hx τ) (measurable_bayesHist x hx τ)
 
-instance [IsMarkovKernel (A.output T)] : IsMarkovKernel (bayesKernel A x hx τ) := by
+instance : IsMarkovKernel (bayesKernel A x hx τ) := by
   unfold bayesKernel
   infer_instance
 
@@ -332,7 +332,7 @@ noncomputable def bayesJoint : Measure ((EuclideanSpace ℝ ι × EuclideanSpace
   ((stdGaussian (EuclideanSpace ℝ ι)).prod (stdGaussian (EuclideanSpace ℝ (Fin T)))) ⊗ₘ
     bayesKernel A x hx τ
 
-instance [IsMarkovKernel (A.output T)] : IsProbabilityMeasure (bayesJoint A x hx τ) := by
+instance : IsProbabilityMeasure (bayesJoint A x hx τ) := by
   unfold bayesJoint
   infer_instance
 
@@ -347,7 +347,7 @@ lemma measurable_meanOutput : Measurable (meanOutput A (T := T)) := by
   exact this.integral_kernel_prod_right'.measurable
 
 omit [DecidableEq ι] in
-lemma norm_meanOutput_le [IsMarkovKernel (A.output T)] (hR : ∀ z ∈ 𝒳, ‖z‖ ≤ R)
+lemma norm_meanOutput_le (hR : ∀ z ∈ 𝒳, ‖z‖ ≤ R)
     (h : Hist Unit 𝒳 ℝ T) : ‖meanOutput A h‖ ≤ R := by
   have hae : ∀ᵐ z : 𝒳 ∂(A.output T h), ‖Subtype.val z‖ ≤ R := ae_of_all _ fun z ↦ hR z z.2
   refine (norm_integral_le_of_norm_le_const hae).trans ?_
@@ -360,7 +360,6 @@ section identity
 /-! ### The Bayes identity `E⟪rec, θ⟫ = c E⟪rec, Σ⁻¹ Xᵀ y⟫` -/
 
 variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
-  [IsMarkovKernel (A.output T)]
 
 /-- `W = (1 - c) θ - c Σ⁻¹ Xᵀ η` and `y = X θ + η` are independent (blueprint
 `lem:posterior_decomposition`). -/
@@ -476,7 +475,6 @@ section regret
 /-! ### The Bayesian lower bound on the expected simple regret -/
 
 variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
-  [IsMarkovKernel (A.output T)]
 
 /-- The integral of a function of `g` under the joint law is its integral under `N(0, I_d)`. -/
 lemma integral_comp_fst_fst_bayesJoint {f : EuclideanSpace ℝ ι → ℝ}
@@ -582,7 +580,7 @@ section pac
 /-! ### The PAC upper bound on the Bayesian expected regret -/
 
 variable [MeasurableEq 𝒳] (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι)
-  (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ) [IsMarkovKernel (A.output T)]
+  (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
 
 omit [MeasurableEq 𝒳] in
 /-- Conditionally on `g`, the history of the Bayesian model is the fixed-design history with
@@ -599,7 +597,7 @@ lemma map_bayesHist_stdGaussian (g : EuclideanSpace ℝ ι) :
   rw [h1, fixedDesignHistLaw]
   rfl
 
-omit [MeasurableEq 𝒳] [IsMarkovKernel (A.output T)] in
+omit [MeasurableEq 𝒳] in
 /-- The kernel of the Bayesian model, conditionally on `g`. -/
 lemma bayesKernel_comap (g : EuclideanSpace ℝ ι) :
     (bayesKernel A x hx τ).comap (Prod.mk g) measurable_prodMk_left =
@@ -614,7 +612,7 @@ law of `(η, rec)` given `θ = bayesParam x τ g`. -/
 lemma measureReal_lt_simpleRegret_bayes_le {E : Type u} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
     [SecondCountableTopology E] {𝒳 : Set E} {A : IdentAlg 𝒳 ℝ 𝒳}
-    {T : ℕ} [IsMarkovKernel (A.output T)] {x' : ℕ → 𝒳} {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ)
+    {T : ℕ} {x' : ℕ → 𝒳} {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ)
     (hA : A.IsFixedBudget T) (hdes : A.alg = fixedDesignAlg x') (θ : E) :
     (fixedDesignPairLaw A (fun t : Fin T ↦ x' t) θ).real
       {p | ε < simpleRegret 𝒳 θ (p.2 : E)} ≤ δ := by

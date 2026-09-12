@@ -529,7 +529,7 @@ Radon--Nikodym derivative rather than its expected logarithm.
 
 \begin{lemma}[Appending the recommendation does not change the divergence]
 \label{lem:kl_data_processing_recommendation}
-\lean{Learning.IdentAlg.IsFixedBudget.stoppingTime_eq, Learning.IdentAlg.IsFixedBudget.stoppedHist_eq, Learning.IdentAlg.IsFixedBudget.stoppingTime_ne_top, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out_of_isFixedBudget, Learning.IdentAlg.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le, Learning.LinearBandit.IsRun.exp_neg_le_measureReal_add_of_sq_le}\leanok
+\lean{Learning.IdentAlg.IsFixedBudget.stoppingTime_eq, Learning.IdentAlg.IsFixedBudget.stoppedHist_eq, Learning.IdentAlg.IsFixedBudget.stoppingTime_ne_top, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le, Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le, Learning.LinearBandit.IsRun.exp_neg_le_measureReal_add_of_sq_le}\leanok
 \uses{def:env_pair, def:bai_alg, lem:pinsker, lem:bretagnolle_huber}
 In the setting of Definition~\ref{def:env_pair}, let $T \ge 1$ and let $\rho$ be a Markov
 kernel from histories of length $T$ to a measurable space $\mathcal{X}$ (a recommendation rule).
@@ -563,9 +563,9 @@ Definition~\ref{def:bai_alg} together with the uniqueness of the law of the hist
 (Definition~\ref{def:bai_alg}, \texttt{IsRun}): for a fixed-budget algorithm the stopping time is
 $T$ and the history at the stopping time is the history of the $T$ rounds
 (\texttt{IsFixedBudget.stoppingTime\_eq}, \texttt{IsFixedBudget.stoppedHist\_eq}); the law of
-(history, output) is the composition-product with the output kernel, which is a probability kernel
-on the stopping set, so \texttt{klDiv\_compProd\_left} applies in the form
-\texttt{klDiv\_compProd\_left\_of\_ae}. Only the inequality
+(history, output) is the composition-product with the output kernel, a Markov kernel, so
+\texttt{klDiv\_compProd\_left} applies (\texttt{IsRun.klDiv\_map\_stoppedHist\_out}). Only the
+inequality
 $\KL(\mathrm{law}(\rec)\|\mathrm{law}'(\rec)) \le \KL(\Prob^T\|\Prob'^T)$ is recorded
 (\texttt{IsRun.klDiv\_map\_out\_le}, by data processing), which is what the lower bounds use, and
 the Bretagnolle--Huber consequence for linear Gaussian environments,
@@ -721,13 +721,14 @@ monotone convergence, and $\sum_t\mathbf 1_{t<\tau}(\cdot) = \sum_{t<\tau}(\cdot
 \end{proof}
 
 \begin{lemma}[Change of measure at a stopping time for runs]\label{lem:run_change_of_measure}
-\lean{Learning.IdentAlg.IsRun.ae_stoppedHist_mem_stopSet, Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le_stoppedHist, Learning.IdentAlg.IsRun.klDiv_map_out_le_tsum_compProd, Learning.IdentAlg.IsRun.klDiv_map_out_le_lintegral}\leanok
+\lean{Learning.IdentAlg.IsRun.klDiv_map_stoppedHist_out, Learning.IdentAlg.IsRun.klDiv_map_out_le_stoppedHist, Learning.IdentAlg.IsRun.klDiv_map_out_le_tsum_compProd, Learning.IdentAlg.IsRun.klDiv_map_out_le_lintegral}\leanok
 \uses{def:bai_alg, def:stopping_rule, thm:divergence_decomposition_stopping, lem:kl_data_processing_recommendation}
 Let $A$ be an identification algorithm and consider two runs of $A$, in two environments, on
-probability spaces $(\Omega,\Prob)$ and $(\Omega',\Prob')$, whose stopping times are almost surely
-finite. Then the divergence between the laws of (stopped history, output) is the divergence
-between the laws of the stopped histories, and the divergence between the laws of the outputs
-is at most the latter. For two stationary environments with reward kernels $\kappa,\kappa'$,
+probability spaces $(\Omega,\Prob)$ and $(\Omega',\Prob')$. Then the divergence between the laws
+of (stopped history, output) is the divergence between the laws of the stopped histories, and
+the divergence between the laws of the outputs is at most the latter. If moreover the stopping
+times are almost surely finite, then for two stationary environments with reward kernels
+$\kappa,\kappa'$,
 \[
   \KL\big(\mathrm{law}(\rec)\,\big\|\,\mathrm{law}'(\rec')\big)
   \le \E\Big[\sum_{t<\tau}\KL(\kappa(X_t)\|\kappa'(X_t))\Big]
@@ -738,10 +739,10 @@ is at most the latter. For two stationary environments with reward kernels $\kap
 \begin{proof}
 \leanok
 \uses{thm:divergence_decomposition_stopping, lem:kl_data_processing_recommendation}
-As in Lemma~\ref{lem:kl_data_processing_recommendation}: the stopped history belongs to the
-stopping set almost surely, on which the output rule is a probability kernel, so
-\texttt{klDiv\_compProd\_left\_of\_ae} applies; then data processing along the projection on the
-output, and Theorem~\ref{thm:divergence_decomposition_stopping}.
+As in Lemma~\ref{lem:kl_data_processing_recommendation}: the output is drawn from the same
+Markov kernel applied to the stopped history under both laws, so \texttt{klDiv\_compProd\_left}
+applies; then data processing along the projection on the output, and
+Theorem~\ref{thm:divergence_decomposition_stopping}.
 \end{proof}
 
 \begin{lemma}[The divergence along a generating sequence of maps]\label{lem:kl_iSup_map}

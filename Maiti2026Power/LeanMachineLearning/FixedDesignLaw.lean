@@ -56,7 +56,7 @@ noncomputable def fixedDesignPairLaw (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T →
     Measure (Hist Unit 𝒳 ℝ T × 𝒳) :=
   fixedDesignHistLaw x θ ⊗ₘ A.output T
 
-instance (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) [IsMarkovKernel (A.output T)] :
+instance (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
     IsProbabilityMeasure (fixedDesignPairLaw A x θ) := by
   unfold fixedDesignPairLaw
   infer_instance
@@ -133,7 +133,6 @@ lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_fixedDesignPairLaw
     (hdes : A.alg = fixedDesignAlg x) (θ : E) :
     1 - δ ≤ (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ).real
       {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
-  have := hA.isMarkovKernel_output
   have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
   have hlaw := hrun.hasLaw_history_out_of_fixedDesign hA hdes
   have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ _ hrun

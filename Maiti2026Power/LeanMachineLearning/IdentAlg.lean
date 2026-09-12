@@ -17,8 +17,8 @@ and `𝓞` denotes here the type of *outputs*) together with
 
 * a *stopping rule*: `stop n h` says that the algorithm stops after `n` rounds when the history
   of these rounds is `h : Hist Unit 𝓐 𝓨 n` (each `{h | stop n h}` is measurable);
-* an *output rule*: for each `n`, a kernel `output n` from histories of length `n` to `𝓞`, which is
-  a probability measure on every history at which the algorithm stops.
+* an *output rule*: for each `n`, a Markov kernel `output n` from histories of length `n` to `𝓞`
+  (the distribution of the output when the algorithm stops after `n` rounds).
 
 A *run* of the algorithm in an environment `env`, on a probability space `(Ω, P)`, consists of
 observation, action and feedback processes `O, X, Y` (with `O` trivially `Unit`-valued) forming an
@@ -71,8 +71,7 @@ noncomputable def fixedDesignAlg (x : ℕ → 𝓐) : Algorithm Unit 𝓐 𝓨 :
 
 /-- An identification algorithm with outputs in `𝓞`: a sampling rule `alg`, a stopping rule
 `stop` (`stop n h`: stop after `n` rounds when their history is `h`) and an output rule `output`
-(the distribution of the output given the history of the `n` rounds played), which is a
-probability measure on every history at which the algorithm stops. -/
+(the distribution of the output given the history of the `n` rounds played), a Markov kernel. -/
 structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨]
     [MeasurableSpace 𝓞] where
   /-- The sampling rule. -/
@@ -84,17 +83,14 @@ structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSp
   measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
   /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
   output : (n : ℕ) → Kernel (Hist Unit 𝓐 𝓨 n) 𝓞
-  /-- The output kernels are s-finite (so that the joint law of history and output is a
-  composition-product). -/
-  [isSFiniteKernel_output : ∀ n, IsSFiniteKernel (output n)]
-  /-- The output rule is a probability measure on every history at which the algorithm stops. -/
-  [isProbabilityMeasure_output : ∀ n h, stop n h → IsProbabilityMeasure (output n h)]
+  /-- The output rules are Markov kernels. -/
+  [isMarkovKernel_output : ∀ n, IsMarkovKernel (output n)]
 
 namespace IdentAlg
 
 variable (A : IdentAlg 𝓐 𝓨 𝓞) (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
 
-instance (n : ℕ) : IsSFiniteKernel (A.output n) := A.isSFiniteKernel_output n
+instance (n : ℕ) : IsMarkovKernel (A.output n) := A.isMarkovKernel_output n
 
 /-- The stopping rule of `A` as a set of histories of variable length. -/
 def stopSet : Set (Σ n : ℕ, Hist Unit 𝓐 𝓨 n) := {h | A.stop h.1 h.2}
@@ -137,57 +133,8 @@ noncomputable def outputKernel : Kernel (Σ n : ℕ, Hist Unit 𝓐 𝓨 n) 𝓞
   toFun h := A.output h.1 h.2
   measurable' := measurable_sigma_of_measurable_comp_mk fun n ↦ (A.output n).measurable
 
-section extendKernel
-
-variable {A}
-
-/-- A kernel `κ` on histories of length `n`, extended by zero to histories of variable length. -/
-noncomputable def extendKernel (n : ℕ) (κ : Kernel (Hist Unit 𝓐 𝓨 n) 𝓞) :
-    Kernel (Σ n : ℕ, Hist Unit 𝓐 𝓨 n) 𝓞 where
-  toFun h := if hn : h.1 = n then κ (fun i ↦ h.2 (Fin.cast hn.symm i)) else 0
-  measurable' := by
-    refine measurable_sigma_of_measurable_comp_mk fun m ↦ ?_
-    by_cases hm : m = n
-    · subst hm
-      simpa [Function.comp_def] using κ.measurable
-    · simp [Function.comp_def, hm]
-
-lemma extendKernel_apply (n : ℕ) (κ : Kernel (Hist Unit 𝓐 𝓨 n) 𝓞) (h : Σ n : ℕ, Hist Unit 𝓐 𝓨 n) :
-    extendKernel n κ h = if hn : h.1 = n then κ (fun i ↦ h.2 (Fin.cast hn.symm i)) else 0 := rfl
-
-instance (n : ℕ) (κ : Kernel (Hist Unit 𝓐 𝓨 n) 𝓞) [IsFiniteKernel κ] :
-    IsFiniteKernel (extendKernel n κ) := by
-  refine ⟨⟨κ.bound, κ.bound_lt_top, fun h ↦ ?_⟩⟩
-  rw [extendKernel_apply]
-  split_ifs
-  · exact κ.measure_le_bound _ _
-  · simp
-
-lemma extendKernel_sum (n : ℕ) {ι : Type*} [Countable ι] (κs : ι → Kernel (Hist Unit 𝓐 𝓨 n) 𝓞) :
-    extendKernel n (Kernel.sum κs) = Kernel.sum fun i ↦ extendKernel n (κs i) := by
-  ext h s hs
-  rw [Kernel.sum_apply' _ _ hs, extendKernel_apply]
-  split_ifs with hn
-  · rw [Kernel.sum_apply' _ _ hs]
-    simp [extendKernel_apply, hn]
-  · simp [extendKernel_apply, hn]
-
-instance (n : ℕ) (κ : Kernel (Hist Unit 𝓐 𝓨 n) 𝓞) [IsSFiniteKernel κ] :
-    IsSFiniteKernel (extendKernel n κ) := by
-  rw [← Kernel.kernel_sum_seq κ, extendKernel_sum]
-  infer_instance
-
-end extendKernel
-
-/-- The output kernel is the sum over `n` of the output rules at length `n`, extended by zero. -/
-lemma outputKernel_eq_sum : A.outputKernel = Kernel.sum fun n ↦ extendKernel n (A.output n) := by
-  ext h s hs
-  rw [Kernel.sum_apply' _ _ hs, tsum_eq_single h.1 fun n hn ↦ by simp [extendKernel_apply, hn.symm]]
-  simp [outputKernel, extendKernel_apply]
-
-instance : IsSFiniteKernel A.outputKernel := by
-  rw [outputKernel_eq_sum]
-  infer_instance
+instance : IsMarkovKernel A.outputKernel :=
+  ⟨fun h ↦ (A.isMarkovKernel_output h.1).isProbabilityMeasure h.2⟩
 
 /-- `(O, X, Y, out)` is a *run* of the identification algorithm `A` in the environment `env` on
 the probability space `(Ω, P)`: the observation, action and feedback processes `O`, `X`, `Y` form
@@ -218,28 +165,28 @@ rule plays a fixed sequence of actions; its output rule is arbitrary. -/
 def IsFixedDesign : Prop := ∃ x : ℕ → 𝓐, A.alg = fixedDesignAlg x
 
 /-- The fixed-budget identification algorithm with sampling rule `alg`, budget `T` and output
-kernel `ρ` on histories of length `T`. -/
-noncomputable def fixedBudget (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
+kernel `ρ` on histories of length `T` (the output rule at other lengths, never used, is an
+arbitrary constant). -/
+noncomputable def fixedBudget [Nonempty 𝓞] (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
     (ρ : Kernel (Hist Unit 𝓐 𝓨 T) 𝓞) [IsMarkovKernel ρ] : IdentAlg 𝓐 𝓨 𝓞 where
   alg := alg
   stop n _ := n = T
   measurableSet_stop n := by by_cases h : n = T <;> simp [h]
-  output n := if h : n = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop) else 0
-  isSFiniteKernel_output n := by
+  output n := if h : n = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop)
+    else Kernel.const _ (Measure.dirac (Classical.arbitrary 𝓞))
+  isMarkovKernel_output n := by
     by_cases h : n = T <;> simp only [h, ↓reduceDIte] <;> infer_instance
-  isProbabilityMeasure_output n h hn := by
-    simp only [hn, ↓reduceDIte, Kernel.coe_comap, Function.comp_apply]
-    infer_instance
 
-lemma isFixedBudget_fixedBudget (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
+lemma isFixedBudget_fixedBudget [Nonempty 𝓞] (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
     (ρ : Kernel (Hist Unit 𝓐 𝓨 T) 𝓞) [IsMarkovKernel ρ] :
     (fixedBudget alg T ρ).IsFixedBudget T := rfl
 
 /-- The output rule of `fixedBudget alg T ρ` at the budget `T` is `ρ`. -/
-lemma output_fixedBudget (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
+lemma output_fixedBudget [Nonempty 𝓞] (alg : Algorithm Unit 𝓐 𝓨) (T : ℕ)
     (ρ : Kernel (Hist Unit 𝓐 𝓨 T) 𝓞) [IsMarkovKernel ρ] :
     (fixedBudget alg T ρ).output T = ρ := by
-  change (if h : T = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop) else 0) = ρ
+  change (if h : T = T then ρ.comap (fun x i ↦ x (Fin.cast h.symm i)) (by fun_prop)
+    else Kernel.const _ (Measure.dirac (Classical.arbitrary 𝓞))) = ρ
   simp only [↓reduceDIte, Fin.cast_eq_self]
   ext y u _
   simp

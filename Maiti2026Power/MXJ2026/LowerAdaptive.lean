@@ -112,7 +112,6 @@ theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompa
         field_simp
   -- Step 4: the test algorithm and its errors
   have : StandardBorelSpace 𝒳 := h𝒳.isClosed.measurableSet.standardBorel
-  have := hA.isMarkovKernel_output
   set alg := A.testAlg n with halg
   have hrun : ∀ θ, IsAlgEnvSeq IT.obs IT.action IT.feedback alg (linearGaussianEnv 𝒳 θ)
       (trajMeasure alg (linearGaussianEnv 𝒳 θ)) := fun θ ↦ IT.isAlgEnvSeq_trajMeasure alg _

@@ -234,8 +234,7 @@ variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : Measur
 
 /-- An identification algorithm with outputs in `𝓞`: a sampling rule `alg`, a stopping rule
 `stop` (`stop n h`: stop after `n` rounds when their history is `h`) and an output rule `output`
-(the distribution of the output given the history of the `n` rounds played), which is a
-probability measure on every history at which the algorithm stops. -/
+(the distribution of the output given the history of the `n` rounds played), a Markov kernel. -/
 structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨]
     [MeasurableSpace 𝓞] where
   /-- The sampling rule. -/
@@ -247,11 +246,8 @@ structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSp
   measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
   /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
   output : (n : ℕ) → Kernel (Hist Unit 𝓐 𝓨 n) 𝓞
-  /-- The output kernels are s-finite (so that the joint law of history and output is a
-  composition-product). -/
-  [isSFiniteKernel_output : ∀ n, IsSFiniteKernel (output n)]
-  /-- The output rule is a probability measure on every history at which the algorithm stops. -/
-  [isProbabilityMeasure_output : ∀ n h, stop n h → IsProbabilityMeasure (output n h)]
+  /-- The output rules are Markov kernels. -/
+  [isMarkovKernel_output : ∀ n, IsMarkovKernel (output n)]
 
 namespace IdentAlg
 variable (A : IdentAlg 𝓐 𝓨 𝓞) (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
