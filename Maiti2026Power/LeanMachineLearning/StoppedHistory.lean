@@ -26,21 +26,23 @@ decomposition at a stopping time (`Maiti2026Power.LeanMachineLearning.Divergence
   of the first `n` rounds;
 * the history stopped at time `M`, Mathlib's `stoppedProcess (sigmaHistory O X Y) τ M` (the
   history of the first `min τ M` rounds): `measurable_stoppedProcess_sigmaHistory`,
-  `stoppedProcess_sigmaHistory_zero`, `fst_stoppedProcess_sigmaHistory_le`;
+  `stoppedProcess_sigmaHistory_zero` and its law `hasLaw_stoppedProcess_sigmaHistory_zero`,
+  `fst_stoppedProcess_sigmaHistory_le`;
 * `truncHist M`, `truncHist_stoppedValue_sigmaHistory`: truncating the history stopped at a
-  finite time `τ` to its first `M` rounds gives the history stopped at time `M`;
-  `map_stoppedProcess_sigmaHistory_eq_map_truncHist`: the law of the history stopped at time `M`
-  is the image of the law of the history stopped at an almost surely finite `τ` by the
-  truncation, and `restrict_map_truncHist`: both laws agree on histories of length `< M`;
+  finite time `τ` to its first `M` rounds gives the history stopped at time `M`, almost surely
+  when `τ` is almost surely finite (`stoppedProcess_sigmaHistory_ae_eq_truncHist`), so that the
+  history stopped at time `M` has law the image of the law of the history stopped at `τ` by the
+  truncation (`HasLaw.stoppedProcess_sigmaHistory`), and `restrict_map_truncHist`: both laws
+  agree on histories of length `< M`;
 * `exists_measurableSet_preimage_lt_hittingAfter_sigmaHistory`: the event `{n < τ}` is
   determined by the first `n` rounds;
 * `map_stoppedProcess_sigmaHistory_eq_add`, `map_stoppedProcess_sigmaHistory_succ_eq_add`: the
   laws of the histories stopped at times `M` and `M + 1` split according to whether `τ ≤ M`;
-  `IsAlgEnvSeq.map_history_succ_restrict_lt_hittingAfter_sigmaHistory`,
-  `IsAlgEnvSeq.map_history_obs_restrict_lt_hittingAfter_sigmaHistory`,
-  `IsAlgEnvSeq.map_action_restrict_lt_hittingAfter_sigmaHistory`: on the event `{M < τ}`, which
-  is determined by the first `M` rounds, the step, the observation and the action at round `M`
-  keep their conditional laws.
+  `IsAlgEnvSeq.hasCondDistrib_step_restrict_lt_hittingAfter_sigmaHistory`,
+  `IsAlgEnvSeq.hasCondDistrib_obs_restrict_lt_hittingAfter_sigmaHistory`,
+  `IsAlgEnvSeq.hasCondDistrib_action_restrict_lt_hittingAfter_sigmaHistory`: on the event
+  `{M < τ}`, which is determined by the first `M` rounds, the step, the observation and the
+  action at round `M` keep their conditional laws.
 -/
 
 @[expose] public section
@@ -100,12 +102,13 @@ lemma stoppedProcess_sigmaHistory_zero (τ : Ω → WithTop ℕ) :
 
 end stoppingTime
 
-/-- The law of the history stopped at time `0` is the Dirac mass at the empty history. -/
-lemma map_stoppedProcess_sigmaHistory_zero (P : Measure Ω) [IsProbabilityMeasure P]
+/-- The history stopped at time `0` has the Dirac law at the empty history. -/
+lemma hasLaw_stoppedProcess_sigmaHistory_zero (P : Measure Ω) [IsProbabilityMeasure P]
     (τ : Ω → WithTop ℕ) :
-    P.map (stoppedProcess (sigmaHistory O X Y) τ 0) =
-      Measure.dirac (⟨0, default⟩ : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n) := by
-  rw [stoppedProcess_sigmaHistory_zero, Measure.map_const, measure_univ, one_smul]
+    HasLaw (stoppedProcess (sigmaHistory O X Y) τ 0)
+      (Measure.dirac (⟨0, default⟩ : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)) P :=
+  hasLaw_dirac_of_ae_eq
+    (Filter.Eventually.of_forall (congrFun (stoppedProcess_sigmaHistory_zero τ)))
 
 section truncation
 
@@ -180,16 +183,25 @@ lemma measurable_stoppedProcess_sigmaHistory (hτ : Measurable τ) (M : ℕ) :
     Measurable (stoppedProcess (sigmaHistory O X Y) τ M) :=
   measurable_stoppedValue_sigmaHistory hO hX hY (by fun_prop)
 
-/-- The law of the history stopped at time `M` is the image by the truncation to the first `M`
-rounds of the law of the history stopped at an almost surely finite `τ`. -/
-lemma map_stoppedProcess_sigmaHistory_eq_map_truncHist {P : Measure Ω} (hτ : Measurable τ)
-    (hτ_top : ∀ᵐ ω ∂P, τ ω ≠ ⊤) (M : ℕ) :
-    P.map (stoppedProcess (sigmaHistory O X Y) τ M) =
-      (P.map (stoppedValue (sigmaHistory O X Y) τ)).map (truncHist M) := by
-  rw [Measure.map_map (measurable_truncHist M) (measurable_stoppedValue_sigmaHistory hO hX hY hτ)]
-  refine Measure.map_congr ?_
+omit hO hX hY in
+/-- For an almost surely finite `τ`, the history stopped at time `M` is almost surely the
+truncation to the first `M` rounds of the history stopped at `τ`. -/
+lemma stoppedProcess_sigmaHistory_ae_eq_truncHist {P : Measure Ω} (hτ_top : ∀ᵐ ω ∂P, τ ω ≠ ⊤)
+    (M : ℕ) :
+    stoppedProcess (sigmaHistory O X Y) τ M =ᵐ[P]
+      truncHist M ∘ stoppedValue (sigmaHistory O X Y) τ := by
   filter_upwards [hτ_top] with ω hω
   exact (truncHist_stoppedValue_sigmaHistory hω).symm
+
+omit hO hX hY in
+/-- If the history stopped at an almost surely finite `τ` has law `μ`, the history stopped at
+time `M` has law the image of `μ` by the truncation to the first `M` rounds. -/
+lemma _root_.ProbabilityTheory.HasLaw.stoppedProcess_sigmaHistory {P : Measure Ω}
+    {μ : Measure (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)} (h : HasLaw (stoppedValue (sigmaHistory O X Y) τ) μ P)
+    (hτ_top : ∀ᵐ ω ∂P, τ ω ≠ ⊤) (M : ℕ) :
+    HasLaw (stoppedProcess (sigmaHistory O X Y) τ M) (μ.map (truncHist M)) P :=
+  ((hasLaw_map (measurable_truncHist M).aemeasurable).comp h).congr
+    (stoppedProcess_sigmaHistory_ae_eq_truncHist hτ_top M)
 
 omit hO hX hY in
 /-- The event `{n < τ}`, for the stopping time `τ` of a stopping rule, is determined by the
@@ -321,52 +333,35 @@ lemma IsAlgEnvSeq.hasCondDistrib_step_restrict_lt_hittingAfter_sigmaHistory
   exact (h.hasCondDistrib_step M).restrict_preimage
     (h.measurable_history M) (h.measurable_step M) hB
 
-/-- On the event `{M < τ}`, for the stopping time `τ` of the stopping rule `S`, the law of the
-first `M + 1` rounds is the composition-product of the law of the first `M` rounds with the step
-kernel. -/
-lemma IsAlgEnvSeq.map_history_succ_restrict_lt_hittingAfter_sigmaHistory
+/-- On the event `{M < τ}`, for the stopping time `τ` of the stopping rule `S`, which is
+determined by the first `M` rounds, the observation at round `M` keeps its conditional law
+given the first `M` rounds. -/
+lemma IsAlgEnvSeq.hasCondDistrib_obs_restrict_lt_hittingAfter_sigmaHistory
     (h : IsAlgEnvSeq O X Y alg env P) (hS : MeasurableSet S) (M : ℕ) :
-    (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
-        (history O X Y (M + 1)) =
-      ((P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
-          (history O X Y M) ⊗ₘ stepKernel alg env M).map
-        ((MeasurableEquiv.finSuccProd (Round 𝓞 𝓐 𝓨) M).symm) :=
-  map_history_succ_of_hasCondDistrib h.measurable_obs h.measurable_action h.measurable_feedback
-    (h.hasCondDistrib_step_restrict_lt_hittingAfter_sigmaHistory hS M)
-
-/-- On the event `{M < τ}`, for the stopping time `τ` of the stopping rule `S`, the law of the
-first `M` rounds together with the observation at round `M` is the composition-product of the
-law of the first `M` rounds with the observation kernel. -/
-lemma IsAlgEnvSeq.map_history_obs_restrict_lt_hittingAfter_sigmaHistory
-    (h : IsAlgEnvSeq O X Y alg env P) (hS : MeasurableSet S) (M : ℕ) :
-    (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
-        (fun ω ↦ (history O X Y M ω, O M ω)) =
-      (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
-        (history O X Y M) ⊗ₘ env.obs M := by
+    HasCondDistrib (O M) (history O X Y M) (env.obs M)
+      (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}) := by
   obtain ⟨B, hB, hB_eq⟩ :=
     exists_measurableSet_preimage_lt_hittingAfter_sigmaHistory (O := O) (X := X) (Y := Y) hS M
   rw [hB_eq]
-  exact ((h.hasCondDistrib_obs M).restrict_preimage (h.measurable_history M) (h.measurable_obs M)
-    hB).map_eq
+  exact (h.hasCondDistrib_obs M).restrict_preimage (h.measurable_history M) (h.measurable_obs M)
+    hB
 
-/-- On the event `{M < τ}`, for the stopping time `τ` of the stopping rule `S`, the law of the
-action at round `M` is the policy applied to the law of the first `M` rounds and of the
-observation at round `M`. -/
-lemma IsAlgEnvSeq.map_action_restrict_lt_hittingAfter_sigmaHistory
+/-- On the event `{M < τ}`, for the stopping time `τ` of the stopping rule `S`, which is
+determined by the first `M` rounds, the action at round `M` keeps its conditional law given the
+first `M` rounds and the observation at round `M`. -/
+lemma IsAlgEnvSeq.hasCondDistrib_action_restrict_lt_hittingAfter_sigmaHistory
     (h : IsAlgEnvSeq O X Y alg env P) (hS : MeasurableSet S) (M : ℕ) :
-    (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map (X M) =
-      alg.policy M ∘ₘ
-        (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
-          (fun ω ↦ (history O X Y M ω, O M ω)) := by
+    HasCondDistrib (X M) (fun ω ↦ (history O X Y M ω, O M ω)) (alg.policy M)
+      (P.restrict {ω | (M : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}) := by
   obtain ⟨B, hB, hB_eq⟩ :=
     exists_measurableSet_preimage_lt_hittingAfter_sigmaHistory (O := O) (X := X) (Y := Y) hS M
   have hB' : history O X Y M ⁻¹' B = (fun ω ↦ (history O X Y M ω, O M ω)) ⁻¹' (B ×ˢ Set.univ) := by
     ext ω
     simp
   rw [hB_eq, hB']
-  exact ((h.hasCondDistrib_action M).restrict_preimage
+  exact (h.hasCondDistrib_action M).restrict_preimage
     ((h.measurable_history M).prodMk (h.measurable_obs M)) (h.measurable_action M)
-    (hB.prod MeasurableSet.univ)).hasLaw_comp.map_eq
+    (hB.prod MeasurableSet.univ)
 
 end filtration
 
