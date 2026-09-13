@@ -27,7 +27,7 @@ For an algorithm-environment sequence `(O, X, Y)` of `alg.thenRepeat n ρ`:
   conditional law `ρ` given the history of the first `n + 1` rounds;
 * `IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat`: `X (n + 1 + s) = X (n + 1)` almost surely.
 
-`IdentAlg.IsPAC.le_measureReal_action_succ_of_testAlg`: the PAC guarantee of `A` applies to the
+`IdentAlg.IsPAC.measureReal_bad_action_succ_of_testAlg`: the PAC guarantee of `A` applies to the
 action at time `n + 1` of the test algorithm.
 -/
 
@@ -35,11 +35,9 @@ action at time `n + 1` of the test algorithm.
 
 open MeasureTheory ProbabilityTheory Finset
 
-universe u v
-
 namespace Learning
 
-variable {𝓐 : Type u} {𝓨 : Type v} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
+variable {𝓐 𝓨 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
 
 namespace Algorithm
 
@@ -141,18 +139,18 @@ variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbability
 
 /-- The test algorithm built from an identification algorithm `A` with budget `n + 1` whose
 outputs are actions: play `A` for `n + 1` rounds, then repeat its recommendation forever. -/
-noncomputable def testAlg (A : IdentAlg 𝓐 𝓨 𝓐) (n : ℕ) : Algorithm Unit 𝓐 𝓨 :=
-  A.alg.thenRepeat n (A.output (n + 1))
+noncomputable def testAlg (A : IdentAlg Unit 𝓐 𝓨 𝓐) (n : ℕ) : Algorithm Unit 𝓐 𝓨 :=
+  A.alg.thenRepeat n (A.output.comap (Sigma.mk (n + 1)) (measurable_sigma_mk (n + 1)))
 
 /-- **The PAC guarantee of `A` applies to the recommendation played by the test algorithm.** -/
-lemma IsPAC.le_measureReal_action_succ_of_testAlg {A : IdentAlg 𝓐 𝓨 𝓐} {Θ : Type*}
+lemma IsPAC.measureReal_bad_action_succ_of_testAlg {A : IdentAlg Unit 𝓐 𝓨 𝓐} {Θ : Type*}
     {env : Θ → Environment Unit 𝓐 𝓨}
-    {good : Θ → 𝓐 → Prop} {δ : ℝ} (hpac : A.IsPAC.{max u v} env good δ)
+    {bad : Θ → 𝓐 → Prop} {δ : ℝ} (hpac : A.IsPAC env bad δ)
     (hA : A.IsFixedBudget (n + 1)) (θ : Θ) (h : IsAlgEnvSeq O X Y (A.testAlg n) (env θ) P)
-    (hgood : MeasurableSet {a | good θ a}) :
-    1 - δ ≤ P.real {ω | good θ (X (n + 1) ω)} :=
-  hpac.le_measureReal_of_isAlgEnvSeqUntil hA θ h.isAlgEnvSeqUntil_of_thenRepeat
-    h.hasCondDistrib_action_succ_of_thenRepeat hgood
+    (hbad : MeasurableSet {a | bad θ a}) :
+    P.real {ω | bad θ (X (n + 1) ω)} ≤ δ :=
+  hpac.measureReal_bad_of_isAlgEnvSeqUntil hA θ h.isAlgEnvSeqUntil_of_thenRepeat
+    h.hasCondDistrib_action_succ_of_thenRepeat hbad
 
 end IdentAlg
 

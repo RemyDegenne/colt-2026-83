@@ -2,8 +2,7 @@
     "challenge_module": "Challenge_exists_isPAC_of_finite",
     "solution_module": "Solution",
     "theorem_names": [
-        "Maiti2026Power.exists_isPAC_of_finite",
-        "measurable_sigma_of_measurable_comp_mk"
+        "Maiti2026Power.exists_isPAC_of_finite"
     ],
     "permitted_axioms": [
         "propext",

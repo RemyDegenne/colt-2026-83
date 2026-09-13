@@ -47,7 +47,7 @@ budget `T` which is `(ε, δ)`-PAC on a spanning compact action set `𝒳 ⊆ �
 theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳)
     (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 2 ≤ Fintype.card ι)
     {ε δ : ℝ} (hε : 0 < ε) (hδ : δ ∈ Set.Ioo 0 (1 / 16)) {T : ℕ}
-    (A : IdentAlg 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T) (hpac : IsPAC 𝒳 A ε δ) :
+    (A : IdentAlg Unit 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T) (hpac : IsPAC 𝒳 A ε δ) :
     Fintype.card ι * log (1 / δ) / (20000 * ε ^ 2) ≤ T := by
   classical
   have hι : Nonempty ι := Fintype.card_pos_iff.1 (by omega)

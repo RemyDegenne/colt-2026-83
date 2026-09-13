@@ -6,6 +6,7 @@ Authors: Rémy Degenne
 module
 
 public import LeanMachineLearning.SequentialLearning.AlgorithmDensity
+public import LeanMachineLearning.SequentialLearning.StationaryEnv
 public import Maiti2026Power.LeanMachineLearning.AlgorithmPrefix
 
 /-!

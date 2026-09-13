@@ -31,8 +31,6 @@ Blueprint: `lem:pb_kernel_of_likelihood`. This construction sidesteps the measur
 open MeasureTheory ProbabilityTheory Learning Real
 open scoped ENNReal RealInnerProductSpace
 
-universe u
-
 namespace Learning.LinearBandit
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
@@ -85,19 +83,21 @@ lemma _root_.Learning.IsAlgEnvSeq.hasLaw_history_histKernel
 
 section identAlg
 
-variable {A : IdentAlg 𝒳 ℝ 𝒳} {T : ℕ}
+variable {A : IdentAlg Unit 𝒳 ℝ 𝒳} {T : ℕ}
 
 /-- **The law of (history, recommendation) of the fixed-budget algorithm `A` under `θ`, as a
 Markov kernel in `θ`**: the history kernel composed with the output rule. -/
-noncomputable def pairKernel (A : IdentAlg 𝒳 ℝ 𝒳) (T : ℕ) : Kernel E (Hist Unit 𝒳 ℝ T × 𝒳) :=
-  histKernel A.alg T ⊗ₖ (A.output T).prodMkLeft E
+noncomputable def pairKernel (A : IdentAlg Unit 𝒳 ℝ 𝒳) (T : ℕ) :
+    Kernel E (Hist Unit 𝒳 ℝ T × 𝒳) :=
+  histKernel A.alg T ⊗ₖ (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)).prodMkLeft E
 
 instance : IsMarkovKernel (pairKernel (E := E) A T) := by
   unfold pairKernel
   infer_instance
 
 lemma pairKernel_apply (θ : E) :
-    pairKernel A T θ = histKernel A.alg T θ ⊗ₘ A.output T := by
+    pairKernel A T θ =
+      histKernel A.alg T θ ⊗ₘ A.output.comap (Sigma.mk T) (measurable_sigma_mk T) := by
   rw [pairKernel, Kernel.compProd_apply_eq_compProd_sectR]
   congr 1
 
@@ -120,18 +120,18 @@ end identAlg
 
 section pac
 
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] [SecondCountableTopology E] {𝒳 : Set E}
-  {A : IdentAlg 𝒳 ℝ 𝒳} {T : ℕ} {ε δ : ℝ}
+  {A : IdentAlg Unit 𝒳 ℝ 𝒳} {T : ℕ} {ε δ : ℝ}
 
 /-- **The PAC property on the kernel**: for every `θ`, the recommendation is `ε`-optimal with
 probability at least `1 - δ` under `pairKernel A T θ`. -/
 lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_pairKernel (hpac : IsPAC 𝒳 A ε δ)
     (hA : A.IsFixedBudget T) (θ : E) :
     1 - δ ≤ (pairKernel A T θ).real {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
-  have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
+  have hrun := A.isRun_runMeasure (linearGaussianEnv 𝒳 θ)
   have hlaw := hrun.hasLaw_history_out_pairKernel hA
-  have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ _ hrun
+  have hpac' := hpac.le_measureReal_of_isRun hrun
   rw [← hlaw.measureReal_eq (p := fun p ↦ simpleRegret 𝒳 θ p.2 ≤ ε)
     (measurableSet_simpleRegret_le θ ε)]
   exact hpac'

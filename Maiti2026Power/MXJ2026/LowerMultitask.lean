@@ -58,7 +58,7 @@ variable {m : ℕ} {d : Fin m → ℕ}
 identification algorithm on the multi-task set with block sizes `dⱼ ≥ 2` and budget
 `T ≤ S_d² / (20000 ε²)` which is `(ε, δ)`-PAC has `δ ≥ 2/5`. -/
 lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ} (hε : 0 < ε) {T : ℕ}
-    (A : IdentAlg (multitaskSet d) ℝ (multitaskSet d)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (multitaskSet d) ℝ (multitaskSet d)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (multitaskSet d) A ε δ)
     (hbudget : (T : ℝ) ≤ mtSum d ^ 2 / (20000 * ε ^ 2)) :
     2 / 5 ≤ δ := by
@@ -72,18 +72,16 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
     positivity
   have hEps0 : ∀ j, 0 ≤ mtEps d ε j := fun j ↦ (hEps j).le
   -- the canonical runs of the instances and of the alternatives
-  have hrun := fun κ ↦ hA.isRun_fixedBudgetRunMeasure
-    (env := linearGaussianEnv (multitaskSet d) (mtParam d ε κ))
-  have hrun0 := fun (κ : ∀ j, Fin (d j)) (j : Fin m) ↦ hA.isRun_fixedBudgetRunMeasure
-    (env := linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j))
+  have hrun := fun κ ↦ A.isRun_runMeasure (linearGaussianEnv (multitaskSet d) (mtParam d ε κ))
+  have hrun0 := fun (κ : ∀ j, Fin (d j)) (j : Fin m) ↦
+    A.isRun_runMeasure (linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j))
   obtain ⟨P, hP⟩ : ∃ P : (∀ j, Fin (d j)) →
       Measure ((ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d),
-      ∀ κ, P κ = A.fixedBudgetRunMeasure (linearGaussianEnv (multitaskSet d) (mtParam d ε κ)) T :=
+      ∀ κ, P κ = A.runMeasure (linearGaussianEnv (multitaskSet d) (mtParam d ε κ)) :=
     ⟨_, fun _ ↦ rfl⟩
   obtain ⟨Q, hQ⟩ : ∃ Q : (∀ j, Fin (d j)) → Fin m →
       Measure ((ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d),
-      ∀ κ j, Q κ j =
-        A.fixedBudgetRunMeasure (linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j)) T :=
+      ∀ κ j, Q κ j = A.runMeasure (linearGaussianEnv (multitaskSet d) (mtParam0 d ε κ j)) :=
     ⟨_, fun _ _ ↦ rfl⟩
   have hprobP : ∀ κ, IsProbabilityMeasure (P κ) := fun κ ↦ by rw [hP]; infer_instance
   have hprobQ : ∀ κ j, IsProbabilityMeasure (Q κ j) := fun κ j ↦ by rw [hQ]; infer_instance
@@ -334,7 +332,7 @@ lemma le_of_isPAC_multitaskSet (hm : 0 < m) (hd : ∀ j, 2 ≤ d j) {ε δ : ℝ
         simpleRegret (multitaskSet d) (mtParam d ε κ)
           ((ω.2 : multitaskSet d) : EuclideanSpace ℝ (Σ j, Fin (d j))) ≤ ε} := by
       rw [hP κ]
-      exact hpac (mtParam d ε κ) _ _ _ _ _ (hrun κ)
+      exact hpac.le_measureReal_of_isRun (hrun κ)
     have hint := integral_simpleRegret_le_of_measureReal_le (P := P κ) measurable_snd h0 hZ
       (by linarith) hpacs
     have hmeasR : Measurable fun ω : (ℕ → Round Unit (multitaskSet d) ℝ) × multitaskSet d ↦

@@ -51,7 +51,7 @@ theorem exists_isPAC_of_finite (𝒳 : Set (EuclideanSpace ℝ ι)) (hfin : 𝒳
     {ε δ : ℝ} (hε : ε ∈ Set.Ioc 0 1) (hδ : δ ∈ Set.Ioo 0 1) :
     ∃ T : ℕ, (T : ℝ) ≤ 97281 * Fintype.card ι *
         (log (max 1 ((𝒳.ncard : ℝ) / Fintype.card ι)) + log (4 / δ)) / ε ^ 2 ∧
-      ∃ A : IdentAlg 𝒳 ℝ 𝒳, A.IsFixedBudget T ∧ IsPAC 𝒳 A ε δ := by
+      ∃ A : IdentAlg Unit 𝒳 ℝ 𝒳, A.IsFixedBudget T ∧ IsPAC 𝒳 A ε δ := by
   classical
   obtain ⟨x₀, hx₀⟩ := hne
   have hε0 : 0 < ε := hε.1
@@ -60,7 +60,7 @@ theorem exists_isPAC_of_finite (𝒳 : Set (EuclideanSpace ℝ ι)) (hfin : 𝒳
   · -- degenerate case `d = 0`: every reward vector is `0` and every recommendation is optimal
     refine ⟨0, by simp, fixedDesignIdentAlg 0 (fun _ ↦ ⟨x₀, hx₀⟩) (fun _ ↦ ⟨x₀, hx₀⟩)
       measurable_const, isFixedBudget_fixedDesignIdentAlg, ?_⟩
-    intro θ Ω _ P _ O X Y out hrun
+    refine isPAC_of_forall_isRun fun θ Ω _ P _ O X Y out hrun ↦ ?_
     have hθ : θ = 0 := by
       ext i
       exact isEmptyElim i
@@ -193,7 +193,7 @@ on the multi-task set with block sizes `dⱼ ≥ 2`, with `δ < 2/5`, satisfies
 `T > (∑ⱼ √dⱼ)² / (20000 ε²)`. -/
 theorem multitaskSet_lt_budget_of_isPAC {m : ℕ} (d : Fin m → ℕ) (hd : ∀ j, 2 ≤ d j)
     {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 2 / 5) {T : ℕ} (hT : 1 ≤ T)
-    (A : IdentAlg (multitaskSet d) ℝ (multitaskSet d)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (multitaskSet d) ℝ (multitaskSet d)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (multitaskSet d) A ε δ) :
     (∑ j, √(d j)) ^ 2 / (20000 * ε ^ 2) < T := by
   by_contra hcon
@@ -210,7 +210,7 @@ theorem multitaskSet_lt_budget_of_isPAC {m : ℕ} (d : Fin m → ℕ) (hd : ∀ 
 /-- **Table 1, hypercube `{-1, 1}^d`**: an `(ε, δ)`-PAC identification algorithm with budget
 `T ≥ 1` on `{-1, 1}^d`, with `δ < 1/6`, satisfies `T > d² / (100 ε²)`. -/
 theorem hypercubePM_lt_budget_of_isPAC {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 1 / 6) {T : ℕ}
-    (hT : 1 ≤ T) (A : IdentAlg (hypercubePM ι) ℝ (hypercubePM ι)) (hA : A.IsFixedBudget T)
+    (hT : 1 ≤ T) (A : IdentAlg Unit (hypercubePM ι) ℝ (hypercubePM ι)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (hypercubePM ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (100 * ε ^ 2) < T := by
   classical
@@ -235,7 +235,7 @@ theorem hypercubePM_lt_budget_of_isPAC {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 
 /-- **Table 1, hypercube `{0, 1}^d`**: an `(ε, δ)`-PAC identification algorithm with budget
 `T ≥ 1` on `{0, 1}^d`, with `δ < 1/6`, satisfies `T > d² / (400 ε²)`. -/
 theorem hypercube01_lt_budget_of_isPAC {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 1 / 6) {T : ℕ}
-    (hT : 1 ≤ T) (A : IdentAlg (hypercube01 ι) ℝ (hypercube01 ι)) (hA : A.IsFixedBudget T)
+    (hT : 1 ≤ T) (A : IdentAlg Unit (hypercube01 ι) ℝ (hypercube01 ι)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (hypercube01 ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (400 * ε ^ 2) < T := by
   classical
@@ -262,7 +262,7 @@ identification algorithm with budget `T ≥ 1` on the `m`-sets of `ℝ^d`, with 
 `T > m n / (2500 ε²)`. -/
 theorem mSet_lt_budget_of_isPAC (m : ℕ) (hm : 1 ≤ m) (hmd : 20 * m ≤ Fintype.card ι - m + 1)
     {ε δ : ℝ} (hε : 0 < ε) (hδ : δ < 2 / 9) {T : ℕ} (hT : 1 ≤ T)
-    (A : IdentAlg (mSet ι m) ℝ (mSet ι m)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (mSet ι m) ℝ (mSet ι m)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (mSet ι m) A ε δ) :
     m * ((Fintype.card ι : ℝ) - m + 1) / (2500 * ε ^ 2) < T := by
   classical
@@ -284,7 +284,8 @@ theorem mSet_lt_budget_of_isPAC (m : ℕ) (hm : 1 ≤ m) (hmd : 20 * m ≤ Finty
 /-- **Table 1, unit ball**: an `(ε, δ)`-PAC identification algorithm with budget `T` on the unit
 ball of `ℝ^d`, `d ≥ 2`, with `δ ≤ 1/500`, satisfies `T ≥ d² / (1000 ε²)`. -/
 theorem unitBall_le_budget_of_isPAC (hd : 2 ≤ Fintype.card ι) {ε δ : ℝ} (hε : 0 < ε)
-    (hδ : δ ≤ 1 / 500) {T : ℕ} (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (hA : A.IsFixedBudget T)
+    (hδ : δ ≤ 1 / 500) {T : ℕ} (A : IdentAlg Unit (unitBall ι) ℝ (unitBall ι))
+    (hA : A.IsFixedBudget T)
     (hpac : IsPAC (unitBall ι) A ε δ) :
     (Fintype.card ι : ℝ) ^ 2 / (1000 * ε ^ 2) ≤ T := by
   classical

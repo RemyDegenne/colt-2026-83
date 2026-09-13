@@ -38,8 +38,12 @@ inlined verbatim: the project's definitions (identification algorithms — sampl
 output rules — and their laws, the PAC property, fixed budgets and fixed designs, the linear Gaussian environment, the simple regret, design matrices,
 Gaussian widths, the structured action sets), and the handful of
 [LML](https://github.com/LeanMachineLearning/LML) declarations they build on (`Algorithm`,
-`Environment`, `history`, `IsAlgEnvSeq`, `obliviousEnv`, `stationaryEnv`, `detAlgorithm`), which
-appear as clearly marked "vendored from LML" sections (`vendor/LML.lean.part`). The `sorry`s in
+`Environment`, `history`, `stepKernel`, the trajectory measure `trajMeasure` of the
+Ionescu-Tulcea construction with its `ForMathlib` ingredients, `obliviousEnv`, `stationaryEnv`,
+`detAlgorithm`, the histories of variable length `sigmaHistory` and the law `stoppedHistMeasure`
+of the stopped history, and the identification algorithms `IdentAlg` with the law of their output
+`IdentAlg.outputMeasure` and the PAC property `IdentAlg.IsPAC`), which appear as clearly marked
+"vendored from LML" sections (`vendor/LML.lean.part`). The `sorry`s in
 these files are the point: they are restatements to be verified, not part of the formalization,
 and are excluded from `formalization.yaml`'s `sorry_count` (as the v0.4 spec prescribes).
 

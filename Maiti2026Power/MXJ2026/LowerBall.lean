@@ -95,11 +95,11 @@ end stats
 
 section joint
 
-variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) (T : ℕ) (σ : ℝ)
+variable (A : IdentAlg Unit (unitBall ι) ℝ (unitBall ι)) (T : ℕ) (σ : ℝ)
 
 /-- The law of (history, recommendation) of `A` under pure noise. -/
 noncomputable def noisePairLaw : Measure (Hist Unit (unitBall ι) ℝ T × unitBall ι) :=
-  noiseHistLaw A.alg T ⊗ₘ A.output T
+  noiseHistLaw A.alg T ⊗ₘ A.output.comap (Sigma.mk T) (measurable_sigma_mk T)
 
 instance : IsProbabilityMeasure (noisePairLaw A T) := by
   unfold noisePairLaw
@@ -235,7 +235,7 @@ end joint
 
 section regret
 
-variable (A : IdentAlg (unitBall ι) ℝ (unitBall ι)) {σ : ℝ}
+variable (A : IdentAlg Unit (unitBall ι) ℝ (unitBall ι)) {σ : ℝ}
 
 /-- The posterior quantities of a history: `u(h) = ∫ ℓ_θ(h) • θ dπ = Z(h) m(h)`. -/
 noncomputable def postU (σ : ℝ) (h : Hist Unit (unitBall ι) ℝ T) : EuclideanSpace ℝ ι :=

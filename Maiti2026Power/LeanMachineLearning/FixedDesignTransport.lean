@@ -30,8 +30,6 @@ algorithm under `ϑ` is the image by `π` of the law of the recommendation of `A
 open MeasureTheory ProbabilityTheory Learning
 open scoped RealInnerProductSpace
 
-universe u v
-
 namespace Learning.LinearBandit
 
 variable {E F : Type*} [MeasurableSpace E] [MeasurableSpace F] {𝒳 : Set E} {𝒴 : Set F} {T : ℕ}
@@ -58,12 +56,13 @@ instance (ρ : Kernel (Hist Unit 𝒳 ℝ T) 𝒳) [IsMarkovKernel ρ] (x : ℕ 
 /-- The transported fixed-design algorithm: play the design `x'` on `𝒴`, then draw a
 recommendation from the output rule of `A` on the history relabelled with the actions of `x`, and
 apply `π`. -/
-noncomputable def fixedDesignTransport (A : IdentAlg 𝒳 ℝ 𝒳) (T : ℕ) (x : ℕ → 𝒳) (x' : ℕ → 𝒴)
-    {π : 𝒳 → 𝒴} (hπ : Measurable π) : IdentAlg 𝒴 ℝ 𝒴 :=
+noncomputable def fixedDesignTransport (A : IdentAlg Unit 𝒳 ℝ 𝒳) (T : ℕ) (x : ℕ → 𝒳)
+    (x' : ℕ → 𝒴) {π : 𝒳 → 𝒴} (hπ : Measurable π) : IdentAlg Unit 𝒴 ℝ 𝒴 :=
   haveI : Nonempty 𝒴 := ⟨x' 0⟩
-  IdentAlg.fixedBudget (fixedDesignAlg x') T (transportKernel (A.output T) x hπ)
+  IdentAlg.fixedBudget (fixedDesignAlg x') T
+    (transportKernel (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)) x hπ)
 
-variable {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳} {x' : ℕ → 𝒴} {π : 𝒳 → 𝒴} {hπ : Measurable π}
+variable {A : IdentAlg Unit 𝒳 ℝ 𝒳} {x : ℕ → 𝒳} {x' : ℕ → 𝒴} {π : 𝒳 → 𝒴} {hπ : Measurable π}
 
 lemma isFixedBudget_fixedDesignTransport :
     (fixedDesignTransport A T x x' hπ).IsFixedBudget T :=
@@ -76,7 +75,8 @@ lemma isFixedDesign_fixedDesignTransport : (fixedDesignTransport A T x x' hπ).I
   ⟨x', rfl⟩
 
 lemma output_fixedDesignTransport :
-    (fixedDesignTransport A T x x' hπ).output T = transportKernel (A.output T) x hπ :=
+    (fixedDesignTransport A T x x' hπ).output.comap (Sigma.mk T) (measurable_sigma_mk T) =
+      transportKernel (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)) x hπ :=
   haveI : Nonempty 𝒴 := ⟨x' 0⟩
   IdentAlg.output_fixedBudget _ _ _
 
@@ -98,17 +98,17 @@ lemma fixedDesignHistLaw_map_relabelHist (L : F →ₗ[ℝ] E)
 `(ε, δ)`-PAC on `𝒳`, the design `x'` on `𝒴` has the same observation laws as `x` through `L`,
 and `π` does not increase the simple regret, then the transported algorithm is `(ε, δ)`-PAC on
 `𝒴`. -/
-theorem isPAC_fixedDesignTransport {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+theorem isPAC_fixedDesignTransport {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [MeasurableSpace E] [OpensMeasurableSpace E] [SecondCountableTopology E]
-    {F : Type v} [NormedAddCommGroup F] [InnerProductSpace ℝ F] [MeasurableSpace F]
+    {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F] [MeasurableSpace F]
     [OpensMeasurableSpace F] {𝒳 : Set E} {𝒴 : Set F} [MeasurableEq 𝒴]
-    {A : IdentAlg 𝒳 ℝ 𝒳} {T : ℕ} (hA : A.IsFixedBudget T)
+    {A : IdentAlg Unit 𝒳 ℝ 𝒳} {T : ℕ} (hA : A.IsFixedBudget T)
     {x : ℕ → 𝒳} (hdes : A.alg = fixedDesignAlg x) {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ)
     (L : F →ₗ[ℝ] E) {x' : ℕ → 𝒴} (hx' : ∀ t (ϑ : F), ⟪(x' t : F), ϑ⟫ = ⟪(x t : E), L ϑ⟫)
     {π : 𝒳 → 𝒴} (hπ : Measurable π)
     (hreg : ∀ (ϑ : F) (y : 𝒳), simpleRegret 𝒴 ϑ (π y) ≤ simpleRegret 𝒳 (L ϑ) y) :
     IsPAC 𝒴 (fixedDesignTransport A T x x' hπ) ε δ := by
-  intro ϑ Ω _ P _ O X Y out hrun
+  refine isPAC_of_forall_isRun fun ϑ Ω _ P _ O X Y out hrun ↦ ?_
   have hlaw := hrun.hasLaw_history_out_of_fixedDesign isFixedBudget_fixedDesignTransport
     alg_fixedDesignTransport
   have hG' : MeasurableSet {y : 𝒴 | simpleRegret 𝒴 ϑ y ≤ ε} :=

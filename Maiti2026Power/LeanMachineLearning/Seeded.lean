@@ -411,12 +411,12 @@ lemma _root_.Learning.IsAlgEnvSeq.map_history_eq_seed {Ω : Type*} [MeasurableSp
 
 /-- For a run of a fixed-budget seeded algorithm with deterministic output `g`, the probability
 of an event of the output is computed on the product space of seeds and noises. -/
-lemma _root_.Learning.IdentAlg.IsRun.measureReal_eq_seed {𝓞 : Type*} [MeasurableSpace 𝓞]
-    [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
+lemma _root_.Learning.IdentAlg.IsRun.measureReal_eq_seed {𝓓 : Type*} [MeasurableSpace 𝓓]
+    [MeasurableEq 𝓓] [Nonempty 𝓓] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓓} (hg : Measurable g)
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
-    {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {out : Ω → 𝓞}
+    {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {out : Ω → 𝓓}
     (h : (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsRun
-      (noiseEnv μe F hF) O X Y out P) {s : Set 𝓞} (hs : MeasurableSet s) :
+      (noiseEnv μe F hF) O X Y out P) {s : Set 𝓓} (hs : MeasurableSet s) :
     P.real {ω | out ω ∈ s} = (A.seedMeasure μe).real {ω | g (A.seedFinHist F T ω) ∈ s} := by
   have hae := h.output_ae_eq_of_output_eq_deterministic (IdentAlg.isFixedBudget_fixedBudget _ _ _)
     hg (IdentAlg.output_fixedBudget _ _ _)
@@ -440,34 +440,34 @@ lemma _root_.Learning.IdentAlg.IsRun.measureReal_eq_seed {𝓞 : Type*} [Measura
 
 /-- **PAC guarantee of a fixed-budget seeded algorithm** with deterministic output `g`, from a
 bound on the product space of seeds and noises. -/
-lemma isPAC_fixedBudget_deterministic {Θ : Type*} {𝓞 : Type*} [MeasurableSpace 𝓞]
-    [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓞} (hg : Measurable g)
+lemma isPAC_fixedBudget_deterministic {Θ : Type*} {𝓓 : Type*} [MeasurableSpace 𝓓]
+    [MeasurableEq 𝓓] [Nonempty 𝓓] {T : ℕ} {g : Hist Unit 𝓐 𝓨 T → 𝓓} (hg : Measurable g)
     {F : Θ → 𝓐 → E → 𝓨} (hF : ∀ θ, Measurable (Function.uncurry (F θ)))
-    {good : Θ → 𝓞 → Prop} (hgood : ∀ θ, MeasurableSet {o | good θ o}) {δ : ℝ}
-    (h : ∀ θ, 1 - δ ≤ (A.seedMeasure μe).real {ω | good θ (g (A.seedFinHist (F θ) T ω))}) :
-    (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsPAC.{u}
-      (fun θ ↦ noiseEnv μe (F θ) (hF θ)) good δ := by
-  intro θ Ω _ P _ O X Y out hrun
-  rw [show {ω | good θ (out ω)} = {ω | out ω ∈ {o | good θ o}} from rfl,
-    IdentAlg.IsRun.measureReal_eq_seed (hF θ) hg hrun (hgood θ)]
+    {bad : Θ → 𝓓 → Prop} (hbad : ∀ θ, MeasurableSet {d | bad θ d}) {δ : ℝ}
+    (h : ∀ θ, (A.seedMeasure μe).real {ω | bad θ (g (A.seedFinHist (F θ) T ω))} ≤ δ) :
+    (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsPAC
+      (fun θ ↦ noiseEnv μe (F θ) (hF θ)) bad δ := by
+  refine IdentAlg.IsPAC.of_forall_isRun hbad fun θ Ω _ P _ O X Y out hrun ↦ ?_
+  rw [show {ω | bad θ (out ω)} = {ω | out ω ∈ {d | bad θ d}} from rfl,
+    IdentAlg.IsRun.measureReal_eq_seed (hF θ) hg hrun (hbad θ)]
   exact h θ
 
 /-- **PAC guarantee of a fixed-budget seeded algorithm in a linear Gaussian bandit** with
 deterministic output `g`, from a bound on the product space of seeds and Gaussian noises. -/
 lemma linearBandit_isPAC_fixedBudget_deterministic {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E] {𝒳 : Set E}
-    (A : SeededAlg 𝒳 ℝ U) {𝓞 : Type*} [MeasurableSpace 𝓞] [MeasurableEq 𝓞] [Nonempty 𝓞] {T : ℕ}
-    {g : Hist Unit 𝒳 ℝ T → 𝓞} (hg : Measurable g) {good : E → 𝓞 → Prop}
-    (hgood : ∀ θ, MeasurableSet {o | good θ o}) {δ : ℝ}
-    (h : ∀ θ : E, 1 - δ ≤ (A.seedMeasure (gaussianReal 0 1)).real
-      {ω | good θ (g (A.seedFinHist (fun (x : 𝒳) (e : ℝ) ↦ inner ℝ (x : E) θ + e) T ω))}) :
-    (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsPAC.{u}
-      (LinearBandit.linearGaussianEnv 𝒳) good δ := by
+    (A : SeededAlg 𝒳 ℝ U) {𝓓 : Type*} [MeasurableSpace 𝓓] [MeasurableEq 𝓓] [Nonempty 𝓓] {T : ℕ}
+    {g : Hist Unit 𝒳 ℝ T → 𝓓} (hg : Measurable g) {bad : E → 𝓓 → Prop}
+    (hbad : ∀ θ, MeasurableSet {d | bad θ d}) {δ : ℝ}
+    (h : ∀ θ : E, (A.seedMeasure (gaussianReal 0 1)).real
+      {ω | bad θ (g (A.seedFinHist (fun (x : 𝒳) (e : ℝ) ↦ inner ℝ (x : E) θ + e) T ω))} ≤ δ) :
+    (IdentAlg.fixedBudget A.toAlgorithm T (Kernel.deterministic g hg)).IsPAC
+      (LinearBandit.linearGaussianEnv 𝒳) bad δ := by
   have e : LinearBandit.linearGaussianEnv 𝒳 = fun θ ↦
       noiseEnv (gaussianReal 0 1) (fun (x : 𝒳) (e : ℝ) ↦ inner ℝ (x : E) θ + e) (by fun_prop) :=
     funext fun θ ↦ LinearBandit.linearGaussianEnv_eq_noiseEnv 𝒳 θ
   rw [e]
-  exact A.isPAC_fixedBudget_deterministic hg (fun θ ↦ by fun_prop) hgood h
+  exact A.isPAC_fixedBudget_deterministic hg (fun θ ↦ by fun_prop) hbad h
 
 end SeededAlg
 

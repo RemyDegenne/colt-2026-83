@@ -38,13 +38,13 @@ namespace Learning.LinearBandit
 
 open IdentAlg
 
-variable {E 𝓞 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
-  [OpensMeasurableSpace E] {m𝓞 : MeasurableSpace 𝓞}
-  {𝒳 : Set E} {θ θ' : E} {A : IdentAlg 𝒳 ℝ 𝓞} {T : ℕ}
+variable {E 𝓓 : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+  [OpensMeasurableSpace E] {m𝓓 : MeasurableSpace 𝓓}
+  {𝒳 : Set E} {θ θ' : E} {A : IdentAlg Unit 𝒳 ℝ 𝓓} {T : ℕ}
   {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
   {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ} {O' : ℕ → Ω' → Unit} {X' : ℕ → Ω' → 𝒳}
-  {Y' : ℕ → Ω' → ℝ} {out : Ω → 𝓞} {out' : Ω' → 𝓞}
+  {Y' : ℕ → Ω' → ℝ} {out : Ω → 𝓓} {out' : Ω' → 𝓓}
 
 /-- The divergence between the laws of the outputs of two runs of a fixed-budget algorithm with
 budget `T` in the linear Gaussian environments with reward vectors `θ` and `θ'` is at most the
@@ -64,7 +64,7 @@ any event of the output differ by at most `√(K / 2)`. -/
 lemma IsRun.abs_measureReal_sub_le_of_sum_le {C K : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hK : ∑ t ∈ Finset.range T, ∫ ω, ⟪(X t ω : E), θ - θ'⟫ ^ 2 / 2 ∂P ≤ K)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
-    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
+    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓓} (hB : MeasurableSet B) :
     |P.real (out ⁻¹' B) - P'.real (out' ⁻¹' B)| ≤ √(K / 2) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hout' : AEMeasurable out' P' := h'.hasCondDistrib_output.aemeasurable_snd
@@ -88,7 +88,7 @@ identification algorithm with budget `T` in the linear Gaussian environments wit
 output differ by at most `√(T C / 4)`. -/
 lemma IsRun.abs_measureReal_sub_le_of_sq_le {C : ℝ} (hC : ∀ x ∈ 𝒳, ⟪x, θ - θ'⟫ ^ 2 ≤ C)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
-    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓞} (hB : MeasurableSet B) :
+    (h' : A.IsRun (linearGaussianEnv 𝒳 θ') O' X' Y' out' P') {B : Set 𝓓} (hB : MeasurableSet B) :
     |P.real (out ⁻¹' B) - P'.real (out' ⁻¹' B)| ≤ √(T * C / 4) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hout' : AEMeasurable out' P' := h'.hasCondDistrib_output.aemeasurable_snd
@@ -113,13 +113,13 @@ then no test on the output of a fixed-budget algorithm with budget `T` separates
 lemma IsRun.one_sub_le_measureReal_add_of_sq_le {C : ℝ} {θp θm : E}
     {Ωp Ωm : Type*} {mΩp : MeasurableSpace Ωp} {mΩm : MeasurableSpace Ωm}
     {Pp : Measure Ωp} {Pm : Measure Ωm} [IsProbabilityMeasure Pp] [IsProbabilityMeasure Pm]
-    {Op : ℕ → Ωp → Unit} {Xp : ℕ → Ωp → 𝒳} {Yp : ℕ → Ωp → ℝ} {outp : Ωp → 𝓞}
-    {Om : ℕ → Ωm → Unit} {Xm : ℕ → Ωm → 𝒳} {Ym : ℕ → Ωm → ℝ} {outm : Ωm → 𝓞}
+    {Op : ℕ → Ωp → Unit} {Xp : ℕ → Ωp → 𝒳} {Yp : ℕ → Ωp → ℝ} {outp : Ωp → 𝓓}
+    {Om : ℕ → Ωm → Unit} {Xm : ℕ → Ωm → 𝒳} {Ym : ℕ → Ωm → ℝ} {outm : Ωm → 𝓓}
     (hCp : ∀ x ∈ 𝒳, ⟪x, θ - θp⟫ ^ 2 ≤ C) (hCm : ∀ x ∈ 𝒳, ⟪x, θ - θm⟫ ^ 2 ≤ C)
     (hA : A.IsFixedBudget T) (h : A.IsRun (linearGaussianEnv 𝒳 θ) O X Y out P)
     (hp : A.IsRun (linearGaussianEnv 𝒳 θp) Op Xp Yp outp Pp)
     (hm : A.IsRun (linearGaussianEnv 𝒳 θm) Om Xm Ym outm Pm)
-    {B : Set 𝓞} (hB : MeasurableSet B) :
+    {B : Set 𝓓} (hB : MeasurableSet B) :
     1 - 2 * √(T * C / 4) ≤ Pp.real (outp ⁻¹' B) + Pm.real (outm ⁻¹' Bᶜ) := by
   have hout : AEMeasurable out P := h.hasCondDistrib_output.aemeasurable_snd
   have hsum : P.real (out ⁻¹' B) + P.real (out ⁻¹' Bᶜ) = 1 := by

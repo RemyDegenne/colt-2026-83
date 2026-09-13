@@ -8,6 +8,7 @@ module
 public import Maiti2026Power.LeanMachineLearning.EnvDensity
 public import Maiti2026Power.Mathlib.Probability.GaussianDensityRatio
 public import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
+public import Maiti2026Power.LeanMachineLearning.LinearBandit
 
 /-!
 # Likelihood ratio of a linear Gaussian history

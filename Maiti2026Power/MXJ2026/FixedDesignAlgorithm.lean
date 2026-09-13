@@ -50,7 +50,7 @@ lemma measurable_lsRecommend (T : ℕ) (x : ℕ → 𝒳) {s : EuclideanSpace �
 play the design `x` for `T` rounds, then recommend `s θ̂` where `θ̂` is the least-squares
 estimate and `s` a measurable selector. -/
 noncomputable def fixedDesignIdentAlg (T : ℕ) (x : ℕ → 𝒳) (s : EuclideanSpace ℝ ι → 𝒳)
-    (hs : Measurable s) : IdentAlg 𝒳 ℝ 𝒳 :=
+    (hs : Measurable s) : IdentAlg Unit 𝒳 ℝ 𝒳 :=
   haveI : Nonempty 𝒳 := ⟨x 0⟩
   IdentAlg.fixedBudget (fixedDesignAlg x) T
     (Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs))
@@ -64,7 +64,7 @@ lemma isFixedBudget_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixed
 lemma isFixedDesign_fixedDesignIdentAlg : (fixedDesignIdentAlg T x s hs).IsFixedDesign := ⟨x, rfl⟩
 
 lemma output_fixedDesignIdentAlg :
-    (fixedDesignIdentAlg T x s hs).output T =
+    (fixedDesignIdentAlg T x s hs).output.comap (Sigma.mk T) (measurable_sigma_mk T) =
       Kernel.deterministic (lsRecommend T x s) (measurable_lsRecommend T x hs) :=
   haveI : Nonempty 𝒳 := ⟨x 0⟩
   IdentAlg.output_fixedBudget _ _ _
@@ -82,7 +82,7 @@ lemma isPAC_fixedDesignIdentAlg (h𝒳 : IsCompact 𝒳) (hne : 𝒳.Nonempty)
     (hbudget : 2 * gwMat 𝒳 (∑ t : Fin T, outerSelf (x t : EuclideanSpace ℝ ι)) +
       2 * σ * √(2 * gaussianConcentrationConst * log (1 / δ)) ≤ 3 * ε / 4) :
     IsPAC 𝒳 (fixedDesignIdentAlg T x s hs) ε δ := by
-  intro θ Ω _ P _ O X Y out hrun
+  refine isPAC_of_forall_isRun fun θ Ω _ P _ O X Y out hrun ↦ ?_
   obtain ⟨R, hR⟩ : ∃ R, ∀ y ∈ 𝒳, ‖y‖ ≤ R := by
     obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
     exact ⟨r, fun y hy ↦ mem_closedBall_zero_iff.1 (hr hy)⟩

@@ -11,6 +11,7 @@ public import Maiti2026Power.MXJ2026.LowerAdaptive
 public import Maiti2026Power.LeanMachineLearning.FixedDesignTransport
 public import Maiti2026Power.MXJ2026.BlockProof
 public import Mathlib.MeasureTheory.Function.SpecialFunctions.Inner
+public import Maiti2026Power.Mathlib.MeasureTheory.Measure.Real
 
 /-!
 # Polynomial separation between adaptive and non-adaptive algorithms (Theorem 7)
@@ -55,7 +56,7 @@ fixed-design algorithm `A` with design `x` is `(ε, δ)`-PAC on the block-ball s
 design `blockDesign i x` on the unit ball of `ℝ^d`, with the recommendation of `A` projected on
 block `i`, is `(ε, δ)`-PAC on the unit ball. -/
 lemma isPAC_fixedDesignTransport_blockProjBall {k d T : ℕ}
-    {A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d)} (hA : A.IsFixedBudget T)
+    {A : IdentAlg Unit (blockBallSet k d) ℝ (blockBallSet k d)} (hA : A.IsFixedBudget T)
     {x : ℕ → blockBallSet k d} (hx : A.alg = fixedDesignAlg x)
     {ε δ : ℝ} (hpac : IsPAC (blockBallSet k d) A ε δ) (i : Fin k) :
     IsPAC (unitBall (Fin d))
@@ -69,7 +70,7 @@ algorithm which is `(ε, δ)`-PAC on the block-ball set of `ℝ^{kd}`, with `ε 
 `δ ≤ 1/10`, has budget `T ≥ k d² / (210 ε²)`. -/
 theorem blockBallSet_le_budget_of_isFixedDesign_of_isPAC (k d : ℕ) {ε δ : ℝ}
     (hε : ε ∈ Set.Ioc 0 1) (hδ : δ ∈ Set.Ioc 0 (1 / 10)) {T : ℕ}
-    (A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (blockBallSet k d) ℝ (blockBallSet k d)) (hA : A.IsFixedBudget T)
     (hdes : A.IsFixedDesign)
     (hpac : IsPAC (blockBallSet k d) A ε δ) :
     k * (d : ℝ) ^ 2 / (210 * ε ^ 2) ≤ T := by
@@ -139,7 +140,7 @@ theorem blockBallSet_le_budget_of_isFixedDesign_of_isPAC (k d : ℕ) {ε δ : �
 `T ≥ kd log(1/δ) / (20000 ε²)`. -/
 theorem blockBallSet_le_budget_of_isPAC (k d : ℕ) (hkd : 2 ≤ k * d) {ε δ : ℝ} (hε : 0 < ε)
     (hδ : δ ∈ Set.Ioo 0 (1 / 16)) {T : ℕ}
-    (A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (blockBallSet k d) ℝ (blockBallSet k d)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (blockBallSet k d) A ε δ) :
     k * d * log (1 / δ) / (20000 * ε ^ 2) ≤ T := by
   have hcard : Fintype.card (Fin k × Fin d) = k * d := by simp [Fintype.card_prod]
@@ -155,34 +156,38 @@ theorem blockBallSet_le_budget_of_isPAC (k d : ℕ) (hkd : 2 ≤ k * d) {ε δ :
 theorem exists_isPAC_blockBallSet (k d : ℕ) (hk : 1 ≤ k) {ε δ : ℝ} (hε : ε ∈ Set.Ioc 0 1)
     (hδ : δ ∈ Set.Ioo 0 1) :
     ∃ T : ℕ, (T : ℝ) ≤ 2000000 * (k * d * log (8 * k / δ) + (d : ℝ) ^ 2) / ε ^ 2 ∧
-      ∃ A : IdentAlg (blockBallSet k d) ℝ (blockBallSet k d), A.IsFixedBudget T ∧
+      ∃ A : IdentAlg Unit (blockBallSet k d) ℝ (blockBallSet k d), A.IsFixedBudget T ∧
         IsPAC (blockBallSet k d) A ε δ := by
   classical
   have : Nonempty (blockBallSet k d) := (blockBallSet_nonempty ⟨0, hk⟩).to_subtype
   let Q : BlockParam := ⟨k, hk, ε, δ, hε, hδ⟩
-  have hgood : ∀ θ : EuclideanSpace ℝ (Fin k × Fin d),
-      MeasurableSet {x : blockBallSet k d | simpleRegret (blockBallSet k d) θ x ≤ ε} := fun θ ↦
-    measurableSet_le (measurable_const.sub (measurable_subtype_coe.inner measurable_const))
-      measurable_const
+  have hbad : ∀ θ : EuclideanSpace ℝ (Fin k × Fin d),
+      MeasurableSet {x : blockBallSet k d | ε < simpleRegret (blockBallSet k d) θ x} := fun θ ↦
+    measurableSet_lt measurable_const (measurable_simpleRegret _ θ)
   rcases Nat.eq_zero_or_pos d with rfl | hd
   · -- degenerate case `d = 0`: every reward vector is `0` and every recommendation is optimal
     refine ⟨0, by simp, IdentAlg.fixedBudget (Q.alg 0).toAlgorithm 0
       (Kernel.deterministic (fun _ ↦ Q.zeroBB 0) measurable_const),
       IdentAlg.isFixedBudget_fixedBudget _ _ _, ?_⟩
-    refine SeededAlg.linearBandit_isPAC_fixedBudget_deterministic (Q.alg 0) measurable_const hgood
+    refine SeededAlg.linearBandit_isPAC_fixedBudget_deterministic (Q.alg 0) measurable_const hbad
       fun θ ↦ ?_
     have hθ : θ = 0 := by
       ext p
       exact isEmptyElim p
-    have huniv : {ω : ℕ → (Fin 0 → Bool) × ℝ |
-        simpleRegret (blockBallSet k 0) θ (Q.zeroBB 0) ≤ ε} = Set.univ :=
-      Set.eq_univ_of_forall fun ω ↦ by simp [simpleRegret, hθ, hε.1.le]
-    rw [huniv, probReal_univ]
-    linarith [hδ.1]
+    have hempty : {ω : ℕ → (Fin 0 → Bool) × ℝ |
+        ε < simpleRegret (blockBallSet k 0) θ (Q.zeroBB 0)} = ∅ :=
+      Set.eq_empty_of_forall_notMem fun ω hω ↦
+        absurd (show ε < simpleRegret (blockBallSet k 0) θ (Q.zeroBB 0) from hω)
+          (not_lt.2 (by simp [simpleRegret, hθ, hε.1.le]))
+    rw [hempty, measureReal_empty]
+    exact hδ.1.le
   · refine ⟨Q.T d, Q.T_le hd, IdentAlg.fixedBudget (Q.alg d).toAlgorithm (Q.T d)
       (Kernel.deterministic (Q.output d) Q.measurable_output),
       IdentAlg.isFixedBudget_fixedBudget _ _ _, ?_⟩
     exact SeededAlg.linearBandit_isPAC_fixedBudget_deterministic (Q.alg d) Q.measurable_output
-      hgood fun θ ↦ Q.one_sub_le_seedMeasure_real_output hd θ
+      hbad fun θ ↦ measureReal_lt_le_of_one_sub_le_measureReal_le
+        ((measurable_simpleRegret _ θ).comp (Q.measurable_output.comp
+          (SeededAlg.measurable_seedFinHist (by fun_prop) _)))
+        (Q.one_sub_le_seedMeasure_real_output hd θ)
 
 end Maiti2026Power

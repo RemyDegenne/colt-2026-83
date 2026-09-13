@@ -241,7 +241,7 @@ In the formalization the two implications (i), (ii) and the error bounds are est
 the proof of Lemma~\ref{lem:baseline_lower} (\texttt{Maiti2026Power.baseline\_le\_budget\_of\_isPAC}),
 in the original coordinates (the set $B := \{x : \ip{Mx}{u} \ge s\}$ of recommendations), and the
 error probabilities are those of the canonical runs of Definition~\ref{def:bai_alg}
-(\texttt{IdentAlg.IsFixedBudget.isRun\_fixedBudgetRunMeasure}).
+(\texttt{IdentAlg.isRun\_runMeasure}).
 
 \begin{lemma}[KL divergence between the two-point instances]\label{lem:kl_two_instances}
 \lean{Learning.LinearBandit.IsRun.klDiv_map_out_le_of_sq_le}\leanok
@@ -417,7 +417,7 @@ with $\Prob_0(E) \le \alpha$ and $\Prob^{\mathrm{test}}_{\theta^{(j)}}(E^c) \le 
 is done in the proof of Theorem~\ref{thm:lower_adaptive}.
 
 \begin{lemma}[A test built from a PAC algorithm]\label{lem:test_from_alg}
-\lean{Learning.Algorithm.thenRepeat, Learning.IdentAlg.testAlg, Learning.LinearBandit.phaseMean, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_thenRepeat, Learning.IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat, Learning.IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat, Learning.IdentAlg.IsPAC.le_measureReal_action_succ_of_testAlg, Learning.LinearBandit.phaseMean_ae_eq_of_thenRepeat, Learning.LinearBandit.measureReal_inner_add_le_phaseMean_le, Learning.LinearBandit.measureReal_phaseMean_le_inner_sub_le, Learning.LinearBandit.measureReal_lt_phaseMean_le_of_testAlg, Learning.LinearBandit.measureReal_phaseMean_le_le_of_testAlg}\leanok
+\lean{Learning.Algorithm.thenRepeat, Learning.IdentAlg.testAlg, Learning.LinearBandit.phaseMean, Learning.IsAlgEnvSeq.isAlgEnvSeqUntil_of_thenRepeat, Learning.IsAlgEnvSeq.hasCondDistrib_action_succ_of_thenRepeat, Learning.IsAlgEnvSeq.action_add_ae_eq_of_thenRepeat, Learning.IdentAlg.IsPAC.measureReal_bad_action_succ_of_testAlg, Learning.LinearBandit.phaseMean_ae_eq_of_thenRepeat, Learning.LinearBandit.measureReal_inner_add_le_phaseMean_le, Learning.LinearBandit.measureReal_phaseMean_le_inner_sub_le, Learning.LinearBandit.measureReal_lt_phaseMean_le_of_testAlg, Learning.LinearBandit.measureReal_phaseMean_le_le_of_testAlg}\leanok
 \uses{def:mixture_test, def:pac, lem:composition, lem:prefix_transfer}
 Let $\eps > 0$, $\delta \in (0,1)$ and let $\mathsf{Alg} = (\mathrm{alg},\rho)$ be an
 $(\eps,\delta)$-PAC identification algorithm on $\Xs'$ with budget $n$. Let
@@ -505,7 +505,7 @@ algorithm-environment sequence for $\mathrm{alg}$ until time $n+1$
 $\rho(\hist_{n+1})$ given $\hist_{n+1}$ (\texttt{hasCondDistrib\_action\_succ\_of\_thenRepeat}),
 and $x_{n+1+s} = x_{n+1}$ almost surely (\texttt{action\_add\_ae\_eq\_of\_thenRepeat}). The PAC
 guarantee of $\mathsf{Alg}$ is transferred to $x_{n+1}$ by Lemma~\ref{lem:prefix_transfer}
-(\texttt{IsPAC.le\_measureReal\_action\_succ\_of\_testAlg}). The concentration of
+(\texttt{IsPAC.measureReal\_bad\_action\_succ\_of\_testAlg}). The concentration of
 $\bar\eta$ is Lemma~\ref{lem:noise_azuma} applied to the run of the test itself (so no
 conditioning on $\hist_n$ is needed): $\hat v = \ip{x_n}{\theta} + \bar\eta$ almost surely
 (\texttt{phaseMean\_ae\_eq\_of\_thenRepeat}, with $\hat v$ the empirical mean

@@ -35,8 +35,6 @@ median counting argument of `MedianEliminationRound.lean`).
 open MeasureTheory ProbabilityTheory Finset
 open scoped RealInnerProductSpace
 
-universe u
-
 namespace Learning.MedianElim
 
 variable {𝓐 : Type*} [MeasurableSpace 𝓐] {K : ℕ} {ε δ : ℝ}
@@ -155,16 +153,19 @@ end algorithm
 
 section linearGaussian
 
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} [MeasurableEq 𝒳]
 
 /-- **Median Elimination is `(ε, δ)`-PAC** on candidate arms `c a ∈ 𝒳` of a linear Gaussian
 bandit (blueprint `thm:median_elimination`, `cor:median_elimination_linear`): with probability at
 least `1 - δ`, the recommended arm `â` satisfies `⟪c â, θ⟫ ≥ ⟪c a, θ⟫ - ε` for every arm `a`. -/
 lemma isPAC_medianElim (hK : 0 < K) (c : Fin K → 𝒳) (hε : 0 < ε) (hδ : δ ∈ Set.Ioo 0 1) :
-    ((medianElim 𝒳 hK c hε hδ).toIdentAlg (numRounds K) (meOut hK) (measurable_meOut hK)).IsPAC.{u}
-      (LinearBandit.linearGaussianEnv 𝒳) (fun θ x ↦ ∀ a, ⟪(c a : E), θ⟫ - ε ≤ ⟪(x : E), θ⟫) δ := by
-  refine PhasedAlg.isPAC_toIdentAlg _ fun θ ↦ ?_
+    ((medianElim 𝒳 hK c hε hδ).toIdentAlg (numRounds K) (meOut hK) (measurable_meOut hK)).IsPAC
+      (LinearBandit.linearGaussianEnv 𝒳) (fun θ x ↦ ∃ a, ⟪(x : E), θ⟫ < ⟪(c a : E), θ⟫ - ε) δ := by
+  refine PhasedAlg.isPAC_toIdentAlg _ (fun θ ↦ ?_) fun θ ↦ ?_
+  · simp only [Set.ofPred_exists]
+    exact MeasurableSet.iUnion fun a ↦
+      measurableSet_lt (continuous_subtype_val.inner continuous_const).measurable measurable_const
   have : Nonempty (Fin K) := ⟨⟨0, hK⟩⟩
   obtain ⟨a₁, ha₁⟩ := Finite.exists_max fun a ↦ ⟪(c a : E), θ⟫
   refine ⟨fun ℓ ↦ {p | p.1 = c ∧ p.2 ∈ goodSet (fun a ↦ ⟪(c a : E), θ⟫) ⟪(c a₁ : E), θ⟫ ε ℓ},
@@ -178,13 +179,13 @@ lemma isPAC_medianElim (hK : 0 < K) (c : Fin K → 𝒳) (hε : 0 < ε) (hδ : �
     refine (one_sub_le_measureReal_roundNext_mem hε hδ _ _ ℓ ⟨0, hK⟩ hS).trans
       (measureReal_mono fun η hη ↦ ?_)
     exact ⟨rfl, hη⟩
-  · rintro ⟨c', S⟩ ⟨hc, hcard, b, hb, hMb⟩ a
+  · rintro ⟨c', S⟩ ⟨hc, hcard, b, hb, hMb⟩ ⟨a, ha⟩
     have hc' : c' = c := hc
     subst hc'
     obtain ⟨b', rfl⟩ := Finset.card_eq_one.1 (hcard.trans (survivors_numRounds hK))
     rw [mem_singleton] at hb
     subst hb
-    rw [meOut_singleton]
+    rw [meOut_singleton] at ha
     have h1 := sum_epsSched_le hε.le (numRounds K)
     have h2 := ha₁ a
     linarith

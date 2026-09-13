@@ -1,7 +1,10 @@
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+import Mathlib.Order.Restriction
 import Mathlib.Probability.HasCondDistrib
 import Mathlib.Probability.HasLaw
 import Mathlib.Probability.Kernel.Composition.MeasureCompProd
-import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+import Mathlib.Probability.Kernel.IonescuTulcea.Maps
+import Mathlib.Probability.Kernel.IonescuTulcea.Traj
 import Mathlib.Probability.Process.HittingTime
 import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.MeasureTheory.Measure.Decomposition.Lebesgue
@@ -37,8 +40,6 @@ namespace MeasureTheory
 end MeasureTheory
 namespace ProbabilityTheory
 end ProbabilityTheory
-namespace Finset
-end Finset
 namespace Learning
 end Learning
 namespace Learning.IdentAlg
@@ -47,13 +48,78 @@ namespace Learning.LinearBandit
 end Learning.LinearBandit
 namespace Real
 end Real
+namespace Finset
+end Finset
 namespace Maiti2026Power
 end Maiti2026Power
 
--- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
+-- ═══ vendored from LML: LeanMachineLearning.ForMathlib.MeasureTheory.MeasurableSpace.Embedding ═══
 -- The declarations of https://github.com/LeanMachineLearning/LML that the statement rests on,
 -- copied verbatim (Apache 2.0, Authors: Rémy Degenne, Paulo Rauber) so that this file's imports
 -- bottom out in Mathlib. Comparator checks each constant is *identical* to the LML package's.
+section
+open Finset Preorder
+namespace MeasurableEquiv
+
+section Fin
+
+variable {X : ℕ → Type*} [∀ n, MeasurableSpace (X n)]
+
+/-- Measurable equivalence between `Π i : Fin (n + 1), X i` and `Π i : Iic n, X i`. -/
+def finSuccPiIic (X : ℕ → Type*) [∀ n, MeasurableSpace (X n)] (n : ℕ) :
+    (Π i : Fin (n + 1), X i) ≃ᵐ (Π i : Iic n, X i) where
+  toFun h i := h ⟨i.1, Nat.lt_succ_of_le (mem_Iic.mp i.2)⟩
+  invFun h i := h ⟨i.1, mem_Iic.mpr (Nat.le_of_lt_succ i.2)⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  measurable_toFun := .of_eval fun _ ↦ measurable_pi_apply _
+  measurable_invFun := .of_eval fun _ ↦ measurable_pi_apply _
+
+end Fin
+
+end MeasurableEquiv
+end
+
+-- ═══ vendored from LML: LeanMachineLearning.ForMathlib.Probability.Kernel.IonescuTulcea.Traj ═══
+section
+open Filter Finset Function MeasurableEquiv MeasurableSpace MeasureTheory Preorder ProbabilityTheory
+
+variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω}
+  {X : ℕ → Type*} [∀ n, MeasurableSpace (X n)]
+  {κ : (n : ℕ) → Kernel (Π i : Iic n, X i) (X (n + 1))} [∀ n, IsMarkovKernel (κ n)]
+  {μ₀ : Measure (X 0)} [IsProbabilityMeasure μ₀]
+
+namespace ProbabilityTheory.Kernel
+
+section FinTraj
+
+variable {κ' : (n : ℕ) → Kernel (Π i : Fin n, X i) (X n)} [∀ n, IsMarkovKernel (κ' n)]
+
+/-- Kernels indexed by `Iic n` (as needed for `Kernel.traj`), obtained from kernels indexed by
+`Fin n`: the kernel `κ' (n + 1)` on `Π i : Fin (n + 1), X i` is seen as a kernel on
+`Π i : Iic n, X i`. -/
+noncomputable
+def iicOfFin (κ' : (n : ℕ) → Kernel (Π i : Fin n, X i) (X n)) (n : ℕ) :
+    Kernel (Π i : Iic n, X i) (X (n + 1)) :=
+  (κ' (n + 1)).comap (MeasurableEquiv.finSuccPiIic X n).symm (by fun_prop)
+
+instance (n : ℕ) : IsMarkovKernel (iicOfFin κ' n) := by unfold iicOfFin; infer_instance
+
+/-- Measure on trajectories `Π n, X n` built from kernels `κ' n : Kernel (Π i : Fin n, X i) (X n)`
+describing the law of the coordinate `n` given the `n` previous coordinates.
+The initial measure is `κ' 0 default`. -/
+noncomputable
+def trajMeasureFin (κ' : (n : ℕ) → Kernel (Π i : Fin n, X i) (X n)) [∀ n, IsMarkovKernel (κ' n)] :
+    Measure (Π n, X n) :=
+  trajMeasure (κ' 0 default) (iicOfFin κ')
+deriving IsProbabilityMeasure
+
+end FinTraj
+
+end ProbabilityTheory.Kernel
+end
+
+-- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.Algorithm ═══
 section
 open MeasureTheory ProbabilityTheory Filter Real Finset
 open scoped ENNReal NNReal
@@ -64,6 +130,13 @@ variable {𝓞 𝓐 𝓨 Ω : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : Mea
 
 /-- One round of interaction: an observation, then an action, then a feedback. -/
 abbrev Round (𝓞 𝓐 𝓨 : Type*) := 𝓞 × 𝓐 × 𝓨
+
+/-- The observation of a round. -/
+def Round.obs (r : Round 𝓞 𝓐 𝓨) : 𝓞 := r.1
+/-- The action of a round. -/
+def Round.action (r : Round 𝓞 𝓐 𝓨) : 𝓐 := r.2.1
+/-- The feedback of a round. -/
+def Round.feedback (r : Round 𝓞 𝓐 𝓨) : 𝓨 := r.2.2
 
 /-- History of `n` complete rounds; `n = 0` is the empty history. -/
 abbrev Hist (𝓞 𝓐 𝓨 : Type*) (n : ℕ) := Fin n → Round 𝓞 𝓐 𝓨
@@ -101,6 +174,13 @@ instance (env : Environment 𝓞 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.obs 
 instance (env : Environment 𝓞 𝓐 𝓨) (n : ℕ) : IsMarkovKernel (env.feedback n) :=
   env.isMarkovKernel_feedback n
 
+/-- Kernel describing the distribution of the round at time `n` given the history before `n`. -/
+noncomputable
+def stepKernel (alg : Algorithm 𝓞 𝓐 𝓨) (env : Environment 𝓞 𝓐 𝓨) (n : ℕ) :
+    Kernel (Hist 𝓞 𝓐 𝓨 n) (Round 𝓞 𝓐 𝓨) :=
+  env.obs n ⊗ₖ (alg.policy n ⊗ₖ env.feedback n)
+deriving IsMarkovKernel
+
 section IsAlgEnvSeq
 
 variable {O : ℕ → Ω → 𝓞} {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
@@ -111,30 +191,6 @@ variable {O : ℕ → Ω → 𝓞} {A : ℕ → Ω → 𝓐} {Y : ℕ → Ω →
 times `0, ..., n - 1`. -/
 def history (O : ℕ → Ω → 𝓞) (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) : Hist 𝓞 𝓐 𝓨 n :=
   fun i ↦ (O i ω, A i ω, Y i ω)
-
-/-- An algorithm-environment sequence: a sequence of observations, actions and feedbacks generated
-by an algorithm interacting with an environment. -/
-structure IsAlgEnvSeq
-    (O : ℕ → Ω → 𝓞) (A : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
-    (alg : Algorithm 𝓞 𝓐 𝓨) (env : Environment 𝓞 𝓐 𝓨)
-    (P : Measure Ω) [IsFiniteMeasure P] : Prop where
-  /-- The observation sequence is measurable. -/
-  measurable_obs n : Measurable (O n) := by fun_prop
-  /-- The action sequence is measurable. -/
-  measurable_action n : Measurable (A n) := by fun_prop
-  /-- The feedback sequence is measurable. -/
-  measurable_feedback n : Measurable (Y n) := by fun_prop
-  /-- The observation at time `n` has the correct conditional distribution given the history. -/
-  hasCondDistrib_obs n :
-    HasCondDistrib (O n) (history O A Y n) (env.obs n) P
-  /-- The action at time `n` has the correct conditional distribution given the history and the
-  observation at time `n`. -/
-  hasCondDistrib_action n :
-    HasCondDistrib (A n) (fun ω ↦ (history O A Y n ω, O n ω)) (alg.policy n) P
-  /-- The feedback at time `n` has the correct conditional distribution given the history, the
-  observation and the action at time `n`. -/
-  hasCondDistrib_feedback n :
-    HasCondDistrib (Y n) (fun ω ↦ ((history O A Y n ω, O n ω), A n ω)) (env.feedback n) P
 
 end IsAlgEnvSeq
 
@@ -188,39 +244,130 @@ def detAlgorithm (nextA : (n : ℕ) → (Hist 𝓞 𝓐 𝓨 n × 𝓞) → 𝓐
 end Learning
 end
 
--- ═══ Mathlib.MeasureTheory.MeasurableSpace.Sigma ═══
+-- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.IonescuTulceaSpace ═══
 section
-open MeasurableSpace
-variable {α γ : Type*} {β : α → Type*} [∀ a, MeasurableSpace (β a)] [MeasurableSpace γ]
+open MeasureTheory ProbabilityTheory Filter Real Finset
+open scoped ENNReal NNReal
+namespace Learning
 
-/-- A function on a sigma type is measurable if all its restrictions to the fibers are. -/
-lemma measurable_sigma_of_measurable_comp_mk {f : (Σ a, β a) → γ}
-    (h : ∀ a, Measurable (f ∘ Sigma.mk a)) : Measurable f := sorry
+variable {𝓞 𝓐 𝓨 Ω : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨} {mΩ : MeasurableSpace Ω}
 
+/-- Measure on the sequence of rounds generated by the algorithm/environment. -/
+noncomputable
+def trajMeasure (alg : Algorithm 𝓞 𝓐 𝓨) (env : Environment 𝓞 𝓐 𝓨) :
+    Measure (ℕ → Round 𝓞 𝓐 𝓨) :=
+  Kernel.trajMeasureFin (stepKernel alg env)
+deriving IsProbabilityMeasure
+
+namespace IT
+
+/-- `obs n` is the observation at time `n`. This is a random variable on the measurable space
+`ℕ → Round 𝓞 𝓐 𝓨`. -/
+def obs (n : ℕ) (h : ℕ → Round 𝓞 𝓐 𝓨) : 𝓞 := (h n).obs
+
+/-- `action n` is the action pulled at time `n`. This is a random variable on the measurable space
+`ℕ → Round 𝓞 𝓐 𝓨`. -/
+def action (n : ℕ) (h : ℕ → Round 𝓞 𝓐 𝓨) : 𝓐 := (h n).action
+
+/-- `feedback n` is the feedback at time `n`. This is a random variable on the measurable space
+`ℕ → Round 𝓞 𝓐 𝓨`. -/
+def feedback (n : ℕ) (h : ℕ → Round 𝓞 𝓐 𝓨) : 𝓨 := (h n).feedback
+
+end IT
+
+end Learning
 end
 
--- ═══ LeanMachineLearning.StoppedHistory ═══
+-- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.StoppedHistory ═══
 section
-open MeasureTheory ProbabilityTheory Finset
+open MeasureTheory ProbabilityTheory
+namespace Learning
+
+variable {𝓞 𝓐 𝓨 Ω : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨} {mΩ : MeasurableSpace Ω}
+  {alg : Algorithm 𝓞 𝓐 𝓨} {env : Environment 𝓞 𝓐 𝓨}
+  {O : ℕ → Ω → 𝓞} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {S : Set (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)}
+  {τ : Ω → WithTop ℕ} {ω : Ω} {n M : ℕ}
+
+/-- The history of the first `n` rounds, as a history of variable length in the sigma type
+`Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n`. -/
+def sigmaHistory (O : ℕ → Ω → 𝓞) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (n : ℕ) (ω : Ω) :
+    Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n :=
+  ⟨n, history O X Y n ω⟩
+
+section StoppedHistMeasure
+
+/-- The law of the history stopped by the stopping rule `S`, for the algorithm `alg` in the
+environment `env`: the law of the stopped history on the canonical space `trajMeasure alg env`.
+This is the law of the stopped history for any algorithm-environment sequence
+(`IsAlgEnvSeq.hasLaw_stoppedValue_sigmaHistory`). -/
+noncomputable def stoppedHistMeasure (alg : Algorithm 𝓞 𝓐 𝓨) (env : Environment 𝓞 𝓐 𝓨)
+    (S : Set (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)) :
+    Measure (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n) :=
+  (trajMeasure alg env).map
+    (stoppedValue (sigmaHistory IT.obs IT.action IT.feedback)
+      (hittingAfter (sigmaHistory IT.obs IT.action IT.feedback) S 0))
+deriving IsProbabilityMeasure
+
+end StoppedHistMeasure
+
+end Learning
+end
+
+-- ═══ vendored from LML: LeanMachineLearning.SequentialLearning.IdentificationAlg ═══
+section
+open MeasureTheory ProbabilityTheory
 open scoped ENat
 namespace Learning
-variable {𝓞 𝓐 𝓨 : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {Ω : Type*} {mΩ : MeasurableSpace Ω}
 
-/-- The stopping time of the stopping rule `S` on the action and feedback processes `X`, `Y`:
-the number of rounds played, that is the first `n` such that the history of the first `n` rounds
-belongs to `S` (`⊤` if there is none). -/
-noncomputable def stoppingTime (O : ℕ → Ω → 𝓞) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
-    (S : Set (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)) : Ω → ℕ∞ :=
-  hittingAfter (fun n ω ↦ (⟨n, history O X Y n ω⟩ : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)) S 0
+variable {𝓞 𝓐 𝓨 𝓓 Ω : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐}
+  {m𝓨 : MeasurableSpace 𝓨} {m𝓓 : MeasurableSpace 𝓓} {mΩ : MeasurableSpace Ω}
+  {O : ℕ → Ω → 𝓞} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
 
-/-- The history of the first `τ ω` rounds, as a history of variable length (of length `0` if
-`τ ω = ⊤`). -/
-noncomputable def stoppedHist (O : ℕ → Ω → 𝓞) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (τ : Ω → ℕ∞)
-    (ω : Ω) :
-    Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n :=
-  ⟨(τ ω).toNat, history O X Y _ ω⟩
+/-- An identification algorithm with outputs in `𝓓`: a sampling rule `alg`, a stopping rule
+`stopSet` (the algorithm stops after `n` rounds if the history of these rounds belongs to
+`stopSet`) and an output rule `output`, a Markov kernel giving the distribution of the output
+given the history of the rounds played. -/
+structure IdentAlg (𝓞 𝓐 𝓨 𝓓 : Type*) [MeasurableSpace 𝓞] [MeasurableSpace 𝓐]
+    [MeasurableSpace 𝓨] [MeasurableSpace 𝓓] where
+  /-- The sampling rule. -/
+  alg : Algorithm 𝓞 𝓐 𝓨
+  /-- The stopping rule: the algorithm stops after `n` rounds if the history of these rounds
+  belongs to `stopSet`. -/
+  stopSet : Set (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)
+  /-- The stopping rule is measurable. -/
+  measurableSet_stopSet : MeasurableSet stopSet
+  /-- The output rule: distribution of the output given the history of the rounds played. -/
+  output : Kernel (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n) 𝓓
+  /-- The output rule is a Markov kernel. -/
+  [isMarkovKernel_output : IsMarkovKernel output]
 
-variable {O : ℕ → Ω → 𝓞} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {S : Set (Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n)} {τ : Ω → ℕ∞} {ω : Ω} {n M : ℕ}
+namespace IdentAlg
+
+variable {A : IdentAlg 𝓞 𝓐 𝓨 𝓓} {env : Environment 𝓞 𝓐 𝓨} {out : Ω → 𝓓} {P : Measure Ω}
+
+instance : IsMarkovKernel A.output := A.isMarkovKernel_output
+
+/-- The law of the output of an identification algorithm in an environment. -/
+noncomputable def outputMeasure (A : IdentAlg 𝓞 𝓐 𝓨 𝓓) (env : Environment 𝓞 𝓐 𝓨) : Measure 𝓓 :=
+  A.output ∘ₘ stoppedHistMeasure A.alg env A.stopSet
+deriving IsProbabilityMeasure
+
+section IsPAC
+
+/-- `A` is *PAC at level `δ`* for the family of environments `env : Θ → Environment 𝓞 𝓐 𝓨` and
+the predicate `bad : Θ → 𝓓 → Prop` if, for every `θ`, the output of `A` in `env θ` is
+`bad θ` with probability at most `δ`.
+See `IsPAC.measureReal_not_good_of_isRun` for the corresponding statement about any run of `A`. -/
+def IsPAC {Θ : Type*} (A : IdentAlg 𝓞 𝓐 𝓨 𝓓) (env : Θ → Environment 𝓞 𝓐 𝓨)
+    (bad : Θ → 𝓓 → Prop) (δ : ℝ) : Prop :=
+  ∀ θ, (A.outputMeasure (env θ)).real {d | bad θ d} ≤ δ
+
+end IsPAC
+
+end IdentAlg
+
 end Learning
 end
 
@@ -228,73 +375,14 @@ end
 section
 open MeasureTheory ProbabilityTheory
 open scoped ENat
-universe u
 namespace Learning
-variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {m𝓞 : MeasurableSpace 𝓞} {Ω : Type*} {mΩ : MeasurableSpace Ω}
-
-/-- An identification algorithm with outputs in `𝓞`: a sampling rule `alg`, a stopping rule
-`stop` (`stop n h`: stop after `n` rounds when their history is `h`) and an output rule `output`
-(the distribution of the output given the history of the `n` rounds played), a Markov kernel. -/
-structure IdentAlg (𝓐 𝓨 𝓞 : Type*) [MeasurableSpace 𝓐] [MeasurableSpace 𝓨]
-    [MeasurableSpace 𝓞] where
-  /-- The sampling rule. -/
-  alg : Algorithm Unit 𝓐 𝓨
-  /-- The stopping rule: `stop n h` means that the algorithm stops after `n` rounds when the
-  history of these rounds is `h`. -/
-  stop : (n : ℕ) → Hist Unit 𝓐 𝓨 n → Prop
-  /-- The stopping rule is measurable. -/
-  measurableSet_stop : ∀ n, MeasurableSet {h | stop n h}
-  /-- The output rule: distribution of the output given the history of the `n` rounds played. -/
-  output : (n : ℕ) → Kernel (Hist Unit 𝓐 𝓨 n) 𝓞
-  /-- The output rules are Markov kernels. -/
-  [isMarkovKernel_output : ∀ n, IsMarkovKernel (output n)]
-
+variable {𝓞 𝓐 𝓨 𝓓 : Type*} {m𝓞 : MeasurableSpace 𝓞} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨} {m𝓓 : MeasurableSpace 𝓓} {Ω : Type*} {mΩ : MeasurableSpace Ω}
 namespace IdentAlg
-variable (A : IdentAlg 𝓐 𝓨 𝓞) (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
-
-/-- The stopping rule of `A` as a set of histories of variable length. -/
-def stopSet : Set (Σ n : ℕ, Hist Unit 𝓐 𝓨 n) := {h | A.stop h.1 h.2}
-
-/-- The stopping time of `A` on the observation, action and feedback processes `O`, `X`, `Y`: the
-number of rounds
-played, that is the first `n` such that the stopping rule fires on the history of the first `n`
-rounds (`⊤` if it never does). It is the stopping time `Learning.stoppingTime` of the stopping
-rule `A.stopSet`. -/
-noncomputable def stoppingTime : Ω → ℕ∞ := Learning.stoppingTime O X Y A.stopSet
-
-/-- The history of the rounds played by `A`, as a history of variable length (of length `0` if
-`A` never stops): the history stopped at `A.stoppingTime O X Y`. -/
-noncomputable def stoppedHist : Ω → Σ n : ℕ, Hist Unit 𝓐 𝓨 n :=
-  Learning.stoppedHist O X Y (A.stoppingTime O X Y)
-
-/-- The output rule of `A` as a single kernel on histories of variable length. -/
-noncomputable def outputKernel : Kernel (Σ n : ℕ, Hist Unit 𝓐 𝓨 n) 𝓞 where
-  toFun h := A.output h.1 h.2
-  measurable' := measurable_sigma_of_measurable_comp_mk fun n ↦ (A.output n).measurable
-
-/-- `(O, X, Y, out)` is a *run* of the identification algorithm `A` in the environment `env` on
-the probability space `(Ω, P)`: the observation, action and feedback processes `O`, `X`, `Y` form
-an algorithm-environment sequence for the sampling rule `A.alg` and `env`, and the output `out` has
-conditional law `A.output` given the history at the stopping time. -/
-structure IsRun (env : Environment Unit 𝓐 𝓨) (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨)
-    (out : Ω → 𝓞) (P : Measure Ω) [IsFiniteMeasure P] : Prop where
-  /-- The actions and feedbacks are generated by the sampling rule in the environment. -/
-  isAlgEnvSeq : IsAlgEnvSeq O X Y A.alg env P
-  /-- The output is drawn from the output rule applied to the history at the stopping time. -/
-  hasCondDistrib_output : HasCondDistrib out (A.stoppedHist O X Y) A.outputKernel P
-
-/-- `A` is *PAC at level `δ`* for the family of environments `env : Θ → Environment Unit 𝓐 𝓨` and
-the goodness predicate `good : Θ → 𝓞 → Prop` if, for every `θ` and every run of `A` in `env θ` on
-a probability space `(Ω, P)`, the output is `good θ` with probability at least `1 - δ`. -/
-def IsPAC {Θ : Type*} (env : Θ → Environment Unit 𝓐 𝓨) (good : Θ → 𝓞 → Prop) (δ : ℝ) : Prop :=
-  ∀ θ, ∀ {Ω : Type u} {_mΩ : MeasurableSpace Ω} (P : Measure Ω) [IsProbabilityMeasure P]
-    (O : ℕ → Ω → Unit) (X : ℕ → Ω → 𝓐) (Y : ℕ → Ω → 𝓨) (out : Ω → 𝓞),
-    A.IsRun (env θ) O X Y out P →
-    1 - δ ≤ P.real {ω | good θ (out ω)}
+variable {A : IdentAlg 𝓞 𝓐 𝓨 𝓓} {T : ℕ} {O : ℕ → Ω → 𝓞} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
 
 /-- `A` is a *fixed-budget* algorithm with budget `T` if its stopping rule is "stop after exactly
 `T` rounds". -/
-def IsFixedBudget (T : ℕ) : Prop := A.stop = fun n _ ↦ n = T
+def IsFixedBudget (A : IdentAlg 𝓞 𝓐 𝓨 𝓓) (T : ℕ) : Prop := A.stopSet = {h | h.1 = T}
 
 end IdentAlg
 end Learning
@@ -306,7 +394,7 @@ open MeasureTheory ProbabilityTheory
 open scoped RealInnerProductSpace NNReal
 universe u
 namespace Learning.LinearBandit
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
 
 /-- Reward kernel of the linear Gaussian bandit on `𝒳` with reward vector `θ`: playing `x` gives an
 observation with law `N(⟪x, θ⟫, 1)`. -/
@@ -332,13 +420,12 @@ noncomputable def linearGaussianEnv (𝒳 : Set E) (θ : E) : Environment Unit �
 noncomputable def simpleRegret (𝒳 : Set E) (θ x : E) : ℝ :=
   (⨆ y : 𝒳, ⟪(y : E), θ⟫) - ⟪x, θ⟫
 
-/-- An identification algorithm (with actions in `𝒳`, real observations and recommendations in
+/-- An identification algorithm (with actions in `𝒳`, real feedbacks and recommendations in
 `𝒳`) is `(ε, δ)`-PAC on `𝒳` if for every reward vector `θ`, run against the linear Gaussian
-environment `linearGaussianEnv 𝒳 θ`, its recommendation has simple regret at most `ε` with
-probability at least `1 - δ`, for every run on every probability space `Ω` in the universe of `E`
-(the universe in which runs of `A` can be constructed, see `IdentAlg.exists_isRun`). -/
-def IsPAC (𝒳 : Set E) (A : IdentAlg 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
-  A.IsPAC.{u} (linearGaussianEnv 𝒳) (fun θ x ↦ simpleRegret 𝒳 θ x ≤ ε) δ
+environment `linearGaussianEnv 𝒳 θ`, its recommendation has simple regret more than `ε` with
+probability at most `δ`. -/
+def IsPAC (𝒳 : Set E) (A : IdentAlg Unit 𝒳 ℝ 𝒳) (ε δ : ℝ) : Prop :=
+  A.IsPAC (linearGaussianEnv 𝒳) (fun θ x ↦ ε < simpleRegret 𝒳 θ x) δ
 
 end Learning.LinearBandit
 end
@@ -356,7 +443,7 @@ budget `T` which is `(ε, δ)`-PAC on a spanning compact action set `𝒳 ⊆ �
 theorem le_budget_of_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 : IsCompact 𝒳)
     (hspan : Submodule.span ℝ 𝒳 = ⊤) (hd : 2 ≤ Fintype.card ι)
     {ε δ : ℝ} (hε : 0 < ε) (hδ : δ ∈ Set.Ioo 0 (1 / 16)) {T : ℕ}
-    (A : IdentAlg 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T) (hpac : IsPAC 𝒳 A ε δ) :
+    (A : IdentAlg Unit 𝒳 ℝ 𝒳) (hA : A.IsFixedBudget T) (hpac : IsPAC 𝒳 A ε δ) :
     Fintype.card ι * log (1 / δ) / (20000 * ε ^ 2) ≤ T := sorry
 
 end Maiti2026Power

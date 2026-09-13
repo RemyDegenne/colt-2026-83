@@ -486,6 +486,34 @@ status:
     tags, the comparator challenges (regenerated with the referee) and CI were updated
     accordingly. The repository name `colt-2026-83` and its URLs are unchanged.
 
+    Twenty-third area (2026-09-13): **the project uses LML's identification algorithms.** LML
+    now defines `Learning.IdentAlg 𝓞 𝓐 𝓨 𝓓` (`SequentialLearning/IdentificationAlg.lean`: a
+    sampling rule, a measurable stopping rule `stopSet` on histories of variable length and a
+    Markov output kernel on histories of variable length), the stopping time
+    `hittingAfter (sigmaHistory O X Y) S 0` and stopped history `stoppedValue` of a stopping
+    rule, the law `stoppedHistMeasure` of the stopped history, runs `IdentAlg.IsRun`, the law of
+    the output `IdentAlg.outputMeasure` and the PAC property `IdentAlg.IsPAC` (a bound on the
+    probability of a *bad* output under that law). The local `IdentAlg` structure, stopping
+    time, stopped history, run and PAC definitions, and the local sigma-type measurability
+    file were deleted in favour of LML's; `Maiti2026Power/LeanMachineLearning/IdentAlg.lean` now
+    only holds fixed budgets and fixed designs (`IsFixedBudget`, `fixedBudget` — its output rule
+    on histories of length `T` is `A.output.comap (Sigma.mk T) _`, `IsFixedDesign`,
+    `fixedDesignAlg`, and the fixed-budget run lemmas), `Run.lean` the transport of runs and the
+    canonical run `IdentAlg.runMeasure` of *every* identification algorithm (which replaces the
+    fixed-budget-only `fixedBudgetRunMeasure`) with the criterion `IsPAC.of_forall_isRun`, and
+    `StoppedHistory.lean`/`DivergenceDecomposition.lean` restate the stopped-history layer and
+    the divergence decomposition at a stopping time on LML's `sigmaHistory`, Mathlib's
+    `hittingAfter`, `stoppedValue` and `stoppedProcess` (the history stopped at time `M`).
+    `LinearBandit.IsPAC 𝒳 A ε δ` is now `A.IsPAC (linearGaussianEnv 𝒳) (fun θ x ↦ ε <
+    simpleRegret 𝒳 θ x) δ`, a statement about the law of the recommendation with no universe
+    parameter, with the run forms `IsPAC.le_measureReal_of_isRun` and
+    `isPAC_of_forall_isRun`; all PAC lemmas were flipped to the badness form
+    (`IsPAC.measureReal_bad_of_isAlgEnvSeqUntil`, `IsPAC.measureReal_bad_action_succ_of_testAlg`,
+    `SeededAlg.isPAC_fixedBudget_deterministic`, `PhasedAlg.isPAC_toIdentAlg`, `IsAccurateNormEst`).
+    The blueprint tags and text, and the comparator challenges (whose vendored LML block now
+    also carries the trajectory measure, `sigmaHistory`, `stoppedHistMeasure` and `IdentAlg`)
+    were updated; `scripts/comparator-verify.sh` has not been rerun since.
+
     Not yet formalized: the remaining prerequisites of Part II of the blueprint
     (continuity/attainment of the width, the sub-Gaussian generality of Median Elimination,
     Gaussian quadratic forms, the sequential composition lemma `lem:composition`, which is no
@@ -650,16 +678,21 @@ fidelity:
     `EuclideanSpace ℝ ι` (d = card ι); the paper's standing spanning assumption
     `span 𝒳 = ℝ^d` is an explicit hypothesis of the results that need it, so that the
     non-spanning structured sets (multi-task sets) are covered. An identification algorithm
-    (`Learning.IdentAlg`) is an LML `Learning.Algorithm 𝒳 ℝ` (a sequence of policy kernels) with
-    a measurable *stopping rule* on finite histories and an *output kernel* from histories to
-    recommendations; the number of rounds played is the hitting time (`hittingAfter`) of the
-    stopping rule by the process of histories. A run of the algorithm on a probability space is
-    an LML algorithm-environment sequence (`Learning.IsAlgEnvSeq`) together with an output whose
-    conditional law given the history at the stopping time is the output rule
-    (`IdentAlg.IsRun`); PAC quantifies over all runs on all probability spaces. The paper's
-    algorithms have a fixed budget T (stopping rule "stop after exactly T rounds",
-    `IdentAlg.IsFixedBudget`); the definition also covers fixed-confidence algorithms. Time is
-    0-indexed.
+    (LML `Learning.IdentAlg Unit 𝒳 ℝ 𝒳`, since 2026-09-13) is an LML
+    `Learning.Algorithm Unit 𝒳 ℝ` (a sequence of policy kernels) with a measurable *stopping
+    rule* (a set of histories of variable length) and an *output kernel* from histories of
+    variable length to recommendations; the number of rounds played is the hitting time
+    (`hittingAfter`) of the stopping rule by the process of histories. A run of the algorithm on
+    a probability space is an LML algorithm-environment sequence (`Learning.IsAlgEnvSeq`)
+    together with an output whose conditional law given the history at the stopping time is the
+    output rule (`IdentAlg.IsRun`); the law of the output is the same for all runs
+    (`IdentAlg.outputMeasure`), and PAC (`IdentAlg.IsPAC`) says that under this law the
+    recommendation has simple regret more than ε with probability at most δ — equivalently
+    (`LinearBandit.isPAC_of_forall_isRun`, `IsPAC.le_measureReal_of_isRun`), for every run on
+    every probability space of the universe of the action set, simple regret at most ε with
+    probability at least 1 - δ. The paper's algorithms have a fixed budget T (stopping rule
+    "stop after exactly T rounds", `IdentAlg.IsFixedBudget`); the definition also covers
+    fixed-confidence algorithms. Time is 0-indexed.
 
     2. Non-adaptive algorithms are deterministic fixed designs with an arbitrary, possibly
     randomized, recommendation kernel (the class of the paper's Theorem 3); the paper's Theorem 7

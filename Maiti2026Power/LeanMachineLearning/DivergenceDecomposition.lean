@@ -24,26 +24,30 @@ environments.
 
 Let `alg` be an algorithm and `env, env'` two environments, and consider two algorithm-environment
 sequences of `alg` against these environments, on arbitrary probability spaces. For a stopping
-rule `S` with stopping time `τ = stoppingTime O X Y S` (the number of rounds played), the
-divergence between the laws of the histories stopped at `min τ M` is the sum over the rounds
-`t < M` of the conditional divergences of the step at round `t`, on the event `{t < τ}`
-(`IsAlgEnvSeq.klDiv_map_stoppedHist_min_stepKernel`, a chain rule: the observation and policy
-kernels are shared and only the feedback kernels differ), and when `τ` is almost surely finite
-under both laws, the divergence between the laws of the stopped histories is the series of these
-terms (`IsAlgEnvSeq.klDiv_map_stoppedHist_stepKernel`).
+rule `S` with stopping time `τ = hittingAfter (sigmaHistory O X Y) S 0` (the number of rounds
+played), the divergence between the laws of the histories stopped at time `M`
+(Mathlib's `stoppedProcess`, the histories of the first `min τ M` rounds) is the sum over the
+rounds `t < M` of the conditional divergences of the step at round `t`, on the event `{t < τ}`
+(`IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory_stepKernel`, a chain rule: the observation
+and policy kernels are shared and only the feedback kernels differ), and when `τ` is almost
+surely finite under both laws, the divergence between the laws of the stopped histories
+(`stoppedValue`) is the series of these terms
+(`IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_stepKernel`).
 
 For two stationary environments with reward kernels `κ, κ'` (environments without observations),
 the conditional divergence of a step is the conditional divergence of the reward given the played
 action. This is the *divergence decomposition* of bandit lower bounds, in composition-product form
-(`klDiv_map_stoppedHist_min_compProd`, `klDiv_map_stoppedHist_compProd`, on arbitrary measurable
-spaces) and in integral form (`klDiv_map_stoppedHist_min`, `klDiv_map_stoppedHist`, when `𝓨` is
-countably generated), the latter reading
-`klDiv (P.map (stoppedHist O X Y τ)) (P'.map (stoppedHist O' X' Y' τ'))
+(`klDiv_map_stoppedProcess_sigmaHistory_compProd`, `klDiv_map_stoppedValue_sigmaHistory_compProd`,
+on arbitrary measurable spaces) and in integral form (`klDiv_map_stoppedProcess_sigmaHistory`,
+`klDiv_map_stoppedValue_sigmaHistory`, when `𝓨` is countably generated), the latter reading
+`klDiv (P.map (stoppedValue (sigmaHistory O X Y) τ))
+    (P'.map (stoppedValue (sigmaHistory O' X' Y') τ'))
   = ∫⁻ ω, ∑ t < τ ω, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P`
 for an almost surely finite stopping time.
 
 The bounded stopping-time version is proved by induction on `M`: the law of the history stopped
-at `min τ (M + 1)` splits according to whether `τ ≤ M` (`map_stoppedHist_min_succ_eq_add`), the
+at time `M + 1` splits according to whether `τ ≤ M`
+(`map_stoppedProcess_sigmaHistory_succ_eq_add`), the
 divergence is additive over disjoint supports (`klDiv_add_add_of_measure_eq_zero`) and the chain
 rule `klDiv_compProd_eq_add` handles the step at round `M`. The almost surely finite version
 follows by monotone convergence (`klDiv_eq_iSup_restrict`) and the data-processing inequality,
@@ -118,42 +122,48 @@ against two environments `env`, `env'`, and a stopping rule `S` with stopping ti
 divergence between the laws of the histories stopped at `min τ M` is the sum over the rounds
 `t < M` of the conditional divergences, on the event `{t < τ}`, of the step at round `t` given
 the first `t` rounds (composition-product form). -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist_min_stepKernel (h : IsAlgEnvSeq O X Y alg env P)
+lemma IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory_stepKernel (h : IsAlgEnvSeq O X Y alg env P)
     (h' : IsAlgEnvSeq O' X' Y' alg env' P') (hS : MeasurableSet S) (M : ℕ) :
-    klDiv (P.map (stoppedHist O X Y fun ω ↦ min (stoppingTime O X Y S ω) M))
-        (P'.map (stoppedHist O' X' Y' fun ω ↦ min (stoppingTime O' X' Y' S ω) M)) =
+    klDiv (P.map (stoppedProcess (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0) M))
+        (P'.map (stoppedProcess (sigmaHistory O' X' Y')
+          (hittingAfter (sigmaHistory O' X' Y') S 0) M)) =
       ∑ t ∈ range M,
-        klDiv ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (history O X Y t) ⊗ₘ
-            stepKernel alg env t)
-          ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (history O X Y t) ⊗ₘ
-            stepKernel alg env' t) := by
+        klDiv ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (history O X Y t) ⊗ₘ stepKernel alg env t)
+          ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (history O X Y t) ⊗ₘ stepKernel alg env' t) := by
   have hO := h.measurable_obs
   have hX := h.measurable_action
   have hY := h.measurable_feedback
   have hO' := h'.measurable_obs
   have hX' := h'.measurable_action
   have hY' := h'.measurable_feedback
+  have hτm := measurable_hittingAfter_sigmaHistory hO hX hY hS
+  have hτm' := measurable_hittingAfter_sigmaHistory hO' hX' hY' hS
   induction M with
-  | zero => rw [map_stoppedHist_min_zero, map_stoppedHist_min_zero, klDiv_self, sum_range_zero]
+  | zero =>
+    rw [map_stoppedProcess_sigmaHistory_zero, map_stoppedProcess_sigmaHistory_zero, klDiv_self,
+      sum_range_zero]
   | succ M ih =>
-    have hB : MeasurableSet {h : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n | h.1 ≤ M} := measurableSet_fst_le M
-    rw [sum_range_succ, ← ih, map_stoppedHist_min_succ_eq_add hO hX hY hS (P := P) M,
-      map_stoppedHist_min_succ_eq_add hO' hX' hY' hS (P := P') M,
-      map_stoppedHist_min_eq_add hO hX hY hS (P := P) M,
-      map_stoppedHist_min_eq_add hO' hX' hY' hS (P := P') M,
+    have hB : MeasurableSet {h : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n | h.1 ≤ M} := measurableSet_sigma_fst_le M
+    rw [sum_range_succ, ← ih, map_stoppedProcess_sigmaHistory_succ_eq_add hO hX hY hτm (P := P) M,
+      map_stoppedProcess_sigmaHistory_succ_eq_add hO' hX' hY' hτm' (P := P') M,
+      map_stoppedProcess_sigmaHistory_eq_add hO hX hY hτm (P := P) M,
+      map_stoppedProcess_sigmaHistory_eq_add hO' hX' hY' hτm' (P := P') M,
       klDiv_add_add_of_measure_eq_zero hB
-        (map_restrict_stoppedHist_min_apply_compl_fst_le hO hX hY hS _ M)
-        (map_restrict_stoppedHist_min_apply_compl_fst_le hO' hX' hY' hS _ M)
-        (map_sigmaMk_succ_apply_fst_le _) (map_sigmaMk_succ_apply_fst_le _),
+        (map_restrict_stoppedProcess_sigmaHistory_apply_compl_fst_le hO hX hY hτm _ M)
+        (map_restrict_stoppedProcess_sigmaHistory_apply_compl_fst_le hO' hX' hY' hτm' _ M)
+        (Measure.map_sigmaMk_succ_apply_fst_le _) (Measure.map_sigmaMk_succ_apply_fst_le _),
       klDiv_add_add_of_measure_eq_zero hS
-        (map_restrict_stoppingTime_le_stoppedHist_min_apply_compl hO hX hY hS M)
-        (map_restrict_stoppingTime_le_stoppedHist_min_apply_compl hO' hX' hY' hS M)
-        (map_restrict_lt_stoppingTime_map_sigmaMk_apply hO hX hY hS M)
-        (map_restrict_lt_stoppingTime_map_sigmaMk_apply hO' hX' hY' hS M),
+        (map_restrict_hittingAfter_sigmaHistory_le_stoppedProcess_apply_compl hO hX hY hS M)
+        (map_restrict_hittingAfter_sigmaHistory_le_stoppedProcess_apply_compl hO' hX' hY' hS M)
+        (map_restrict_lt_hittingAfter_sigmaHistory_map_sigmaMk_apply hO hX hY hS M)
+        (map_restrict_lt_hittingAfter_sigmaHistory_map_sigmaMk_apply hO' hX' hY' hS M),
       klDiv_map_measurableEmbedding _ _ (measurableEmbedding_sigma_mk (M + 1)),
       klDiv_map_measurableEmbedding _ _ (measurableEmbedding_sigma_mk M),
-      h.map_history_succ_restrict_lt_stoppingTime hS M,
-      h'.map_history_succ_restrict_lt_stoppingTime hS M, klDiv_map_measurableEquiv, add_assoc]
+      h.map_history_succ_restrict_lt_hittingAfter_sigmaHistory hS M,
+      h'.map_history_succ_restrict_lt_hittingAfter_sigmaHistory hS M, klDiv_map_measurableEquiv,
+      add_assoc]
     congr 1
     exact klDiv_compProd_eq_add _ _ _ _
 
@@ -162,32 +172,34 @@ algorithm `alg` run against two environments `env`, `env'`, and a stopping rule 
 time is almost surely finite under both laws, the divergence between the laws of the stopped
 histories is the series over the rounds `t` of the conditional divergences, on the event
 `{t < τ}`, of the step at round `t` given the first `t` rounds (composition-product form). -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist_stepKernel (h : IsAlgEnvSeq O X Y alg env P)
+lemma IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_stepKernel (h : IsAlgEnvSeq O X Y alg env P)
     (h' : IsAlgEnvSeq O' X' Y' alg env' P') (hS : MeasurableSet S)
-    (hτ : ∀ᵐ ω ∂P, stoppingTime O X Y S ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', stoppingTime O' X' Y' S ω ≠ ⊤) :
-    klDiv (P.map (stoppedHist O X Y (stoppingTime O X Y S)))
-        (P'.map (stoppedHist O' X' Y' (stoppingTime O' X' Y' S))) =
+    (hτ : ∀ᵐ ω ∂P, hittingAfter (sigmaHistory O X Y) S 0 ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', hittingAfter (sigmaHistory O' X' Y') S 0 ω ≠ ⊤) :
+    klDiv (P.map (stoppedValue (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0)))
+        (P'.map (stoppedValue (sigmaHistory O' X' Y') (hittingAfter (sigmaHistory O' X' Y') S 0))) =
       ∑' t : ℕ,
-        klDiv ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (history O X Y t) ⊗ₘ
-            stepKernel alg env t)
-          ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (history O X Y t) ⊗ₘ
-            stepKernel alg env' t) := by
+        klDiv ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (history O X Y t) ⊗ₘ stepKernel alg env t)
+          ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (history O X Y t) ⊗ₘ stepKernel alg env' t) := by
   have hO := h.measurable_obs
   have hX := h.measurable_action
   have hY := h.measurable_feedback
   have hO' := h'.measurable_obs
   have hX' := h'.measurable_action
   have hY' := h'.measurable_feedback
-  have hτm := measurable_stoppingTime hO hX hY hS
-  have hτm' := measurable_stoppingTime hO' hX' hY' hS
+  have hτm := measurable_hittingAfter_sigmaHistory hO hX hY hS
+  have hτm' := measurable_hittingAfter_sigmaHistory hO' hX' hY' hS
   have hB : ∀ M, MeasurableSet {h : Σ n : ℕ, Hist 𝓞 𝓐 𝓨 n | h.1 < M} :=
-    measurableSet_fst_lt
+    measurableSet_sigma_fst_lt
   rw [ENNReal.tsum_eq_iSup_nat]
-  simp_rw [← h.klDiv_map_stoppedHist_min_stepKernel h' hS,
-    map_stoppedHist_min_eq_map_truncHist hO hX hY hτm hτ,
-    map_stoppedHist_min_eq_map_truncHist hO' hX' hY' hτm' hτ']
-  set μ := P.map (stoppedHist O X Y (stoppingTime O X Y S)) with hμ
-  set ν := P'.map (stoppedHist O' X' Y' (stoppingTime O' X' Y' S)) with hν
+  simp_rw [← h.klDiv_map_stoppedProcess_sigmaHistory_stepKernel h' hS,
+    map_stoppedProcess_sigmaHistory_eq_map_truncHist hO hX hY hτm hτ,
+    map_stoppedProcess_sigmaHistory_eq_map_truncHist hO' hX' hY' hτm' hτ']
+  set μ := P.map (stoppedValue (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0)) with hμ
+  set ν := P'.map (stoppedValue (sigmaHistory O' X' Y') (hittingAfter (sigmaHistory O' X' Y') S 0))
+    with hν
   refine le_antisymm ?_ (iSup_le fun M ↦ klDiv_map_le _ _ (measurable_truncHist M))
   rw [klDiv_eq_iSup_restrict hB (fun M N hMN h hh ↦ lt_of_lt_of_le hh hMN) (by
     ext h
@@ -218,6 +230,16 @@ lemma sum_ite_lt_eq_sum_range_toNat_min {β : Type*} [AddCommMonoid β] (f : ℕ
     · rw [min_eq_right (by exact_mod_cast hkM), ENat.toNat_natCast]
       omega
 
+omit m𝓞 m𝓐 m𝓨 in
+/-- A series of terms which vanish unless `t < τ`, for a finite `τ`, is a sum over `t < τ`. -/
+lemma tsum_ite_lt_eq_sum_range_toNat {β : Type*} [AddCommMonoid β] [TopologicalSpace β]
+    (f : ℕ → β) {τ : ℕ∞} (hτ : τ ≠ ⊤) :
+    ∑' t : ℕ, (if (t : ℕ∞) < τ then f t else 0) = ∑ t ∈ range τ.toNat, f t := by
+  obtain ⟨k, rfl⟩ := ENat.ne_top_iff_exists.1 hτ
+  simp_rw [ENat.natCast_lt_natCast, ENat.toNat_natCast]
+  rw [tsum_eq_sum (s := range k) fun t ht ↦ ite_eq_right (by simpa using ht)]
+  exact sum_congr rfl fun t ht ↦ ite_eq_left (mem_range.1 ht)
+
 section StationaryEnv
 
 /-! ### The divergence decomposition for stationary environments
@@ -232,39 +254,44 @@ composition-product form. For an algorithm `alg` run against two stationary envi
 reward kernels `κ` and `κ'`, and a stopping rule `S` with stopping time `τ`, the divergence
 between the laws of the histories stopped at `min τ M` is the sum over the rounds `t < M` of the
 conditional divergences of the reward kernels given the played action, on the event `{t < τ}`. -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist_min_compProd
+lemma IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory_compProd
     (h : IsAlgEnvSeq O X Y alg (stationaryEnv κ) P)
     (h' : IsAlgEnvSeq O' X' Y' alg (stationaryEnv κ') P') (hS : MeasurableSet S) (M : ℕ) :
-    klDiv (P.map (stoppedHist O X Y fun ω ↦ min (stoppingTime O X Y S ω) M))
-        (P'.map (stoppedHist O' X' Y' fun ω ↦ min (stoppingTime O' X' Y' S ω) M)) =
+    klDiv (P.map (stoppedProcess (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0) M))
+        (P'.map (stoppedProcess (sigmaHistory O' X' Y')
+          (hittingAfter (sigmaHistory O' X' Y') S 0) M)) =
       ∑ t ∈ range M,
-        klDiv ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (X t) ⊗ₘ κ)
-          ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (X t) ⊗ₘ κ') := by
-  rw [h.klDiv_map_stoppedHist_min_stepKernel h' hS M]
+        klDiv ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (X t) ⊗ₘ κ)
+          ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (X t) ⊗ₘ κ') := by
+  rw [h.klDiv_map_stoppedProcess_sigmaHistory_stepKernel h' hS M]
   refine sum_congr rfl fun t _ ↦ ?_
-  have h_obs := h.map_history_obs_restrict_lt_stoppingTime hS t
+  have h_obs := h.map_history_obs_restrict_lt_hittingAfter_sigmaHistory hS t
   rw [obs_stationaryEnv] at h_obs
   rw [stepKernel_stationaryEnv, stepKernel_stationaryEnv,
     klDiv_compProd_compProd_compProd_prodMkLeft_eq_klDiv_comp_compProd, ← h_obs,
-    ← h.map_action_restrict_lt_stoppingTime hS t]
+    ← h.map_action_restrict_lt_hittingAfter_sigmaHistory hS t]
 
 /-- **Divergence decomposition for histories stopped at a bounded stopping time**, integral
 form: the divergence between the laws of the histories stopped at `min τ M` is the expected sum,
 along the first trajectory, of the divergences of the reward kernels at the actions played before
 `min τ M`. -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist_min [MeasurableSpace.CountablyGenerated 𝓨]
+lemma IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory [MeasurableSpace.CountablyGenerated 𝓨]
     (h : IsAlgEnvSeq O X Y alg (stationaryEnv κ) P)
     (h' : IsAlgEnvSeq O' X' Y' alg (stationaryEnv κ') P') (hS : MeasurableSet S) (M : ℕ) :
-    klDiv (P.map (stoppedHist O X Y fun ω ↦ min (stoppingTime O X Y S ω) M))
-        (P'.map (stoppedHist O' X' Y' fun ω ↦ min (stoppingTime O' X' Y' S ω) M)) =
-      ∫⁻ ω, ∑ t ∈ range (min (stoppingTime O X Y S ω) M).toNat,
+    klDiv (P.map (stoppedProcess (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0) M))
+        (P'.map (stoppedProcess (sigmaHistory O' X' Y')
+          (hittingAfter (sigmaHistory O' X' Y') S 0) M)) =
+      ∫⁻ ω, ∑ t ∈ range (ENat.toNat (min (hittingAfter (sigmaHistory O X Y) S 0 ω) M)),
         klDiv (κ (X t ω)) (κ' (X t ω)) ∂P := by
   have hX := h.measurable_action
   have hmeas : ∀ t, Measurable fun ω ↦ klDiv (κ (X t ω)) (κ' (X t ω)) := fun t ↦
     (measurable_klDiv_kernel κ κ').comp (hX t)
-  have hlt : ∀ t : ℕ, MeasurableSet {ω | (t : ℕ∞) < stoppingTime O X Y S ω} :=
-    measurableSet_lt_stoppingTime h.measurable_obs hX h.measurable_feedback hS
-  rw [h.klDiv_map_stoppedHist_min_compProd h' hS M]
+  have hlt : ∀ t : ℕ,
+      MeasurableSet {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω} :=
+    measurableSet_lt_hittingAfter_sigmaHistory h.measurable_obs hX h.measurable_feedback hS
+  rw [h.klDiv_map_stoppedProcess_sigmaHistory_compProd h' hS M]
   simp_rw [klDiv_compProd_right_eq_lintegral, lintegral_map (measurable_klDiv_kernel κ κ') (hX _),
     ← lintegral_indicator (hlt _)]
   rw [← lintegral_finsetSum _ fun t _ ↦ (hmeas t).indicator (hlt t)]
@@ -278,48 +305,53 @@ reward kernels `κ` and `κ'`, and a stopping rule `S` whose stopping time is al
 under both laws, the divergence between the laws of the stopped histories is the series over the
 rounds `t` of the conditional divergences of the reward kernels given the played action, on the
 event `{t < τ}`. -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist_compProd (h : IsAlgEnvSeq O X Y alg (stationaryEnv κ) P)
+lemma IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_compProd
+    (h : IsAlgEnvSeq O X Y alg (stationaryEnv κ) P)
     (h' : IsAlgEnvSeq O' X' Y' alg (stationaryEnv κ') P') (hS : MeasurableSet S)
-    (hτ : ∀ᵐ ω ∂P, stoppingTime O X Y S ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', stoppingTime O' X' Y' S ω ≠ ⊤) :
-    klDiv (P.map (stoppedHist O X Y (stoppingTime O X Y S)))
-        (P'.map (stoppedHist O' X' Y' (stoppingTime O' X' Y' S))) =
-      ∑' t : ℕ, klDiv ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (X t) ⊗ₘ κ)
-        ((P.restrict {ω | (t : ℕ∞) < stoppingTime O X Y S ω}).map (X t) ⊗ₘ κ') := by
-  rw [h.klDiv_map_stoppedHist_stepKernel h' hS hτ hτ']
+    (hτ : ∀ᵐ ω ∂P, hittingAfter (sigmaHistory O X Y) S 0 ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', hittingAfter (sigmaHistory O' X' Y') S 0 ω ≠ ⊤) :
+    klDiv (P.map (stoppedValue (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0)))
+        (P'.map (stoppedValue (sigmaHistory O' X' Y') (hittingAfter (sigmaHistory O' X' Y') S 0))) =
+      ∑' t : ℕ,
+        klDiv ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (X t) ⊗ₘ κ)
+          ((P.restrict {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω}).map
+            (X t) ⊗ₘ κ') := by
+  rw [h.klDiv_map_stoppedValue_sigmaHistory_stepKernel h' hS hτ hτ']
   refine tsum_congr fun t ↦ ?_
-  have h_obs := h.map_history_obs_restrict_lt_stoppingTime hS t
+  have h_obs := h.map_history_obs_restrict_lt_hittingAfter_sigmaHistory hS t
   rw [obs_stationaryEnv] at h_obs
   rw [stepKernel_stationaryEnv, stepKernel_stationaryEnv,
     klDiv_compProd_compProd_compProd_prodMkLeft_eq_klDiv_comp_compProd, ← h_obs,
-    ← h.map_action_restrict_lt_stoppingTime hS t]
+    ← h.map_action_restrict_lt_hittingAfter_sigmaHistory hS t]
 
 /-- **Divergence decomposition for histories stopped at an almost surely finite stopping time**,
 integral form: the divergence between the laws of the stopped histories is the expected sum,
 along the first trajectory, of the divergences of the reward kernels at the actions played before
 stopping. -/
-lemma IsAlgEnvSeq.klDiv_map_stoppedHist [MeasurableSpace.CountablyGenerated 𝓨]
+lemma IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory [MeasurableSpace.CountablyGenerated 𝓨]
     (h : IsAlgEnvSeq O X Y alg (stationaryEnv κ) P)
     (h' : IsAlgEnvSeq O' X' Y' alg (stationaryEnv κ') P') (hS : MeasurableSet S)
-    (hτ : ∀ᵐ ω ∂P, stoppingTime O X Y S ω ≠ ⊤) (hτ' : ∀ᵐ ω ∂P', stoppingTime O' X' Y' S ω ≠ ⊤) :
-    klDiv (P.map (stoppedHist O X Y (stoppingTime O X Y S)))
-        (P'.map (stoppedHist O' X' Y' (stoppingTime O' X' Y' S))) =
-      ∫⁻ ω, ∑ t ∈ range (stoppingTime O X Y S ω).toNat, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P := by
+    (hτ : ∀ᵐ ω ∂P, hittingAfter (sigmaHistory O X Y) S 0 ω ≠ ⊤)
+    (hτ' : ∀ᵐ ω ∂P', hittingAfter (sigmaHistory O' X' Y') S 0 ω ≠ ⊤) :
+    klDiv (P.map (stoppedValue (sigmaHistory O X Y) (hittingAfter (sigmaHistory O X Y) S 0)))
+        (P'.map (stoppedValue (sigmaHistory O' X' Y') (hittingAfter (sigmaHistory O' X' Y') S 0))) =
+      ∫⁻ ω, ∑ t ∈ range (ENat.toNat (hittingAfter (sigmaHistory O X Y) S 0 ω)),
+        klDiv (κ (X t ω)) (κ' (X t ω)) ∂P := by
   have hX := h.measurable_action
   have hmeas : ∀ t, Measurable fun ω ↦ klDiv (κ (X t ω)) (κ' (X t ω)) := fun t ↦
     (measurable_klDiv_kernel κ κ').comp (hX t)
-  have hlt : ∀ t : ℕ, MeasurableSet {ω | (t : ℕ∞) < stoppingTime O X Y S ω} :=
-    measurableSet_lt_stoppingTime h.measurable_obs hX h.measurable_feedback hS
-  rw [h.klDiv_map_stoppedHist_compProd h' hS hτ hτ']
+  have hlt : ∀ t : ℕ,
+      MeasurableSet {ω | (t : WithTop ℕ) < hittingAfter (sigmaHistory O X Y) S 0 ω} :=
+    measurableSet_lt_hittingAfter_sigmaHistory h.measurable_obs hX h.measurable_feedback hS
+  rw [h.klDiv_map_stoppedValue_sigmaHistory_compProd h' hS hτ hτ']
   simp_rw [klDiv_compProd_right_eq_lintegral, lintegral_map (measurable_klDiv_kernel κ κ') (hX _),
     ← lintegral_indicator (hlt _)]
   rw [← lintegral_tsum fun t ↦ ((hmeas t).indicator (hlt t)).aemeasurable]
   refine lintegral_congr_ae ?_
   filter_upwards [hτ] with ω hω
-  obtain ⟨k, hk⟩ := ENat.ne_top_iff_exists.1 hω
-  simp_rw [Set.indicator_apply, Set.mem_ofPred_eq, ← hk, ENat.natCast_lt_natCast,
-    ENat.toNat_natCast]
-  rw [tsum_eq_sum (s := range k) fun t ht ↦ ite_eq_right (by simpa using ht)]
-  exact sum_congr rfl fun t ht ↦ ite_eq_left (mem_range.1 ht)
+  simp_rw [Set.indicator_apply, Set.mem_ofPred_eq]
+  exact tsum_ite_lt_eq_sum_range_toNat (fun t ↦ klDiv (κ (X t ω)) (κ' (X t ω))) hω
 
 end StationaryEnv
 

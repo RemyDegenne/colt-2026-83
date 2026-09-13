@@ -39,7 +39,7 @@ theorem exists_isFixedDesign_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 :
     (hne : 𝒳.Nonempty) (hspan : Submodule.span ℝ 𝒳 = ⊤)
     {ε δ : ℝ} (hε : ε ∈ Set.Ioc 0 1) (hδ : δ ∈ Set.Ioo 0 1) :
     ∃ T : ℕ, (T : ℝ) ≤ 600 * (gw 𝒳 ^ 2 + Fintype.card ι * log (2 / δ)) / ε ^ 2 + 1 ∧
-      ∃ A : IdentAlg 𝒳 ℝ 𝒳, A.IsFixedBudget T ∧ A.IsFixedDesign ∧ IsPAC 𝒳 A ε δ := by
+      ∃ A : IdentAlg Unit 𝒳 ℝ 𝒳, A.IsFixedBudget T ∧ A.IsFixedDesign ∧ IsPAC 𝒳 A ε δ := by
   classical
   obtain ⟨R, hR⟩ : ∃ R, ∀ x ∈ 𝒳, ‖x‖ ≤ R := by
     obtain ⟨r, hr⟩ := h𝒳.isBounded.subset_closedBall (0 : EuclideanSpace ℝ ι)
@@ -63,7 +63,7 @@ theorem exists_isFixedDesign_isPAC (𝒳 : Set (EuclideanSpace ℝ ι)) (h𝒳 :
   · -- degenerate case `d = 0`: every reward vector is `0` and every recommendation is optimal
     refine ⟨fixedDesignIdentAlg T (fun _ ↦ ⟨x₀, hx₀⟩) (fun _ ↦ ⟨x₀, hx₀⟩) measurable_const,
       isFixedBudget_fixedDesignIdentAlg, isFixedDesign_fixedDesignIdentAlg, ?_⟩
-    intro θ Ω _ P _ O X Y out hrun
+    refine isPAC_of_forall_isRun fun θ Ω _ P _ O X Y out hrun ↦ ?_
     have hθ : θ = 0 := by
       ext i
       exact isEmptyElim i

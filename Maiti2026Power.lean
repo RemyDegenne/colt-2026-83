@@ -107,7 +107,7 @@ public import Maiti2026Power.Mathlib.Matrix.Loewner
 public import Maiti2026Power.Mathlib.Matrix.LoewnerInv
 public import Maiti2026Power.Mathlib.Matrix.TraceInv
 public import Maiti2026Power.Mathlib.MeasureTheory.ApproxArgmax
-public import Maiti2026Power.Mathlib.MeasureTheory.MeasurableSpace.Sigma
+public import Maiti2026Power.Mathlib.MeasureTheory.Measure.Real
 public import Maiti2026Power.Mathlib.MeasureTheory.MixtureMeasure
 public import Maiti2026Power.Mathlib.Order.CiSupFinite
 public import Maiti2026Power.Mathlib.Probability.BorellTIS

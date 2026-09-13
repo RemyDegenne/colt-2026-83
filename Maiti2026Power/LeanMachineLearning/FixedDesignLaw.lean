@@ -14,7 +14,8 @@ public import Maiti2026Power.LeanMachineLearning.Run
 For a fixed-budget identification algorithm `A` (budget `T`) with the fixed design `x` in the
 linear Gaussian environment with reward vector `θ`, the pair (history of the `T` rounds, output)
 has the explicit law
-`fixedDesignPairLaw A x θ = (N(0,1)^T).map (η ↦ (x t, ⟪x t, θ⟫ + η t)_t) ⊗ₘ A.output T`
+`fixedDesignPairLaw A x θ = (N(0,1)^T).map (η ↦ (x t, ⟪x t, θ⟫ + η t)_t) ⊗ₘ ρ` where `ρ` is
+the output rule of `A` on histories of length `T`
 (`IsRun.hasLaw_history_out_of_fixedDesign`, blueprint `lem:fixed_design_law` and
 `def:bayes_prior`). Consequently the PAC property of `A` is a statement about this law
 (`IsPAC.le_measureReal_fixedDesignPairLaw`), which is what the Bayesian lower bound of
@@ -25,8 +26,6 @@ Theorem 3 uses.
 
 open MeasureTheory ProbabilityTheory Learning
 open scoped RealInnerProductSpace
-
-universe u
 
 namespace Learning.LinearBandit
 
@@ -52,17 +51,17 @@ instance (x : Fin T → 𝒳) (θ : E) : IsProbabilityMeasure (fixedDesignHistLa
 
 /-- The joint law of (history of the `T` rounds, output) of the fixed-budget algorithm `A` with
 the fixed design `x` in the linear Gaussian environment with reward vector `θ`. -/
-noncomputable def fixedDesignPairLaw (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
+noncomputable def fixedDesignPairLaw (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
     Measure (Hist Unit 𝒳 ℝ T × 𝒳) :=
-  fixedDesignHistLaw x θ ⊗ₘ A.output T
+  fixedDesignHistLaw x θ ⊗ₘ A.output.comap (Sigma.mk T) (measurable_sigma_mk T)
 
-instance (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
+instance (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) (θ : E) :
     IsProbabilityMeasure (fixedDesignPairLaw A x θ) := by
   unfold fixedDesignPairLaw
   infer_instance
 
 /-- Two reward vectors with the same means `⟪x t, θ⟫` on the design give the same pair law. -/
-lemma fixedDesignPairLaw_congr (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) {θ θ' : E}
+lemma fixedDesignPairLaw_congr (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → 𝒳) {θ θ' : E}
     (h : ∀ t, ⟪(x t : E), θ⟫ = ⟪(x t : E), θ'⟫) :
     fixedDesignPairLaw A x θ = fixedDesignPairLaw A x θ' := by
   have : fixedDesignHist x θ = fixedDesignHist x θ' := by
@@ -74,7 +73,7 @@ section run
 
 variable [OpensMeasurableSpace E] [MeasurableEq 𝒳] {Ω : Type*} {mΩ : MeasurableSpace Ω}
   {P : Measure Ω} [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
-  {out : Ω → 𝒳} {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
+  {out : Ω → 𝒳} {A : IdentAlg Unit 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
 
 /-- Under a fixed-design run, the history of the first `T` rounds has law
 `fixedDesignHistLaw`. -/
@@ -121,21 +120,21 @@ end run
 
 section pac
 
-variable {A : IdentAlg 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
+variable {A : IdentAlg Unit 𝒳 ℝ 𝒳} {x : ℕ → 𝒳}
 
 /-- **The PAC property of a fixed-design algorithm, on its explicit law**: for every reward
 vector `θ`, the recommendation has simple regret at most `ε` with probability at least `1 - δ`
 under `fixedDesignPairLaw A x θ`. -/
 lemma _root_.Learning.LinearBandit.IsPAC.le_measureReal_fixedDesignPairLaw
-    {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
-    [OpensMeasurableSpace E] [SecondCountableTopology E] {𝒳 : Set E} {A : IdentAlg 𝒳 ℝ 𝒳}
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+    [OpensMeasurableSpace E] [SecondCountableTopology E] {𝒳 : Set E} {A : IdentAlg Unit 𝒳 ℝ 𝒳}
     {x : ℕ → 𝒳} {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ) (hA : A.IsFixedBudget T)
     (hdes : A.alg = fixedDesignAlg x) (θ : E) :
     1 - δ ≤ (fixedDesignPairLaw A (fun t : Fin T ↦ x t) θ).real
       {p | simpleRegret 𝒳 θ p.2 ≤ ε} := by
-  have hrun := hA.isRun_fixedBudgetRunMeasure (env := linearGaussianEnv 𝒳 θ)
+  have hrun := A.isRun_runMeasure (linearGaussianEnv 𝒳 θ)
   have hlaw := hrun.hasLaw_history_out_of_fixedDesign hA hdes
-  have hpac' := hpac θ (A.fixedBudgetRunMeasure (linearGaussianEnv 𝒳 θ) T) _ _ _ _ hrun
+  have hpac' := hpac.le_measureReal_of_isRun hrun
   have hmeas : MeasurableSet {p : Hist Unit 𝒳 ℝ T × 𝒳 | simpleRegret 𝒳 θ p.2 ≤ ε} := by
     refine measurableSet_le ?_ measurable_const
     exact (continuous_const.sub ((continuous_subtype_val.comp continuous_snd).inner

@@ -19,7 +19,7 @@ Fix a design `x : Fin T → ℝ^d` with positive definite design matrix `Σ = �
 `τ > 0`. The Bayesian model (blueprint `def:bayes_prior`) is built on a standard Gaussian pair
 `(g, η) ~ N(0, I_d) ⊗ N(0, I_T)`: the reward vector is `θ = bayesParam x τ g = τ Σ^{-1/2} g`
 (so that `θ ~ N(0, τ² Σ⁻¹)`), the observations are `y t = ⟪x t, θ⟫ + η t` (`bayesObs`), and the
-recommendation of a fixed-budget algorithm `A` is drawn from `A.output T` applied to the history
+recommendation of a fixed-budget algorithm `A` is drawn from `A.output` applied to the history
 `(x t, y t)_t`; the joint law of `((g, η), rec)` is `bayesJoint A x hx τ`.
 
 * `map_bayesParam_stdGaussian`: `θ ~ N(0, τ² Σ⁻¹)`;
@@ -32,8 +32,6 @@ recommendation of a fixed-budget algorithm `A` is drawn from `A.output T` applie
 
 open MeasureTheory ProbabilityTheory Matrix Learning Learning.LinearBandit
 open scoped RealInnerProductSpace MatrixOrder
-
-universe u
 
 namespace Maiti2026Power
 
@@ -298,7 +296,7 @@ lemma integral_fst_prod {Ω₁ : Type*} {mΩ₁ : MeasurableSpace Ω₁} {μ : M
   have h : (μ.prod ν).map Prod.fst = μ := by rw [Measure.map_fst_prod, measure_univ, one_smul]
   rw [← integral_map (f := f) measurable_fst.aemeasurable (by rw [h]; exact hf.1), h]
 
-variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
+variable (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
 
 /-- The history of the design `x` seen by the algorithm in the Bayesian model, as a function of
 the standard Gaussian pair `(g, η)`. -/
@@ -319,9 +317,10 @@ lemma measurable_bayesHist : Measurable (bayesHist x hx τ) := by
   refine Measurable.of_eval fun t ↦ measurable_const.prodMk (measurable_const.prodMk ?_)
   exact ((continuous_apply t).comp (continuous_bayesObs x τ)).measurable
 
-/-- The recommendation kernel of the Bayesian model: `(g, η) ↦ A.output T (history)`. -/
+/-- The recommendation kernel of the Bayesian model: `(g, η) ↦ A.output ⟨T, history⟩`. -/
 noncomputable def bayesKernel : Kernel (EuclideanSpace ℝ ι × EuclideanSpace ℝ (Fin T)) 𝒳 :=
-  (A.output T).comap (bayesHist x hx τ) (measurable_bayesHist x hx τ)
+  (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)).comap (bayesHist x hx τ)
+    (measurable_bayesHist x hx τ)
 
 instance : IsMarkovKernel (bayesKernel A x hx τ) := by
   unfold bayesKernel
@@ -336,9 +335,9 @@ instance : IsProbabilityMeasure (bayesJoint A x hx τ) := by
   unfold bayesJoint
   infer_instance
 
-/-- The mean recommendation `∫ rec ∂A.output T h` as a function of the history `h`. -/
+/-- The mean recommendation `∫ rec ∂A.output ⟨T, h⟩` as a function of the history `h`. -/
 noncomputable def meanOutput (h : Hist Unit 𝒳 ℝ T) : EuclideanSpace ℝ ι :=
-  ∫ z, (z : EuclideanSpace ℝ ι) ∂(A.output T h)
+  ∫ z, (z : EuclideanSpace ℝ ι) ∂(A.output.comap (Sigma.mk T) (measurable_sigma_mk T) h)
 
 omit [DecidableEq ι] in
 lemma measurable_meanOutput : Measurable (meanOutput A (T := T)) := by
@@ -349,7 +348,9 @@ lemma measurable_meanOutput : Measurable (meanOutput A (T := T)) := by
 omit [DecidableEq ι] in
 lemma norm_meanOutput_le (hR : ∀ z ∈ 𝒳, ‖z‖ ≤ R)
     (h : Hist Unit 𝒳 ℝ T) : ‖meanOutput A h‖ ≤ R := by
-  have hae : ∀ᵐ z : 𝒳 ∂(A.output T h), ‖Subtype.val z‖ ≤ R := ae_of_all _ fun z ↦ hR z z.2
+  have hae : ∀ᵐ z : 𝒳 ∂(A.output.comap (Sigma.mk T) (measurable_sigma_mk T) h),
+      ‖Subtype.val z‖ ≤ R :=
+    ae_of_all _ fun z ↦ hR z z.2
   refine (norm_integral_le_of_norm_le_const hae).trans ?_
   simp
 
@@ -359,7 +360,7 @@ section identity
 
 /-! ### The Bayes identity `E⟪rec, θ⟫ = c E⟪rec, Σ⁻¹ Xᵀ y⟫` -/
 
-variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
+variable (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
 
 /-- `W = (1 - c) θ - c Σ⁻¹ Xᵀ η` and `y = X θ + η` are independent (blueprint
 `lem:posterior_decomposition`). -/
@@ -474,7 +475,7 @@ section regret
 
 /-! ### The Bayesian lower bound on the expected simple regret -/
 
-variable (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
+variable (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι) (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
 
 /-- The integral of a function of `g` under the joint law is its integral under `N(0, I_d)`. -/
 lemma integral_comp_fst_fst_bayesJoint {f : EuclideanSpace ℝ ι → ℝ}
@@ -579,7 +580,7 @@ section pac
 
 /-! ### The PAC upper bound on the Bayesian expected regret -/
 
-variable [MeasurableEq 𝒳] (A : IdentAlg 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι)
+variable [MeasurableEq 𝒳] (A : IdentAlg Unit 𝒳 ℝ 𝒳) (x : Fin T → EuclideanSpace ℝ ι)
   (hx : ∀ t, x t ∈ 𝒳) (τ : ℝ)
 
 omit [MeasurableEq 𝒳] in
@@ -601,7 +602,7 @@ omit [MeasurableEq 𝒳] in
 /-- The kernel of the Bayesian model, conditionally on `g`. -/
 lemma bayesKernel_comap (g : EuclideanSpace ℝ ι) :
     (bayesKernel A x hx τ).comap (Prod.mk g) measurable_prodMk_left =
-      (A.output T).comap (fun η ↦ bayesHist x hx τ (g, η))
+      (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)).comap (fun η ↦ bayesHist x hx τ (g, η))
         (measurable_bayesHist x hx τ |>.comp measurable_prodMk_left) := by
   ext η s _
   simp [bayesKernel, Kernel.comap_apply]
@@ -609,9 +610,9 @@ lemma bayesKernel_comap (g : EuclideanSpace ℝ ι) :
 /-- **The conditional PAC guarantee**: for every `g`, the recommendation of a fixed-design
 `(ε, δ)`-PAC algorithm has simple regret more than `ε` with probability at most `δ`, under the
 law of `(η, rec)` given `θ = bayesParam x τ g`. -/
-lemma measureReal_lt_simpleRegret_bayes_le {E : Type u} [NormedAddCommGroup E]
+lemma measureReal_lt_simpleRegret_bayes_le {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
-    [SecondCountableTopology E] {𝒳 : Set E} {A : IdentAlg 𝒳 ℝ 𝒳}
+    [SecondCountableTopology E] {𝒳 : Set E} {A : IdentAlg Unit 𝒳 ℝ 𝒳}
     {T : ℕ} {x' : ℕ → 𝒳} {ε δ : ℝ} (hpac : IsPAC 𝒳 A ε δ)
     (hA : A.IsFixedBudget T) (hdes : A.alg = fixedDesignAlg x') (θ : E) :
     (fixedDesignPairLaw A (fun t : Fin T ↦ x' t) θ).real
@@ -642,7 +643,8 @@ lemma measureReal_lt_simpleRegret_comap_eq (g : EuclideanSpace ℝ ι) {ε : ℝ
   have hset : MeasurableSet {z : 𝒳 | ε < simpleRegret 𝒳 (bayesParam x τ g) (z : _)} := by
     refine measurableSet_lt measurable_const ?_
     exact (continuous_const.sub (continuous_subtype_val.inner continuous_const)).measurable
-  have hmap := map_snd_compProd_comap (stdGaussian (EuclideanSpace ℝ (Fin T))) (A.output T) hg
+  have hmap := map_snd_compProd_comap (stdGaussian (EuclideanSpace ℝ (Fin T)))
+    (A.output.comap (Sigma.mk T) (measurable_sigma_mk T)) hg
     (fun _ ↦ inferInstance)
   rw [bayesKernel_comap A x hx τ g, fixedDesignPairLaw, ← map_bayesHist_stdGaussian x hx τ g]
   have h1 : ∀ (μ : Measure (Hist Unit 𝒳 ℝ T × 𝒳)),

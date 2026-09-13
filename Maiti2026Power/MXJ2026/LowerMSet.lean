@@ -48,7 +48,7 @@ identification algorithm on the `m`-sets of `ℝ^d`, `m = k + 1`, `d = k + n` wi
 with budget `1 ≤ T ≤ m n / (2500 ε²)` which is `(ε, δ)`-PAC has `δ ≥ 2/9`. -/
 lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι = k + n)
     (hk : 20 * m ≤ n) {ε δ : ℝ} (hε : 0 < ε) {T : ℕ} (hT : 1 ≤ T)
-    (A : IdentAlg (mSet ι m) ℝ (mSet ι m)) (hA : A.IsFixedBudget T)
+    (A : IdentAlg Unit (mSet ι m) ℝ (mSet ι m)) (hA : A.IsFixedBudget T)
     (hpac : IsPAC (mSet ι m) A ε δ)
     (hbudget : (T : ℝ) ≤ m * n / (2500 * ε ^ 2)) :
     2 / 9 ≤ δ := by
@@ -64,10 +64,9 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
   have hΔ : 0 < Δ := by rw [hΔ_def]; positivity
   have hΔm : Δ * m = 10 * ε := by rw [hΔ_def]; field_simp
   -- the canonical runs
-  have hrun := fun S : Finset ι ↦ hA.isRun_fixedBudgetRunMeasure
-    (env := linearGaussianEnv (mSet ι m) (msParam Δ S))
+  have hrun := fun S : Finset ι ↦ A.isRun_runMeasure (linearGaussianEnv (mSet ι m) (msParam Δ S))
   obtain ⟨P, hP⟩ : ∃ P : Finset ι → Measure ((ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m),
-      ∀ S, P S = A.fixedBudgetRunMeasure (linearGaussianEnv (mSet ι m) (msParam Δ S)) T :=
+      ∀ S, P S = A.runMeasure (linearGaussianEnv (mSet ι m) (msParam Δ S)) :=
     ⟨_, fun _ ↦ rfl⟩
   have hprob : ∀ S, IsProbabilityMeasure (P S) := fun S ↦ by rw [hP]; infer_instance
   -- the events "the coordinate `i` of the recommendation is `1`"
@@ -335,7 +334,7 @@ lemma le_of_isPAC_mSet {k n m : ℕ} (hm_def : m = k + 1) (hn : Fintype.card ι 
         simpleRegret (mSet ι m) (msParam Δ S)
           ((ω.2 : mSet ι m) : EuclideanSpace ℝ ι) ≤ ε} := by
       rw [hP S]
-      exact hpac (msParam Δ S) _ _ _ _ _ (hrun S)
+      exact hpac.le_measureReal_of_isRun (hrun S)
     have hint := integral_simpleRegret_le_of_measureReal_le (P := P S) measurable_snd h0 hZ
       (by linarith) hpacs
     have hmeasR : Measurable fun ω : (ℕ → Round Unit (mSet ι m) ℝ) × mSet ι m ↦

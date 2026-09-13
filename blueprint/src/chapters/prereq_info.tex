@@ -579,7 +579,9 @@ The paper only needs the divergence decomposition for a fixed number of rounds. 
 we also prove it for histories stopped at a stopping time (the change-of-measure lemma of
 fixed-confidence lower bounds, Kaufmann, Capp\'e and Garivier 2016) and for whole trajectories.
 The results below are formalized in \texttt{Maiti2026Power/LeanMachineLearning/\{HistoryLaw,
-StoppedHistory, DivergenceDecomposition, RunDivergence\}.lean}, on top of the $\KL$ lemmas of
+StoppedHistory, DivergenceDecomposition, RunDivergence\}.lean}, on top of LML's stopping rules
+and stopped histories (\texttt{LeanMachineLearning/SequentialLearning/StoppedHistory.lean}) and
+of the $\KL$ lemmas of
 \texttt{LeanMachineLearning/ForMathlib/InformationTheory/KullbackLeibler/\{CompProd,
 DataProcessing, MapSequence, Restrict\}.lean} and of the fixed-round and trajectory
 decompositions of \texttt{LeanMachineLearning/SequentialLearning/DivergenceDecomposition.lean}.
@@ -602,23 +604,28 @@ every round, so $\sigma_n = \pi_n\otimes\tilde\kappa$.
 \end{definition}
 
 \begin{definition}[Stopping rules, stopping times, stopped histories]\label{def:stopping_rule}
-\lean{Learning.stoppingTime, Learning.stoppedHist, Learning.stoppingTime_le_iff, Learning.lt_stoppingTime_iff, Learning.stoppingTime_eq_coe_iff, Learning.stoppingTime_eq_top_iff, Learning.stoppingTime_empty, Learning.notMem_of_lt_stoppingTime, Learning.stoppedHist_mem_of_ne_top, Learning.stoppedHist_min_of_le, Learning.stoppedHist_min_of_lt, Learning.measurable_stoppingTime, Learning.measurable_stoppedHist, Learning.IsAlgEnvSeq.isStoppingTime_stoppingTime, Learning.exists_measurableSet_preimage_lt_stoppingTime, Learning.truncHist, Learning.truncHist_stoppedHist, Learning.map_stoppedHist_min_eq_map_truncHist, Learning.restrict_map_truncHist, Learning.IdentAlg.stoppingTime, Learning.IdentAlg.stoppedHist}\leanok
+\lean{Learning.sigmaHistory, Learning.lt_hittingAfter_sigmaHistory_iff, Learning.hittingAfter_sigmaHistory_eq_coe_iff, Learning.stoppedValue_sigmaHistory_of_eq, Learning.fst_stoppedProcess_sigmaHistory_le, Learning.measurable_hittingAfter_sigmaHistory, Learning.measurable_stoppedValue_sigmaHistory, Learning.measurable_stoppedProcess_sigmaHistory, Learning.IsAlgEnvSeq.adapted_sigmaHistory, Learning.exists_measurableSet_preimage_lt_hittingAfter_sigmaHistory, Learning.truncHist, Learning.truncHist_stoppedValue_sigmaHistory, Learning.map_stoppedProcess_sigmaHistory_eq_map_truncHist, Learning.restrict_map_truncHist, Learning.stoppedHistMeasure, Learning.IsAlgEnvSeq.hasLaw_stoppedValue_sigmaHistory, Learning.IdentAlg.stoppingTime, Learning.IdentAlg.stoppedHist, Learning.IdentAlg.isStoppingTime_stoppingTime}\leanok
 \uses{def:fin_history, def:bai_alg}
 A \emph{stopping rule} is a measurable set $S$ of histories of variable length,
 $S \subseteq \bigsqcup_n (\{0,\dots,n-1\}\to\mathcal{A}\times\mathcal{Y})$: the interaction stops after
 $n$ rounds if the history of these $n$ rounds belongs to $S$. Its \emph{stopping time}
-$\tau_S := \inf\{n : \mathrm{hist}_n \in S\} \in \N\cup\{\infty\}$ (Mathlib \texttt{hittingAfter})
-is the number of rounds played; it is a stopping time of the history filtration of any
+$\tau_S := \inf\{n : \mathrm{hist}_n \in S\} \in \N\cup\{\infty\}$ is the number of rounds
+played: the hitting time (Mathlib \texttt{hittingAfter}) of $S$ by the process
+$n \mapsto \langle n, \mathrm{hist}_n\rangle$ of histories of variable length (LML
+\texttt{sigmaHistory}); it is a stopping time of the history filtration of any
 algorithm-environment sequence, $\{n < \tau_S\}$ is determined by $\mathrm{hist}_n$, and
 $\tau_S = \infty$ for $S = \emptyset$. For a random time $\tau$, the \emph{stopped history}
 $\mathrm{hist}_\tau := \langle\tau, \mathrm{hist}_\tau\rangle$ is the history of the first $\tau$
-rounds as a history of variable length (of length $0$ if $\tau = \infty$); it belongs to $S$ when
-$\tau = \tau_S < \infty$. The \emph{truncation} $\mathrm{trunc}_M$ keeps the first $M$ rounds of a
-history of variable length: $\mathrm{trunc}_M(\mathrm{hist}_\tau) = \mathrm{hist}_{\min(\tau,M)}$
-when $\tau < \infty$, so that the law of $\mathrm{hist}_{\min(\tau,M)}$ is the image of the law of
-$\mathrm{hist}_\tau$ by $\mathrm{trunc}_M$ when $\tau$ is almost surely finite, and both laws
-agree on histories of length $< M$. The stopping time and stopped history of an identification
-algorithm (Definition~\ref{def:bai_alg}) are those of its stopping rule.
+rounds as a history of variable length (Mathlib \texttt{stoppedValue}; of arbitrary length if
+$\tau = \infty$); it belongs to $S$ when $\tau = \tau_S < \infty$. The history stopped at time
+$M$, $\mathrm{hist}_{\min(\tau,M)}$, is Mathlib's \texttt{stoppedProcess}. The \emph{truncation}
+$\mathrm{trunc}_M$ keeps the first $M$ rounds of a history of variable length:
+$\mathrm{trunc}_M(\mathrm{hist}_\tau) = \mathrm{hist}_{\min(\tau,M)}$ when $\tau < \infty$, so
+that the law of $\mathrm{hist}_{\min(\tau,M)}$ is the image of the law of $\mathrm{hist}_\tau$ by
+$\mathrm{trunc}_M$ when $\tau$ is almost surely finite, and both laws agree on histories of
+length $< M$. The law of $\mathrm{hist}_{\tau_S}$ is determined by the algorithm and the
+environment (LML \texttt{stoppedHistMeasure}). The stopping time and stopped history of an
+identification algorithm (Definition~\ref{def:bai_alg}) are those of its stopping rule.
 \end{definition}
 
 \begin{lemma}[Restrictions and the divergence]\label{lem:kl_restrict}
@@ -641,7 +648,7 @@ positive $\mu$-measure, so the corresponding restricted divergences are infinite
 \end{proof}
 
 \begin{lemma}[Chain rule for stopped histories]\label{lem:stopped_history_chain_rule}
-\lean{Learning.map_stoppedHist_min_eq_add, Learning.map_stoppedHist_min_succ_eq_add, Learning.map_stoppedHist_min_zero, Learning.IsAlgEnvSeq.map_history_succ_restrict_lt_stoppingTime, Learning.IsAlgEnvSeq.map_action_restrict_lt_stoppingTime, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_min, Learning.sum_ite_lt_eq_sum_range_toNat_min}\leanok
+\lean{Learning.map_stoppedProcess_sigmaHistory_eq_add, Learning.map_stoppedProcess_sigmaHistory_succ_eq_add, Learning.map_stoppedProcess_sigmaHistory_zero, Learning.IsAlgEnvSeq.map_history_succ_restrict_lt_hittingAfter_sigmaHistory, Learning.IsAlgEnvSeq.map_action_restrict_lt_hittingAfter_sigmaHistory, Learning.IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedProcess_sigmaHistory, Learning.sum_ite_lt_eq_sum_range_toNat_min}\leanok
 \uses{def:env_pair, def:fin_history, def:stopping_rule, lem:kl_restrict, lem:pi_kl_measurable_equiv, lem:pi_kl_step, lem:kl_sufficient_statistic}
 Let $\mathrm{alg}$ be an algorithm, $\nu,\nu'$ two environments, $(X,Y)$ and $(X',Y')$
 algorithm-environment sequences of $(\mathrm{alg},\nu)$ and $(\mathrm{alg},\nu')$ on probability
@@ -686,7 +693,7 @@ with the integral.
 \end{proof}
 
 \begin{theorem}[Divergence decomposition at a stopping time]\label{thm:divergence_decomposition_stopping}
-\lean{Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedHist}\leanok
+\lean{Learning.IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_stepKernel, Learning.IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_compProd, Learning.IsAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory, Learning.tsum_ite_lt_eq_sum_range_toNat}\leanok
 \uses{def:env_pair, def:stopping_rule, lem:stopped_history_chain_rule, lem:kl_restrict}
 In the setting of Lemma~\ref{lem:stopped_history_chain_rule}, assume that the stopping time is
 almost surely finite under both $\Prob$ and $\Prob'$. Then

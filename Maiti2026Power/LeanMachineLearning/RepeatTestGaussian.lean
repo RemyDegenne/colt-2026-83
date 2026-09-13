@@ -30,11 +30,9 @@ algorithm `A` with budget `n + 1`, the decision `phaseMean > ε` is wrong with p
 open MeasureTheory ProbabilityTheory Real Finset Learning
 open scoped RealInnerProductSpace
 
-universe u
-
 namespace Learning.LinearBandit
 
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} {θ : E} {Ω : Type*} {mΩ : MeasurableSpace Ω}
   {P : Measure Ω} [IsProbabilityMeasure P] {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝒳} {Y : ℕ → Ω → ℝ}
   {n m : ℕ}
@@ -116,7 +114,7 @@ lemma measureReal_phaseMean_le_inner_sub_le [MeasurableEq 𝒳]
 
 section testAlg
 
-variable [MeasurableEq 𝒳] {A : IdentAlg 𝒳 ℝ 𝒳}
+variable [MeasurableEq 𝒳] {A : IdentAlg Unit 𝒳 ℝ 𝒳}
 
 /-- **The test decides `θ ≠ 0` wrongly with small probability.** Under `θ = 0`, the empirical mean
 of the observations of the second phase of the test algorithm exceeds `ε` with probability at
@@ -142,16 +140,12 @@ lemma measureReal_phaseMean_le_le_of_testAlg {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖
     (hθ : 3 * ε ≤ ⟪v, θ⟫) (h : IsAlgEnvSeq O X Y (A.testAlg n) (linearGaussianEnv 𝒳 θ) P)
     (hm : 0 < m) :
     P.real {ω | phaseMean Y n m ω ≤ ε} ≤ δ + 2 * exp (-(m * ε ^ 2 / 8)) := by
-  have hgood : MeasurableSet {x : 𝒳 | simpleRegret 𝒳 θ x ≤ ε} := by
-    have : Continuous fun x : 𝒳 ↦ simpleRegret 𝒳 θ x :=
-      continuous_const.sub (continuous_subtype_val.inner continuous_const)
-    exact measurableSet_le this.measurable measurable_const
-  have hp := hpac.le_measureReal_action_succ_of_testAlg hA θ h hgood
-  have hmeas : MeasurableSet {ω | simpleRegret 𝒳 θ (X (n + 1) ω) ≤ ε} :=
-    h.measurable_action (n + 1) hgood
+  have hbad : MeasurableSet {x : 𝒳 | ε < simpleRegret 𝒳 θ x} :=
+    measurableSet_lt measurable_const (measurable_simpleRegret 𝒳 θ)
+  have hp := hpac.measureReal_bad_action_succ_of_testAlg hA θ h hbad
   have h2 := measureReal_phaseMean_le_inner_sub_le h hm (ε := ε / 2) (by positivity)
   have hsub : {ω | phaseMean Y n m ω ≤ ε} ⊆
-      {ω | simpleRegret 𝒳 θ (X (n + 1) ω) ≤ ε}ᶜ ∪
+      {ω | ε < simpleRegret 𝒳 θ (X (n + 1) ω)} ∪
         {ω | phaseMean Y n m ω ≤ ⟪(X (n + 1) ω : E), θ⟫ - ε / 2} := by
     intro ω hω
     by_cases hg : simpleRegret 𝒳 θ (X (n + 1) ω) ≤ ε
@@ -160,17 +154,14 @@ lemma measureReal_phaseMean_le_le_of_testAlg {R : ℝ} (hR : ∀ x ∈ 𝒳, ‖
       simp only [simpleRegret] at hg
       simp only [Set.mem_ofPred_eq] at hω ⊢
       linarith
-    · exact Or.inl hg
+    · exact Or.inl (not_le.1 hg)
   calc P.real {ω | phaseMean Y n m ω ≤ ε}
-      ≤ P.real ({ω | simpleRegret 𝒳 θ (X (n + 1) ω) ≤ ε}ᶜ ∪
+      ≤ P.real ({ω | ε < simpleRegret 𝒳 θ (X (n + 1) ω)} ∪
           {ω | phaseMean Y n m ω ≤ ⟪(X (n + 1) ω : E), θ⟫ - ε / 2}) := measureReal_mono hsub
-    _ ≤ P.real {ω | simpleRegret 𝒳 θ (X (n + 1) ω) ≤ ε}ᶜ +
+    _ ≤ P.real {ω | ε < simpleRegret 𝒳 θ (X (n + 1) ω)} +
           P.real {ω | phaseMean Y n m ω ≤ ⟪(X (n + 1) ω : E), θ⟫ - ε / 2} :=
         measureReal_union_le _ _
-    _ ≤ δ + 2 * exp (-(m * (ε / 2) ^ 2 / 2)) := by
-        gcongr
-        rw [measureReal_compl hmeas, probReal_univ]
-        linarith
+    _ ≤ δ + 2 * exp (-(m * (ε / 2) ^ 2 / 2)) := by gcongr
     _ = δ + 2 * exp (-(m * ε ^ 2 / 8)) := by
         congr 3
         ring

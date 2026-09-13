@@ -28,9 +28,14 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VENDOR_IMPORTS = [
+    "Mathlib.MeasureTheory.MeasurableSpace.Embedding",
+    "Mathlib.Order.Restriction",
     "Mathlib.Probability.HasCondDistrib",
     "Mathlib.Probability.HasLaw",
     "Mathlib.Probability.Kernel.Composition.MeasureCompProd",
+    "Mathlib.Probability.Kernel.IonescuTulcea.Maps",
+    "Mathlib.Probability.Kernel.IonescuTulcea.Traj",
+    "Mathlib.Probability.Process.HittingTime",
 ]
 PERMITTED_AXIOMS = ["propext", "Classical.choice", "Quot.sound"]
 

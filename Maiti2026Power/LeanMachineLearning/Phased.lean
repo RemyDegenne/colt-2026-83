@@ -351,35 +351,37 @@ end run
 
 section identAlg
 
-variable {𝓞 : Type*} {m𝓞 : MeasurableSpace 𝓞} {L : ℕ} {out : S → 𝓞} {hout : Measurable out}
+variable {𝓓 : Type*} {m𝓓 : MeasurableSpace 𝓓} {L : ℕ} {out : S → 𝓓} {hout : Measurable out}
 
 /-- The fixed-budget identification algorithm which runs `A` for `L` phases (budget `start L`)
 and outputs `out s` where `s` is the state at the end of the last phase. -/
-noncomputable def toIdentAlg (L : ℕ) (out : S → 𝓞) (hout : Measurable out) : IdentAlg 𝓐 𝓨 𝓞 :=
-  haveI : Nonempty 𝓞 := ⟨out A.init⟩
+noncomputable def toIdentAlg (L : ℕ) (out : S → 𝓓) (hout : Measurable out) :
+    IdentAlg Unit 𝓐 𝓨 𝓓 :=
+  haveI : Nonempty 𝓓 := ⟨out A.init⟩
   IdentAlg.fixedBudget A.toAlgorithm (A.start L)
     (Kernel.deterministic (fun hist ↦ out (A.stateOfFinHistory L hist))
       (hout.comp (A.measurable_stateOfFinHistory L)))
 
 lemma isFixedBudget_toIdentAlg : (A.toIdentAlg L out hout).IsFixedBudget (A.start L) :=
-  haveI : Nonempty 𝓞 := ⟨out A.init⟩
+  haveI : Nonempty 𝓓 := ⟨out A.init⟩
   IdentAlg.isFixedBudget_fixedBudget _ _ _
 
 lemma alg_toIdentAlg : (A.toIdentAlg L out hout).alg = A.toAlgorithm := rfl
 
 lemma output_toIdentAlg :
-    (A.toIdentAlg L out hout).output (A.start L) =
+    (A.toIdentAlg L out hout).output.comap (Sigma.mk (A.start L))
+        (measurable_sigma_mk (A.start L)) =
       Kernel.deterministic (fun hist ↦ out (A.stateOfFinHistory L hist))
         (hout.comp (A.measurable_stateOfFinHistory L)) :=
-  haveI : Nonempty 𝓞 := ⟨out A.init⟩
+  haveI : Nonempty 𝓓 := ⟨out A.init⟩
   IdentAlg.output_fixedBudget _ _ _
 
 variable {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} [IsProbabilityMeasure P]
-  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment Unit 𝓐 𝓨} {o : Ω → 𝓞}
+  {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨} {env : Environment Unit 𝓐 𝓨} {o : Ω → 𝓓}
 
 /-- Along a run of the identification algorithm, the output is `out` of the state at the end of
 the last phase. -/
-lemma output_ae_eq_of_isRun [MeasurableEq 𝓞]
+lemma output_ae_eq_of_isRun [MeasurableEq 𝓓]
     (hrun : (A.toIdentAlg L out hout).IsRun env O X Y o P) :
     o =ᵐ[P] fun ω ↦ out (A.stateProc Y L ω) := by
   filter_upwards [hrun.output_ae_eq_of_output_eq_deterministic A.isFixedBudget_toIdentAlg _
@@ -508,33 +510,35 @@ end Learning.PhasedAlg
 
 namespace Learning.PhasedAlg
 
-universe u
-
-variable {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [MeasurableSpace E]
   [OpensMeasurableSpace E] {𝒳 : Set E} {S : Type*} {mS : MeasurableSpace S}
   (A : PhasedAlg 𝒳 ℝ S) [MeasurableEq 𝒳]
 
 /-- **PAC guarantee of a phased identification algorithm** in a linear Gaussian bandit: if for
 every reward vector `θ` there are good sets of states `good ℓ` such that the initial state is
-good, each phase `ℓ < L` fails with probability at most `δ ℓ` with `∑ ℓ < L, δ ℓ ≤ δ`, and every
-good final state gives a good output, then the algorithm is `δ`-PAC. -/
-lemma isPAC_toIdentAlg {𝓞 : Type*} {m𝓞 : MeasurableSpace 𝓞} [MeasurableEq 𝓞] {L : ℕ}
-    {out : S → 𝓞} {hout : Measurable out} {gd : E → 𝓞 → Prop} {δ : ℝ}
+good, each phase `ℓ < L` fails with probability at most `δ ℓ` with `∑ ℓ < L, δ ℓ ≤ δ`, and no
+good final state gives a bad output, then the algorithm is PAC at level `δ`. -/
+lemma isPAC_toIdentAlg {𝓓 : Type*} {m𝓓 : MeasurableSpace 𝓓} [MeasurableEq 𝓓] {L : ℕ}
+    {out : S → 𝓓} {hout : Measurable out} {bad : E → 𝓓 → Prop} {δ : ℝ}
+    (hbad : ∀ θ, MeasurableSet {d | bad θ d})
     (hgood : ∀ θ : E, ∃ good : ℕ → Set S, (∀ ℓ, MeasurableSet (good ℓ)) ∧ A.init ∈ good 0 ∧
       (∃ δs : ℕ → ℝ, (∀ ℓ, 0 ≤ δs ℓ) ∧ ∑ ℓ ∈ range L, δs ℓ ≤ δ ∧ ∀ ℓ < L, ∀ s ∈ good ℓ,
         1 - δs ℓ ≤ (Measure.pi fun _ : Fin (A.len ℓ) ↦ gaussianReal 0 1).real
           {η | A.nextState θ ℓ s η ∈ good (ℓ + 1)}) ∧
-      ∀ s ∈ good L, gd θ (out s)) :
-    (A.toIdentAlg L out hout).IsPAC.{u} (LinearBandit.linearGaussianEnv 𝒳) gd δ := by
-  intro θ Ω _ P _ O X Y o hrun
+      ∀ s ∈ good L, ¬ bad θ (out s)) :
+    (A.toIdentAlg L out hout).IsPAC (LinearBandit.linearGaussianEnv 𝒳) bad δ := by
+  refine IdentAlg.IsPAC.of_forall_isRun hbad fun θ Ω _ P _ O X Y o hrun ↦ ?_
   obtain ⟨good, hmeas, hinit, ⟨δs, hδs0, hδs, hstep⟩, hL⟩ := hgood θ
   have h1 := A.one_sub_sum_le_measureReal_stateProc_mem hrun.isAlgEnvSeq hmeas hδs0 hinit L hstep
-  have h2 : P.real {ω | A.stateProc Y L ω ∈ good L} ≤ P.real {ω | gd θ (o ω)} := by
+  have hm : MeasurableSet {ω | A.stateProc Y L ω ∈ good L} :=
+    A.measurable_stateProc hrun.isAlgEnvSeq.measurable_feedback L (hmeas L)
+  have h2 : P.real {ω | bad θ (o ω)} ≤ P.real {ω | A.stateProc Y L ω ∈ good L}ᶜ := by
     refine ENNReal.toReal_mono (measure_ne_top _ _) (measure_mono_ae ?_)
-    change ∀ᵐ ω ∂P, ω ∈ {ω | A.stateProc Y L ω ∈ good L} → ω ∈ {ω | gd θ (o ω)}
-    filter_upwards [A.output_ae_eq_of_isRun hrun] with ω hω hmem
-    rw [hω]
-    exact hL _ hmem
+    change ∀ᵐ ω ∂P, ω ∈ {ω | bad θ (o ω)} → ω ∈ {ω | A.stateProc Y L ω ∈ good L}ᶜ
+    filter_upwards [A.output_ae_eq_of_isRun hrun] with ω hω hmem hgood'
+    rw [hω] at hmem
+    exact hL _ hgood' hmem
+  rw [measureReal_compl hm, probReal_univ] at h2
   linarith
 
 /-- **`(ε, δ)`-PAC guarantee of a phased identification algorithm** in a linear Gaussian bandit
@@ -546,7 +550,11 @@ lemma linearBandit_isPAC_toIdentAlg {L : ℕ} {out : S → 𝒳} {hout : Measura
         1 - δs ℓ ≤ (Measure.pi fun _ : Fin (A.len ℓ) ↦ gaussianReal 0 1).real
           {η | A.nextState θ ℓ s η ∈ good (ℓ + 1)}) ∧
       ∀ s ∈ good L, LinearBandit.simpleRegret 𝒳 θ (out s) ≤ ε) :
-    LinearBandit.IsPAC 𝒳 (A.toIdentAlg L out hout) ε δ :=
-  A.isPAC_toIdentAlg hgood
+    LinearBandit.IsPAC 𝒳 (A.toIdentAlg L out hout) ε δ := by
+  refine A.isPAC_toIdentAlg
+    (fun θ ↦ measurableSet_lt measurable_const (LinearBandit.measurable_simpleRegret 𝒳 θ))
+    fun θ ↦ ?_
+  obtain ⟨good, h1, h2, h3, h4⟩ := hgood θ
+  exact ⟨good, h1, h2, h3, fun s hs ↦ not_lt.2 (h4 s hs)⟩
 
 end Learning.PhasedAlg

@@ -10,10 +10,10 @@ public import Maiti2026Power.LeanMachineLearning.DivergenceDecomposition
 /-!
 # Data processing for runs of identification algorithms
 
-For two runs of the same identification algorithm `A` (on arbitrary probability spaces, in two
-environments), the divergence between the laws of the pairs (history at the stopping time,
-output) is the divergence between the laws of the histories at the stopping time
-(`IsRun.klDiv_map_stoppedHist_out`), since the output is drawn from the same Markov kernel;
+For two runs of the same identification algorithm `A : IdentAlg Unit 𝓐 𝓨 𝓓` (on arbitrary
+probability spaces, in two environments), the divergence between the laws of the pairs (history
+at the stopping time, output) is the divergence between the laws of the histories at the stopping
+time (`IsRun.klDiv_map_stoppedHist_out`), since the output is drawn from the same Markov kernel;
 consequently the divergence between the laws of the outputs is at most the divergence between
 the laws of the stopped histories (`IsRun.klDiv_map_out_le_stoppedHist`), by the data-processing
 inequality.
@@ -34,12 +34,12 @@ open scoped ENNReal ENat
 
 namespace Learning.IdentAlg
 
-variable {𝓐 𝓨 𝓞 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
-  {m𝓞 : MeasurableSpace 𝓞} {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
+variable {𝓐 𝓨 𝓓 : Type*} {m𝓐 : MeasurableSpace 𝓐} {m𝓨 : MeasurableSpace 𝓨}
+  {m𝓓 : MeasurableSpace 𝓓} {Ω Ω' : Type*} {mΩ : MeasurableSpace Ω} {mΩ' : MeasurableSpace Ω'}
   {P : Measure Ω} {P' : Measure Ω'} [IsProbabilityMeasure P] [IsProbabilityMeasure P']
-  {A : IdentAlg 𝓐 𝓨 𝓞} {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
+  {A : IdentAlg Unit 𝓐 𝓨 𝓓} {O : ℕ → Ω → Unit} {X : ℕ → Ω → 𝓐} {Y : ℕ → Ω → 𝓨}
   {O' : ℕ → Ω' → Unit} {X' : ℕ → Ω' → 𝓐} {Y' : ℕ → Ω' → 𝓨}
-  {out : Ω → 𝓞} {out' : Ω' → 𝓞} {env env' : Environment Unit 𝓐 𝓨}
+  {out : Ω → 𝓓} {out' : Ω' → 𝓓} {env env' : Environment Unit 𝓐 𝓨}
 
 /-- **Data processing for runs**: for two runs of the same identification algorithm, the
 divergence between the laws of the pairs (history at the stopping time, output) is the divergence
@@ -80,7 +80,8 @@ lemma IsRun.klDiv_map_out_le_tsum_compProd (h : A.IsRun (stationaryEnv κ) O X Y
       ∑' t : ℕ, klDiv ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ)
         ((P.restrict {ω | (t : ℕ∞) < A.stoppingTime O X Y ω}).map (X t) ⊗ₘ κ') :=
   (h.klDiv_map_out_le_stoppedHist h').trans_eq
-    (h.isAlgEnvSeq.klDiv_map_stoppedHist_compProd h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
+    (h.isAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory_compProd h'.isAlgEnvSeq
+      A.measurableSet_stopSet hτ hτ')
 
 /-- **Change of measure at a stopping time**, integral form: for two runs of the same
 identification algorithm in two stationary environments with reward kernels `κ` and `κ'`, with
@@ -93,6 +94,7 @@ lemma IsRun.klDiv_map_out_le_lintegral [MeasurableSpace.CountablyGenerated 𝓨]
     klDiv (P.map out) (P'.map out') ≤
       ∫⁻ ω, ∑ t ∈ range (A.stoppingTime O X Y ω).toNat, klDiv (κ (X t ω)) (κ' (X t ω)) ∂P :=
   (h.klDiv_map_out_le_stoppedHist h').trans_eq
-    (h.isAlgEnvSeq.klDiv_map_stoppedHist h'.isAlgEnvSeq A.measurableSet_stopSet hτ hτ')
+    (h.isAlgEnvSeq.klDiv_map_stoppedValue_sigmaHistory h'.isAlgEnvSeq A.measurableSet_stopSet
+      hτ hτ')
 
 end Learning.IdentAlg
